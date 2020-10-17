@@ -27,12 +27,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -51,19 +49,30 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Motor Test", group="Linear Opmode")
+@TeleOp(name="Collector Test", group="Linear Opmode")
 //@Disabled
-public class BasicOpMode_Linear extends LinearOpMode {
+public class CollectorTest extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotorEx leftDrive = null;
-    private DcMotorEx rightDrive = null;
+    private DcMotorEx frontCollector = null;
+    private DcMotorEx midCollector = null;
 
-    public boolean x1Last = false;
-    public boolean a1Last = false;
-    public boolean y1Last = false;
-    public boolean b1Last = false;
+    final double MOTOR_INCREASE = 100;
+    final double MAX_RPM = 2700;
+
+    double frontSpeed = 0;
+    double midSpeed = 0;
+
+    public boolean frontFast = false;
+    public boolean frontSlow = false;
+    public boolean midFast = false;
+    public boolean midSlow = false;
+
+    public boolean lastFrontFast = false;
+    public boolean lastFrontSlow = false;
+    public boolean lastMidFast = false;
+    public boolean lastMidSlow = false;
 
     @Override
     public void runOpMode() {
@@ -73,13 +82,13 @@ public class BasicOpMode_Linear extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        leftDrive = hardwareMap.get(DcMotorEx.class, "left_drive");
-        rightDrive = hardwareMap.get(DcMotorEx.class, "right_drive");
+        frontCollector = hardwareMap.get(DcMotorEx.class, "m1");
+        midCollector = hardwareMap.get(DcMotorEx.class, "m2");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        leftDrive.setDirection(DcMotorEx.Direction.FORWARD);
-        rightDrive.setDirection(DcMotorEx.Direction.REVERSE);
+        frontCollector.setDirection(DcMotorEx.Direction.REVERSE);
+        midCollector.setDirection(DcMotorEx.Direction.FORWARD);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -89,40 +98,48 @@ public class BasicOpMode_Linear extends LinearOpMode {
         while (opModeIsActive()) {
 
             // Setup a variable for each drive wheel to save power level for telemetry
-            final double MOTOR_SPEED = 2600; //RPMS
-            double leftVelocity = leftDrive.getVelocity();
-            double rightVelocity = rightDrive.getVelocity();
+            double frontVelocity = frontCollector.getVelocity();
+            double midVelocity = midCollector.getVelocity();
 
-            // Choose to drive using either Tank Mode, or POV Mode
-            // Comment out the method that's not used.  The default below is POV.
+            frontFast = gamepad1.left_bumper;
+            frontSlow = (gamepad1.left_trigger > 0.5);
+            midFast = gamepad1.right_bumper;
+            midSlow = (gamepad1.right_trigger > 0.5);
 
-            // POV Mode uses left stick to go forward, and right stick to turn.
-            // - This uses basic math to combine motions and is easier to drive straight.
-            double left = -gamepad1.left_stick_y;
-            double right = gamepad1.right_stick_x;
+            // Look for button clicks and adjust speed
+            if (frontFast && !lastFrontFast) {
+                frontSpeed += MOTOR_INCREASE;
+            } else if (frontSlow && !lastFrontSlow) {
+                frontSpeed -= MOTOR_INCREASE;
+            }
 
+            if (midFast && !lastMidFast) {
+                midSpeed += MOTOR_INCREASE;
+            } else if (midSlow && !lastMidSlow) {
+                midSpeed -= MOTOR_INCREASE;
+            }
 
-            // Tank Mode uses one stick to control each wheel.
-            // - This requires no math, but it is hard to drive forward slowly and keep straight.
-            // leftPower  = -gamepad1.left_stick_y ;
-            // rightPower = -gamepad1.right_stick_y ;
+            // Clipping so that it does not go too fast
+            frontSpeed = Range.clip(frontSpeed,0, MAX_RPM);
+            midSpeed = Range.clip(midSpeed, 0, MAX_RPM);
 
-            // Send calculated power to wheels
-            leftDrive.setVelocity(MOTOR_SPEED);
-            rightDrive.setVelocity(MOTOR_SPEED);
+            // Send calculated velocity to motors
+            frontCollector.setVelocity(frontSpeed);
+            midCollector.setVelocity(midSpeed);
+
+            // Set to previous values before looping again
+            lastFrontFast = frontFast;
+            lastFrontSlow = frontSlow;
+            lastMidFast = midFast;
+            lastMidSlow = midSlow;
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motor Velocities", "left (%.2f), right (%.2f)", leftVelocity, rightVelocity);
+            telemetry.addData(":", "Left bumper increase front (0)");
+            telemetry.addData(":", "Right bumper increase mid (1)");
+            telemetry.addData("Measured Velocities", " front (%.2f), mid (%.2f)", frontVelocity, midVelocity);
+            telemetry.addData("Set Velocities", " front (%.2f), mid (%.2f)", frontSpeed, midSpeed);
             telemetry.update();
         }
-    }
-
-    public void updateClickState () {
-        x1Last = gamepad1.x;
-        a1Last = gamepad1.a;
-        y1Last = gamepad1.y;
-        b1Last = gamepad1.b;
-
     }
 }
