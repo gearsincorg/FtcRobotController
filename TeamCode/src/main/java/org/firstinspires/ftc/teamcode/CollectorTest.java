@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -57,12 +58,13 @@ public class CollectorTest extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotorEx frontCollector = null;
     private DcMotorEx midCollector = null;
+    private RevTouchSensor midCollectorDown = null;
 
     final double MOTOR_INCREASE = 100;
     final double MAX_RPM = 2700;
 
-    double frontSpeed = 0;
-    double midSpeed = 0;
+    double frontSpeed = MAX_RPM;
+    double midSpeed = MAX_RPM;
 
     public boolean frontFast = false;
     public boolean frontSlow = false;
@@ -84,6 +86,7 @@ public class CollectorTest extends LinearOpMode {
         // step (using the FTC Robot Controller app on the phone).
         frontCollector = hardwareMap.get(DcMotorEx.class, "m1");
         midCollector = hardwareMap.get(DcMotorEx.class, "m2");
+        midCollectorDown = hardwareMap.get(RevTouchSensor.class,"midTouch");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
@@ -123,9 +126,24 @@ public class CollectorTest extends LinearOpMode {
             frontSpeed = Range.clip(frontSpeed,0, MAX_RPM);
             midSpeed = Range.clip(midSpeed, 0, MAX_RPM);
 
-            // Send calculated velocity to motors
-            frontCollector.setVelocity(frontSpeed);
-            midCollector.setVelocity(midSpeed);
+            // When y pressed run front collector
+            if (gamepad1.y) {
+                if (midCollectorDown.isPressed()) {
+                    frontCollector.setVelocity(frontSpeed);
+                } else {
+                    frontCollector.setVelocity(-frontSpeed/4);
+                }
+            } else {
+                frontCollector.setVelocity(0);
+            }
+
+            //When a pressed run mid collector
+            if (gamepad1.a) {
+                midCollector.setVelocity(midSpeed);
+            } else {
+                midCollector.setVelocity(0);
+            }
+
 
             // Set to previous values before looping again
             lastFrontFast = frontFast;
