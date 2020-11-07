@@ -11,7 +11,6 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -39,7 +38,6 @@ public class GFORCE_Hardware {
     public static final String TAG = "Hardware";
     public static final boolean LOGGING = false;  // Set to true to add data to logfile
 
-
     /* Public OpMode members. */
     public AllianceColor allianceColor = AllianceColor.UNKNOWN_COLOR;
     public DcMotorEx leftDrive = null;
@@ -64,21 +62,19 @@ public class GFORCE_Hardware {
 
     OpenCvCamera webcam;
 
-    //public DigitalChannel leftLimit = null;
-    //public DigitalChannel rightLimit = null;
-
+    public DigitalChannel leftLimit = null;
+    public DigitalChannel rightLimit = null;
 
     public static BNO055IMU imu = null;
 
     public final double MAX_VELOCITY        = 2500;  // Counts per second
     public final double MAX_VELOCITY_MMPS   = 2540;  // MM Per Second
-    public final double AUTO_ROTATION_DPS   = 2540;   // Degrees per second
+    public final double AUTO_ROTATION_DPS   = 2540;  // Degrees per second
 
     public final double ACCELERATION_LIMIT  = 1000;  // MM per second per second  was 1524
 
-    public final double YAW_GAIN            = 0.010;  // Rate at which we respond to heading error 0.013
-    public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
     public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
+    public final double YAW_GAIN            = 0.010;  // Rate at which we respond to heading error 0.013
 
     // SERVO CONSTANTS
 
@@ -92,37 +88,26 @@ public class GFORCE_Hardware {
 
     final double YAW_IS_CLOSE = 2.0;  // angle within which we are "close"
 
-    final double AXIAL_ENCODER_COUNTS_PER_MM   = 0.958; // was 0.8602
-    final double LATERAL_ENCODER_COUNTS_PER_MM = 0.958;  // was 0.9134
-
-
+    final double AXIAL_ENCODER_COUNTS_PER_MM   = 1.78; // 537.6 Counts per (96 * 3.1415) mm
 
     // Robot states that we share with others
     public double axialMotion = 0;
-    public double lateralMotion = 0;
     public double currentHeading = 0;
 
 
     private static LinearOpMode myOpMode = null;
 
     // Sensor Read Info.
-    private int   encoderLB;
-    private int   encoderLF;
-    private int   encoderRB;
-    private int   encoderRF;
+    private int encoderLeft;
+    private int encoderRight;
 
-    private int startLeftBack = 0;
-    private int startLeftFront = 0;
-    private int startRightBack = 0;
-    private int startRightFront = 0;
-    private int deltaLeftBack = 0;
-    private int deltaLeftFront = 0;
-    private int deltaRightBack = 0;
-    private int deltaRightFront = 0;
+    private int startLeft = 0;
+    private int startRight = 0;
+    private int deltaLeft = 0;
+    private int deltaRight = 0;
 
     private double driveAxial = 0;
     private double driveYaw = 0;
-    private double driveLateral = 0;
     private double startTime = 0;
 
     // gyro
@@ -135,17 +120,12 @@ public class GFORCE_Hardware {
     private double headingSetpoint = 0;
 
     // Scoring Status variables
-
-
-
     private int timeoutSoundID = 0;
 
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
     private ElapsedTime cycleTime = new ElapsedTime();
     private ElapsedTime navTime = new ElapsedTime();
-    private ElapsedTime craneTime = new ElapsedTime();
-    private ElapsedTime liftTime = new ElapsedTime();
 
     /* Constructor */
     public GFORCE_Hardware() {
@@ -160,13 +140,12 @@ public class GFORCE_Hardware {
         // Define and Initialize Motors
         leftDrive = configureMotor("left_drive", DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
         rightDrive = configureMotor("right_drive", DcMotor.Direction.FORWARD,DcMotor.RunMode.RUN_USING_ENCODER);
-        frontCollector = configureMotor("front_collector",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);          //Was m1 in CollectorTest
-        midCollector = configureMotor("mid_collector",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);              //Was m2 in CollectorTest
-        //leftShooter = configureMotor ("left_shooter",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        //rightShooter = configureMotor ("right_shooter",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //frontCollector = configureMotor("front_collector",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);          //Was m1 in CollectorTest
+        //midCollector = configureMotor("mid_collector",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);              //Was m2 in CollectorTest
+        leftShooter = configureMotor ("left_shooter",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
+        rightShooter = configureMotor ("right_shooter",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
         //ringLift = configureMotor ("ring_lift",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
         //ringFeed = configureMotor ("ring_feed",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
 
         //Define and Initialize Sensors
         midCollectorDown = myOpMode.hardwareMap.get(RevTouchSensor.class,"midTouch");
@@ -176,7 +155,6 @@ public class GFORCE_Hardware {
         ringFinger = myOpMode.hardwareMap.get(Servo.class,"ring_finger");
         ringStop = myOpMode.hardwareMap.get(Servo.class,"ring_stop");
 
-
         // Set all Expansion hubs to use the MANUAL Bulk Caching mode
         allHubs = myOpMode.hardwareMap.getAll(LynxModule.class);
         for (LynxModule module : allHubs) {
@@ -184,8 +162,6 @@ public class GFORCE_Hardware {
         }
 
         resetEncoders();
-
-
         timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("ss_siren", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
             SoundPlayer.getInstance().preload(myOpMode.hardwareMap.appContext, timeoutSoundID);
@@ -205,7 +181,6 @@ public class GFORCE_Hardware {
 
         // Set all motors to zero power
         stopRobot();
-
     }
 
     // Configure a motor
@@ -254,9 +229,8 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(axialMotion) < absMm) &&
                 (runTime.seconds() < endingTime)) {
-            if (LOGGING) RobotLog.ii(TAG, String.format("DAV A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+            if (LOGGING) RobotLog.ii(TAG, String.format("DAV Ax %5.0f ", axialMotion));
             setAxialVelocity(getProfileVelocity(vel, getAxialMotion(), absMm));
-            setLateralVelocity(-lateralMotion);  // Reverse any drift
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
             showEncoders();
@@ -264,7 +238,7 @@ public class GFORCE_Hardware {
 
         stopRobot();
         updateMotion();
-        RobotLog.ii(TAG, String.format("DAV Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+        RobotLog.ii(TAG, String.format("DAV Last Ax: %5.0f ", axialMotion));
 
         // Return true if we have not timed out
         boolean success = (runTime.seconds() < endingTime) ;
@@ -308,18 +282,16 @@ public class GFORCE_Hardware {
         // Loop until the robot has driven to where it needs to go
         // Remember to call updateMotion() once per loop cycle.
         while (myOpMode.opModeIsActive() && updateMotion() &&
-                (Math.abs(lateralMotion) < absMm) &&
                 (runTime.seconds() < endingTime)) {
-            if (LOGGING) RobotLog.ii(TAG, String.format("DLV A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+            if (LOGGING) RobotLog.ii(TAG, String.format("DLV Ax %5.0f ", axialMotion));
             setAxialVelocity(-axialMotion);  //  Reverse any drift
-            setLateralVelocity(getProfileVelocity(vel, getLateralMotion(), absMm));
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
             showEncoders();
         }
 
         stopRobot();
-        RobotLog.ii(TAG, String.format("DLV Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+        RobotLog.ii(TAG, String.format("DLV Last Ax %5.0f ", axialMotion));
 
         // Return true if we have not timed out
         boolean success = (runTime.seconds() < endingTime) ;
@@ -381,8 +353,8 @@ public class GFORCE_Hardware {
                 module.clearBulkCache();
             }
 
-            encoderLF =         leftDrive.getCurrentPosition();
-            encoderRF =         rightDrive.getCurrentPosition();
+            encoderLeft  = leftDrive.getCurrentPosition();
+            encoderRight = rightDrive.getCurrentPosition();
 
             getHeading();
 
@@ -394,27 +366,19 @@ public class GFORCE_Hardware {
     //Get the current encoder counts of the drive motors
     public void startMotion() {
         readSensors();
-        startLeftBack = encoderLB;
-        startLeftFront = encoderLF;
-        startRightBack = encoderRB;
-        startRightFront = encoderRF;
-        deltaLeftBack = 0;
-        deltaLeftFront = 0;
-        deltaRightBack = 0;
-        deltaRightFront = 0;
+        startLeft = encoderLeft;
+        startRight = encoderRight;
+        deltaLeft = 0;
+        deltaRight = 0;
         startTime = runTime.time();
     }
 
     public boolean updateMotion() {
         readSensors();
-        deltaLeftBack = encoderLB - startLeftBack;
-        deltaLeftFront = encoderLF - startLeftFront;
-        deltaRightBack = encoderRB - startRightBack;
-        deltaRightFront = encoderRF - startRightFront;
-        axialMotion = ((deltaLeftBack + deltaLeftFront + deltaRightBack + deltaRightFront) / 4);
+        deltaLeft = encoderLeft - startLeft;
+        deltaRight = encoderRight - startRight;
+        axialMotion = ((deltaLeft + deltaRight) / 2);
         axialMotion /= AXIAL_ENCODER_COUNTS_PER_MM;
-        lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
-        lateralMotion /= LATERAL_ENCODER_COUNTS_PER_MM;
         return (true);
     }
 
@@ -425,11 +389,6 @@ public class GFORCE_Hardware {
     public double getAxialMotion() {
         // NOTE:  Must call updateMotion() once before calling this method;
         return (axialMotion);
-    }
-
-    public double getLateralMotion() {
-        // NOTE:  Must call updateMotion() once before calling this method;
-        return (lateralMotion);
     }
 
     // Turn with both wheels
@@ -448,7 +407,6 @@ public class GFORCE_Hardware {
 
         setHeadingSetpoint(heading);
         setAxialVelocity(0);
-        setLateralVelocity(0);
         navTime.reset();
 
         while (myOpMode.opModeIsActive() &&
@@ -523,14 +481,6 @@ public class GFORCE_Hardware {
     }
     */
 
-
-
-
-
-
-
-
-
     public void playTimoutSound() {
         if (timeoutSoundID != 0) {
             SoundPlayer.getInstance().startPlaying(myOpMode.hardwareMap.appContext, timeoutSoundID);
@@ -543,8 +493,10 @@ public class GFORCE_Hardware {
 
     public void showEncoders() {
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
-        myOpMode.telemetry.addData("axes",  "A:L:Y %6.0f %6.0f %6.0f", driveAxial, driveLateral,driveYaw);
-        myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
+        myOpMode.telemetry.addData("Req Vel (mmPS)",  "A:Y %6.0f %6.0f ", driveAxial, driveYaw);
+        myOpMode.telemetry.addData("Act Vel (CPS)",  "L:R %6.0f %6.0f ", leftDrive.getVelocity(), rightDrive.getVelocity());
+        myOpMode.telemetry.addData("motion (mm)","axial %6.1f", getAxialMotion());
+        myOpMode.telemetry.addData("Encoders (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
         myOpMode.telemetry.update();
     }
 
@@ -610,7 +562,7 @@ public class GFORCE_Hardware {
         double error = normalizeHeading(headingSetpoint - currentHeading);
         double yaw = Range.clip(error * HEADING_GAIN, -0.25, 0.25);
 
-        if (LOGGING) RobotLog.ii(TAG, String.format("sYVTHH SP:CH:Y %6.3f %6.3f %6.3f" , headingSetpoint, currentHeading, yaw));
+        //myOpMode.telemetry.addData("holdHeading","sYVTHH SP:CH:Y %6.3f %6.3f %6.3f" , headingSetpoint, currentHeading, yaw);
 
         setYawVelocity(yaw * AUTO_ROTATION_DPS);
         return (Math.abs(error) < YAW_IS_CLOSE);
@@ -644,7 +596,7 @@ public class GFORCE_Hardware {
 
         AngularVelocity velocities;
         velocities = imu.getAngularVelocity();
-        double rate = velocities.zRotationRate;
+        double rate = velocities.xRotationRate;
 
         filteredTurnRate += ((rate - filteredTurnRate) * TURN_RATE_TC);
         myOpMode.telemetry.addData("Turn Rate", "%6.3f", filteredTurnRate);
@@ -661,40 +613,32 @@ public class GFORCE_Hardware {
         driveYaw = Range.clip(yawV * AXIAL_ENCODER_COUNTS_PER_MM, -MAX_VELOCITY, MAX_VELOCITY);
     }
 
-    public void setLateralVelocity(double lateralV) {
-        driveLateral = Range.clip(lateralV * LATERAL_ENCODER_COUNTS_PER_MM, -MAX_VELOCITY, MAX_VELOCITY);
-    }
-
     public void moveRobotVelocity(double axialV, double yawV, double lateralV) {
         setAxialVelocity(axialV);
         setYawVelocity(yawV);
-        setLateralVelocity(lateralV);
         moveRobotVelocity();
     }
 
     public void moveRobotVelocity() {
         //calculate required motor speeds
-        double leftFrontVel = driveAxial - driveYaw + driveLateral;
-        double leftBackVel = driveAxial - driveYaw - driveLateral;
-        double rightFrontVel = driveAxial + driveYaw - driveLateral;
-        double rightBackVel = driveAxial + driveYaw + driveLateral;
+        double leftVel = driveAxial - driveYaw;
+        double rightVel = driveAxial + driveYaw;
 
-        double biggest = Math.max(Math.abs(leftFrontVel), Math.abs(rightFrontVel));
-        biggest = Math.max(biggest, Math.abs(leftBackVel));
-        biggest = Math.max(biggest, Math.abs(rightBackVel));
+        double biggest = Math.max(Math.abs(leftVel), Math.abs(rightVel));
 
         if (biggest > MAX_VELOCITY) {
             double scale = MAX_VELOCITY / biggest;
-            leftFrontVel *= scale;
-            rightFrontVel *= scale;
-            leftBackVel *= scale;
-            rightBackVel *= scale;
+            leftVel *= scale;
+            rightVel *= scale;
         }
 
-        leftDrive.setVelocity(leftFrontVel);
-        rightDrive.setVelocity(rightFrontVel);
+        leftDrive.setVelocity(leftVel);
+        rightDrive.setVelocity(rightVel);
 
-        // Log.d("G-FORCE AUTO", String.format("M %5.1f %5.1f %5.1f %5.1f ", leftFrontVel, rightFrontVel, leftBackVel, rightBackVel));
+        myOpMode.telemetry.addData("Motor Vel (CPS)", "%3.1f %3.1f", leftVel, rightVel);
+
+
+        // Log.d("G-FORCE AUTO", String.format("M %5.1f %5.1f %5.1f %5.1f ", leftVel, rightVel, leftBackVel, rightBackVel));
     }
 
     public void setAxialPower (double power) {
@@ -719,150 +663,4 @@ public class GFORCE_Hardware {
     // ========================================================
     // ----               SERVO Methods
     // ========================================================
-
-
-
-
-
-
-
-
-
-/*
-    // --------------------------------------------------------------
-    // Lift Control
-    // --------------------------------------------------------------
-    public void setLiftSetpoint(double angle)  {
-        liftSetpoint = angle;
-    }
-
-    public void lockLiftInPlace(){
-        liftSetpoint = liftAngle;
-        liftInPosition = true;
-    }
-
-    public double getLiftAngle() {
-        return liftAngle;
-    }
-
-    public void zeroLiftEncoders () {
-        leftLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-
-    public void runLiftControl() {
-
-        if (LOGGING) RobotLog.ii(TAG, String.format("RLC state:time:setpoint:angle %s, %6.3f %6.3f %6.3f",
-                                    liftState , liftTime.time(), liftSetpoint, liftAngle));
-
-        switch (liftState) {
-            case AUTO:
-
-                if (myOpMode.gamepad2.back && myOpMode.gamepad2.start) {
-                    liftSetpoint += LIFT_HOME;
-                    liftState = LiftControl.HOME_RAISING;
-                    liftTime.reset();  //
-                }
-                else if (myOpMode.gamepad2.dpad_up && (liftAngle < LIFT_UPPER_LIMIT)) {
-                    liftSetpoint = liftAngle + 2 + (2 * liftTime.time());  // speed up lift over time
-
-                }
-                else if (myOpMode.gamepad2.dpad_down && (liftAngle > LIFT_LOWER_LIMIT)) {
-                    liftSetpoint = liftAngle - 2 - (2 * liftTime.time());  // speed up lift over time;
-                }
-                else {
-                    liftTime.reset();
-
-                    // Run lift using left Joystick
-                    if(Math.abs(myOpMode.gamepad2.left_stick_y) > 0.1 ) {
-                        liftSetpoint -= (myOpMode.gamepad2.left_stick_y * 1.5);
-                    }
-                }
-
-                setLiftPower();
-                break;
-
-            case HOME_RAISING:
-                if ((liftInPosition && (liftTime.time() > 0.8)) || (liftTime.time() > 1.0)) {
-                    leftLift.setPower(0);
-                    rightLift.setPower(0);
-                    leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    liftTime.reset();
-                    liftState = LiftControl.HOME_LOWERING;
-                } else {
-                    setLiftPower();
-                }
-                break;
-
-            case HOME_LOWERING:
-                leftLift.setPower(leftLimitTripped ? 0 : -0.05);
-                rightLift.setPower(rightLimitTripped ? 0 : -0.05);
-
-                if ((leftLimitTripped && rightLimitTripped) || (liftTime.time() > 2.0)) {
-                    leftLift.setPower(0);
-                    rightLift.setPower(0);
-                    zeroLiftEncoders (); // also setes mode
-                    liftSetpoint = LIFT_LOWER_LIMIT;
-                    liftState = LiftControl.AUTO;
-                }
-        }
-    }
-
-    public void releaseCollectorArms() {
-        beginReleaseCollectorArms();
-
-        while (liftState != LiftControl.AUTO) {
-            readSensors();
-            runLiftControl();
-        }
-    }
-
-    public void beginReleaseCollectorArms() {
-        readSensors();
-        liftSetpoint += COLLECTOR_RELEASE;
-        liftState = LiftControl.HOME_RAISING;
-        liftInPosition = false;
-        liftTime.reset();  //
-        setLiftPower();
-    }
-
-    private void setLiftPower () {
-        double leftPower = 0;
-        double rightPower = 0;
-
-        // Restrict Lift Setpoint;
-        liftSetpoint = Range.clip(liftSetpoint, LIFT_LOWER_LIMIT, LIFT_UPPER_LIMIT);
-
-        // Determine lift position error
-        double leftLiftError = liftSetpoint - leftLiftAngle;
-        double rightLiftError = liftSetpoint - rightLiftAngle;
-
-        leftPower = Range.clip(leftLiftError * LIFT_GAIN, AUTO_LOWER_POWER, AUTO_RAISE_POWER);
-        rightPower = Range.clip(rightLiftError * LIFT_GAIN, AUTO_LOWER_POWER, AUTO_RAISE_POWER);
-
-        if ((leftPower < 0) && leftLimitTripped) {
-            leftPower = 0;
-        }
-
-        if ((rightPower < 0) && rightLimitTripped) {
-            rightPower = 0;
-        }
-
-        liftInPosition = (Math.abs(leftLiftError + rightLiftError) < LIFT_IN_LIMIT);
-        leftLift.setPower(leftPower);
-        rightLift.setPower(rightPower);
-    }
-
-    public boolean extendJustClicked() {
-        boolean clicked = false;
-
-        clicked = (myOpMode.gamepad2.a && !lastExtend);
-        lastExtend = myOpMode.gamepad2.a;
-        return (clicked);
-    }
-
- */
 }

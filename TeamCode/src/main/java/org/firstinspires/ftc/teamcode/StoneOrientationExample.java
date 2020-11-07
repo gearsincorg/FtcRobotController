@@ -21,6 +21,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -50,6 +51,7 @@ import java.util.List;
  * of multiple stones, switching the viewport output, and communicating the results
  * of the vision processing to usercode.
  */
+@Disabled
 @TeleOp(name="Concept: Stone Orientation Example", group ="Concept")
 public class StoneOrientationExample extends LinearOpMode
 {
