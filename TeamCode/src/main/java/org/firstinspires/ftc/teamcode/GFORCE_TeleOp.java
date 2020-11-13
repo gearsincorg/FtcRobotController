@@ -18,7 +18,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public final double SLOW_YAW_JS_SCALE = 0.15;
     public final double NORMAL_YAW_JS_SCALE = 0.25;
 
-    public final int shooterSpeed = 2700;
+    public double shooterSpeed = 0;
 
     private ElapsedTime neutralTime = new ElapsedTime();
 
@@ -47,6 +47,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+        shooterSpeed = robot.MAX_VELOCITY;
         robot.startMotion();
 
         // Run until the end of the match (Driver presses STOP)

@@ -67,7 +67,7 @@ public class GFORCE_Hardware {
 
     public static BNO055IMU imu = null;
 
-    public final double MAX_VELOCITY        = 2500;  // Counts per second
+    public final double MAX_VELOCITY        = 2400;  // Counts per second
     public final double MAX_VELOCITY_MMPS   = 2540;  // MM Per Second
     public final double AUTO_ROTATION_DPS   = 2540;  // Degrees per second
 
@@ -142,10 +142,13 @@ public class GFORCE_Hardware {
         rightDrive = configureMotor("right_drive", DcMotor.Direction.FORWARD,DcMotor.RunMode.RUN_USING_ENCODER);
         //frontCollector = configureMotor("front_collector",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);          //Was m1 in CollectorTest
         //midCollector = configureMotor("mid_collector",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);              //Was m2 in CollectorTest
-        leftShooter = configureMotor ("left_shooter",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
-        rightShooter = configureMotor ("right_shooter",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
+        leftShooter = configureMotor ("left_shooter",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
+        rightShooter = configureMotor ("right_shooter",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
         //ringLift = configureMotor ("ring_lift",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
         //ringFeed = configureMotor ("ring_feed",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        leftShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         //Define and Initialize Sensors
         midCollectorDown = myOpMode.hardwareMap.get(RevTouchSensor.class,"midTouch");
@@ -493,10 +496,11 @@ public class GFORCE_Hardware {
 
     public void showEncoders() {
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
-        myOpMode.telemetry.addData("Req Vel (mmPS)",  "A:Y %6.0f %6.0f ", driveAxial, driveYaw);
-        myOpMode.telemetry.addData("Act Vel (CPS)",  "L:R %6.0f %6.0f ", leftDrive.getVelocity(), rightDrive.getVelocity());
-        myOpMode.telemetry.addData("motion (mm)","axial %6.1f", getAxialMotion());
-        myOpMode.telemetry.addData("Encoders (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
+        // myOpMode.telemetry.addData("Req Vel (mmPS)",  "A:Y %6.0f %6.0f ", driveAxial, driveYaw);
+        // myOpMode.telemetry.addData("Act Vel (CPS)",  "L:R %6.0f %6.0f ", leftDrive.getVelocity(), rightDrive.getVelocity());
+        // myOpMode.telemetry.addData("motion (mm)","axial %6.1f", getAxialMotion());
+        myOpMode.telemetry.addData("Drive (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
+        myOpMode.telemetry.addData("Shooter (cps)","Left %6.0fd, Right %6.0f", leftShooter.getVelocity(), rightShooter.getVelocity());
         myOpMode.telemetry.update();
     }
 
