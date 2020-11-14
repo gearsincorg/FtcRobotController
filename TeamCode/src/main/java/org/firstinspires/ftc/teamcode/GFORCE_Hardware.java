@@ -67,9 +67,10 @@ public class GFORCE_Hardware {
 
     public static BNO055IMU imu = null;
 
-    public final double MAX_VELOCITY        = 2400;  // Counts per second
+    public final double MAX_VELOCITY        = 2700;  // Counts per second
     public final double MAX_VELOCITY_MMPS   = 2540;  // MM Per Second
     public final double AUTO_ROTATION_DPS   = 2540;  // Degrees per second
+    public final double INITIAL_SHOOTER_SPEED = 2400;
 
     public final double ACCELERATION_LIMIT  = 1000;  // MM per second per second  was 1524
 
@@ -140,12 +141,12 @@ public class GFORCE_Hardware {
         // Define and Initialize Motors
         leftDrive = configureMotor("left_drive", DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
         rightDrive = configureMotor("right_drive", DcMotor.Direction.FORWARD,DcMotor.RunMode.RUN_USING_ENCODER);
-        //frontCollector = configureMotor("front_collector",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);          //Was m1 in CollectorTest
-        //midCollector = configureMotor("mid_collector",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);              //Was m2 in CollectorTest
+        frontCollector = configureMotor("front_collector",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);          //Was m1 in CollectorTest
+        midCollector = configureMotor("mid_collector",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);              //Was m2 in CollectorTest
         leftShooter = configureMotor ("left_shooter",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
         rightShooter = configureMotor ("right_shooter",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
-        //ringLift = configureMotor ("ring_lift",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
-        //ringFeed = configureMotor ("ring_feed",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        ringLift = configureMotor ("ring_lift",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
+        ringFeed = configureMotor ("ring_feed",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         leftShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);

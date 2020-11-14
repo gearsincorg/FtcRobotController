@@ -8,6 +8,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 @TeleOp(name="G-FORCE Teleop", group="!Competition")
 public class GFORCE_TeleOp extends LinearOpMode {
@@ -17,8 +18,14 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     public final double SLOW_YAW_JS_SCALE = 0.15;
     public final double NORMAL_YAW_JS_SCALE = 0.25;
+    public final double SHOOTER_SPEED_INCREASE = 100;
 
     public double shooterSpeed = 0;
+    public boolean shooterFast = false;
+    public boolean lastShooterFast = false;
+    public boolean shooterSlow = false;
+    public boolean lastShooterSlow = false;
+    public boolean shooterRunning = false;
 
     private ElapsedTime neutralTime = new ElapsedTime();
 
@@ -47,7 +54,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-        shooterSpeed = robot.MAX_VELOCITY;
+        shooterSpeed = robot.INITIAL_SHOOTER_SPEED;
         robot.startMotion();
 
         // Run until the end of the match (Driver presses STOP)
@@ -104,13 +111,42 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.setAxialVelocity(axialVel);
             robot.moveRobotVelocity();
 
-            if (gamepad1.right_bumper) {
+            //Shooter Methods
+            shooterFast = gamepad1.right_bumper;
+            shooterSlow = (gamepad1.right_trigger > 0.5);
+
+            //Look for button clicks and adjust speed
+            if (shooterFast && !lastShooterFast) {
+                shooterSpeed += SHOOTER_SPEED_INCREASE;
+            } else if (shooterSlow && !lastShooterSlow) {
+                shooterSpeed -= SHOOTER_SPEED_INCREASE;
+            }
+
+            //Clipping so that it does not go too fast
+            shooterSpeed = Range.clip (shooterSpeed, 0 , robot.MAX_VELOCITY);
+
+            //Check to see if the shooter should be running
+            if (gamepad1.a) {
+                shooterRunning = true;
+            }
+            if (gamepad1.y) {
+                shooterRunning = false;
+            }
+
+            //Run the shooter
+            if (shooterRunning) {
                 robot.leftShooter.setVelocity(shooterSpeed);
                 robot.rightShooter.setVelocity(shooterSpeed);
+                robot.midCollector.setVelocity(1000);
             } else {
                 robot.leftShooter.setVelocity(0);
                 robot.rightShooter.setVelocity(0);
+                robot.midCollector.setVelocity(0);
             }
+
+            //Set to previous values before looping again
+            lastShooterFast = shooterFast;
+            lastShooterSlow = shooterSlow;
 
             // Send telemetry message to signify robot running
             robot.showEncoders();

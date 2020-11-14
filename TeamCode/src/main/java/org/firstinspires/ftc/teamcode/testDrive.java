@@ -27,15 +27,16 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.internal.stellaris.FlashLoaderProtocolException;
 
 
 /**
@@ -51,9 +52,9 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Motor Test", group="Linear Opmode")
+@TeleOp(name="Drive Test", group="Linear Opmode")
 //@Disabled
-public class BasicOpMode_Linear extends LinearOpMode {
+public class testDrive extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
@@ -65,6 +66,14 @@ public class BasicOpMode_Linear extends LinearOpMode {
     public boolean y1Last = false;
     public boolean b1Last = false;
 
+    public boolean leftDriveFast = false;
+    public boolean lastLeftDriveFast = false;
+    public boolean rightDriveFast = false;
+    public boolean lastRightDriveFast = false;
+    public boolean leftDriveSlow = false;
+    public boolean lastLeftDriveSlow = false;
+    public boolean rightDriveSlow = false;
+    public boolean lastRightDriveSlow = false;
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
@@ -87,38 +96,57 @@ public class BasicOpMode_Linear extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-
-            // Setup a variable for each drive wheel to save power level for telemetry
-            final double MOTOR_SPEED = 2600; //RPMS
             double leftVelocity = leftDrive.getVelocity();
             double rightVelocity = rightDrive.getVelocity();
+            // Setup a variable for each drive wheel to save power level for telemetry
+            /*final double MOTOR_SPEED = 2000; //RPMS
+            final double MOTOR_INCREASE = 100;
+            final double MAX_RPM = 2700;
 
+
+            leftDriveFast = gamepad1.left_bumper;
+            leftDriveSlow = (gamepad1.left_trigger > 0.5);
+            rightDriveFast = gamepad1.right_bumper;
+            rightDriveSlow = (gamepad1.right_trigger > 0.5);
+
+            // Look for button clicks and adjust speed
+            if (leftDriveFast && !lastLeftDriveFast) {
+                leftVelocity += MOTOR_INCREASE;
+            } else if (leftDriveSlow && !lastLeftDriveSlow) {
+                leftVelocity -= MOTOR_INCREASE;
+            }
+
+            if (rightDriveFast && !lastRightDriveFast) {
+                rightVelocity += MOTOR_INCREASE;
+            } else if (rightDriveSlow && !lastRightDriveSlow) {
+                rightVelocity -= MOTOR_INCREASE;
+            }
+
+            // Clipping so that it does not go too fast
+            leftVelocity = Range.clip(leftVelocity,0, MAX_RPM);
+            rightVelocity = Range.clip(rightVelocity, 0, MAX_RPM);
+            lastLeftDriveFast = leftDriveFast;
+            lastLeftDriveSlow = leftDriveSlow;
+            lastRightDriveFast = rightDriveFast;
+            lastRightDriveSlow = leftDriveSlow;
             // Choose to drive using either Tank Mode, or POV Mode
             // Comment out the method that's not used.  The default below is POV.
+            */
 
             // POV Mode uses left stick to go forward, and right stick to turn.
             // - This uses basic math to combine motions and is easier to drive straight.
-            double left = -gamepad1.left_stick_y;
-            double right = gamepad1.right_stick_x;
+            //double left = -gamepad1.left_stick_y;
+            //double right = gamepad1.right_stick_x;
 
 
             // Tank Mode uses one stick to control each wheel.
             // - This requires no math, but it is hard to drive forward slowly and keep straight.
-            // leftPower  = -gamepad1.left_stick_y ;
-            // rightPower = -gamepad1.right_stick_y ;
-
-            if (gamepad1.a) {
-                leftDrive.setVelocity(MOTOR_SPEED);
-                rightDrive.setVelocity(MOTOR_SPEED);
-
-            } else {
-                leftDrive.setVelocity(0);
-                rightDrive.setVelocity(0);
-            }
-
+            double leftPower  = -gamepad1.left_stick_y ;
+            double rightPower = -gamepad1.right_stick_y ;
 
             // Send calculated power to wheels
-
+            leftDrive.setPower(leftPower);
+            rightDrive.setPower(rightPower);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
