@@ -36,7 +36,7 @@ public class GFORCE_Hardware {
     }
 
     public static final String TAG = "Hardware";
-    public static final boolean LOGGING = false;  // Set to true to add data to logfile
+    public static final boolean LOGGING = true;  // Set to true to add data to logfile
 
     /* Public OpMode members. */
     public AllianceColor allianceColor = AllianceColor.UNKNOWN_COLOR;
@@ -81,7 +81,7 @@ public class GFORCE_Hardware {
 
 
     // Driving constants Yaw heading
-    final double HEADING_GAIN       = 0.015;  // Was 0.012
+    final double HEADING_GAIN       = 0.010;  // Was 0.012
     final double TURN_RATE_TC       = 0.6;
     final double STOP_TURNRATE      = 0.020;
     final double GYRO_360_READING   = 360.0;
@@ -207,14 +207,9 @@ public class GFORCE_Hardware {
      * @param timeOutSec
      * @return
      */
-    public boolean driveAxialVelocity(double mm, double heading, double vel, double timeOutSec, boolean flipOnBlue) {
+    public boolean driveAxialVelocity(double mm, double heading, double vel, double timeOutSec) {
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
-
-        // Reverse axial directions for blue autonomous if flipOnBlue is true
-        if ((allianceColor == AllianceColor.BLUE) && flipOnBlue) {
-            vel = -vel;
-        }
 
         // If we are moving backwards, set vel negative
         if ((mm * vel) < 0.0) {
@@ -252,59 +247,6 @@ public class GFORCE_Hardware {
         return (success);
     }
 
-    /**
-     * Drive a set distance at a set heading at a set speed until the timeout occurs
-     *
-     * @param mm
-     * @param heading
-     * @param vel
-     * @param timeOutSec
-     * @return
-     */
-    public boolean driveLateralVelocity(double mm, double heading, double vel, double timeOutSec, boolean flipOnBlue) {
-
-        double endingTime = runTime.seconds() + timeOutSec;
-        double absMm = Math.abs(mm);
-
-        RobotLog.ii(TAG, String.format("DLV D:V:H %5.0f : %5.0f : %5.0f ", mm, vel, heading));
-
-        // Reverse Lateral directions for blue autonomous and when flipOnBlue is true
-        if ((allianceColor == AllianceColor.BLUE) && flipOnBlue) {
-          vel = -vel;
-        }
-
-        // If we are moving backwards, set vel negative
-         if ((mm * vel) < 0.0) {
-            vel = -Math.abs(vel);
-        } else {
-            vel = Math.abs(vel);
-        }
-
-        //Save the current position
-        startMotion();
-
-        // Loop until the robot has driven to where it needs to go
-        // Remember to call updateMotion() once per loop cycle.
-        while (myOpMode.opModeIsActive() && updateMotion() &&
-                (runTime.seconds() < endingTime)) {
-            if (LOGGING) RobotLog.ii(TAG, String.format("DLV Ax %5.0f ", axialMotion));
-            setAxialVelocity(-axialMotion);  //  Reverse any drift
-            setYawVelocityToHoldHeading(heading);
-            moveRobotVelocity();
-            showEncoders();
-        }
-
-        stopRobot();
-        RobotLog.ii(TAG, String.format("DLV Last Ax %5.0f ", axialMotion));
-
-        // Return true if we have not timed out
-        boolean success = (runTime.seconds() < endingTime) ;
-        if (!success) {
-            playTimoutSound();
-        }
-        return (success);
-    }
-
     //
     public double getProfileVelocity(double topVel, double dTraveled, double dGoal) {
         double profileVelocity = 0;
@@ -313,7 +255,7 @@ public class GFORCE_Hardware {
         double absdTraveled = Math.abs(dTraveled);
         double absdGoal     = Math.abs(dGoal);
         double absTopVel = Math.abs(topVel);
-        double currentVel = leftDrive.getVelocity();
+        double currentVel = leftDrive.getVelocity()/AXIAL_ENCODER_COUNTS_PER_MM;
 
         // Treat the profile as an acceleration half and a deceleration half, based on distance traveled.
         // Determine the velocity, then just clip the requested velocity based on the requested top speed.
@@ -342,7 +284,7 @@ public class GFORCE_Hardware {
         profileVelocity = Range.clip(profileVelocity, 0, absTopVel) * Math.signum(topVel);
 
         if (LOGGING) Log.d(TAG, String.format("GVP T:V:D:A %5.3f %4.2f %5.2f %5.2f",
-                 getMotionTime(), profileVelocity, absdTraveled, currentVel / AXIAL_ENCODER_COUNTS_PER_MM));
+                 getMotionTime(), profileVelocity, absdTraveled, currentVel));
 
         return (profileVelocity);
     }
@@ -420,11 +362,6 @@ public class GFORCE_Hardware {
 
             inPosition = setYawVelocityToHoldHeading(heading);
 
-            //Brake if velocity is too high
-            if (Math.abs(rightDrive.getVelocity()) > Math.abs(driveYaw)) {
-                driveYaw = 0;
-            }
-
             moveRobotVelocity();
             showEncoders();
         }
@@ -437,53 +374,6 @@ public class GFORCE_Hardware {
 
         return (!timedOut);
     }
-
-    /*
-    //Turning code from Rover Ruckus when we had two omni wheels and two traction wheels
-    //Need to change to Velocity
-    // turn with both wheels
-    public boolean turnToHeading(double newSetpoint, double timeOutSEC) {
-        // Flip translation and rotations if we are RED
-        setHeadingSetpoint(newSetpoint);
-        navTime.reset();
-        while (myOpMode.opModeIsActive() &&
-                (navTime.time() < timeOutSEC)&&
-                !setYawVelocityToHoldHeading() &&
-                (runningAuto || runningAuto())) {
-            moveRobotVelocity();
-        }
-        if (navTime.time() > timeOutSEC) {
-            playTimoutSound();
-        }
-        stopRobot();
-        return (navTime.time() < timeOutSEC);
-    }
-
-    // sweeping turn with one wheel or the other
-    public boolean sweepToHeading(double newSetpoint, double timeOutSEC, boolean moveLeftWheel) {
-        // Flip translation and rotations if we are RED
-        setHeadingSetpoint(newSetpoint);
-        navTime.reset();
-        while (myOpMode.opModeIsActive() &&
-                (navTime.time() < timeOutSEC)&&
-                !setYawVelocityToHoldHeading() &&
-                (runningAuto || runningAuto())) {
-            if (moveLeftWheel) {
-                // Set drive motor power levels.
-                leftDrive.setPower(Range.clip(-driveYaw * 2, -1, 1));
-                rightDrive.setVelocity(0);
-            } else {
-                leftDrive.setVelocity(0);
-                rightDrive.setPower(Range.clip(driveYaw * 2, -1, 1));
-            }
-        }
-        if (navTime.time() > timeOutSEC) {
-            playTimoutSound();
-        }
-        stopRobot();
-        return (navTime.time() < timeOutSEC);
-    }
-    */
 
     public void playTimoutSound() {
         if (timeoutSoundID != 0) {
@@ -498,10 +388,10 @@ public class GFORCE_Hardware {
     public void showEncoders() {
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
         // myOpMode.telemetry.addData("Req Vel (mmPS)",  "A:Y %6.0f %6.0f ", driveAxial, driveYaw);
-        // myOpMode.telemetry.addData("Act Vel (CPS)",  "L:R %6.0f %6.0f ", leftDrive.getVelocity(), rightDrive.getVelocity());
-        // myOpMode.telemetry.addData("motion (mm)","axial %6.1f", getAxialMotion());
-        myOpMode.telemetry.addData("Drive (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("Shooter (cps)","Left %6.0fd, Right %6.0f", leftShooter.getVelocity(), rightShooter.getVelocity());
+        myOpMode.telemetry.addData("Act Vel (MMPS)",  "L:R %6.0f %6.0f ", leftDrive.getVelocity()/AXIAL_ENCODER_COUNTS_PER_MM, rightDrive.getVelocity()/AXIAL_ENCODER_COUNTS_PER_MM);
+        myOpMode.telemetry.addData("motion (mm)","axial %6.1f", getAxialMotion());
+        //myOpMode.telemetry.addData("Drive (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
+        //myOpMode.telemetry.addData("Shooter (cps)","Left %6.0fd, Right %6.0f", leftShooter.getVelocity(), rightShooter.getVelocity());
         myOpMode.telemetry.update();
     }
 
@@ -563,7 +453,6 @@ public class GFORCE_Hardware {
 
     // NOTE: updateMotion() or getHeading() MUST be called prior to this call
     public boolean setYawVelocityToHoldHeading() {
-        // double error = normalizeHeading(headingSetpoint - getHeading());
         double error = normalizeHeading(headingSetpoint - currentHeading);
         double yaw = Range.clip(error * HEADING_GAIN, -0.25, 0.25);
 
@@ -658,11 +547,6 @@ public class GFORCE_Hardware {
     public void runCollectors(double leftPower, double rightPower) {
         frontCollector.setPower(leftPower);
         midCollector.setPower(rightPower);
-    }
-
-    public void runCollector(double Power) {
-        frontCollector.setPower(Power);
-        midCollector.setPower(Power);
     }
 
     // ========================================================
