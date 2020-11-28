@@ -18,7 +18,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     public final double SLOW_YAW_JS_SCALE = 0.15;
     public final double NORMAL_YAW_JS_SCALE = 0.25;
-    public final double SHOOTER_SPEED_INCREASE = 100;
+    public final double SHOOTER_SPEED_INCREASE = 50;
 
     public double shooterSpeed = 0;
     public boolean shooterFast = false;
@@ -26,6 +26,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public boolean shooterSlow = false;
     public boolean lastShooterSlow = false;
     public boolean shooterRunning = false;
+
+    //public double midCollectorSpeed = 1000;
+    //public double frontCollectorSpeed = 1000; //Never tested the speed for this
 
     private ElapsedTime neutralTime = new ElapsedTime();
 
@@ -44,6 +47,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
         boolean neutralSticks = true;
         boolean autoHeadingOn = false;
 
+
+
         /* Initialize the hardware variables.
          * The init() method of the Hardware class does all the work here
          */
@@ -60,6 +65,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         // Run until the end of the match (Driver presses STOP)
         while (opModeIsActive()) {
             robot.updateMotion();  // Read all sensors and calculate motions
+            runShooter(); //Set the shooter speed according to buttons
 
             //Driver Controls
             if (gamepad1.back && gamepad1.start) {
@@ -71,7 +77,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             // In this mode the Left stick moves the robot fwd and back, the Right stick turns left and right.
             // This way it's also easy to just drive straight, or just turn.
 
-            forwardBack = -gamepad1.left_stick_y;
+            forwardBack = gamepad1.left_stick_y;
             rotate = -gamepad1.right_stick_x;
 
             if (gamepad1.left_trigger > 0.5) {
@@ -111,46 +117,58 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.setAxialVelocity(axialVel);
             robot.moveRobotVelocity();
 
-            //Shooter Methods
-            shooterFast = gamepad1.right_bumper;
-            shooterSlow = (gamepad1.right_trigger > 0.5);
-
-            //Look for button clicks and adjust speed
-            if (shooterFast && !lastShooterFast) {
-                shooterSpeed += SHOOTER_SPEED_INCREASE;
-            } else if (shooterSlow && !lastShooterSlow) {
-                shooterSpeed -= SHOOTER_SPEED_INCREASE;
-            }
-
-            //Clipping so that it does not go too fast
-            shooterSpeed = Range.clip (shooterSpeed, 0 , robot.MAX_VELOCITY);
-
-            //Check to see if the shooter should be running
-            if (gamepad1.a) {
-                shooterRunning = true;
-            }
-            if (gamepad1.y) {
-                shooterRunning = false;
-            }
-
-            //Run the shooter
-            if (shooterRunning) {
-                robot.leftShooter.setVelocity(shooterSpeed);
-                robot.rightShooter.setVelocity(shooterSpeed);
-                robot.midCollector.setVelocity(1000);
+            // Collector Methods
+            if (gamepad1.left_trigger > 0.5) {
+                //robot.midCollector.setVelocity(midCollectorSpeed);
+                robot.midCollector.setPower(1);
+                robot.frontCollector.setPower(1);
             } else {
-                robot.leftShooter.setVelocity(0);
-                robot.rightShooter.setVelocity(0);
-                robot.midCollector.setVelocity(0);
+                //robot.midCollector.setVelocity(0);
+                robot.midCollector.setPower(0);
+                robot.frontCollector.setPower(0);
             }
-
-            //Set to previous values before looping again
-            lastShooterFast = shooterFast;
-            lastShooterSlow = shooterSlow;
 
             // Send telemetry message to signify robot running
             robot.showEncoders();
         }
 
     }
+    //Shooter Methods
+    public double runShooter () {
+        shooterFast = (gamepad1.right_bumper);
+        shooterSlow = (gamepad1.right_trigger > 0.5);
+
+        //Look for button clicks and adjust speed
+        if (shooterFast && !lastShooterFast) {
+            shooterSpeed += SHOOTER_SPEED_INCREASE;
+        } else if (shooterSlow && !lastShooterSlow) {
+            shooterSpeed -= SHOOTER_SPEED_INCREASE;
+        }
+
+        //Clipping so that it does not go too fast
+        shooterSpeed = Range.clip(shooterSpeed, 0, robot.MAX_VELOCITY);
+
+        //Check to see if the shooter should be running
+        if (gamepad1.a) {
+            shooterRunning = true;
+        }
+        if (gamepad1.y) {
+            shooterRunning = false;
+        }
+
+        //Run the shooter
+        if (shooterRunning) {
+            robot.leftShooter.setVelocity(shooterSpeed);
+            robot.rightShooter.setVelocity(shooterSpeed);
+        } else {
+            robot.leftShooter.setVelocity(0);
+            robot.rightShooter.setVelocity(0);
+        }
+
+        //Set to previous values before looping again
+        lastShooterFast = shooterFast;
+        lastShooterSlow = shooterSlow;
+        return (shooterSpeed);
+    }
+
 }

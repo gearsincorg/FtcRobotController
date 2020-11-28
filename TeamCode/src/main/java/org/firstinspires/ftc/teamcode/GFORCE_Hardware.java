@@ -24,6 +24,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.openftc.easyopencv.OpenCvCamera;
 
 import java.util.List;
@@ -128,6 +129,11 @@ public class GFORCE_Hardware {
     private ElapsedTime cycleTime = new ElapsedTime();
     private ElapsedTime navTime = new ElapsedTime();
 
+    //VuForia Key
+    public static final String VUFORIA_KEY =
+            "ASFl1ib/////AAABmdtl1FqwZUIEqtOW/F+xX70YsCPMRYbusW+Av5TpUTDuB3VJT4z6ju8tkAzSKLD0cIwdp/o/3ggJzx27+OsIHWn8OTNfsAtxIzQVSCa75gI76/v006khzWpGV1wmdoEgK7JkvEns6BCzmgfSBSThg70Ej42wDF7l5FuIXUhm/AAMJ7sHLlMl5BboZg/vRyNRFTbEbFLyj98DOwLlaNl9DvUtf5bGBOHwFCNOBX8vlxWVU3aZZpGNxNTX/KyZ84TWECIxg8SeRSz3QcBEwsBYX97HXfj4nJxn93u8m5SZmoHF11MPkV0tlqemRwrCy/MJ3eGB3WCJ+MEeCAYeVa30E+WEkVTiFQAo4WW3vKuEVuBc";
+    public VuforiaLocalizer vuforia;
+
     /* Constructor */
     public GFORCE_Hardware() {
 
@@ -141,10 +147,10 @@ public class GFORCE_Hardware {
         // Define and Initialize Motors
         leftDrive = configureMotor("left_drive", DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
         rightDrive = configureMotor("right_drive", DcMotor.Direction.FORWARD,DcMotor.RunMode.RUN_USING_ENCODER);
-        frontCollector = configureMotor("front_collector",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);          //Was m1 in CollectorTest
+        frontCollector = configureMotor("front_collector",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);          //Was m1 in CollectorTest
         midCollector = configureMotor("mid_collector",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);              //Was m2 in CollectorTest
-        leftShooter = configureMotor ("left_shooter",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
-        rightShooter = configureMotor ("right_shooter",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
+        leftShooter = configureMotor ("left_shooter",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
+        rightShooter = configureMotor ("right_shooter",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
         ringLift = configureMotor ("ring_lift",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
         ringFeed = configureMotor ("ring_feed",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -391,7 +397,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("Act Vel (MMPS)",  "L:R %6.0f %6.0f ", leftDrive.getVelocity()/AXIAL_ENCODER_COUNTS_PER_MM, rightDrive.getVelocity()/AXIAL_ENCODER_COUNTS_PER_MM);
         myOpMode.telemetry.addData("motion (mm)","axial %6.1f", getAxialMotion());
         //myOpMode.telemetry.addData("Drive (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
-        //myOpMode.telemetry.addData("Shooter (cps)","Left %6.0fd, Right %6.0f", leftShooter.getVelocity(), rightShooter.getVelocity());
+        myOpMode.telemetry.addData("Shooter (CPS)","Left %6.0fd, Right %6.0f", leftShooter.getVelocity(), rightShooter.getVelocity());
         myOpMode.telemetry.update();
     }
 
@@ -552,4 +558,5 @@ public class GFORCE_Hardware {
     // ========================================================
     // ----               SERVO Methods
     // ========================================================
+
 }
