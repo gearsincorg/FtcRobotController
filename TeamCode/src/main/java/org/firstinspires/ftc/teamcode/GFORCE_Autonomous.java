@@ -37,6 +37,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
     boolean isRed;
     int ringsStacked = 0;
 
+    public VuforiaLocalizer vuforia;
+
     @Override
     public void runOpMode() {
 
@@ -57,40 +59,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
         while (!opModeIsActive() && !isStopRequested()) {
             autoConfig.init_loop(); //Run menu system
             sleep(20);
+            findRings();
 
-            if (tfod != null) {
-                // getUpdatedRecognitions() will return null if no new information is available since
-                // the last time that call was made.
-                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                if (updatedRecognitions != null) {
-                    telemetry.addData("# Object Detected", updatedRecognitions.size());
-                    // step through the list of recognitions and display boundary info.
-                    int i = 0;
-                    for (Recognition recognition : updatedRecognitions) {
-                        telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                                recognition.getLeft(), recognition.getTop());
-                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                                recognition.getRight(), recognition.getBottom());
-                        i++;
-
-                        if (recognition.getLabel() == LABEL_QUAD_ELEMENT) {
-                            ringsStacked = 4;
-                        } else if (recognition.getLabel() == LABEL_SINGLE_ELEMENT) {
-                            ringsStacked = 1;
-                        }
-                        telemetry.update();
-                    }
-
-                } else {
-                    ringsStacked = 0;
-                }
-            }
-
-            //Shut down TensorFlow before the robot runs
-            if (tfod != null) {
-                tfod.shutdown();
-            }
 
             // Get alliance color from Menu
             isRed = autoConfig.autoOptions.redAlliance;
@@ -105,45 +75,107 @@ public class GFORCE_Autonomous extends LinearOpMode {
             robot.resetHeading();
             robot.readSensors();
             autoTime.reset();
+        }
 
-            if (autoConfig.autoOptions.enabled) {
-                // Testing code
-                for (double head = 0; head < 360; head += 90) {
-                    robot.driveAxialVelocity(1500, head, 1000, 8);
-                    robot.turnToHeading(head + 90, 3);
-                    robot.sleepAndHoldHeading(head + 90, 0.5);
-                }
+
+        if (autoConfig.autoOptions.enabled) {
+            // Testing code
+            robot.driveAxialVelocity(450,0,700,2);
+            robot.turnToHeading(-45,1);
+            robot.sleepAndHoldHeading(-45, 3);
+            findRings();
+
+            switch (ringsStacked) {
+                case 0:
+                default:
+                    robot.turnToHeading(0,1);
+                    robot.sleepAndHoldHeading(0,1);
+                    robot.driveAxialVelocity(1166,0,900,3);
+                    break;
+                case 1:
+                    robot.turnToHeading(-17,1);
+                    robot.sleepAndHoldHeading(-17,1);
+                    robot.driveAxialVelocity(1824,-17,900,4);
+                    break;
+                case 4:
+                    robot.turnToHeading(0,1);
+                    robot.sleepAndHoldHeading(0,1);
+                    robot.driveAxialVelocity(2390,0,900,6);
+                    break;
             }
 
-            robot.stopRobot();
+            robot.dropWobbleGoal();
+        }
+
+        robot.stopRobot();
+        //Shut down TensorFlow before the robot runs
+        if (tfod != null) {
+            tfod.shutdown();
         }
     }
 
 
-        private void initVuforia () {
-            /*
-             * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-             */
-            VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-
-            parameters.vuforiaLicenseKey = robot.VUFORIA_KEY;
-            parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-
-            //  Instantiate the Vuforia engine
-            robot.vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-            // Loading trackables is not necessary for the TensorFlow Object Detection engine.
-        }
-
-        /**
-         * Initialize the TensorFlow Object Detection engine.
+    private void initVuforia () {
+        /*
+         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
          */
-        private void initTfod () {
-            int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-                    "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-            TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-            tfodParameters.minResultConfidence = 0.8f;
-            tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, robot.vuforia);
-            tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_QUAD_ELEMENT, LABEL_SINGLE_ELEMENT);
-        }
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+
+        parameters.vuforiaLicenseKey = robot.VUFORIA_KEY;
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+
+        // Loading trackables is not necessary for the TensorFlow Object Detection engine.
     }
+
+    /**
+     * Initialize the TensorFlow Object Detection engine.
+     */
+    private void initTfod () {
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
+                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfodParameters.minResultConfidence = 0.8f;
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_QUAD_ELEMENT, LABEL_SINGLE_ELEMENT);
+    }
+
+    private int findRings() {
+        ringsStacked = -1;
+
+        if (tfod != null) {
+           // getUpdatedRecognitions() will return null if no new information is available since
+           // the last time that call was made.
+           List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+           if (updatedRecognitions != null) {
+               telemetry.addData("# Object Detected", updatedRecognitions.size());
+               // step through the list of recognitions and display boundary info.
+               int i = 0;
+               for (Recognition recognition : updatedRecognitions) {
+                   telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                   telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                           recognition.getLeft(), recognition.getTop());
+                   telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                           recognition.getRight(), recognition.getBottom());
+                   i++;
+
+                   if (recognition.getLabel() == LABEL_QUAD_ELEMENT) {
+                       ringsStacked = 4;
+                   } else if (recognition.getLabel() == LABEL_SINGLE_ELEMENT) {
+                       ringsStacked = 1;
+                   }
+               }
+
+               telemetry.update();
+
+           } else {
+               ringsStacked = 0;
+           }
+        }
+        return ringsStacked;
+   }
+
+}
