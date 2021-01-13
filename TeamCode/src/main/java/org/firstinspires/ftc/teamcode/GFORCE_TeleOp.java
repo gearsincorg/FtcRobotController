@@ -10,6 +10,16 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
+import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
+
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
+
 @TeleOp(name="G-FORCE Teleop", group="!Competition")
 public class GFORCE_TeleOp extends LinearOpMode {
 
@@ -29,6 +39,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     //public double midCollectorSpeed = 1000;
     //public double frontCollectorSpeed = 1000; //Never tested the speed for this
+    public boolean newTargetFound = false;
+    public double relativeTargetHeading = 0;
 
     private ElapsedTime neutralTime = new ElapsedTime();
 
@@ -53,6 +65,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
          * The init() method of the Hardware class does all the work here
          */
         robot.init(this);
+        robot.activateVuforiaTargets();
 
         // Wait for the game to start (Driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
@@ -64,6 +77,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
         // Run until the end of the match (Driver presses STOP)
         while (opModeIsActive()) {
+            newTargetPosition();
             robot.updateMotion();  // Read all sensors and calculate motions
             runShooter(); //Set the shooter speed according to buttons
 
@@ -92,14 +106,21 @@ public class GFORCE_TeleOp extends LinearOpMode {
             axialVel = forwardBack * robot.MAX_VELOCITY_MMPS;
             yawVel = rotate * robot.MAX_VELOCITY_MMPS;
 
-            // Control Yaw, using manual or auto correction
-            if (rotate != 0) {
-                // We are turning with the joystick
-                autoHeadingOn = false;
-            } else if (!autoHeadingOn && robot.notTurning()) {
-                // We have just stopped turning, so lock in current heading
-                desiredHeading = robot.currentHeading;
-                autoHeadingOn = true;
+            // Control Yaw, using manual or auto correction or target tracking
+            if (!gamepad1.left_bumper) {
+                if (rotate != 0) {
+                    // We are turning with the joystick
+                    autoHeadingOn = false;
+                } else if (!autoHeadingOn && robot.notTurning()) {
+                    // We have just stopped turning, so lock in current heading
+                    desiredHeading = robot.currentHeading;
+                    autoHeadingOn = true;
+                }
+            } else {
+                if (newTargetPosition()) {
+                    desiredHeading = relativeTargetHeading;
+                    autoHeadingOn = true;
+                }
             }
 
             // Disable correction if JS are neutral for more than 2 seconds
@@ -169,6 +190,45 @@ public class GFORCE_TeleOp extends LinearOpMode {
         lastShooterFast = shooterFast;
         lastShooterSlow = shooterSlow;
         return (shooterSpeed);
+    }
+
+    public boolean newTargetPosition(){
+
+        // check all the trackable targets to see which one (if any) is visible.
+        robot.targetVisible = false;
+        for (VuforiaTrackable trackable : robot.allTrackables) {
+            if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
+                telemetry.addData("Visible Target", trackable.getName());
+                robot.targetVisible = true;
+
+                // getUpdatedRobotLocation() will return null if no new information is available since
+                // the last time that call was made, or if the trackable is not currently visible.
+                OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
+                if (robotLocationTransform != null) {
+                    robot.lastLocation = robotLocationTransform;
+                } else {
+                    newTargetFound = true;
+                    relativeTargetHeading = 10; //Put in code from Velocity Vortex
+                }
+                break;
+            }
+        }
+
+        // Provide feedback as to where the robot is located (if we know).
+        if (robot.targetVisible) {
+            // express position (translation) of robot in inches.
+            VectorF translation = robot.lastLocation.getTranslation();
+            telemetry.addData("Pos (mm)", "{X, Y, Z} = %.1f, %.1f, %.1f",
+                    translation.get(0), translation.get(1), translation.get(2));
+
+            // express the rotation of the robot in degrees.
+            Orientation rotation = Orientation.getOrientation(robot.lastLocation, EXTRINSIC, XYZ, DEGREES);
+            telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+        }
+        else {
+            telemetry.addData("Visible Target", "none");
+        }
+        return(newTargetFound);
     }
 
 }

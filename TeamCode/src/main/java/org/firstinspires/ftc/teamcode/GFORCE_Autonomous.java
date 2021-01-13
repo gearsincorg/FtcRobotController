@@ -37,7 +37,6 @@ public class GFORCE_Autonomous extends LinearOpMode {
     boolean isRed;
     int ringsStacked = 0;
 
-    public VuforiaLocalizer vuforia;
 
     @Override
     public void runOpMode() {
@@ -45,7 +44,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         // Initialize the hardware variables.
         autoConfig.init(hardwareMap.appContext, this);
         robot.init(this);
-        initVuforia();
+        robot.initVuforia();
         initTfod();
 
         if (tfod != null) {
@@ -115,21 +114,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
     }
 
 
-    private void initVuforia () {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
-        parameters.vuforiaLicenseKey = robot.VUFORIA_KEY;
-        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
-
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-        // Loading trackables is not necessary for the TensorFlow Object Detection engine.
-    }
 
     /**
      * Initialize the TensorFlow Object Detection engine.
@@ -139,7 +124,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfodParameters.minResultConfidence = 0.8f;
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, robot.vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_QUAD_ELEMENT, LABEL_SINGLE_ELEMENT);
     }
 
