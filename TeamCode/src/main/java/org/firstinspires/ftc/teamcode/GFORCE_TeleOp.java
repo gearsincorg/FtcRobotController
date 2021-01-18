@@ -28,6 +28,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     public final double SLOW_YAW_JS_SCALE = 0.15;
     public final double NORMAL_YAW_JS_SCALE = 0.25;
+
     public final double SHOOTER_SPEED_INCREASE = 50;
 
     public double shooterSpeed = 0;
@@ -59,8 +60,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
         boolean neutralSticks = true;
         boolean autoHeadingOn = false;
 
-
-
         /* Initialize the hardware variables.
          * The init() method of the Hardware class does all the work here
          */
@@ -77,7 +76,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
         // Run until the end of the match (Driver presses STOP)
         while (opModeIsActive()) {
-            newTargetPosition();
             robot.updateMotion();  // Read all sensors and calculate motions
             runShooter(); //Set the shooter speed according to buttons
 
@@ -86,10 +84,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 robot.resetHeading();
                 desiredHeading = 0;
             }
-
-            // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
-            // In this mode the Left stick moves the robot fwd and back, the Right stick turns left and right.
-            // This way it's also easy to just drive straight, or just turn.
 
             forwardBack = gamepad1.left_stick_y;
             rotate = -gamepad1.right_stick_x;
