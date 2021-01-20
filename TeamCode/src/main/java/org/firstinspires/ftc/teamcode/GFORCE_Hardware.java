@@ -374,7 +374,7 @@ public class GFORCE_Hardware {
             profileVelocity = 0.0;
         }
 
-            //Brake if velocity is too high
+        //Brake if velocity is too high
         if (Math.abs(currentVel) > profileVelocity) {
             profileVelocity = 0;
         }

@@ -12,6 +12,9 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
@@ -38,10 +41,13 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public boolean lastShooterSlow = false;
     public boolean shooterRunning = false;
 
-    //public double midCollectorSpeed = 1000;
-    //public double frontCollectorSpeed = 1000; //Never tested the speed for this
-    public boolean newTargetFound = false;
-    public double relativeTargetHeading = 0;
+    public  double robotX;
+    public  double robotY;
+    public  double targetRange;
+    public  double targetBearing;
+    public  double robotBearing;
+    public  double relativeBearing;
+    public  OpenGLMatrix        robotLocation;
 
     private ElapsedTime neutralTime = new ElapsedTime();
 
@@ -111,9 +117,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     autoHeadingOn = true;
                 }
             } else {
+                // Look to see if we have a new taregt lock....
                 if (newTargetPosition()) {
-                    desiredHeading = relativeTargetHeading;
                     autoHeadingOn = true;
+                    //  desiredHeading = something
                 }
             }
 
@@ -189,7 +196,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public boolean newTargetPosition(){
 
         // check all the trackable targets to see which one (if any) is visible.
-        robot.targetVisible = false;
+        boolean newTargetFound  = false;
+        robot.targetVisible     = false;
+
         for (VuforiaTrackable trackable : robot.allTrackables) {
             if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
                 telemetry.addData("Visible Target", trackable.getName());
@@ -200,9 +209,28 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
                 if (robotLocationTransform != null) {
                     robot.lastLocation = robotLocationTransform;
-                } else {
                     newTargetFound = true;
-                    relativeTargetHeading = 10; //Put in code from Velocity Vortex
+
+                    robotLocation = robotLocationTransform;
+                    VectorF trans = robotLocation.getTranslation();
+                    Orientation rot = Orientation.getOrientation(robotLocation, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+
+                    // Robot position is defined by the standard Matrix translation (x and y)
+                    robotX = trans.get(0);
+                    robotY = trans.get(1);
+
+                    // Robot bearing (in cartesian system) is defined by the standard Matrix z rotation
+                    robotBearing = rot.thirdAngle;
+
+                    // target range is based on distance from robot position to origin.
+                    targetRange = Math.hypot(robotX, robotY);
+
+                    // target bearing is based on angle formed between the X axis to the target range line
+                    targetBearing = Math.toDegrees(-Math.asin(robotY / targetRange));
+
+                    // Target relative bearing is the target currentHeading relative to the direction the robot is pointing.
+                    relativeBearing = targetBearing - robotBearing;
+
                 }
                 break;
             }
@@ -211,13 +239,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
         // Provide feedback as to where the robot is located (if we know).
         if (robot.targetVisible) {
             // express position (translation) of robot in inches.
-            VectorF translation = robot.lastLocation.getTranslation();
-            telemetry.addData("Pos (mm)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-                    translation.get(0), translation.get(1), translation.get(2));
-
-            // express the rotation of the robot in degrees.
-            Orientation rotation = Orientation.getOrientation(robot.lastLocation, EXTRINSIC, XYZ, DEGREES);
-            telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+            telemetry.addData("Robot", "X:Y (H) = %.0f:%.0f (%.1f)", robotX, robotY, robotBearing);
+            telemetry.addData("Target", "R (B) (RB) = %.0f  (%.1f) (%.1f)", targetRange, targetBearing, relativeBearing);
         }
         else {
             telemetry.addData("Visible Target", "none");
