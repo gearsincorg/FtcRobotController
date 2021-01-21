@@ -79,7 +79,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         if (autoConfig.autoOptions.enabled) {
             // Testing code
-            robot.driveAxialVelocity(450,0,700,2);
+            robot.grabWobbleGoal();
+            robot.sleepAndHoldHeading(0,1);
+            robot.driveAxialVelocity(300,0,700,2);
             robot.turnToHeading(-45,1);
             robot.sleepAndHoldHeading(-45, 3);
             findRings();
@@ -89,21 +91,31 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 default:
                     robot.turnToHeading(0,1);
                     robot.sleepAndHoldHeading(0,1);
-                    robot.driveAxialVelocity(1166,0,900,3);
+                    robot.driveAxialVelocity(1316,0,900,3);
                     break;
                 case 1:
                     robot.turnToHeading(-17,1);
                     robot.sleepAndHoldHeading(-17,1);
-                    robot.driveAxialVelocity(1824,-17,900,4);
+                    robot.driveAxialVelocity(1974,-17,900,4);
                     break;
                 case 4:
                     robot.turnToHeading(0,1);
                     robot.sleepAndHoldHeading(0,1);
-                    robot.driveAxialVelocity(2390,0,900,6);
+                    robot.driveAxialVelocity(2540,0,900,6);
                     break;
             }
 
-            robot.dropWobbleGoal();
+            robot.releaseWobbleGoal();
+            sleep(1000);
+            if(ringsStacked == 1) {
+                robot.driveAxialVelocity(400,-17,-300,2);
+                robot.turnToHeading(-90,1);
+                robot.driveAxialVelocity(400,-90,-600,3);
+                robot.turnToHeading(0,1);
+                robot.sleepAndHoldHeading(0,1);
+            } else {
+                robot.driveAxialVelocity(120,0,-300,1);
+            }
         }
 
         robot.stopRobot();

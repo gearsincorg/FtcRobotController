@@ -22,7 +22,6 @@ import com.qualcomm.robotcore.util.RobotLog;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -30,20 +29,16 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.openftc.easyopencv.OpenCvCamera;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
-import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 public class GFORCE_Hardware {
     public static enum AllianceColor {
@@ -71,9 +66,8 @@ public class GFORCE_Hardware {
 
     List<LynxModule> allHubs = null;
 
-    public Servo ringGrab = null;
-    public Servo ringFinger = null;
-    public Servo ringStop = null;
+    public Servo leftWobbleGrab = null;
+    public Servo rightWobbleGrab = null;
 
     public RevTouchSensor midCollectorDown = null;
 
@@ -166,6 +160,14 @@ public class GFORCE_Hardware {
     public OpenGLMatrix lastLocation = null;
     public boolean targetVisible = false;
 
+    //Wobble Goal Servo Positions
+    public final double LEFT_GOAL_GRAB = 0.48;
+    public final double RIGHT_GOAL_GRAB = 0.52;
+
+    public final double LEFT_GOAL_RELEASE = 0.80;
+    public final double RIGHT_GOAL_RELEASE = 0.15;
+
+
 
     /* Constructor */
     public GFORCE_Hardware() {
@@ -194,9 +196,9 @@ public class GFORCE_Hardware {
         midCollectorDown = myOpMode.hardwareMap.get(RevTouchSensor.class,"midTouch");
 
         //Define and Initialize Ring Servos
-        ringGrab = myOpMode.hardwareMap.get(Servo.class,"ring_grab");
-        ringFinger = myOpMode.hardwareMap.get(Servo.class,"ring_finger");
-        ringStop = myOpMode.hardwareMap.get(Servo.class,"ring_stop");
+        leftWobbleGrab = myOpMode.hardwareMap.get(Servo.class,"left_wobble");
+        rightWobbleGrab = myOpMode.hardwareMap.get(Servo.class,"right_wobble");
+        releaseWobbleGoal();
 
         // Set all Expansion hubs to use the MANUAL Bulk Caching mode
         allHubs = myOpMode.hardwareMap.getAll(LynxModule.class);
@@ -272,9 +274,9 @@ public class GFORCE_Hardware {
         for (VuforiaTrackable trackable : allTrackables) {
             trackable.setLocation(OpenGLMatrix
                     .translation(0, 0, mmTargetHeight)
-                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
+                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -180)));
             /**  Let all the trackable listeners know where the phone is.  */
-            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
+            //((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
         }
 
         targetsUltimateGoal.activate();
@@ -652,8 +654,14 @@ public class GFORCE_Hardware {
     // ----               SERVO Methods
     // ========================================================
 
-    public void dropWobbleGoal() {
-        
+    public void releaseWobbleGoal() {
+       leftWobbleGrab.setPosition(LEFT_GOAL_RELEASE);
+       rightWobbleGrab.setPosition(RIGHT_GOAL_RELEASE);
+    }
+
+    public void grabWobbleGoal() {
+        leftWobbleGrab.setPosition(LEFT_GOAL_GRAB);
+        rightWobbleGrab.setPosition(RIGHT_GOAL_GRAB);
     }
 
 

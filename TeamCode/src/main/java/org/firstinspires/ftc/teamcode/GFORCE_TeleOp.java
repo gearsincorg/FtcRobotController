@@ -78,6 +78,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
         waitForStart();
         shooterSpeed = robot.INITIAL_SHOOTER_SPEED;
+        robot.grabWobbleGoal();
         robot.startMotion();
 
         // Run until the end of the match (Driver presses STOP)
@@ -105,6 +106,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
             //Scale velocities to mm per second
             axialVel = forwardBack * robot.MAX_VELOCITY_MMPS;
             yawVel = rotate * robot.MAX_VELOCITY_MMPS;
+
+            newTargetPosition();
 
             // Control Yaw, using manual or auto correction or target tracking
             if (!gamepad1.left_bumper) {
