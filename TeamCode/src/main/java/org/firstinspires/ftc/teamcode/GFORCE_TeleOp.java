@@ -27,10 +27,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 public class GFORCE_TeleOp extends LinearOpMode {
 
     public final double SLOW_AXIAL_JS_SCALE = 0.2;
-    public final double NORMAL_AXIAL_JS_SCALE = 1.0;
-
     public final double SLOW_YAW_JS_SCALE = 0.15;
-    public final double NORMAL_YAW_JS_SCALE = 0.25;
 
     public final double SHOOTER_SPEED_INCREASE = 50;
 
@@ -50,6 +47,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public  OpenGLMatrix        robotLocation;
 
     private ElapsedTime neutralTime = new ElapsedTime();
+    private ElapsedTime cycleTimer  = new ElapsedTime();
 
     /* Declare OpMode members. */
     GFORCE_Hardware robot = new GFORCE_Hardware();
@@ -58,10 +56,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public void runOpMode() {
         double forwardBack;
         double rotate;
+        double deltaLimit;
 
         double axialVel;
         double yawVel;
-
+        double lastAxialVel = 0;
         double desiredHeading = 0;
         boolean neutralSticks = true;
         boolean autoHeadingOn = false;
@@ -98,16 +97,19 @@ public class GFORCE_TeleOp extends LinearOpMode {
             if (gamepad1.left_trigger > 0.5) {
                 forwardBack *= SLOW_AXIAL_JS_SCALE;
                 rotate *= SLOW_YAW_JS_SCALE;
-            } else {
-                forwardBack *= NORMAL_AXIAL_JS_SCALE;
-                rotate *= NORMAL_YAW_JS_SCALE;
             }
 
             //Scale velocities to mm per second
-            axialVel = forwardBack * robot.MAX_VELOCITY_MMPS;
-            yawVel = rotate * robot.MAX_VELOCITY_MMPS;
+            axialVel = forwardBack * robot.MAX_AXIAL_MMPS;
+            yawVel = rotate * robot.MAX_YAW_MMPS;
 
-            newTargetPosition();
+            // Implement Acceleration limits.
+            deltaLimit = cycleTimer.time() * robot.ACCELERATION_LIMIT;
+            if (Math.abs(axialVel - lastAxialVel) > deltaLimit) {
+                axialVel = lastAxialVel + ((axialVel > lastAxialVel ) ? deltaLimit : -deltaLimit);
+            }
+            lastAxialVel = axialVel;
+            cycleTimer.reset();
 
             // Control Yaw, using manual or auto correction or target tracking
             if (!gamepad1.left_bumper) {
@@ -127,7 +129,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 }
             }
 
-            // Disable correction if JS are neutral for more than 2 seconds
+            // Disable correction if JS are neutral for more than 3 seconds
             neutralSticks = ((forwardBack == 0) && (rotate == 0));
             if (!neutralSticks)
                 neutralTime.reset();

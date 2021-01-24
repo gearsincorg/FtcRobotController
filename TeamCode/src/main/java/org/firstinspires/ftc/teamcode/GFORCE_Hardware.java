@@ -79,17 +79,18 @@ public class GFORCE_Hardware {
     public static BNO055IMU imu = null;
 
     public final double MAX_VELOCITY        = 2700;  // Counts per second
-    public final double MAX_VELOCITY_MMPS   = 2540;  // MM Per Second
     public final double AUTO_ROTATION_DPS   = 2540;  // Degrees per second
-    public final double INITIAL_SHOOTER_SPEED = 2400;
 
-    public final double ACCELERATION_LIMIT  = 1000;  // MM per second per second  was 1524
+    public final double MAX_AXIAL_MMPS      = 2540;  // MM Per Second
+    public final double MAX_YAW_MMPS        = 1000;  // MM Per Second
+    public final double ACCELERATION_LIMIT  = 1500;  // MM per second per second
+
+    public final double INITIAL_SHOOTER_SPEED = 2400; // CPS
 
     public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
     public final double YAW_GAIN            = 0.010;  // Rate at which we respond to heading error 0.013
 
     // SERVO CONSTANTS
-
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.010;  // Was 0.012
@@ -377,9 +378,9 @@ public class GFORCE_Hardware {
         }
 
         //Brake if velocity is too high
-        if (Math.abs(currentVel) > profileVelocity) {
-            profileVelocity = 0;
-        }
+        //if (Math.abs(currentVel) > profileVelocity) {
+        //    profileVelocity = 0;
+        //}
 
         // Make sure the final velocity sign is correct.
         profileVelocity = Range.clip(profileVelocity, 0, absTopVel) * Math.signum(topVel);
