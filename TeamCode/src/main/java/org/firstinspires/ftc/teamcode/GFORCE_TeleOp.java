@@ -114,10 +114,12 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             //Scale velocities to mm per second
             axialVel = forwardBack * robot.MAX_AXIAL_MMPS;
-            yawVel = rotate * robot.MAX_YAW_MMPS;
+            yawVel   = rotate      * robot.MAX_YAW_MMPS;
 
             // Implement Acceleration limits.
             deltaLimit = cycleTimer.time() * robot.ACCELERATION_LIMIT;
+            telemetry.addData("profile", "cycle %.3f Limit %.0f", cycleTimer.time(), deltaLimit  );
+
             if (Math.abs(axialVel - lastAxialVel) > deltaLimit) {
                 axialVel = lastAxialVel + ((axialVel > lastAxialVel ) ? deltaLimit : -deltaLimit);
             }
@@ -244,7 +246,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
     }
 
     private void runRingHandler() {
-        telemetry.addData("Ring State", ringState);
         switch (ringState) {
             case IDLE:
                 if (toggleCollector()) {

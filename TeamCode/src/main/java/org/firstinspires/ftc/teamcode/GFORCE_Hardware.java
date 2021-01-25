@@ -80,12 +80,12 @@ public class GFORCE_Hardware {
 
     public static BNO055IMU imu = null;
 
-    public final double MAX_VELOCITY = 2700;  // Counts per second
-    public final double AUTO_ROTATION_DPS = 2540;  // Degrees per second
+    public final double MAX_VELOCITY        = 2700;  // Counts per second
+    public final double AUTO_ROTATION_MMPS  = 2000;  // MM Per Second
 
-    public final double MAX_AXIAL_MMPS = 2540;  // MM Per Second
-    public final double MAX_YAW_MMPS = 1000;  // MM Per Second
-    public final double ACCELERATION_LIMIT = 1500;  // MM per second per second
+    public final double MAX_AXIAL_MMPS      = 1500;  // MM Per Second
+    public final double MAX_YAW_MMPS        =  500;  // MM Per Second
+    public final double ACCELERATION_LIMIT  =10000;  // MM per second per second
 
     public final double INITIAL_SHOOTER_SPEED = 2400; // CPS
     public final double SHOOTER_SPEED_TEST    =  100; // CPS
@@ -561,7 +561,7 @@ public class GFORCE_Hardware {
 
         //myOpMode.telemetry.addData("holdHeading","sYVTHH SP:CH:Y %6.3f %6.3f %6.3f" , headingSetpoint, currentHeading, yaw);
 
-        setYawVelocity(yaw * AUTO_ROTATION_DPS);
+        setYawVelocity(yaw * AUTO_ROTATION_MMPS);
         return (Math.abs(error) < YAW_IS_CLOSE);
     }
 
