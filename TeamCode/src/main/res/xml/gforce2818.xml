@@ -7,6 +7,7 @@
             <goBILDA5202SeriesMotor name="mid_collector" port="1" />
             <goBILDA5202SeriesMotor name="ring_lift" port="2" />
             <goBILDA5202SeriesMotor name="ring_feed" port="3" />
+            <Servo name="ring_stop" port="0" />
             <Servo name="left_wobble" port="4" />
             <Servo name="right_wobble" port="5" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />

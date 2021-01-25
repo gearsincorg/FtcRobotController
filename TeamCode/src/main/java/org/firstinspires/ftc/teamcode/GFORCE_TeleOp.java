@@ -19,25 +19,27 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
+import static org.firstinspires.ftc.teamcode.RingHandler.COLLECTING;
+import static org.firstinspires.ftc.teamcode.RingHandler.IDLE;
+import static org.firstinspires.ftc.teamcode.RingHandler.SPIN_UP;
+import static org.firstinspires.ftc.teamcode.RingHandler.STOP_COLLECT;
 
 @TeleOp(name="G-FORCE Teleop", group="!Competition")
 public class GFORCE_TeleOp extends LinearOpMode {
 
+    // Constants
     public final double SLOW_AXIAL_JS_SCALE = 0.2;
     public final double SLOW_YAW_JS_SCALE = 0.15;
-
     public final double SHOOTER_SPEED_INCREASE = 50;
 
-    public double shooterSpeed = 0;
+    //Shooter Speed Management
+    public double spinnerSpeed = 0;
     public boolean shooterFast = false;
     public boolean lastShooterFast = false;
     public boolean shooterSlow = false;
     public boolean lastShooterSlow = false;
-    public boolean shooterRunning = false;
 
+    // Image Targeting
     public  double robotX;
     public  double robotY;
     public  double targetRange;
@@ -46,11 +48,20 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public  double relativeBearing;
     public  OpenGLMatrix        robotLocation;
 
+    // click detector variables
+    boolean collectorPressed = false;
+    boolean lastCollectorPressed = false;
+    boolean spinnerPressed = false;
+    boolean lastSpinnerPressed = false;
+
+    // Time Keeping
     private ElapsedTime neutralTime = new ElapsedTime();
     private ElapsedTime cycleTimer  = new ElapsedTime();
+    private ElapsedTime stateTimer  = new ElapsedTime();
 
     /* Declare OpMode members. */
     GFORCE_Hardware robot = new GFORCE_Hardware();
+    RingHandler     ringState = IDLE;
 
     @Override
     public void runOpMode() {
@@ -76,14 +87,16 @@ public class GFORCE_TeleOp extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-        shooterSpeed = robot.INITIAL_SHOOTER_SPEED;
+        spinnerSpeed = robot.INITIAL_SHOOTER_SPEED;
         robot.grabWobbleGoal();
         robot.startMotion();
 
         // Run until the end of the match (Driver presses STOP)
         while (opModeIsActive()) {
             robot.updateMotion();  // Read all sensors and calculate motions
-            runShooter(); //Set the shooter speed according to buttons
+            setSpinnerSpeed();     // Set the shooter speed according to buttons
+            runRingHandler();
+            newTargetPosition();
 
             //Driver Controls
             if (gamepad1.back && gamepad1.start) {
@@ -122,10 +135,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     autoHeadingOn = true;
                 }
             } else {
-                // Look to see if we have a new taregt lock....
-                if (newTargetPosition()) {
+                // Look to see if we have a new target lock....
+                if (robot.targetVisible) {
                     autoHeadingOn = true;
-                    //  desiredHeading = something
                 }
             }
 
@@ -134,6 +146,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             if (!neutralSticks)
                 neutralTime.reset();
 
+            // determine yaw velocity from either manual or auto control
             if (autoHeadingOn && (neutralTime.time() < 3)) {
                 robot.setYawVelocityToHoldHeading(desiredHeading);
             } else {
@@ -141,19 +154,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 desiredHeading = robot.currentHeading;
             }
 
+            // send outputs to drive motors
             robot.setAxialVelocity(axialVel);
             robot.moveRobotVelocity();
-
-            // Collector Methods
-            if (gamepad1.left_trigger > 0.5) {
-                //robot.midCollector.setVelocity(midCollectorSpeed);
-                robot.midCollector.setPower(1);
-                robot.frontCollector.setPower(1);
-            } else {
-                //robot.midCollector.setVelocity(0);
-                robot.midCollector.setPower(0);
-                robot.frontCollector.setPower(0);
-            }
 
             // Send telemetry message to signify robot running
             robot.showEncoders();
@@ -161,44 +164,31 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     }
     //Shooter Methods
-    public double runShooter () {
-        shooterFast = (gamepad1.right_bumper);
-        shooterSlow = (gamepad1.right_trigger > 0.5);
+    public double setSpinnerSpeed() {
+        shooterFast = (gamepad1.dpad_up);
+        shooterSlow = (gamepad1.dpad_down);
 
         //Look for button clicks and adjust speed
         if (shooterFast && !lastShooterFast) {
-            shooterSpeed += SHOOTER_SPEED_INCREASE;
+            spinnerSpeed += SHOOTER_SPEED_INCREASE;
         } else if (shooterSlow && !lastShooterSlow) {
-            shooterSpeed -= SHOOTER_SPEED_INCREASE;
+            spinnerSpeed -= SHOOTER_SPEED_INCREASE;
         }
 
         //Clipping so that it does not go too fast
-        shooterSpeed = Range.clip(shooterSpeed, 0, robot.MAX_VELOCITY);
-
-        //Check to see if the shooter should be running
-        if (gamepad1.a) {
-            shooterRunning = true;
-        }
-        if (gamepad1.y) {
-            shooterRunning = false;
-        }
-
-        //Run the shooter
-        if (shooterRunning) {
-            robot.leftShooter.setVelocity(shooterSpeed);
-            robot.rightShooter.setVelocity(shooterSpeed);
-        } else {
-            robot.leftShooter.setVelocity(0);
-            robot.rightShooter.setVelocity(0);
-        }
+        spinnerSpeed = Range.clip(spinnerSpeed, 0, robot.MAX_VELOCITY);
 
         //Set to previous values before looping again
         lastShooterFast = shooterFast;
         lastShooterSlow = shooterSlow;
-        return (shooterSpeed);
+        return (spinnerSpeed);
     }
 
-    public boolean newTargetPosition(){
+    /***
+     * Look for new target position and generate tracking data
+     * @return
+     */
+    private boolean newTargetPosition(){
 
         // check all the trackable targets to see which one (if any) is visible.
         boolean newTargetFound  = false;
@@ -225,7 +215,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robotY = trans.get(1);
 
                     // Robot bearing (in cartesian system) is defined by the standard Matrix z rotation
-                    robotBearing = rot.thirdAngle;
+                    robotBearing = -(rot.thirdAngle - 90.0);
 
                     // target range is based on distance from robot position to origin.
                     targetRange = Math.hypot(robotX, robotY);
@@ -244,7 +234,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         // Provide feedback as to where the robot is located (if we know).
         if (robot.targetVisible) {
             // express position (translation) of robot in inches.
-            telemetry.addData("Robot", "X:Y (H) = %.0f:%.0f (%.1f)", robotX, robotY, robotBearing);
+            telemetry.addData("Robot", "X, Y (H) = %.0f, %.0f (%.1f)", robotX, robotY, robotBearing);
             telemetry.addData("Target", "R (B) (RB) = %.0f  (%.1f) (%.1f)", targetRange, targetBearing, relativeBearing);
         }
         else {
@@ -253,4 +243,76 @@ public class GFORCE_TeleOp extends LinearOpMode {
         return(newTargetFound);
     }
 
+    private void runRingHandler() {
+        telemetry.addData("Ring State", ringState);
+        switch (ringState) {
+            case IDLE:
+                if (toggleCollector()) {
+                    robot.runCollectors(1);
+                    ringState = COLLECTING;
+                } else if (toggleSpinner() || gamepad1.right_bumper) {
+                    robot.runSpinners(spinnerSpeed);
+                    robot.releaseRings();
+                    ringState = SPIN_UP;
+                } else {
+                    robot.runCollectors(0);
+                    robot.runSpinners(0);
+                    robot.stopRings();
+                }
+                break;
+
+            case COLLECTING:
+                if (toggleCollector()){
+                    robot.runCollectors(0);
+                    ringState = IDLE;
+                } else if (toggleSpinner() || gamepad1.right_bumper) {
+                    robot.runCollectors(0);
+                    robot.runSpinners(spinnerSpeed);
+                    stateTimer.reset();
+                    ringState = STOP_COLLECT;
+                }
+                break;
+
+            case STOP_COLLECT:
+                if (stateTimer.time() > 0.2) {
+                    robot.releaseRings();
+                    ringState = SPIN_UP;
+                }
+                break;
+
+            case SPIN_UP:
+                if (toggleSpinner()) {
+                    robot.runSpinners(0);
+                    robot.stopRings();
+                    ringState = IDLE;
+                } else if (toggleCollector()) {
+                    robot.stopRings();
+                    robot.runSpinners(0);
+                    robot.runCollectors(1);
+                    ringState = COLLECTING;
+                } else if (robot.spinnerAtSpeed(spinnerSpeed) && (gamepad1.right_bumper) ) {
+                    robot.runCollectors(1);
+                } else {
+                    robot.runCollectors(0);
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private boolean toggleCollector() {
+        collectorPressed = gamepad2.left_bumper;
+        boolean clicked = (collectorPressed && !lastCollectorPressed);
+        lastCollectorPressed = collectorPressed;
+        return clicked;
+    }
+
+    private boolean toggleSpinner() {
+        spinnerPressed = gamepad2.right_bumper;
+        boolean clicked = (spinnerPressed && !lastSpinnerPressed);
+        lastSpinnerPressed = spinnerPressed;
+        return clicked;
+    }
 }

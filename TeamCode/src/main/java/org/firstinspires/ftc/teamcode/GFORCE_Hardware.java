@@ -29,6 +29,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.openftc.easyopencv.OpenCvCamera;
 
@@ -59,7 +60,7 @@ public class GFORCE_Hardware {
     public DcMotorEx midCollector = null;
 
     public DcMotorEx leftShooter = null;
-    public DcMotorEx rightShooter= null;
+    public DcMotorEx rightShooter = null;
 
     public DcMotorEx ringLift = null;
     public DcMotorEx ringFeed = null;
@@ -68,6 +69,7 @@ public class GFORCE_Hardware {
 
     public Servo leftWobbleGrab = null;
     public Servo rightWobbleGrab = null;
+    public Servo ringStop = null;
 
     public RevTouchSensor midCollectorDown = null;
 
@@ -78,30 +80,32 @@ public class GFORCE_Hardware {
 
     public static BNO055IMU imu = null;
 
-    public final double MAX_VELOCITY        = 2700;  // Counts per second
-    public final double AUTO_ROTATION_DPS   = 2540;  // Degrees per second
+    public final double MAX_VELOCITY = 2700;  // Counts per second
+    public final double AUTO_ROTATION_DPS = 2540;  // Degrees per second
 
-    public final double MAX_AXIAL_MMPS      = 2540;  // MM Per Second
-    public final double MAX_YAW_MMPS        = 1000;  // MM Per Second
-    public final double ACCELERATION_LIMIT  = 1500;  // MM per second per second
+    public final double MAX_AXIAL_MMPS = 2540;  // MM Per Second
+    public final double MAX_YAW_MMPS = 1000;  // MM Per Second
+    public final double ACCELERATION_LIMIT = 1500;  // MM per second per second
 
     public final double INITIAL_SHOOTER_SPEED = 2400; // CPS
+    public final double SHOOTER_SPEED_TEST    =  100; // CPS
 
-    public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
-    public final double YAW_GAIN            = 0.010;  // Rate at which we respond to heading error 0.013
+
+    public final double AXIAL_GAIN = 0.0015; // Distance from target that we start to slow down. 0017
+    public final double YAW_GAIN = 0.010;  // Rate at which we respond to heading error 0.013
 
     // SERVO CONSTANTS
 
     // Driving constants Yaw heading
-    final double HEADING_GAIN       = 0.010;  // Was 0.012
-    final double TURN_RATE_TC       = 0.6;
-    final double STOP_TURNRATE      = 0.020;
-    final double GYRO_360_READING   = 360.0;
-    final double GYRO_SCALE_FACTOR  = 360.0 / GYRO_360_READING;
+    final double HEADING_GAIN = 0.010;  // Was 0.012
+    final double TURN_RATE_TC = 0.6;
+    final double STOP_TURNRATE = 0.020;
+    final double GYRO_360_READING = 360.0;
+    final double GYRO_SCALE_FACTOR = 360.0 / GYRO_360_READING;
 
     final double YAW_IS_CLOSE = 2.0;  // angle within which we are "close"
 
-    final double AXIAL_ENCODER_COUNTS_PER_MM   = 1.78; // 537.6 Counts per (96 * 3.1415) mm
+    final double AXIAL_ENCODER_COUNTS_PER_MM = 1.78; // 537.6 Counts per (96 * 3.1415) mm
 
     // Robot states that we share with others
     public double axialMotion = 0;
@@ -134,6 +138,7 @@ public class GFORCE_Hardware {
 
     // Scoring Status variables
     private int timeoutSoundID = 0;
+    private double targetSpinnerSpeed = 0;
 
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
@@ -148,13 +153,13 @@ public class GFORCE_Hardware {
     VuforiaTrackables targetsUltimateGoal;
     List<VuforiaTrackable> allTrackables;
 
-    private float phoneYRotate    = -90;
-    private float phoneXRotate    = 0;
-    private float phoneZRotate    = 0;
-    final float CAMERA_FORWARD_DISPLACEMENT  = 160.0f;   // eg: Camera is 160 mm in front of robot-center
+    private float phoneYRotate = -90;
+    private float phoneXRotate = 0;
+    private float phoneZRotate = 0;
+    final float CAMERA_FORWARD_DISPLACEMENT = 160.0f;   // eg: Camera is 160 mm in front of robot-center
     final float CAMERA_VERTICAL_DISPLACEMENT = 110.0f;   // eg: Camera is 8 mm above ground
-    final float CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
-    private static final float mmTargetHeight   = 150.0f;          // the height in mm of the center of the target image above the floor
+    final float CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
+    private static final float mmTargetHeight = 150.0f;          // the height in mm of the center of the target image above the floor
 
 
     // Class Members
@@ -168,7 +173,8 @@ public class GFORCE_Hardware {
     public final double LEFT_GOAL_RELEASE = 0.80;
     public final double RIGHT_GOAL_RELEASE = 0.15;
 
-
+    public final double RING_STOP    = 0.0;
+    public final double RING_RELEASE = 1.0;
 
     /* Constructor */
     public GFORCE_Hardware() {
@@ -182,24 +188,26 @@ public class GFORCE_Hardware {
 
         // Define and Initialize Motors
         leftDrive = configureMotor("left_drive", DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
-        rightDrive = configureMotor("right_drive", DcMotor.Direction.FORWARD,DcMotor.RunMode.RUN_USING_ENCODER);
-        frontCollector = configureMotor("front_collector",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);          //Was m1 in CollectorTest
-        midCollector = configureMotor("mid_collector",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);              //Was m2 in CollectorTest
-        leftShooter = configureMotor ("left_shooter",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
-        rightShooter = configureMotor ("right_shooter",DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
-        ringLift = configureMotor ("ring_lift",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
-        ringFeed = configureMotor ("ring_feed",DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightDrive = configureMotor("right_drive", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
+        frontCollector = configureMotor("front_collector", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        midCollector = configureMotor("mid_collector", DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftShooter = configureMotor("left_shooter", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
+        rightShooter = configureMotor("right_shooter", DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
+        ringLift = configureMotor("ring_lift", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
+        ringFeed = configureMotor("ring_feed", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         leftShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         //Define and Initialize Sensors
-        midCollectorDown = myOpMode.hardwareMap.get(RevTouchSensor.class,"midTouch");
+        midCollectorDown = myOpMode.hardwareMap.get(RevTouchSensor.class, "midTouch");
 
         //Define and Initialize Ring Servos
-        leftWobbleGrab = myOpMode.hardwareMap.get(Servo.class,"left_wobble");
-        rightWobbleGrab = myOpMode.hardwareMap.get(Servo.class,"right_wobble");
+        leftWobbleGrab = myOpMode.hardwareMap.get(Servo.class, "left_wobble");
+        rightWobbleGrab = myOpMode.hardwareMap.get(Servo.class, "right_wobble");
+        ringStop = myOpMode.hardwareMap.get(Servo.class, "ring_stop");
         releaseWobbleGoal();
+        stopRings();
 
         // Set all Expansion hubs to use the MANUAL Bulk Caching mode
         allHubs = myOpMode.hardwareMap.getAll(LynxModule.class);
@@ -229,7 +237,7 @@ public class GFORCE_Hardware {
         stopRobot();
     }
 
-    public void initVuforia () {
+    public void initVuforia() {
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
          */
@@ -238,14 +246,13 @@ public class GFORCE_Hardware {
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraName = myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1");
+        parameters.useExtendedTracking = false;
 
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
-
-        // Loading trackables is not necessary for the TensorFlow Object Detection engine.
     }
 
-    public void activateVuforiaTargets () {
+    public void activateVuforiaTargets() {
         //  Instantiate the Vuforia engine
         if (vuforia == null) {
             initVuforia();
@@ -257,12 +264,6 @@ public class GFORCE_Hardware {
         blueTowerGoalTarget.setName("Blue Tower Goal Target");
         VuforiaTrackable redTowerGoalTarget = targetsUltimateGoal.get(1);
         redTowerGoalTarget.setName("Red Tower Goal Target");
-        VuforiaTrackable redAllianceTarget = targetsUltimateGoal.get(2);
-        redAllianceTarget.setName("Red Alliance Target");
-        VuforiaTrackable blueAllianceTarget = targetsUltimateGoal.get(3);
-        blueAllianceTarget.setName("Blue Alliance Target");
-        VuforiaTrackable frontWallTarget = targetsUltimateGoal.get(4);
-        frontWallTarget.setName("Front Wall Target");
 
         OpenGLMatrix robotFromCamera = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
@@ -275,9 +276,9 @@ public class GFORCE_Hardware {
         for (VuforiaTrackable trackable : allTrackables) {
             trackable.setLocation(OpenGLMatrix
                     .translation(0, 0, mmTargetHeight)
-                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -180)));
+                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
             /**  Let all the trackable listeners know where the phone is.  */
-            //((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
+            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
         }
 
         targetsUltimateGoal.activate();
@@ -285,12 +286,11 @@ public class GFORCE_Hardware {
 
     public void deactivateVuforiaTargets() {
         targetsUltimateGoal.deactivate();
-
     }
 
 
     // Configure a motor
-    public DcMotorEx configureMotor( String name, DcMotor.Direction direction, DcMotor.RunMode mode) {
+    public DcMotorEx configureMotor(String name, DcMotor.Direction direction, DcMotor.RunMode mode) {
         DcMotorEx motorObj = myOpMode.hardwareMap.get(DcMotorEx.class, name);
         motorObj.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorObj.setDirection(direction);
@@ -300,6 +300,7 @@ public class GFORCE_Hardware {
     }
 
     // Autonomous driving methods
+
     /**
      * Drive a set distance at a set heading at a set speed until the timeout occurs
      *
@@ -342,7 +343,7 @@ public class GFORCE_Hardware {
         RobotLog.ii(TAG, String.format("DAV Last Ax: %5.0f ", axialMotion));
 
         // Return true if we have not timed out
-        boolean success = (runTime.seconds() < endingTime) ;
+        boolean success = (runTime.seconds() < endingTime);
         if (!success) {
             playTimoutSound();
         }
@@ -355,9 +356,9 @@ public class GFORCE_Hardware {
 
         // Make all distances positive
         double absdTraveled = Math.abs(dTraveled);
-        double absdGoal     = Math.abs(dGoal);
+        double absdGoal = Math.abs(dGoal);
         double absTopVel = Math.abs(topVel);
-        double currentVel = leftDrive.getVelocity()/AXIAL_ENCODER_COUNTS_PER_MM;
+        double currentVel = leftDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM;
 
         // Treat the profile as an acceleration half and a deceleration half, based on distance traveled.
         // Determine the velocity, then just clip the requested velocity based on the requested top speed.
@@ -366,9 +367,9 @@ public class GFORCE_Hardware {
 
         if (absdTraveled < (absdGoal / 2.0)) {
             // We are accelerating, give a little boost
-            profileVelocity = (ACCELERATION_LIMIT * getMotionTime() * 2) ;
+            profileVelocity = (ACCELERATION_LIMIT * getMotionTime() * 2);
 
-        } else if (absdTraveled < absdGoal ) {
+        } else if (absdTraveled < absdGoal) {
             // We are Decelerating
             double dRemaining = Range.clip((absdGoal - absdTraveled), 0, absdGoal); // Don't let this go negative.
             profileVelocity = ACCELERATION_LIMIT * Math.sqrt(2 * dRemaining / ACCELERATION_LIMIT);
@@ -386,7 +387,7 @@ public class GFORCE_Hardware {
         profileVelocity = Range.clip(profileVelocity, 0, absTopVel) * Math.signum(topVel);
 
         if (LOGGING) Log.d(TAG, String.format("GVP T:V:D:A %5.3f %4.2f %5.2f %5.2f",
-                 getMotionTime(), profileVelocity, absdTraveled, currentVel));
+                getMotionTime(), profileVelocity, absdTraveled, currentVel));
 
         return (profileVelocity);
     }
@@ -401,7 +402,7 @@ public class GFORCE_Hardware {
                 module.clearBulkCache();
             }
 
-            encoderLeft  = leftDrive.getCurrentPosition();
+            encoderLeft = leftDrive.getCurrentPosition();
             encoderRight = rightDrive.getCurrentPosition();
 
             getHeading();
@@ -431,7 +432,7 @@ public class GFORCE_Hardware {
     }
 
     public double getMotionTime() {
-        return(runTime.time() - startTime);
+        return (runTime.time() - startTime);
     }
 
     public double getAxialMotion() {
@@ -490,10 +491,10 @@ public class GFORCE_Hardware {
     public void showEncoders() {
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
         // myOpMode.telemetry.addData("Req Vel (mmPS)",  "A:Y %6.0f %6.0f ", driveAxial, driveYaw);
-        myOpMode.telemetry.addData("Act Vel (MMPS)",  "L:R %6.0f %6.0f ", leftDrive.getVelocity()/AXIAL_ENCODER_COUNTS_PER_MM, rightDrive.getVelocity()/AXIAL_ENCODER_COUNTS_PER_MM);
-        myOpMode.telemetry.addData("motion (mm)","axial %6.1f", getAxialMotion());
+        myOpMode.telemetry.addData("Act Vel (MMPS)", "L:R %6.0f %6.0f ", leftDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM, rightDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM);
+        myOpMode.telemetry.addData("motion (mm)", "axial %6.1f", getAxialMotion());
         //myOpMode.telemetry.addData("Drive (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("Shooter (CPS)","Left %6.0fd, Right %6.0f", leftShooter.getVelocity(), rightShooter.getVelocity());
+        myOpMode.telemetry.addData("Shooter (CPS)", "Left %6.0fd, Right %6.0f", leftShooter.getVelocity(), rightShooter.getVelocity());
         myOpMode.telemetry.update();
     }
 
@@ -637,7 +638,7 @@ public class GFORCE_Hardware {
         // Log.d("G-FORCE AUTO", String.format("M %5.1f %5.1f %5.1f %5.1f ", leftVel, rightVel, leftBackVel, rightBackVel));
     }
 
-    public void setAxialPower (double power) {
+    public void setAxialPower(double power) {
         leftDrive.setPower(power);
         rightDrive.setPower(power);
     }
@@ -646,9 +647,24 @@ public class GFORCE_Hardware {
         moveRobotVelocity(0, 0, 0);
     }
 
-    public void runCollectors(double leftPower, double rightPower) {
-        frontCollector.setPower(leftPower);
-        midCollector.setPower(rightPower);
+    // ========================================================
+    // ----               Motor Methods
+    // ========================================================
+
+    public void runCollectors(double power) {
+        frontCollector.setPower(power);
+        midCollector.setPower(power);
+    }
+
+    public void runSpinners(double spinnerSpeed) {
+        targetSpinnerSpeed = spinnerSpeed;
+        leftShooter.setVelocity(spinnerSpeed);
+        rightShooter.setVelocity(spinnerSpeed);
+    }
+
+    public boolean spinnerAtSpeed(double spinnerSpeed) {
+        runSpinners(spinnerSpeed);
+        return (Math.abs(targetSpinnerSpeed - leftShooter.getVelocity()) < SHOOTER_SPEED_TEST);
     }
 
     // ========================================================
@@ -656,8 +672,8 @@ public class GFORCE_Hardware {
     // ========================================================
 
     public void releaseWobbleGoal() {
-       leftWobbleGrab.setPosition(LEFT_GOAL_RELEASE);
-       rightWobbleGrab.setPosition(RIGHT_GOAL_RELEASE);
+        leftWobbleGrab.setPosition(LEFT_GOAL_RELEASE);
+        rightWobbleGrab.setPosition(RIGHT_GOAL_RELEASE);
     }
 
     public void grabWobbleGoal() {
@@ -665,5 +681,12 @@ public class GFORCE_Hardware {
         rightWobbleGrab.setPosition(RIGHT_GOAL_GRAB);
     }
 
+    public void stopRings() {
+        ringStop.setPosition(RING_STOP);
+    }
+
+    public void releaseRings() {
+        ringStop.setPosition(RING_RELEASE);
+    }
 
 }
