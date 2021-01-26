@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
@@ -73,7 +74,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         double yawVel;
         double lastAxialVel = 0;
         double desiredHeading = 0;
-        boolean neutralSticks = true;
+        boolean driving = true;
         boolean autoHeadingOn = false;
 
         /* Initialize the hardware variables.
@@ -96,7 +97,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.updateMotion();  // Read all sensors and calculate motions
             setSpinnerSpeed();     // Set the shooter speed according to buttons
             runRingHandler();
-            newTargetPosition();
 
             //Driver Controls
             if (gamepad1.back && gamepad1.start) {
@@ -118,7 +118,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             // Implement Acceleration limits.
             deltaLimit = cycleTimer.time() * robot.ACCELERATION_LIMIT;
-            telemetry.addData("profile", "cycle %.3f Limit %.0f", cycleTimer.time(), deltaLimit  );
 
             if (Math.abs(axialVel - lastAxialVel) > deltaLimit) {
                 axialVel = lastAxialVel + ((axialVel > lastAxialVel ) ? deltaLimit : -deltaLimit);
@@ -127,7 +126,21 @@ public class GFORCE_TeleOp extends LinearOpMode {
             cycleTimer.reset();
 
             // Control Yaw, using manual or auto correction or target tracking
-            if (!gamepad1.left_bumper) {
+            if (gamepad1.left_bumper) {
+                // Look to see if we have a new target lock....
+                if (newTargetPosition()) {
+                    RobotLog.ii("TARGET", "New Position");
+                    autoHeadingOn = true;
+                    desiredHeading = robot.currentHeading + relativeBearing;
+                }
+                RobotLog.ii("TARGET", String.format("H:R:T:RB:S, %.1f, %.1f, %.1f, %.1f, %.1f ",
+                        robot.currentHeading,
+                        robotBearing,
+                        targetBearing,
+                        relativeBearing,
+                        desiredHeading));
+                neutralTime.reset();
+            } else {
                 if (rotate != 0) {
                     // We are turning with the joystick
                     autoHeadingOn = false;
@@ -136,16 +149,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     desiredHeading = robot.currentHeading;
                     autoHeadingOn = true;
                 }
-            } else {
-                // Look to see if we have a new target lock....
-                if (robot.targetVisible) {
-                    autoHeadingOn = true;
-                }
             }
 
             // Disable correction if JS are neutral for more than 3 seconds
-            neutralSticks = ((forwardBack == 0) && (rotate == 0));
-            if (!neutralSticks)
+            driving = ((forwardBack != 0) || (rotate != 0));
+            if (driving)
                 neutralTime.reset();
 
             // determine yaw velocity from either manual or auto control
@@ -195,6 +203,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
         // check all the trackable targets to see which one (if any) is visible.
         boolean newTargetFound  = false;
         robot.targetVisible     = false;
+        double lrobotX;
+        double lrobotY;
+        double ltargetRange;
+        double ltargetBearing;
+        double lrobotBearing;
 
         for (VuforiaTrackable trackable : robot.allTrackables) {
             if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
@@ -206,27 +219,36 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
                 if (robotLocationTransform != null) {
                     robot.lastLocation = robotLocationTransform;
-                    newTargetFound = true;
 
                     robotLocation = robotLocationTransform;
                     VectorF trans = robotLocation.getTranslation();
                     Orientation rot = Orientation.getOrientation(robotLocation, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
 
                     // Robot position is defined by the standard Matrix translation (x and y)
-                    robotX = trans.get(0);
-                    robotY = trans.get(1);
+                    lrobotX = trans.get(0);
+                    lrobotY = trans.get(1);
 
                     // Robot bearing (in cartesian system) is defined by the standard Matrix z rotation
-                    robotBearing = -(rot.thirdAngle - 90.0);
+                    lrobotBearing = rot.thirdAngle;
 
                     // target range is based on distance from robot position to origin.
-                    targetRange = Math.hypot(robotX, robotY);
+                    ltargetRange = Math.hypot(lrobotX, lrobotY);
 
                     // target bearing is based on angle formed between the X axis to the target range line
-                    targetBearing = Math.toDegrees(-Math.asin(robotY / targetRange));
+                    ltargetBearing = Math.toDegrees(-Math.asin(lrobotY / ltargetRange));
 
-                    // Target relative bearing is the target currentHeading relative to the direction the robot is pointing.
-                    relativeBearing = targetBearing - robotBearing;
+                    // sanity check
+                    if ((Math.abs(lrobotBearing) < 30) && (Math.abs(ltargetBearing) < 30)) {
+                        robotX = lrobotX;
+                        robotY = lrobotY;
+                        robotBearing = lrobotBearing;
+                        targetRange = ltargetRange;
+                        targetBearing = ltargetBearing;
+
+                        // Target relative bearing is the target currentHeading relative to the direction the robot is pointing.
+                        relativeBearing = targetBearing - robotBearing;
+                        newTargetFound = true;
+                    }
 
                 }
                 break;
@@ -282,7 +304,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 break;
 
             case SPIN_UP:
-                if (toggleSpinner()) {
+                if (toggleSpinner() || (gamepad1.right_trigger > 0.5)) {
                     robot.runSpinners(0);
                     robot.stopRings();
                     ringState = IDLE;

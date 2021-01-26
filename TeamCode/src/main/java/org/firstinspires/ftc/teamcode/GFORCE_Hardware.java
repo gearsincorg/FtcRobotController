@@ -38,6 +38,7 @@ import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XZY;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 
@@ -81,29 +82,23 @@ public class GFORCE_Hardware {
     public static BNO055IMU imu = null;
 
     public final double MAX_VELOCITY        = 2700;  // Counts per second
-    public final double AUTO_ROTATION_MMPS  = 2000;  // MM Per Second
+    public final double AUTO_ROTATION_MMPS  = 2400;  // MM Per Second
 
     public final double MAX_AXIAL_MMPS      = 1500;  // MM Per Second
     public final double MAX_YAW_MMPS        =  500;  // MM Per Second
     public final double ACCELERATION_LIMIT  =10000;  // MM per second per second
 
-    public final double INITIAL_SHOOTER_SPEED = 2400; // CPS
+    public final double INITIAL_SHOOTER_SPEED = 2300; // CPS
     public final double SHOOTER_SPEED_TEST    =  100; // CPS
 
-
-    public final double AXIAL_GAIN = 0.0015; // Distance from target that we start to slow down. 0017
-    public final double YAW_GAIN = 0.010;  // Rate at which we respond to heading error 0.013
-
-    // SERVO CONSTANTS
-
     // Driving constants Yaw heading
-    final double HEADING_GAIN = 0.010;  // Was 0.012
+    final double HEADING_GAIN = 0.012;
     final double TURN_RATE_TC = 0.6;
     final double STOP_TURNRATE = 0.020;
     final double GYRO_360_READING = 360.0;
     final double GYRO_SCALE_FACTOR = 360.0 / GYRO_360_READING;
 
-    final double YAW_IS_CLOSE = 2.0;  // angle within which we are "close"
+    final double YAW_IS_CLOSE = 1.5;  // angle within which we are "close"
 
     final double AXIAL_ENCODER_COUNTS_PER_MM = 1.78; // 537.6 Counts per (96 * 3.1415) mm
 
@@ -153,14 +148,8 @@ public class GFORCE_Hardware {
     VuforiaTrackables targetsUltimateGoal;
     List<VuforiaTrackable> allTrackables;
 
-    private float phoneYRotate = -90;
-    private float phoneXRotate = 0;
-    private float phoneZRotate = 0;
-    final float CAMERA_FORWARD_DISPLACEMENT = 160.0f;   // eg: Camera is 160 mm in front of robot-center
-    final float CAMERA_VERTICAL_DISPLACEMENT = 110.0f;   // eg: Camera is 8 mm above ground
-    final float CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
-    private static final float mmTargetHeight = 150.0f;          // the height in mm of the center of the target image above the floor
-
+    final float CAMERA_VERTICAL_DISPLACEMENT  = 200.0f;   // eg: Camera is 8 inches above ground
+    private static final float mmTargetHeight = 150.0f;   // the height in mm of the center of the target image above the floor
 
     // Class Members
     public OpenGLMatrix lastLocation = null;
@@ -261,13 +250,13 @@ public class GFORCE_Hardware {
         // sets are stored in the 'assets' part of our application.
         targetsUltimateGoal = this.vuforia.loadTrackablesFromAsset("UltimateGoal");
         VuforiaTrackable blueTowerGoalTarget = targetsUltimateGoal.get(0);
-        blueTowerGoalTarget.setName("Blue Tower Goal Target");
+        blueTowerGoalTarget.setName("Blue Tower");
         VuforiaTrackable redTowerGoalTarget = targetsUltimateGoal.get(1);
-        redTowerGoalTarget.setName("Red Tower Goal Target");
+        redTowerGoalTarget.setName("Red Tower");
 
         OpenGLMatrix robotFromCamera = OpenGLMatrix
-                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES, phoneYRotate, phoneZRotate, phoneXRotate));
+                .translation(0, 0, CAMERA_VERTICAL_DISPLACEMENT)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XZY, DEGREES, 90, 90, 0));
 
         // For convenience, gather together all the trackable objects in one easily-iterable collection */
         allTrackables = new ArrayList<VuforiaTrackable>();
@@ -278,7 +267,7 @@ public class GFORCE_Hardware {
                     .translation(0, 0, mmTargetHeight)
                     .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
             /**  Let all the trackable listeners know where the phone is.  */
-            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(robotFromCamera, parameters.cameraDirection);
+            ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(parameters.cameraName, robotFromCamera);
         }
 
         targetsUltimateGoal.activate();
@@ -449,7 +438,6 @@ public class GFORCE_Hardware {
         return generalRotationControl(heading, timeOutSEC, true);
     }
 
-
     public boolean generalRotationControl(double heading, double timeOutSEC, boolean waitFullTimeout) {
         boolean inPosition = false;  // needed to run at least one control cycle.
         boolean timedOut = false;
@@ -558,8 +546,6 @@ public class GFORCE_Hardware {
     public boolean setYawVelocityToHoldHeading() {
         double error = normalizeHeading(headingSetpoint - currentHeading);
         double yaw = Range.clip(error * HEADING_GAIN, -0.25, 0.25);
-
-        //myOpMode.telemetry.addData("holdHeading","sYVTHH SP:CH:Y %6.3f %6.3f %6.3f" , headingSetpoint, currentHeading, yaw);
 
         setYawVelocity(yaw * AUTO_ROTATION_MMPS);
         return (Math.abs(error) < YAW_IS_CLOSE);
