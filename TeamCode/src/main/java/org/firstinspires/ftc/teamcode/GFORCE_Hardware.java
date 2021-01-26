@@ -13,34 +13,18 @@ import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.openftc.easyopencv.OpenCvCamera;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XZY;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 
 public class GFORCE_Hardware {
     public static enum AllianceColor {
@@ -50,7 +34,7 @@ public class GFORCE_Hardware {
     }
 
     public static final String TAG = "Hardware";
-    public static final boolean LOGGING = true;  // Set to true to add data to logfile
+    public static final boolean LOGGING = false;  // Set to true to add data to logfile
 
     /* Public OpMode members. */
     public AllianceColor allianceColor = AllianceColor.UNKNOWN_COLOR;
@@ -73,12 +57,6 @@ public class GFORCE_Hardware {
     public Servo ringStop = null;
 
     public RevTouchSensor midCollectorDown = null;
-
-    OpenCvCamera webcam;
-
-    public DigitalChannel leftLimit = null;
-    public DigitalChannel rightLimit = null;
-
     public static BNO055IMU imu = null;
 
     public final double MAX_VELOCITY        = 2700;  // Counts per second
@@ -92,7 +70,7 @@ public class GFORCE_Hardware {
     public final double SHOOTER_SPEED_TEST    =  100; // CPS
 
     // Driving constants Yaw heading
-    final double HEADING_GAIN = 0.012;
+    final double HEADING_GAIN = 0.005;  // was 0.01
     final double TURN_RATE_TC = 0.6;
     final double STOP_TURNRATE = 0.020;
     final double GYRO_360_READING = 360.0;
@@ -105,7 +83,6 @@ public class GFORCE_Hardware {
     // Robot states that we share with others
     public double axialMotion = 0;
     public double currentHeading = 0;
-
 
     private static LinearOpMode myOpMode = null;
 
@@ -139,21 +116,6 @@ public class GFORCE_Hardware {
     private ElapsedTime runTime = new ElapsedTime();
     private ElapsedTime cycleTime = new ElapsedTime();
     private ElapsedTime navTime = new ElapsedTime();
-
-    //VuForia Key
-    public VuforiaLocalizer vuforia;
-    public static final String VUFORIA_KEY =
-            "ASFl1ib/////AAABmdtl1FqwZUIEqtOW/F+xX70YsCPMRYbusW+Av5TpUTDuB3VJT4z6ju8tkAzSKLD0cIwdp/o/3ggJzx27+OsIHWn8OTNfsAtxIzQVSCa75gI76/v006khzWpGV1wmdoEgK7JkvEns6BCzmgfSBSThg70Ej42wDF7l5FuIXUhm/AAMJ7sHLlMl5BboZg/vRyNRFTbEbFLyj98DOwLlaNl9DvUtf5bGBOHwFCNOBX8vlxWVU3aZZpGNxNTX/KyZ84TWECIxg8SeRSz3QcBEwsBYX97HXfj4nJxn93u8m5SZmoHF11MPkV0tlqemRwrCy/MJ3eGB3WCJ+MEeCAYeVa30E+WEkVTiFQAo4WW3vKuEVuBc";
-    VuforiaLocalizer.Parameters parameters;
-    VuforiaTrackables targetsUltimateGoal;
-    List<VuforiaTrackable> allTrackables;
-
-    final float CAMERA_VERTICAL_DISPLACEMENT  = 200.0f;   // eg: Camera is 8 inches above ground
-    private static final float mmTargetHeight = 150.0f;   // the height in mm of the center of the target image above the floor
-
-    // Class Members
-    public OpenGLMatrix lastLocation = null;
-    public boolean targetVisible = false;
 
     //Wobble Goal Servo Positions
     public final double LEFT_GOAL_GRAB = 0.48;
@@ -226,58 +188,6 @@ public class GFORCE_Hardware {
         stopRobot();
     }
 
-    public void initVuforia() {
-        /*
-         * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         */
-        int cameraMonitorViewId = myOpMode.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", myOpMode.hardwareMap.appContext.getPackageName());
-        parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraName = myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1");
-        parameters.useExtendedTracking = false;
-
-        //  Instantiate the Vuforia engine
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-    }
-
-    public void activateVuforiaTargets() {
-        //  Instantiate the Vuforia engine
-        if (vuforia == null) {
-            initVuforia();
-        }
-        // Load the data sets for the trackable objects. These particular data
-        // sets are stored in the 'assets' part of our application.
-        targetsUltimateGoal = this.vuforia.loadTrackablesFromAsset("UltimateGoal");
-        VuforiaTrackable blueTowerGoalTarget = targetsUltimateGoal.get(0);
-        blueTowerGoalTarget.setName("Blue Tower");
-        VuforiaTrackable redTowerGoalTarget = targetsUltimateGoal.get(1);
-        redTowerGoalTarget.setName("Red Tower");
-
-        OpenGLMatrix robotFromCamera = OpenGLMatrix
-                .translation(0, 0, CAMERA_VERTICAL_DISPLACEMENT)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XZY, DEGREES, 90, 90, 0));
-
-        // For convenience, gather together all the trackable objects in one easily-iterable collection */
-        allTrackables = new ArrayList<VuforiaTrackable>();
-        allTrackables.addAll(targetsUltimateGoal);
-
-        for (VuforiaTrackable trackable : allTrackables) {
-            trackable.setLocation(OpenGLMatrix
-                    .translation(0, 0, mmTargetHeight)
-                    .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
-            /**  Let all the trackable listeners know where the phone is.  */
-            ((VuforiaTrackableDefaultListener) trackable.getListener()).setCameraLocationOnRobot(parameters.cameraName, robotFromCamera);
-        }
-
-        targetsUltimateGoal.activate();
-    }
-
-    public void deactivateVuforiaTargets() {
-        targetsUltimateGoal.deactivate();
-    }
-
-
     // Configure a motor
     public DcMotorEx configureMotor(String name, DcMotor.Direction direction, DcMotor.RunMode mode) {
         DcMotorEx motorObj = myOpMode.hardwareMap.get(DcMotorEx.class, name);
@@ -289,7 +199,6 @@ public class GFORCE_Hardware {
     }
 
     // Autonomous driving methods
-
     /**
      * Drive a set distance at a set heading at a set speed until the timeout occurs
      *
@@ -310,7 +219,7 @@ public class GFORCE_Hardware {
             vel = Math.abs(vel);
         }
 
-        RobotLog.ii(TAG, String.format("DAV D:V:H %5.0f:%5.0f ", mm, vel, heading));
+        if (LOGGING) RobotLog.ii(TAG, String.format("DAV D:V:H %5.0f:%5.0f ", mm, vel, heading));
 
         //Save the current position
         startMotion();
@@ -320,7 +229,9 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(axialMotion) < absMm) &&
                 (runTime.seconds() < endingTime)) {
+
             if (LOGGING) RobotLog.ii(TAG, String.format("DAV Ax %5.0f ", axialMotion));
+
             setAxialVelocity(getProfileVelocity(vel, getAxialMotion(), absMm));
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
@@ -329,7 +240,8 @@ public class GFORCE_Hardware {
 
         stopRobot();
         updateMotion();
-        RobotLog.ii(TAG, String.format("DAV Last Ax: %5.0f ", axialMotion));
+
+        if (LOGGING) RobotLog.ii(TAG, String.format("DAV Last Ax: %5.0f ", axialMotion));
 
         // Return true if we have not timed out
         boolean success = (runTime.seconds() < endingTime);
@@ -548,6 +460,9 @@ public class GFORCE_Hardware {
         double yaw = Range.clip(error * HEADING_GAIN, -0.25, 0.25);
 
         setYawVelocity(yaw * AUTO_ROTATION_MMPS);
+
+        if (LOGGING) RobotLog.ii("TARGET", String.format("YAW %.1f, %.1f", yaw, yaw * AUTO_ROTATION_MMPS));
+
         return (Math.abs(error) < YAW_IS_CLOSE);
     }
 
@@ -619,9 +534,7 @@ public class GFORCE_Hardware {
         rightDrive.setVelocity(rightVel);
 
         myOpMode.telemetry.addData("Motor Vel (CPS)", "%3.1f %3.1f", leftVel, rightVel);
-
-
-        // Log.d("G-FORCE AUTO", String.format("M %5.1f %5.1f %5.1f %5.1f ", leftVel, rightVel, leftBackVel, rightBackVel));
+        if (LOGGING) Log.d("G-FORCE AUTO", String.format("MV (CPS) %5.1f %5.1f ", leftVel, rightVel));
     }
 
     public void setAxialPower(double power) {

@@ -40,14 +40,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public boolean shooterSlow = false;
     public boolean lastShooterSlow = false;
 
-    // Image Targeting
-    public  double robotX;
-    public  double robotY;
-    public  double targetRange;
-    public  double targetBearing;
-    public  double robotBearing;
-    public  double relativeBearing;
-    public  OpenGLMatrix        robotLocation;
 
     // click detector variables
     boolean collectorPressed = false;
@@ -61,7 +53,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
     private ElapsedTime stateTimer  = new ElapsedTime();
 
     /* Declare OpMode members. */
-    GFORCE_Hardware robot = new GFORCE_Hardware();
+    GFORCE_Hardware robot  = new GFORCE_Hardware();
+    GFORCE_Vision   vision = new GFORCE_Vision();
     RingHandler     ringState = IDLE;
 
     @Override
@@ -81,7 +74,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
          * The init() method of the Hardware class does all the work here
          */
         robot.init(this);
-        robot.activateVuforiaTargets();
+        vision.init(this);
+        vision.activateVuforiaTargets();
 
         // Wait for the game to start (Driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
@@ -126,19 +120,23 @@ public class GFORCE_TeleOp extends LinearOpMode {
             cycleTimer.reset();
 
             // Control Yaw, using manual or auto correction or target tracking
+            boolean newTarget = vision.newTargetPosition();
             if (gamepad1.left_bumper) {
                 // Look to see if we have a new target lock....
-                if (newTargetPosition()) {
+                if (newTarget) {
                     RobotLog.ii("TARGET", "New Position");
                     autoHeadingOn = true;
-                    desiredHeading = robot.currentHeading + relativeBearing;
+                    desiredHeading = robot.currentHeading + vision.relativeBearing;
                 }
-                RobotLog.ii("TARGET", String.format("H:R:T:RB:S, %.1f, %.1f, %.1f, %.1f, %.1f ",
+
+
+                if (robot.LOGGING) RobotLog.ii("TARGET", String.format("H:R:T:RB:S, %.1f, %.1f, %.1f, %.1f, %.1f ",
                         robot.currentHeading,
-                        robotBearing,
-                        targetBearing,
-                        relativeBearing,
+                        vision.robotBearing,
+                        vision.targetBearing,
+                        vision.relativeBearing,
                         desiredHeading));
+
                 neutralTime.reset();
             } else {
                 if (rotate != 0) {
@@ -194,78 +192,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
         return (spinnerSpeed);
     }
 
-    /***
-     * Look for new target position and generate tracking data
-     * @return
-     */
-    private boolean newTargetPosition(){
-
-        // check all the trackable targets to see which one (if any) is visible.
-        boolean newTargetFound  = false;
-        robot.targetVisible     = false;
-        double lrobotX;
-        double lrobotY;
-        double ltargetRange;
-        double ltargetBearing;
-        double lrobotBearing;
-
-        for (VuforiaTrackable trackable : robot.allTrackables) {
-            if (((VuforiaTrackableDefaultListener)trackable.getListener()).isVisible()) {
-                telemetry.addData("Visible Target", trackable.getName());
-                robot.targetVisible = true;
-
-                // getUpdatedRobotLocation() will return null if no new information is available since
-                // the last time that call was made, or if the trackable is not currently visible.
-                OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener)trackable.getListener()).getUpdatedRobotLocation();
-                if (robotLocationTransform != null) {
-                    robot.lastLocation = robotLocationTransform;
-
-                    robotLocation = robotLocationTransform;
-                    VectorF trans = robotLocation.getTranslation();
-                    Orientation rot = Orientation.getOrientation(robotLocation, AxesReference.EXTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-
-                    // Robot position is defined by the standard Matrix translation (x and y)
-                    lrobotX = trans.get(0);
-                    lrobotY = trans.get(1);
-
-                    // Robot bearing (in cartesian system) is defined by the standard Matrix z rotation
-                    lrobotBearing = rot.thirdAngle;
-
-                    // target range is based on distance from robot position to origin.
-                    ltargetRange = Math.hypot(lrobotX, lrobotY);
-
-                    // target bearing is based on angle formed between the X axis to the target range line
-                    ltargetBearing = Math.toDegrees(-Math.asin(lrobotY / ltargetRange));
-
-                    // sanity check
-                    if ((Math.abs(lrobotBearing) < 30) && (Math.abs(ltargetBearing) < 30)) {
-                        robotX = lrobotX;
-                        robotY = lrobotY;
-                        robotBearing = lrobotBearing;
-                        targetRange = ltargetRange;
-                        targetBearing = ltargetBearing;
-
-                        // Target relative bearing is the target currentHeading relative to the direction the robot is pointing.
-                        relativeBearing = targetBearing - robotBearing;
-                        newTargetFound = true;
-                    }
-
-                }
-                break;
-            }
-        }
-
-        // Provide feedback as to where the robot is located (if we know).
-        if (robot.targetVisible) {
-            // express position (translation) of robot in inches.
-            telemetry.addData("Robot", "X, Y (H) = %.0f, %.0f (%.1f)", robotX, robotY, robotBearing);
-            telemetry.addData("Target", "R (B) (RB) = %.0f  (%.1f) (%.1f)", targetRange, targetBearing, relativeBearing);
-        }
-        else {
-            telemetry.addData("Visible Target", "none");
-        }
-        return(newTargetFound);
-    }
 
     private void runRingHandler() {
         switch (ringState) {

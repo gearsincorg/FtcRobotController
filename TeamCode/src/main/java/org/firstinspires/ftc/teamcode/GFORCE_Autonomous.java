@@ -9,11 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
-import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.List;
 //import com.vuforia.CameraDevice;
@@ -22,15 +18,11 @@ import java.util.List;
 public class GFORCE_Autonomous extends LinearOpMode {
 
     /* Declare OpMode members. */
-    public AutoConfig autoConfig = new AutoConfig();
-    public GFORCE_Hardware robot = new GFORCE_Hardware();
-    // public GFORCE_Navigation   nav           = new GFORCE_Navigation();
+    public AutoConfig       autoConfig  = new AutoConfig();
+    public GFORCE_Hardware  robot       = new GFORCE_Hardware();
+    public GFORCE_Vision    vision      = new GFORCE_Vision();
 
     public static final String TAG = "G-FORCE";
-    private static final String TFOD_MODEL_ASSET = "UltimateGoal.tflite";
-    private static final String LABEL_QUAD_ELEMENT = "Quad";
-    private static final String LABEL_SINGLE_ELEMENT = "Single";
-    private TFObjectDetector tfod;
 
     private ElapsedTime autoTime = new ElapsedTime();
 
@@ -44,12 +36,10 @@ public class GFORCE_Autonomous extends LinearOpMode {
         // Initialize the hardware variables.
         autoConfig.init(hardwareMap.appContext, this);
         robot.init(this);
-        robot.initVuforia();
-        initTfod();
-
-        if (tfod != null) {
-            tfod.activate();
-        }
+        vision.init(this);
+        vision.initVuforia();
+        vision.initTFOD();
+        vision.activateTFOD();
 
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
@@ -119,34 +109,17 @@ public class GFORCE_Autonomous extends LinearOpMode {
         }
 
         robot.stopRobot();
-        //Shut down TensorFlow before the robot runs
-        if (tfod != null) {
-            tfod.shutdown();
-        }
-    }
+        vision.shutdownTFOD();
 
-
-
-
-    /**
-     * Initialize the TensorFlow Object Detection engine.
-     */
-    private void initTfod () {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
-        tfodParameters.minResultConfidence = 0.8f;
-        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, robot.vuforia);
-        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_QUAD_ELEMENT, LABEL_SINGLE_ELEMENT);
     }
 
     private int findRings() {
         ringsStacked = -1;
 
-        if (tfod != null) {
+        if (vision.TFODIsValid()) {
            // getUpdatedRecognitions() will return null if no new information is available since
            // the last time that call was made.
-           List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+           List<Recognition> updatedRecognitions = vision.getUpdatedRecognitions();
            if (updatedRecognitions != null) {
                telemetry.addData("# Object Detected", updatedRecognitions.size());
                // step through the list of recognitions and display boundary info.
@@ -159,9 +132,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
                            recognition.getRight(), recognition.getBottom());
                    i++;
 
-                   if (recognition.getLabel() == LABEL_QUAD_ELEMENT) {
+                   if (recognition.getLabel() == vision.LABEL_QUAD_ELEMENT) {
                        ringsStacked = 4;
-                   } else if (recognition.getLabel() == LABEL_SINGLE_ELEMENT) {
+                   } else if (recognition.getLabel() == vision.LABEL_SINGLE_ELEMENT) {
                        ringsStacked = 1;
                    }
                }
