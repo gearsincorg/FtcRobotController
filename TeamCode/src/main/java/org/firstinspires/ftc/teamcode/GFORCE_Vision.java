@@ -65,7 +65,9 @@ public class GFORCE_Vision {
 
     private VuforiaLocalizer.Parameters parameters;
     private VuforiaTrackables targetsUltimateGoal;
-    private  List<VuforiaTrackable> allTrackables;
+    private List<VuforiaTrackable> allTrackables;
+
+    private TFObjectDetector.Parameters tfodParameters = null;
 
     /* Constructor */
     public GFORCE_Vision() {
@@ -82,11 +84,17 @@ public class GFORCE_Vision {
     * Vuforia target tracking
     * ============================================================== */
 
-    public void initVuforia() {
+    public void initVuforia(boolean preview) {
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
          */
-        parameters = new VuforiaLocalizer.Parameters();
+        if (preview) {
+            int cameraMonitorViewId = myOpMode.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", myOpMode.hardwareMap.appContext.getPackageName());
+            parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        } else {
+            parameters = new VuforiaLocalizer.Parameters();
+        }
+
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraName = myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1");
         parameters.useExtendedTracking = false;
@@ -95,11 +103,12 @@ public class GFORCE_Vision {
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
     }
 
-    public void activateVuforiaTargets() {
+    public void activateVuforiaTargets(boolean preview) {
         //  Instantiate the Vuforia engine
         if (vuforia == null) {
-            initVuforia();
+            initVuforia(preview);
         }
+
         // Load the data sets for the trackable objects. These particular data
         // sets are stored in the 'assets' part of our application.
         targetsUltimateGoal = this.vuforia.loadTrackablesFromAsset(VUFORIA_MODEL_ASSET);
@@ -206,8 +215,15 @@ public class GFORCE_Vision {
     /** ============================================================================
      * TensorFlow Object Detection engine.
      * ============================================================================ */
-    public void initTFOD () {
-        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters();
+    public void initTFOD (boolean preview) {
+        if(preview) {
+            int tfodMonitorViewId = myOpMode.hardwareMap.appContext.getResources().getIdentifier(
+                    "tfodMonitorViewId", "id", myOpMode.hardwareMap.appContext.getPackageName());
+            tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        } else {
+            tfodParameters = new TFObjectDetector.Parameters();
+        }
+
         tfodParameters.minResultConfidence = 0.8f;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_QUAD_ELEMENT, LABEL_SINGLE_ELEMENT);

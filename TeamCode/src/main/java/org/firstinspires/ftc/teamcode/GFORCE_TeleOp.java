@@ -25,7 +25,7 @@ import static org.firstinspires.ftc.teamcode.RingHandler.IDLE;
 import static org.firstinspires.ftc.teamcode.RingHandler.SPIN_UP;
 import static org.firstinspires.ftc.teamcode.RingHandler.STOP_COLLECT;
 
-@TeleOp(name="G-FORCE Teleop", group="!Competition")
+@TeleOp(name="G-FORCE TELEOP", group="!Competition")
 public class GFORCE_TeleOp extends LinearOpMode {
 
     // Constants
@@ -75,7 +75,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
          */
         robot.init(this);
         vision.init(this);
-        vision.activateVuforiaTargets();
+        vision.activateVuforiaTargets(true);
 
         // Wait for the game to start (Driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
@@ -170,7 +170,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.showEncoders();
         }
 
+        vision.deactivateVuforiaTargets();
     }
+
     //Shooter Methods
     public double setSpinnerSpeed() {
         shooterFast = (gamepad1.dpad_up);

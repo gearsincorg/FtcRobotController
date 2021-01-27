@@ -14,7 +14,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import java.util.List;
 //import com.vuforia.CameraDevice;
 
-@Autonomous(name="G-FORCE Autonomous", group="!Competition")
+@Autonomous(name="G-FORCE AUTO", group="!Competition", preselectTeleOp="G-FORCE TELEOP")
 public class GFORCE_Autonomous extends LinearOpMode {
 
     /* Declare OpMode members. */
@@ -37,19 +37,21 @@ public class GFORCE_Autonomous extends LinearOpMode {
         autoConfig.init(hardwareMap.appContext, this);
         robot.init(this);
         vision.init(this);
-        vision.initVuforia();
-        vision.initTFOD();
+        vision.initVuforia(false);
+        vision.initTFOD(true);
         vision.activateTFOD();
 
         // Wait for the game to start (driver presses PLAY)
-        telemetry.addData(">", "Press Play to Start");
-        telemetry.update();
-
         while (!opModeIsActive() && !isStopRequested()) {
-            autoConfig.init_loop(); //Run menu system
             sleep(20);
-            findRings();
 
+            // display TFOD targets if Pilot Left Bumper pushed.
+            if (gamepad1.left_bumper) {
+                findRings();
+            } else {
+                telemetry.addData("---", "Press Left Bumper for TFOD");
+                autoConfig.init_loop(); //Run menu system
+            }
 
             // Get alliance color from Menu
             isRed = autoConfig.autoOptions.redAlliance;
@@ -66,8 +68,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
             autoTime.reset();
         }
 
-
-        if (autoConfig.autoOptions.enabled) {
+        if (opModeIsActive() && autoConfig.autoOptions.enabled) {
             // Testing code
             robot.grabWobbleGoal();
             robot.sleepAndHoldHeading(0,1);
@@ -96,7 +97,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
             }
 
             robot.releaseWobbleGoal();
-            sleep(1000);
+            sleep(500);
             if(ringsStacked == 1) {
                 robot.driveAxialVelocity(400,-17,-300,2);
                 robot.turnToHeading(-90,1);
@@ -110,7 +111,6 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         robot.stopRobot();
         vision.shutdownTFOD();
-
     }
 
     private int findRings() {
