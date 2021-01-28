@@ -40,6 +40,7 @@ public class GFORCE_Vision {
     // Image Targeting
     public  double robotX;
     public  double robotY;
+    public  double robotZ;
     public  double targetRange;
     public  double targetBearing;
     public  double robotBearing;
@@ -117,14 +118,33 @@ public class GFORCE_Vision {
         VuforiaTrackable redTowerGoalTarget = targetsUltimateGoal.get(1);
         redTowerGoalTarget.setName("Red Tower");
 
+        // Create a transformation matrix describing where the phone is on the robot.
+        //
+        // Info:  The coordinate frame for the robot looks the same as the field.
+        // The robot's "forward" direction is facing out along X axis, with the LEFT side facing out along the Y axis.
+        // Z is UP on the robot.  This equates to a bearing angle of Zero degrees.
+        //
+        // For a WebCam, the default starting orientation of the camera is looking UP (pointing in the Z direction),
+        // with the wide (horizontal) axis of the camera aligned with the X axis, and
+        // the Narrow (vertical) axis of the camera aligned with the Y axis
+        //
+        // But, on this robot the camer is pointing 3.8 degrees CW (-ve) of forward.
+        // So, the "default" camera position requires two rotations to get it oriented correctly.
+        // 1) First it must be rotated +90 degrees around the X axis to get it horizontal (it's now facing out the right side of the robot)
+        // 2) Next it must be be rotated +87 degrees (counter-clockwise) around the Z axis to face forward.
+        //
+        // Finally the camera can be translated to its actual mounting position on the robot.
+        // For our robot, it is 100mm fwd of center, 50mm left of center and 170mm above the ground.
+
         OpenGLMatrix robotFromCamera = OpenGLMatrix
-                .translation(0, 0, CAMERA_VERTICAL_DISPLACEMENT)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XZY, DEGREES, 90, 90, 0));
+                .translation(100, 50, 170)
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XZY, DEGREES, 90, 86.2f, 0));
 
         // For convenience, gather together all the trackable objects in one easily-iterable collection */
         allTrackables = new ArrayList<VuforiaTrackable>();
         allTrackables.addAll(targetsUltimateGoal);
 
+        // Position each target and set it's camera location.
         for (VuforiaTrackable trackable : allTrackables) {
             trackable.setLocation(OpenGLMatrix
                     .translation(0, 0, mmTargetHeight)
@@ -152,6 +172,7 @@ public class GFORCE_Vision {
         targetVisible     = false;
         double lrobotX;
         double lrobotY;
+        double lrobotZ;
         double ltargetRange;
         double ltargetBearing;
         double lrobotBearing;
@@ -174,6 +195,7 @@ public class GFORCE_Vision {
                     // Robot position is defined by the standard Matrix translation (x and y)
                     lrobotX = trans.get(0);
                     lrobotY = trans.get(1);
+                    lrobotZ = trans.get(2);
 
                     // Robot bearing (in cartesian system) is defined by the standard Matrix z rotation
                     lrobotBearing = rot.thirdAngle;
@@ -188,6 +210,7 @@ public class GFORCE_Vision {
                     if ((Math.abs(lrobotBearing) < 30) && (Math.abs(ltargetBearing) < 30)) {
                         robotX = lrobotX;
                         robotY = lrobotY;
+                        robotZ = lrobotZ;
                         robotBearing = lrobotBearing;
                         targetRange = ltargetRange;
                         targetBearing = ltargetBearing;
@@ -203,7 +226,7 @@ public class GFORCE_Vision {
 
         // Provide feedback as to where the robot is located (if we know).
         if (targetVisible) {
-            myOpMode.telemetry.addData("Robot", "X, Y (H) = %.0f, %.0f (%.1f)", robotX, robotY, robotBearing);
+            myOpMode.telemetry.addData("Robot", "X, Y, Z (H) = %.0f, %.0f, %.0f (%.1f)", robotX, robotY, robotZ, robotBearing);
             myOpMode.telemetry.addData("Target", "R (B) (RB) = %.0f  (%.1f) (%.1f)", targetRange, targetBearing, relativeBearing);
         }
         else {
