@@ -67,8 +67,8 @@ public class AutoConfig
 
     // setup initial toggle memory states for buttons used
     lastPrev =false;
-    lastX1 =false;
-    lastB1 =false;
+    lastX1   =false;
+    lastB1   =false;
     lastNext =false;
   }
 
@@ -135,8 +135,6 @@ public class AutoConfig
     lastX1 = x1;
     lastB1 = b1;
     lastNext  = next;
-
-
   }
 
   public void saveConfig() {

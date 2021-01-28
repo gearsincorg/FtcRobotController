@@ -107,6 +107,7 @@ public class GFORCE_Hardware {
     private double integratedZAxis = 0;
     private double adjustedIntegratedZAxis = 0;
     private double headingSetpoint = 0;
+    private int     delaySoundID = 0;
 
     // Scoring Status variables
     private int timeoutSoundID = 0;
@@ -166,11 +167,17 @@ public class GFORCE_Hardware {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
 
-        resetEncoders();
+        // PreLoad sound files
+        delaySoundID   = myOpMode.hardwareMap.appContext.getResources().getIdentifier("jeopardy",   "raw", myOpMode.hardwareMap.appContext.getPackageName());
+        if (delaySoundID != 0)
+            SoundPlayer.getInstance().preload(myOpMode.hardwareMap.appContext, delaySoundID);
+
         timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("ss_siren", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
             SoundPlayer.getInstance().preload(myOpMode.hardwareMap.appContext, timeoutSoundID);
         }
+
+        resetEncoders();
 
         //Do a full gyro init if it has never ben initialized
         //Else just reconnect to it
@@ -211,6 +218,10 @@ public class GFORCE_Hardware {
     public boolean driveAxialVelocity(double mm, double heading, double vel, double timeOutSec) {
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
+
+        if (allianceColor == GFORCE_Hardware.AllianceColor.RED) {
+            heading = -heading;
+        }
 
         // If we are moving backwards, set vel negative
         if ((mm * vel) < 0.0) {
@@ -354,6 +365,10 @@ public class GFORCE_Hardware {
         boolean inPosition = false;  // needed to run at least one control cycle.
         boolean timedOut = false;
 
+        if (allianceColor == GFORCE_Hardware.AllianceColor.RED) {
+            heading = -heading;
+        }
+
         setHeadingSetpoint(heading);
         setAxialVelocity(0);
         navTime.reset();
@@ -376,12 +391,6 @@ public class GFORCE_Hardware {
         }
 
         return (!timedOut);
-    }
-
-    public void playTimoutSound() {
-        if (timeoutSoundID != 0) {
-            SoundPlayer.getInstance().startPlaying(myOpMode.hardwareMap.appContext, timeoutSoundID);
-        }
     }
 
     public void resetEncoders() {
@@ -587,5 +596,29 @@ public class GFORCE_Hardware {
     public void releaseRings() {
         ringStop.setPosition(RING_RELEASE);
     }
+
+    // ========================================================
+    // ----               Sound Methods
+    // ========================================================
+    public void delayWithSound(double seconds) {
+        ElapsedTime delayTime = new ElapsedTime();
+
+        if (seconds > 0) {
+            SoundPlayer.getInstance().startPlaying(myOpMode.hardwareMap.appContext, delaySoundID);
+            while (delayTime.time() <= seconds) {
+                myOpMode.sleep(10);
+            }
+
+            SoundPlayer.getInstance().stopPlayingAll();
+        }
+    }
+
+    public void playTimoutSound() {
+        if (timeoutSoundID != 0) {
+            SoundPlayer.getInstance().startPlaying(myOpMode.hardwareMap.appContext, timeoutSoundID);
+        }
+    }
+
+
 
 }

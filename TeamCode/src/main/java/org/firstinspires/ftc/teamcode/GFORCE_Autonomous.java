@@ -43,7 +43,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         // Wait for the game to start (driver presses PLAY)
         while (!opModeIsActive() && !isStopRequested()) {
-            sleep(20);
+            robot.readSensors();
 
             // display TFOD targets if Pilot Left Bumper pushed.
             if (gamepad1.left_bumper) {
@@ -53,22 +53,27 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 autoConfig.init_loop(); //Run menu system
             }
 
-            // Get alliance color from Menu
-            isRed = autoConfig.autoOptions.redAlliance;
-
-            if (autoConfig.autoOptions.redAlliance) {
-                robot.allianceColor = GFORCE_Hardware.AllianceColor.RED;
-            } else {
-                robot.allianceColor = GFORCE_Hardware.AllianceColor.BLUE;
-            }
-
-            //Starting autonomous reset heading to zero
-            robot.resetHeading();
-            robot.readSensors();
-            autoTime.reset();
+            sleep(10);
         }
 
+        // Get alliance color from Menu
+        isRed = autoConfig.autoOptions.redAlliance;
+        if (autoConfig.autoOptions.redAlliance) {
+            robot.allianceColor = GFORCE_Hardware.AllianceColor.RED;
+        } else {
+            robot.allianceColor = GFORCE_Hardware.AllianceColor.BLUE;
+        }
+
+        //Starting autonomous. reset heading to zero
+        robot.resetHeading();
+        robot.readSensors();
+        autoTime.reset();
+
         if (opModeIsActive() && autoConfig.autoOptions.enabled) {
+
+            // Wait for the required delay
+            robot.delayWithSound(autoConfig.autoOptions.delayInSec);
+
             // Testing code
             robot.grabWobbleGoal();
             robot.sleepAndHoldHeading(0,1);
