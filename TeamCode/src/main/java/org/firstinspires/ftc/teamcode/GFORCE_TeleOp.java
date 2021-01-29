@@ -82,7 +82,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-        spinnerSpeed = robot.INITIAL_SHOOTER_SPEED;
+        spinnerSpeed = robot.HIGH_SHOOTER_SPEED;
         robot.grabWobbleGoal();
         robot.startMotion();
 
@@ -91,6 +91,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.updateMotion();  // Read all sensors and calculate motions
             setSpinnerSpeed();     // Set the shooter speed according to buttons
             runRingHandler();
+            runWobbleGrabber();
 
             //Driver Controls
             if (gamepad1.back && gamepad1.start) {
@@ -98,6 +99,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 desiredHeading = 0;
             }
 
+            // Manual driving
             forwardBack = gamepad1.left_stick_y;
             rotate = -gamepad1.right_stick_x;
 
@@ -178,6 +180,15 @@ public class GFORCE_TeleOp extends LinearOpMode {
         shooterFast = (gamepad1.dpad_up);
         shooterSlow = (gamepad1.dpad_down);
 
+        // Let copilot set target speed.
+        if (gamepad2.dpad_up)
+            spinnerSpeed = robot.HIGH_SHOOTER_SPEED;
+        else if (gamepad2.dpad_right)
+            spinnerSpeed = robot.MID_SHOOTER_SPEED;
+        else if (gamepad2.dpad_down)
+            spinnerSpeed = robot.WOBBLE_SHOOTER_SPEED;
+
+
         //Look for button clicks and adjust speed
         if (shooterFast && !lastShooterFast) {
             spinnerSpeed += SHOOTER_SPEED_INCREASE;
@@ -206,9 +217,17 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.releaseRings();
                     ringState = SPIN_UP;
                 } else {
-                    robot.runCollectors(0);
-                    robot.runSpinners(0);
                     robot.stopRings();
+                    if (gamepad2.left_trigger > 0.5) {
+                        robot.runCollectors(-1);
+                    } else {
+                        robot.runCollectors(0);
+                    }
+                    if (gamepad2.right_trigger > 0.5) {
+                        robot.runSpinners(-spinnerSpeed);
+                    } else {
+                        robot.runSpinners(0);
+                    }
                 }
                 break;
 
@@ -221,6 +240,12 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.runSpinners(spinnerSpeed);
                     stateTimer.reset();
                     ringState = STOP_COLLECT;
+                } else {
+                    if (gamepad2.left_trigger > 0.5) {
+                        robot.runCollectors(-1);
+                    } else {
+                        robot.runCollectors(1);
+                    }
                 }
                 break;
 
@@ -266,4 +291,12 @@ public class GFORCE_TeleOp extends LinearOpMode {
         lastSpinnerPressed = spinnerPressed;
         return clicked;
     }
+
+    private void runWobbleGrabber() {
+        if (gamepad2.y)
+            robot.grabWobbleGoal();
+        else if (gamepad2.a)
+            robot.releaseWobbleGoal();
+    }
+
 }

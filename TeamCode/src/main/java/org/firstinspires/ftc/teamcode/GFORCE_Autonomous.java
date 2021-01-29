@@ -74,46 +74,15 @@ public class GFORCE_Autonomous extends LinearOpMode {
             // Wait for the required delay
             robot.delayWithSound(autoConfig.autoOptions.delayInSec);
 
-            // Testing code
-            robot.grabWobbleGoal();
-            robot.sleepAndHoldHeading(0,1);
-            robot.driveAxialVelocity(300,0,700,2);
-            robot.turnToHeading(-45,1);
-            robot.sleepAndHoldHeading(-45, 3);
-            findRings();
-
-            switch (ringsStacked) {
-                case 0:
-                default:
-                    robot.turnToHeading(0,1);
-                    robot.sleepAndHoldHeading(0,1);
-                    robot.driveAxialVelocity(1316,0,900,3);
-                    break;
-                case 1:
-                    robot.turnToHeading(-17,1);
-                    robot.sleepAndHoldHeading(-17,1);
-                    robot.driveAxialVelocity(1974,-17,900,4);
-                    break;
-                case 4:
-                    robot.turnToHeading(0,1);
-                    robot.sleepAndHoldHeading(0,1);
-                    robot.driveAxialVelocity(2540,0,900,6);
-                    break;
+            driveToLine();
+            if (autoConfig.autoOptions.scorePowerShot) {
+                shootPowerShot();
+            }
+            if (autoConfig.autoOptions.scoreWobble) {
+                placeWobbleGoal();
             }
 
-            robot.releaseWobbleGoal();
-            sleep(500);
-            if(ringsStacked == 1) {
-                robot.driveAxialVelocity(400,-17,-300,2);
-                robot.turnToHeading(-90,1);
-                robot.driveAxialVelocity(400,-90,-600,3);
-                robot.turnToHeading(0,1);
-                robot.sleepAndHoldHeading(0,1);
-            } else {
-                robot.driveAxialVelocity(120,0,-300,1);
-            }
         }
-
         robot.stopRobot();
         vision.shutdownTFOD();
     }
@@ -152,5 +121,91 @@ public class GFORCE_Autonomous extends LinearOpMode {
         }
         return ringsStacked;
    }
+    private void driveToLine () {
+        robot.grabWobbleGoal();
+        robot.sleepAndHoldHeading(0,1);
+        robot.driveAxialVelocity(300,0,700,2);
+
+        double goalHeading = autoConfig.autoOptions.startCenter ? 35  : -35;
+        robot.turnToHeading(goalHeading, 1);
+        robot.sleepAndHoldHeading(goalHeading, 3);
+        findRings();
+        robot.turnToHeading(0,1);
+        robot.sleepAndHoldHeading(0,1);
+        robot.driveAxialVelocity(1000,0,900,2);
+    }
+
+    private void shootPowerShot() {
+        double goalHeading = autoConfig.autoOptions.startCenter ? 0  : -30;
+        robot.sleepAndHoldHeading(goalHeading,1);
+        robot.releaseRings();
+        double goalSpeed = autoConfig.autoOptions.startCenter ? robot.POWER_SHOT_SPEED : robot.HIGH_SHOOTER_SPEED;
+        robot.spinnerAtSpeed(goalSpeed);
+        robot.sleepAndHoldHeading(goalHeading,1);
+        robot.runCollectors(1);
+        robot.sleepAndHoldHeading(goalHeading - 5,2);
+        robot.runCollectors(0);
+        robot.runSpinners(0);
+        robot.turnToHeading(0,1);
+
+    }
+
+    private void placeWobbleGoal () {
+        if (autoConfig.autoOptions.startCenter) {
+            switch (ringsStacked) {
+                case 0:
+                default:
+                    robot.turnToHeading(70, 1);
+                    robot.driveAxialVelocity(900, 70, 700, 1);
+                    robot.releaseWobbleGoal();
+                    robot.driveAxialVelocity(300,70,-300,1);
+                    break;
+                case 1:
+                    robot.turnToHeading(30, 1);
+                    robot.sleepAndHoldHeading(30, 1);
+                    robot.driveAxialVelocity(900, 30, 700, 4);
+                    robot.releaseWobbleGoal();
+                    robot.driveAxialVelocity(300,30,-300,1);
+                    break;
+                case 4:
+                    robot.turnToHeading(35, 1);
+                    robot.sleepAndHoldHeading(35, 1);
+                    robot.driveAxialVelocity(1600, 35, 900, 6);
+                    robot.releaseWobbleGoal();
+                    robot.driveAxialVelocity(300,35,-300,1);
+                    break;
+
+            }
+
+        } else {
+            switch (ringsStacked) {
+                case 0:
+                default:
+                    robot.releaseWobbleGoal();
+                    robot.sleepAndHoldHeading(0,0.5);
+                    robot.driveAxialVelocity(300,0,-300,1);
+                    break;
+                case 1:
+                    robot.turnToHeading(-30, 1);
+                    robot.sleepAndHoldHeading(-30, 1);
+                    robot.driveAxialVelocity(900, -30, 900, 4);
+                    robot.releaseWobbleGoal();
+                    robot.sleepAndHoldHeading(-30,0.5);
+                    robot.driveAxialVelocity(300,-30,-300,1);
+                    break;
+                case 4:
+                    robot.sleepAndHoldHeading(0, 1);
+                    robot.driveAxialVelocity(1200, 0, 900, 6);
+                    robot.releaseWobbleGoal();
+                    robot.sleepAndHoldHeading(0,0.5);
+                    robot.driveAxialVelocity(300,0,-300,1);
+                    break;
+
+            }
+
+
+        }
+
+    }
 
 }

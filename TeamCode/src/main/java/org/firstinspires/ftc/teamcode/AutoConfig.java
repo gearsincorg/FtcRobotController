@@ -192,7 +192,7 @@ public class AutoConfig
       opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > ALLIANCE"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "Blue");
       opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > START DELAY"   : "1   Start Delay", autoOptions.delayInSec);
       opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > RUN AUTO"   : "2   Run Auto", autoOptions.enabled ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > START POSITION"   : "3   Start Position", autoOptions.startCenter ? "By WALL" : "By center");
+      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > START POSITION"   : "3   Start Position", autoOptions.startCenter ? "By CENTER" : "By wall");
       opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > SCORE WOBBLE"   : "4   Score Wobble", autoOptions.scoreWobble ? "YES" : "no");
       opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > SCORE HIGH GOAL"   : "5   Score High Goal", autoOptions.scoreRingsHigh ? "YES" : "no");
       opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > SCORE POWERSHOT"   : "6  Score Powershot", autoOptions.scorePowerShot ? "YES" : "no");

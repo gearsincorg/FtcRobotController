@@ -64,13 +64,16 @@ public class GFORCE_Hardware {
 
     public final double MAX_AXIAL_MMPS      = 1500;  // MM Per Second
     public final double MAX_YAW_MMPS        =  500;  // MM Per Second
-    public final double ACCELERATION_LIMIT  =10000;  // MM per second per second
+    public final double ACCELERATION_LIMIT  =5000;  // MM per second per second
 
-    public final double INITIAL_SHOOTER_SPEED = 2300; // CPS
-    public final double SHOOTER_SPEED_TEST    =  100; // CPS
+    public final double HIGH_SHOOTER_SPEED   = 2500; // CPS
+    public final double POWER_SHOT_SPEED     = 2350;
+    public final double MID_SHOOTER_SPEED    = 2200; // CPS
+    public final double WOBBLE_SHOOTER_SPEED =  500; // CPS
+    public final double SHOOTER_SPEED_TEST   =  100; // CPS
 
     // Driving constants Yaw heading
-    final double HEADING_GAIN = 0.005;  // was 0.01
+    final double HEADING_GAIN = 0.0075;  // was 0.01
     final double TURN_RATE_TC = 0.6;
     final double STOP_TURNRATE = 0.020;
     final double GYRO_360_READING = 360.0;
