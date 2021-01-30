@@ -29,8 +29,10 @@ import static org.firstinspires.ftc.teamcode.RingHandler.STOP_COLLECT;
 public class GFORCE_TeleOp extends LinearOpMode {
 
     // Constants
-    public final double SLOW_AXIAL_JS_SCALE = 0.2;
-    public final double SLOW_YAW_JS_SCALE = 0.15;
+    public final double PRECISE_AXIAL_JS_SCALE = 0.4;  // .2
+    public final double PRECISE_YAW_JS_SCALE = 0.3;   // .15
+    public final double SLOW_AXIAL_JS_SCALE = 0.6;  // .2
+    public final double SLOW_YAW_JS_SCALE = 0.5;   // .15
     public final double SHOOTER_SPEED_INCREASE = 50;
 
     //Shooter Speed Management
@@ -83,7 +85,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
         waitForStart();
         spinnerSpeed = robot.HIGH_SHOOTER_SPEED;
-        robot.grabWobbleGoal();
+        robot.releaseWobbleGoal();
         robot.startMotion();
 
         // Run until the end of the match (Driver presses STOP)
@@ -100,10 +102,14 @@ public class GFORCE_TeleOp extends LinearOpMode {
             }
 
             // Manual driving
-            forwardBack = gamepad1.left_stick_y;
+            forwardBack = -gamepad1.left_stick_y;
             rotate = -gamepad1.right_stick_x;
 
-            if (gamepad1.left_trigger > 0.5) {
+            // Go super slow for shoot and collect, or Go sorta slow if not pressing Turbo Button
+            if ((ringState == COLLECTING) || (ringState == SPIN_UP)) {
+                forwardBack *= PRECISE_AXIAL_JS_SCALE;
+                rotate *= PRECISE_YAW_JS_SCALE;
+            } else if (gamepad1.left_trigger < 0.5) {
                 forwardBack *= SLOW_AXIAL_JS_SCALE;
                 rotate *= SLOW_YAW_JS_SCALE;
             }
@@ -187,6 +193,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
             spinnerSpeed = robot.MID_SHOOTER_SPEED;
         else if (gamepad2.dpad_down)
             spinnerSpeed = robot.WOBBLE_SHOOTER_SPEED;
+        else if (gamepad2.dpad_left)
+            spinnerSpeed = robot.POWER_SHOT_SPEED;
 
 
         //Look for button clicks and adjust speed

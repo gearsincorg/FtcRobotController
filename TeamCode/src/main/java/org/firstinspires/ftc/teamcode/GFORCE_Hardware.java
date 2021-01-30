@@ -63,8 +63,8 @@ public class GFORCE_Hardware {
     public final double AUTO_ROTATION_MMPS  = 2400;  // MM Per Second
 
     public final double MAX_AXIAL_MMPS      = 1500;  // MM Per Second
-    public final double MAX_YAW_MMPS        =  500;  // MM Per Second
-    public final double ACCELERATION_LIMIT  =5000;  // MM per second per second
+    public final double MAX_YAW_MMPS        =  800;  // MM Per Second
+    public final double ACCELERATION_LIMIT  = 3000;  // MM per second per second
 
     public final double HIGH_SHOOTER_SPEED   = 2500; // CPS
     public final double POWER_SHOT_SPEED     = 2350;
