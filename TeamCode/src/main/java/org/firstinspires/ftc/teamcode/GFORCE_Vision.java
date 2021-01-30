@@ -247,9 +247,10 @@ public class GFORCE_Vision {
             tfodParameters = new TFObjectDetector.Parameters();
         }
 
-        tfodParameters.minResultConfidence = 0.8f;
+        tfodParameters.minResultConfidence = 0.6f;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_QUAD_ELEMENT, LABEL_SINGLE_ELEMENT);
+        tfod.setZoom(2, 1.333);
     }
 
     public void activateTFOD () {

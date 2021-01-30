@@ -8,11 +8,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
-
 import java.util.List;
-//import com.vuforia.CameraDevice;
 
 @Autonomous(name="G-FORCE AUTO", group="!Competition", preselectTeleOp="G-FORCE TELEOP")
 public class GFORCE_Autonomous extends LinearOpMode {
@@ -23,12 +20,10 @@ public class GFORCE_Autonomous extends LinearOpMode {
     public GFORCE_Vision    vision      = new GFORCE_Vision();
 
     public static final String TAG = "G-FORCE";
-
     private ElapsedTime autoTime = new ElapsedTime();
 
     boolean isRed;
     int ringsStacked = 0;
-
 
     @Override
     public void runOpMode() {
@@ -75,11 +70,17 @@ public class GFORCE_Autonomous extends LinearOpMode {
             robot.delayWithSound(autoConfig.autoOptions.delayInSec);
 
             driveToLine();
+
             if (autoConfig.autoOptions.scorePowerShot) {
                 shootPowerShot();
             }
+
             if (autoConfig.autoOptions.scoreWobble) {
-                placeWobbleGoal();
+                scoreWobbleGoal();
+            } else {
+                // just drive forward to park
+                if (autoConfig.autoOptions.park)
+                    robot.driveAxialVelocity(250, 0, 300, 2);
             }
 
         }
@@ -88,91 +89,93 @@ public class GFORCE_Autonomous extends LinearOpMode {
     }
 
     private int findRings() {
-        ringsStacked = -1;
+        ringsStacked = 0;
 
+        autoTime.reset();
         if (vision.TFODIsValid()) {
+
            // getUpdatedRecognitions() will return null if no new information is available since
            // the last time that call was made.
-           List<Recognition> updatedRecognitions = vision.getUpdatedRecognitions();
-           if (updatedRecognitions != null) {
-               telemetry.addData("# Object Detected", updatedRecognitions.size());
-               // step through the list of recognitions and display boundary info.
-               int i = 0;
-               for (Recognition recognition : updatedRecognitions) {
-                   telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                   telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                           recognition.getLeft(), recognition.getTop());
-                   telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                           recognition.getRight(), recognition.getBottom());
-                   i++;
+           while (opModeIsActive() && (autoTime.time() < 2.0)) {
+               List<Recognition> updatedRecognitions = vision.tfod.getUpdatedRecognitions();
+               if (updatedRecognitions != null) {
+                   telemetry.addData("# Object Detected =====================", updatedRecognitions.size());
+                   // step through the list of recognitions and display boundary info.
+                   double maxConfidence = -1.0;
+                   for (Recognition recognition : updatedRecognitions) {
+                       double confidence = recognition.getConfidence();
+                       telemetry.addData("Target", String.format("%s %.2f", recognition.getLabel(), confidence));
 
-                   if (recognition.getLabel() == vision.LABEL_QUAD_ELEMENT) {
-                       ringsStacked = 4;
-                   } else if (recognition.getLabel() == vision.LABEL_SINGLE_ELEMENT) {
-                       ringsStacked = 1;
+                       // Keep looking for the best one;
+                       if (confidence > maxConfidence) {
+                           if (recognition.getLabel() == vision.LABEL_QUAD_ELEMENT) {
+                               ringsStacked = 4;
+                           } else if (recognition.getLabel() == vision.LABEL_SINGLE_ELEMENT) {
+                               ringsStacked = 1;
+                           }
+                           maxConfidence = confidence;
+                       }
                    }
+                   break;  // exit out of while loop early.
+               } else {
+                   telemetry.addData("targets", "None");
                }
-
                telemetry.update();
-
-           } else {
-               ringsStacked = 0;
            }
         }
         return ringsStacked;
-   }
-    private void driveToLine () {
-        robot.grabWobbleGoal();
-        robot.sleepAndHoldHeading(0,1);
-        robot.driveAxialVelocity(300,0,700,2);
+    }
 
-        double goalHeading = autoConfig.autoOptions.startCenter ? 35  : -35;
-        robot.turnToHeading(goalHeading, 1);
-        robot.sleepAndHoldHeading(goalHeading, 3);
-        findRings();
-        robot.turnToHeading(0,1);
-        robot.sleepAndHoldHeading(0,1);
-        robot.driveAxialVelocity(1000,0,900,2);
+    private void driveToLine () {
+        double goalHeading = autoConfig.autoOptions.startCenter ? 34 : -39;
+        double runDistance = autoConfig.autoOptions.startCenter ? 1130 : 1110;
+
+        if (autoConfig.autoOptions.scoreWobble) {
+            // go and look at ring stack;
+            robot.grabWobbleGoal();
+            robot.sleepAndHoldHeading(0, 1);
+            robot.driveAxialVelocity(200, 0, 700, 2);
+
+            // look at ring stack
+            robot.turnToHeading(goalHeading, 1.5);
+            robot.sleepAndHoldHeading(goalHeading, 1);
+            findRings();
+            robot.turnToHeading(0, 1);
+            robot.sleepAndHoldHeading(0, 1);
+            robot.driveAxialVelocity(runDistance, 0, 900, 2);
+        } else {
+            // drive out to edge of launch zone to attempt shots
+            robot.driveAxialVelocity(runDistance + 200, 0, 900, 2);
+        }
     }
 
     private void shootPowerShot() {
-        double goalHeading = autoConfig.autoOptions.startCenter ? 0  : -30;
-        robot.sleepAndHoldHeading(goalHeading,1);
-        robot.releaseRings();
+        double goalHeading = autoConfig.autoOptions.startCenter ? 0  : -27;
         double goalSpeed = autoConfig.autoOptions.startCenter ? robot.POWER_SHOT_SPEED : robot.HIGH_SHOOTER_SPEED;
-        robot.spinnerAtSpeed(goalSpeed);
-        robot.sleepAndHoldHeading(goalHeading,1);
+        robot.releaseRings();
+        robot.runSpinners(goalSpeed);
+        robot.sleepAndHoldHeading(goalHeading,2);
         robot.runCollectors(1);
-        robot.sleepAndHoldHeading(goalHeading - 5,2);
+        robot.sleepAndHoldHeading(goalHeading,0.25);
+        robot.sleepAndHoldHeading(goalHeading - 6,2);
         robot.runCollectors(0);
         robot.runSpinners(0);
         robot.turnToHeading(0,1);
 
     }
 
-    private void placeWobbleGoal () {
+    private void scoreWobbleGoal() {
         if (autoConfig.autoOptions.startCenter) {
             switch (ringsStacked) {
                 case 0:
                 default:
-                    robot.turnToHeading(70, 1);
-                    robot.driveAxialVelocity(900, 70, 700, 1);
-                    robot.releaseWobbleGoal();
-                    robot.driveAxialVelocity(300,70,-300,1);
+                    placeWobbleGoal(900, 70, 700, 2);
                     break;
                 case 1:
-                    robot.turnToHeading(30, 1);
-                    robot.sleepAndHoldHeading(30, 1);
-                    robot.driveAxialVelocity(900, 30, 700, 4);
-                    robot.releaseWobbleGoal();
-                    robot.driveAxialVelocity(300,30,-300,1);
+                    placeWobbleGoal(900, 30, 700, 3);
                     break;
                 case 4:
-                    robot.turnToHeading(35, 1);
-                    robot.sleepAndHoldHeading(35, 1);
-                    robot.driveAxialVelocity(1600, 35, 900, 6);
-                    robot.releaseWobbleGoal();
-                    robot.driveAxialVelocity(300,35,-300,1);
+                    placeWobbleGoal(1600, 35, 900, 4);
                     break;
 
             }
@@ -181,31 +184,38 @@ public class GFORCE_Autonomous extends LinearOpMode {
             switch (ringsStacked) {
                 case 0:
                 default:
-                    robot.releaseWobbleGoal();
-                    robot.sleepAndHoldHeading(0,0.5);
-                    robot.driveAxialVelocity(300,0,-300,1);
+                    placeWobbleGoal(250, 0, 300, 2);
                     break;
                 case 1:
-                    robot.turnToHeading(-30, 1);
-                    robot.sleepAndHoldHeading(-30, 1);
-                    robot.driveAxialVelocity(900, -30, 900, 4);
-                    robot.releaseWobbleGoal();
-                    robot.sleepAndHoldHeading(-30,0.5);
-                    robot.driveAxialVelocity(300,-30,-300,1);
+                    placeWobbleGoal(900, -27, 900, 3);
                     break;
                 case 4:
-                    robot.sleepAndHoldHeading(0, 1);
-                    robot.driveAxialVelocity(1200, 0, 900, 6);
-                    robot.releaseWobbleGoal();
-                    robot.sleepAndHoldHeading(0,0.5);
-                    robot.driveAxialVelocity(300,0,-300,1);
+                    placeWobbleGoal(1300, 0, 900, 4);
                     break;
 
             }
-
-
         }
-
     }
 
+    private void placeWobbleGoal(double distance, double heading, double speed, double timeout) {
+
+        robot.turnToHeading(heading, 1);
+        robot.driveAxialVelocity(distance, heading, speed, timeout);
+        robot.releaseWobbleGoal();
+        robot.sleepAndHoldHeading(heading,0.5);
+
+        if (autoConfig.autoOptions.park) {
+            if (ringsStacked == 0) {
+                // Just backoff the minimum
+                robot.driveAxialVelocity(75, heading, -300, timeout);
+            } else {
+                // roll back over starting location
+                robot.driveAxialVelocity(distance - 400, heading, -speed, timeout);
+            }
+
+            robot.grabWobbleGoal();
+        } else {
+            robot.driveAxialVelocity(150, heading, -300,1);
+        }
+    }
 }
