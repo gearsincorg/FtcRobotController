@@ -19,22 +19,20 @@ public class GFORCE_Autonomous extends LinearOpMode {
     public GFORCE_Hardware  robot       = new GFORCE_Hardware();
     public GFORCE_Vision    vision      = new GFORCE_Vision();
 
-    public static final String TAG = "G-FORCE";
-    private ElapsedTime autoTime = new ElapsedTime();
-
-    boolean isRed;
-    int ringsStacked = 0;
+    public  static final String TAG = "G-FORCE";
+    private ElapsedTime autoTime    = new ElapsedTime();
+    private int     ringsStacked    = 0;
 
     @Override
     public void runOpMode() {
 
         // Initialize the hardware variables.
         autoConfig.init(hardwareMap.appContext, this);
-        robot.init(this);
-        vision.init(this);
-        vision.initVuforia(false);
-        vision.initTFOD(true);
-        vision.activateTFOD();
+        robot.init(this);           // Motors, servos and Sensors.
+        vision.init(this);          // Basic Vision connection
+        vision.initVuforia(false);   // Vuforia
+        vision.initTFOD(true);       // Tensor flow
+        vision.activateTFOD();               // Object Detaction
 
         // Wait for the game to start (driver presses PLAY)
         while (!opModeIsActive() && !isStopRequested()) {
@@ -42,7 +40,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
             // display TFOD targets if Pilot Left Bumper pushed.
             if (gamepad1.left_bumper) {
-                findRings();
+                findRings();  // Wait 2 seconds while searching for a valid ring stack
             } else {
                 telemetry.addData("---", "Press Left Bumper for TFOD");
                 autoConfig.init_loop(); //Run menu system
@@ -52,7 +50,6 @@ public class GFORCE_Autonomous extends LinearOpMode {
         }
 
         // Get alliance color from Menu
-        isRed = autoConfig.autoOptions.redAlliance;
         if (autoConfig.autoOptions.redAlliance) {
             robot.allianceColor = GFORCE_Hardware.AllianceColor.RED;
         } else {
@@ -96,7 +93,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
            // getUpdatedRecognitions() will return null if no new information is available since
            // the last time that call was made.
-           while (opModeIsActive() && (autoTime.time() < 2.0)) {
+           while (!isStopRequested() && (autoTime.time() < 2.0)) {
                List<Recognition> updatedRecognitions = vision.tfod.getUpdatedRecognitions();
                if (updatedRecognitions != null) {
                    telemetry.addData("# Object Detected =====================", updatedRecognitions.size());

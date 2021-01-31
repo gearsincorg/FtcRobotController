@@ -92,8 +92,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
         while (opModeIsActive()) {
             robot.updateMotion();  // Read all sensors and calculate motions
             setSpinnerSpeed();     // Set the shooter speed according to buttons
-            runRingHandler();
-            runWobbleGrabber();
+            runRingHandler();      // Manage the conveyor and spinner
+            runWobbleGrabber();    // Mamage the wobble goal grabber
 
             //Driver Controls
             if (gamepad1.back && gamepad1.start) {
