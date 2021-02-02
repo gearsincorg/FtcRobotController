@@ -66,7 +66,7 @@ public class GFORCE_Hardware {
     public final double MAX_YAW_MMPS        =  800;  // MM Per Second
     public final double ACCELERATION_LIMIT  = 3000;  // MM per second per second
 
-    public final double HIGH_SHOOTER_SPEED   = 2500; // CPS
+    public final double HIGH_SHOOTER_SPEED   = 2450; // CPS
     public final double POWER_SHOT_SPEED     = 2350;
     public final double MID_SHOOTER_SPEED    = 2200; // CPS
     public final double WOBBLE_SHOOTER_SPEED =  500; // CPS
