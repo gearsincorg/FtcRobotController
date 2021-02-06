@@ -29,11 +29,11 @@ import static org.firstinspires.ftc.teamcode.RingHandler.STOP_COLLECT;
 public class GFORCE_TeleOp extends LinearOpMode {
 
     // Constants
-    public final double PRECISE_AXIAL_JS_SCALE = 0.4;  // .2
-    public final double PRECISE_YAW_JS_SCALE = 0.3;   // .15
-    public final double SLOW_AXIAL_JS_SCALE = 0.6;  // .2
-    public final double SLOW_YAW_JS_SCALE = 0.5;   // .15
-    public final double SHOOTER_SPEED_INCREASE = 50;
+    public final double PRECISE_AXIAL_JS_SCALE  =  0.30;   // .2
+    public final double PRECISE_YAW_JS_SCALE    =  0.30;   // .15
+    public final double SLOW_AXIAL_JS_SCALE     =  0.65;   // .2
+    public final double SLOW_YAW_JS_SCALE       =  0.65;   // .15
+    public final double SHOOTER_SPEED_INCREASE  = 50.00;
 
     //Shooter Speed Management
     public double spinnerSpeed = 0;
@@ -136,7 +136,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     autoHeadingOn = true;
                     desiredHeading = robot.currentHeading + vision.relativeBearing;
                 }
-
 
                 if (robot.LOGGING) RobotLog.ii("TARGET", String.format("H:R:T:RB:S, %.1f, %.1f, %.1f, %.1f, %.1f ",
                         robot.currentHeading,
