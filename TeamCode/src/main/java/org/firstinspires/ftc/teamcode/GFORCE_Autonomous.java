@@ -181,15 +181,14 @@ public class GFORCE_Autonomous extends LinearOpMode {
             switch (ringsStacked) {
                 case 0:
                 default:
-                    placeWobbleGoal(250, 0, 300, 2);
+                    placeWobbleGoal(190, 0, 200, 2);
                     break;
                 case 1:
-                    placeWobbleGoal(900, -27, 900, 3);
+                    placeWobbleGoal(850, -27, 900, 3);
                     break;
                 case 4:
-                    placeWobbleGoal(1300, 0, 900, 4);
+                    placeWobbleGoal(1250, 0, 900, 4);
                     break;
-
             }
         }
     }
@@ -204,7 +203,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         if (autoConfig.autoOptions.park) {
             if (ringsStacked == 0) {
                 // Just backoff the minimum
-                robot.driveAxialVelocity(75, heading, -300, timeout);
+                robot.driveAxialVelocity(60, heading, -300, timeout);
             } else {
                 // roll back over starting location
                 robot.driveAxialVelocity(distance - 400, heading, -speed, timeout);

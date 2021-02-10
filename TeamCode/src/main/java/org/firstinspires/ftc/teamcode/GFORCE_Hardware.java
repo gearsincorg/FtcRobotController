@@ -38,23 +38,23 @@ public class GFORCE_Hardware {
 
     /* Public OpMode members. */
     public AllianceColor allianceColor = AllianceColor.UNKNOWN_COLOR;
-    public DcMotorEx leftDrive = null;
-    public DcMotorEx rightDrive = null;
+    public DcMotorEx leftDrive    = null;
+    public DcMotorEx rightDrive   = null;
 
     public DcMotorEx frontCollector = null;
     public DcMotorEx midCollector = null;
 
-    public DcMotorEx leftShooter = null;
+    public DcMotorEx leftShooter  = null;
     public DcMotorEx rightShooter = null;
 
-    public DcMotorEx ringLift = null;
-    public DcMotorEx ringFeed = null;
+    public DcMotorEx ringLift     = null;
+    public DcMotorEx ringFeed     = null;
 
-    List<LynxModule> allHubs = null;
+    List<LynxModule> allHubs      = null;
 
-    public Servo leftWobbleGrab = null;
-    public Servo rightWobbleGrab = null;
-    public Servo ringStop = null;
+    public Servo leftWobbleGrab   = null;
+    public Servo rightWobbleGrab  = null;
+    public Servo ringStop         = null;
 
     public RevTouchSensor midCollectorDown = null;
     public static BNO055IMU imu = null;
@@ -67,19 +67,19 @@ public class GFORCE_Hardware {
     public final double ACCELERATION_LIMIT  = 3000;  // MM per second per second
 
     public final double HIGH_SHOOTER_SPEED   = 2450; // CPS
-    public final double POWER_SHOT_SPEED     = 2350;
+    public final double POWER_SHOT_SPEED     = 2300;
     public final double MID_SHOOTER_SPEED    = 2200; // CPS
-    public final double WOBBLE_SHOOTER_SPEED =  500; // CPS
+    public final double WOBBLE_SHOOTER_SPEED =  400; // CPS
     public final double SHOOTER_SPEED_TEST   =  100; // CPS
 
     // Driving constants Yaw heading
-    final double HEADING_GAIN = 0.0075;  // was 0.01
-    final double TURN_RATE_TC = 0.6;
-    final double STOP_TURNRATE = 0.020;
-    final double GYRO_360_READING = 360.0;
-    final double GYRO_SCALE_FACTOR = 360.0 / GYRO_360_READING;
+    final double HEADING_GAIN       =   0.0075;  // was 0.01
+    final double TURN_RATE_TC       =   0.6;
+    final double STOP_TURNRATE      =   0.020;
+    final double GYRO_360_READING   = 360.0;
+    final double GYRO_SCALE_FACTOR  = 360.0 / GYRO_360_READING;
 
-    final double YAW_IS_CLOSE = 1.5;  // angle within which we are "close"
+    final double YAW_IS_CLOSE       =   1.5;  // angle within which we are "close"
 
     final double AXIAL_ENCODER_COUNTS_PER_MM = 1.78; // 537.6 Counts per (96 * 3.1415) mm
 
