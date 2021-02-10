@@ -89,6 +89,7 @@ public class GFORCE_Hardware {
     public double currentHeading = 0;
 
     private static LinearOpMode myOpMode = null;
+    private static GFORCE_Vision myVision = null;
 
     // Sensor Read Info.
     private int encoderLeft;
@@ -141,9 +142,10 @@ public class GFORCE_Hardware {
     }
 
     /* Initialize standard Hardware interfaces */
-    public void init(LinearOpMode opMode) {
+    public void init(LinearOpMode opMode, GFORCE_Vision vision) {
         // Save reference to Hardware map
         myOpMode = opMode;
+        myVision = vision;
 
         // Define and Initialize Motors
         leftDrive = configureMotor("left_drive", DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
@@ -420,6 +422,36 @@ public class GFORCE_Hardware {
         leftDrive.setMode(mode);
         rightDrive.setMode(mode);
     }
+    // --------------------------------------------------------------------
+    // Target Tracking
+    // --------------------------------------------------------------------
+    public boolean turnToTarget (double timeOutSEC) {
+        boolean inPosition = false;
+        boolean seenTarget = false;
+        double heading;
+
+        setAxialVelocity(0);
+        heading = getHeading();
+        navTime.reset();
+
+        while (myOpMode.opModeIsActive() &&
+                updateMotion() &&
+                (navTime.time() < timeOutSEC) &&
+                ( !(inPosition && seenTarget)) ) {
+            if (myVision.newTargetPosition()) {
+                heading = currentHeading + myVision.relativeBearing;
+                seenTarget = true;
+            }
+            inPosition = setYawVelocityToHoldHeading(heading);
+
+            moveRobotVelocity();
+            showEncoders();
+        }
+        stopRobot();
+
+        return (navTime.time() < timeOutSEC);
+    }
+
 
     // --------------------------------------------------------------------
     // Heading/Gyro Control

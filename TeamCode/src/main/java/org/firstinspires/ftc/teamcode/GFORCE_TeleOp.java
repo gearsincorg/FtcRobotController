@@ -57,7 +57,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     /* Declare OpMode members. */
     GFORCE_Hardware robot  = new GFORCE_Hardware();
-    GFORCE_Vision   vision = new GFORCE_Vision();
+    public GFORCE_Vision   vision = new GFORCE_Vision();
     RingHandler     ringState = IDLE;
 
     @Override
@@ -76,8 +76,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
         /* Initialize the hardware variables.
          * The init() method of the Hardware class does all the work here
          */
-        robot.init(this);
-        vision.init(this);
+        robot.init(this, vision);
+        vision.init(this, robot);
         vision.activateVuforiaTargets(true);
 
         // Wait for the game to start (Driver presses PLAY)

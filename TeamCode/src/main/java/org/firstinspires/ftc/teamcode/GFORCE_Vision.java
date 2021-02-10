@@ -60,6 +60,7 @@ public class GFORCE_Vision {
 
     // Private data  ========================================
     private static LinearOpMode myOpMode = null;
+    private static GFORCE_Hardware myRobot = null;
 
     private static final String VUFORIA_KEY =
             "ASFl1ib/////AAABmdtl1FqwZUIEqtOW/F+xX70YsCPMRYbusW+Av5TpUTDuB3VJT4z6ju8tkAzSKLD0cIwdp/o/3ggJzx27+OsIHWn8OTNfsAtxIzQVSCa75gI76/v006khzWpGV1wmdoEgK7JkvEns6BCzmgfSBSThg70Ej42wDF7l5FuIXUhm/AAMJ7sHLlMl5BboZg/vRyNRFTbEbFLyj98DOwLlaNl9DvUtf5bGBOHwFCNOBX8vlxWVU3aZZpGNxNTX/KyZ84TWECIxg8SeRSz3QcBEwsBYX97HXfj4nJxn93u8m5SZmoHF11MPkV0tlqemRwrCy/MJ3eGB3WCJ+MEeCAYeVa30E+WEkVTiFQAo4WW3vKuEVuBc";
@@ -75,9 +76,10 @@ public class GFORCE_Vision {
     }
 
     /* Initialize standard Hardware interfaces */
-    public void init(LinearOpMode opMode) {
+    public void init(LinearOpMode opMode, GFORCE_Hardware robot) {
         // Save reference to Hardware map
         myOpMode = opMode;
+        myRobot = robot;
         tfod = null;
     }
 

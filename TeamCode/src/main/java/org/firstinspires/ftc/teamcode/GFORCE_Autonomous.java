@@ -28,9 +28,10 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         // Initialize the hardware variables.
         autoConfig.init(hardwareMap.appContext, this);
-        robot.init(this);           // Motors, servos and Sensors.
-        vision.init(this);          // Basic Vision connection
+        robot.init(this, vision);           // Motors, servos and Sensors.
+        vision.init(this, robot);          // Basic Vision connection
         vision.initVuforia(false);   // Vuforia
+        vision.activateVuforiaTargets(false);
         vision.initTFOD(true);       // Tensor flow
         vision.activateTFOD();               // Object Detaction
 
@@ -67,8 +68,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
             robot.delayWithSound(autoConfig.autoOptions.delayInSec);
 
             driveToLine();
-
-            if (autoConfig.autoOptions.scorePowerShot) {
+            if (autoConfig.autoOptions.scoreRingsHigh) {
+                shootHighGoal();
+            } else if (autoConfig.autoOptions.scorePowerShot) {
                 shootPowerShot();
             }
 
@@ -160,6 +162,21 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.turnToHeading(0,1);
 
     }
+    private void shootHighGoal() {
+        double goalHeading = autoConfig.autoOptions.startCenter ? 19  : -19; //19 : -19
+        double goalSpeed = robot.HIGH_SHOOTER_SPEED;
+        robot.releaseRings();
+        robot.runSpinners(goalSpeed);
+        robot.turnToHeading(goalHeading,2);
+        robot.turnToTarget(5);
+        robot.runCollectors(1);
+        sleep(2000);
+        robot.runCollectors(0);
+        robot.runSpinners(0);
+        robot.turnToHeading(0,1);
+
+    }
+
 
     private void scoreWobbleGoal() {
         if (autoConfig.autoOptions.startCenter) {
