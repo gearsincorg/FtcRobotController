@@ -24,6 +24,7 @@ import static org.firstinspires.ftc.teamcode.RingHandler.COLLECTING;
 import static org.firstinspires.ftc.teamcode.RingHandler.IDLE;
 import static org.firstinspires.ftc.teamcode.RingHandler.SPIN_UP;
 import static org.firstinspires.ftc.teamcode.RingHandler.STOP_COLLECT;
+import static org.firstinspires.ftc.teamcode.RingHandler.WOBBLE_LOADING;
 
 @TeleOp(name="G-FORCE TELEOP", group="!Competition")
 public class GFORCE_TeleOp extends LinearOpMode {
@@ -223,6 +224,13 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.runSpinners(spinnerSpeed);
                     robot.releaseRings();
                     ringState = SPIN_UP;
+                } else if (gamepad2.b) {
+                    robot.runCollectors(0);
+                    spinnerSpeed = robot.WOBBLE_SHOOTER_SPEED;
+                    robot.runSpinners(spinnerSpeed);
+                    robot.releaseRings();
+                    robot.lowerRingDrop();
+                    ringState = WOBBLE_LOADING;
                 } else {
                     robot.stopRings();
                     if (gamepad2.left_trigger > 0.5) {
@@ -263,6 +271,20 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 }
                 break;
 
+            case WOBBLE_LOADING:
+                if (gamepad2.x) {
+                    robot.liftRingDrop();
+                    robot.runSpinners(0);
+                    robot.runCollectors(0);
+                    robot.stopRings();
+                    ringState = IDLE;
+                } else if (robot.spinnerAtSpeed(spinnerSpeed) && (gamepad1.right_bumper) ) {
+                    robot.runCollectors(1);
+                } else {
+                    robot.runCollectors(0);
+                }
+                break;
+
             case SPIN_UP:
                 if (toggleSpinner() || (gamepad1.right_trigger > 0.5)) {
                     robot.runSpinners(0);
@@ -282,6 +304,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             default:
                 break;
+
         }
     }
 

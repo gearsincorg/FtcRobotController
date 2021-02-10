@@ -6,5 +6,7 @@ enum RingHandler {
     STOP_COLLECT,
     SPIN_UP,
     AT_SPEED,
-    FIRING
+    FIRING,
+    WOBBLE_LOADING
+
 }

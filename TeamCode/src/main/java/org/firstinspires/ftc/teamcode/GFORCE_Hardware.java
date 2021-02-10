@@ -55,6 +55,7 @@ public class GFORCE_Hardware {
     public Servo leftWobbleGrab   = null;
     public Servo rightWobbleGrab  = null;
     public Servo ringStop         = null;
+    public Servo ringDrop         = null;
 
     public RevTouchSensor midCollectorDown = null;
     public static BNO055IMU imu = null;
@@ -66,10 +67,10 @@ public class GFORCE_Hardware {
     public final double MAX_YAW_MMPS        =  800;  // MM Per Second
     public final double ACCELERATION_LIMIT  = 3000;  // MM per second per second
 
-    public final double HIGH_SHOOTER_SPEED   = 2450; // CPS
+    public final double HIGH_SHOOTER_SPEED   = 2425; // CPS
     public final double POWER_SHOT_SPEED     = 2300;
     public final double MID_SHOOTER_SPEED    = 2200; // CPS
-    public final double WOBBLE_SHOOTER_SPEED =  400; // CPS
+    public final double WOBBLE_SHOOTER_SPEED =  600; // CPS
     public final double SHOOTER_SPEED_TEST   =  100; // CPS
 
     // Driving constants Yaw heading
@@ -131,6 +132,9 @@ public class GFORCE_Hardware {
     public final double RING_STOP    = 0.0;
     public final double RING_RELEASE = 1.0;
 
+    public final double RING_DROP_DISABLE = 0.0;
+    public final double RING_DROP_ENABLE = 1.0;
+
     /* Constructor */
     public GFORCE_Hardware() {
 
@@ -161,7 +165,9 @@ public class GFORCE_Hardware {
         leftWobbleGrab = myOpMode.hardwareMap.get(Servo.class, "left_wobble");
         rightWobbleGrab = myOpMode.hardwareMap.get(Servo.class, "right_wobble");
         ringStop = myOpMode.hardwareMap.get(Servo.class, "ring_stop");
+        ringDrop = myOpMode.hardwareMap.get(Servo.class, "ring_drop");
         releaseWobbleGoal();
+        liftRingDrop();
         stopRings();
 
         // Set all Expansion hubs to use the MANUAL Bulk Caching mode
@@ -599,6 +605,16 @@ public class GFORCE_Hardware {
     public void releaseRings() {
         ringStop.setPosition(RING_RELEASE);
     }
+
+    public void liftRingDrop() {
+        ringDrop.setPosition(RING_DROP_DISABLE);
+    }
+
+    public void lowerRingDrop() {
+        ringDrop.setPosition(RING_DROP_ENABLE);
+    }
+
+
 
     // ========================================================
     // ----               Sound Methods
