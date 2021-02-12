@@ -36,13 +36,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public final double SLOW_YAW_JS_SCALE       =  0.65;   // .15
     public final double SHOOTER_SPEED_INCREASE  = 50.00;
 
-    //Shooter Speed Management
-    public double spinnerSpeed = 0;
+    //Shooter Speed button Management
     public boolean shooterFast = false;
     public boolean lastShooterFast = false;
     public boolean shooterSlow = false;
     public boolean lastShooterSlow = false;
-
 
     // click detector variables
     boolean collectorPressed = false;
@@ -85,9 +83,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-        spinnerSpeed = robot.HIGH_SHOOTER_SPEED;
         robot.releaseWobbleGoal();
         robot.startMotion();
+        robot.stopSpinners();
+        robot.setSpinnerTarget(Target.HIGH_GOAL);
 
         // Run until the end of the match (Driver presses STOP)
         while (opModeIsActive()) {
@@ -139,11 +138,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 }
 
                 if (robot.LOGGING) RobotLog.ii("TARGET", String.format("H:R:T:RB:S, %.1f, %.1f, %.1f, %.1f, %.1f ",
-                        robot.currentHeading,
-                        vision.robotBearing,
-                        vision.targetBearing,
-                        vision.relativeBearing,
-                        desiredHeading));
+                        robot.currentHeading, vision.robotBearing, vision.targetBearing, vision.relativeBearing, desiredHeading));
 
                 neutralTime.reset();
             } else {
@@ -182,35 +177,31 @@ public class GFORCE_TeleOp extends LinearOpMode {
     }
 
     //Shooter Methods
-    public double setSpinnerSpeed() {
+    public void setSpinnerSpeed() {
         shooterFast = (gamepad1.dpad_up);
         shooterSlow = (gamepad1.dpad_down);
 
         // Let copilot set target speed.
         if (gamepad2.dpad_up)
-            spinnerSpeed = robot.HIGH_SHOOTER_SPEED;
+            robot.setSpinnerTarget(Target.HIGH_GOAL);
         else if (gamepad2.dpad_right)
-            spinnerSpeed = robot.MID_SHOOTER_SPEED;
+            robot.setSpinnerTarget(Target.MID_GOAL);
         else if (gamepad2.dpad_down)
-            spinnerSpeed = robot.WOBBLE_SHOOTER_SPEED;
+            robot.setSpinnerTarget(Target.WOBBLE_GOAL);
         else if (gamepad2.dpad_left)
-            spinnerSpeed = robot.POWER_SHOT_SPEED;
+            robot.setSpinnerTarget(Target.POWER_SHOT);
 
 
         //Look for button clicks and adjust speed
         if (shooterFast && !lastShooterFast) {
-            spinnerSpeed += SHOOTER_SPEED_INCREASE;
+            robot.jogSpinnerUp();
         } else if (shooterSlow && !lastShooterSlow) {
-            spinnerSpeed -= SHOOTER_SPEED_INCREASE;
+            robot.jogSpinnerDown();
         }
-
-        //Clipping so that it does not go too fast
-        spinnerSpeed = Range.clip(spinnerSpeed, 0, robot.MAX_VELOCITY);
 
         //Set to previous values before looping again
         lastShooterFast = shooterFast;
         lastShooterSlow = shooterSlow;
-        return (spinnerSpeed);
     }
 
 
@@ -221,13 +212,13 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.runCollectors(1);
                     ringState = COLLECTING;
                 } else if (toggleSpinner() || gamepad1.right_bumper) {
-                    robot.runSpinners(spinnerSpeed);
+                    robot.runSpinners();
                     robot.releaseRings();
                     ringState = SPIN_UP;
                 } else if (gamepad2.b) {
                     robot.runCollectors(0);
-                    spinnerSpeed = robot.WOBBLE_SHOOTER_SPEED;
-                    robot.runSpinners(spinnerSpeed);
+                    robot.setSpinnerTarget(Target.WOBBLE_GOAL);
+                    robot.runSpinners();
                     robot.releaseRings();
                     robot.lowerRingDrop();
                     ringState = WOBBLE_LOADING;
@@ -239,9 +230,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
                         robot.runCollectors(0);
                     }
                     if (gamepad2.right_trigger > 0.5) {
-                        robot.runSpinners(-spinnerSpeed);
+                        robot.reverseSpinners();
                     } else {
-                        robot.runSpinners(0);
+                        robot.stopSpinners();
                     }
                 }
                 break;
@@ -252,7 +243,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     ringState = IDLE;
                 } else if (toggleSpinner() || gamepad1.right_bumper) {
                     robot.runCollectors(0);
-                    robot.runSpinners(spinnerSpeed);
+                    robot.runSpinners();
                     stateTimer.reset();
                     ringState = STOP_COLLECT;
                 } else {
@@ -274,11 +265,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
             case WOBBLE_LOADING:
                 if (gamepad2.x) {
                     robot.liftRingDrop();
-                    robot.runSpinners(0);
+                    robot.stopSpinners();
                     robot.runCollectors(0);
                     robot.stopRings();
                     ringState = IDLE;
-                } else if (robot.spinnerAtSpeed(spinnerSpeed) && (gamepad1.right_bumper) ) {
+                } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
                     robot.runCollectors(1);
                 } else {
                     robot.runCollectors(0);
@@ -287,15 +278,15 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             case SPIN_UP:
                 if (toggleSpinner() || (gamepad1.right_trigger > 0.5)) {
-                    robot.runSpinners(0);
+                    robot.stopSpinners();
                     robot.stopRings();
                     ringState = IDLE;
                 } else if (toggleCollector()) {
                     robot.stopRings();
-                    robot.runSpinners(0);
+                    robot.stopSpinners();
                     robot.runCollectors(1);
                     ringState = COLLECTING;
-                } else if (robot.spinnerAtSpeed(spinnerSpeed) && (gamepad1.right_bumper) ) {
+                } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
                     robot.runCollectors(1);
                 } else {
                     robot.runCollectors(0);

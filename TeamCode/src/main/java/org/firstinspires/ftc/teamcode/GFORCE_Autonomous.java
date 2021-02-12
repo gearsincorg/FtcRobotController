@@ -63,7 +63,6 @@ public class GFORCE_Autonomous extends LinearOpMode {
         autoTime.reset();
 
         if (opModeIsActive() && autoConfig.autoOptions.enabled) {
-
             // Wait for the required delay
             robot.delayWithSound(autoConfig.autoOptions.delayInSec);
 
@@ -81,7 +80,6 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 if (autoConfig.autoOptions.park)
                     robot.driveAxialVelocity(250, 0, 300, 2);
             }
-
         }
         robot.stopRobot();
         vision.shutdownTFOD();
@@ -150,33 +148,31 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
     private void shootPowerShot() {
         double goalHeading = autoConfig.autoOptions.startCenter ? 0  : -27;
-        double goalSpeed = autoConfig.autoOptions.startCenter ? robot.POWER_SHOT_SPEED : robot.HIGH_SHOOTER_SPEED;
         robot.releaseRings();
-        robot.runSpinners(goalSpeed);
+        robot.setSpinnerTarget(autoConfig.autoOptions.startCenter ? Target.POWER_SHOT : Target.HIGH_GOAL);
+        robot.runSpinners();
         robot.sleepAndHoldHeading(goalHeading,2);
         robot.runCollectors(1);
         robot.sleepAndHoldHeading(goalHeading,0.25);
         robot.sleepAndHoldHeading(goalHeading - 6,2);
         robot.runCollectors(0);
-        robot.runSpinners(0);
+        robot.stopSpinners();
         robot.turnToHeading(0,1);
 
     }
     private void shootHighGoal() {
         double goalHeading = autoConfig.autoOptions.startCenter ? 19  : -19; //19 : -19
-        double goalSpeed = robot.HIGH_SHOOTER_SPEED;
         robot.releaseRings();
-        robot.runSpinners(goalSpeed);
+        robot.setSpinnerTarget(Target.HIGH_GOAL);
+        robot.runSpinners();
         robot.turnToHeading(goalHeading,2);
         robot.turnToTarget(5);
         robot.runCollectors(1);
         sleep(2000);
         robot.runCollectors(0);
-        robot.runSpinners(0);
+        robot.stopSpinners();
         robot.turnToHeading(0,1);
-
     }
-
 
     private void scoreWobbleGoal() {
         if (autoConfig.autoOptions.startCenter) {

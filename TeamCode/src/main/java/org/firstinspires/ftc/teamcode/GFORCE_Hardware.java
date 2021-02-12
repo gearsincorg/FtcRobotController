@@ -60,6 +60,8 @@ public class GFORCE_Hardware {
     public RevTouchSensor midCollectorDown = null;
     public static BNO055IMU imu = null;
 
+    public final boolean DUAL_SPEED_SPINNER = true;  // Configure the spinner configuration
+
     public final double MAX_VELOCITY        = 2700;  // Counts per second
     public final double AUTO_ROTATION_MMPS  = 2400;  // MM Per Second
 
@@ -67,21 +69,13 @@ public class GFORCE_Hardware {
     public final double MAX_YAW_MMPS        =  800;  // MM Per Second
     public final double ACCELERATION_LIMIT  = 3000;  // MM per second per second
 
-    public final double HIGH_SHOOTER_SPEED   = 2425; // CPS
-    public final double POWER_SHOT_SPEED     = 2300;
-    public final double MID_SHOOTER_SPEED    = 2200; // CPS
-    public final double WOBBLE_SHOOTER_SPEED =  600; // CPS
-    public final double SHOOTER_SPEED_TEST   =  100; // CPS
-
     // Driving constants Yaw heading
     final double HEADING_GAIN       =   0.0075;  // was 0.01
     final double TURN_RATE_TC       =   0.6;
     final double STOP_TURNRATE      =   0.020;
     final double GYRO_360_READING   = 360.0;
     final double GYRO_SCALE_FACTOR  = 360.0 / GYRO_360_READING;
-
     final double YAW_IS_CLOSE       =   1.5;  // angle within which we are "close"
-
     final double AXIAL_ENCODER_COUNTS_PER_MM = 1.78; // 537.6 Counts per (96 * 3.1415) mm
 
     // Robot states that we share with others
@@ -116,7 +110,9 @@ public class GFORCE_Hardware {
 
     // Scoring Status variables
     private int timeoutSoundID = 0;
-    private double targetSpinnerSpeed = 0;
+    private double targetLeftSpinnerSpeed = 0;
+    private double targetRightSpinnerSpeed = 0;
+    private boolean shooterIsRunning = false;
 
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
@@ -587,33 +583,143 @@ public class GFORCE_Hardware {
         if (LOGGING) Log.d("G-FORCE AUTO", String.format("MV (CPS) %5.1f %5.1f ", leftVel, rightVel));
     }
 
-    public void setAxialPower(double power) {
-        leftDrive.setPower(power);
-        rightDrive.setPower(power);
-    }
-
     public void stopRobot() {
         moveRobotVelocity(0, 0, 0);
     }
 
     // ========================================================
-    // ----               Motor Methods
+    // ----               Motor Constants and Methods
     // ========================================================
+    public final double INCH_PER_COUNT_1150                = (4 * 3.1415 / 146.4 ); // 0.08577
+    public final double INCH_PER_COUNT_6000                = (4 * 3.1415 / 28 );    // 0.44879
+
+    public final double HIGH_SHOOTER_SPEED_L          =  520; // IPS
+    public final double HIGH_SHOOTER_SPEED_R          =  208; // IPS
+
+    public final double POWER_SHOT_SHOOTER_SPEED_L    =  197; // IPS
+    public final double POWER_SHOT_SHOOTER_SPEED_R    =  197; // IPS
+
+    public final double MID_SHOOTER_SPEED_L           =  189; // IPS
+    public final double MID_SHOOTER_SPEED_R           =  189; // IPS
+
+    public final double LOW_SHOOTER_SPEED_L           =   69; // IPS
+    public final double LOW_SHOOTER_SPEED_R           =   69; // IPS
+
+    public final double WOBBLE_SHOOTER_SPEED_L        =   51; // IPS
+    public final double WOBBLE_SHOOTER_SPEED_R        =   51; // IPS
+
+    public final double SHOOTER_SPEED_TEST            =  100; // CPS
+
 
     public void runCollectors(double power) {
         frontCollector.setPower(power);
         midCollector.setPower(power);
     }
 
-    public void runSpinners(double spinnerSpeed) {
-        targetSpinnerSpeed = spinnerSpeed;
-        leftShooter.setVelocity(spinnerSpeed);
-        rightShooter.setVelocity(spinnerSpeed);
+    public void setSpinnerTarget(Target spinnerTarget) {
+        if (DUAL_SPEED_SPINNER) {
+            switch (spinnerTarget) {
+                case WOBBLE_GOAL:
+                    setSpinners(WOBBLE_SHOOTER_SPEED_L, WOBBLE_SHOOTER_SPEED_R);
+                    break;
+
+                case LOW_GOAL:
+                    setSpinners(LOW_SHOOTER_SPEED_L, LOW_SHOOTER_SPEED_R);
+                    break;
+
+                case MID_GOAL:
+                    setSpinners(MID_SHOOTER_SPEED_L, MID_SHOOTER_SPEED_R);
+                    break;
+
+                case HIGH_GOAL:
+                    setSpinners(HIGH_SHOOTER_SPEED_L, -10);
+                    break;
+
+                case POWER_SHOT:
+                    setSpinners(POWER_SHOT_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
+                    break;
+            }
+
+        } else {
+            switch (spinnerTarget) {
+                case WOBBLE_GOAL:
+                    setSpinners(WOBBLE_SHOOTER_SPEED_R);
+                    break;
+
+                case LOW_GOAL:
+                    setSpinners(LOW_SHOOTER_SPEED_R);
+                    break;
+
+                case MID_GOAL:
+                    setSpinners(MID_SHOOTER_SPEED_R);
+                    break;
+
+                case HIGH_GOAL:
+                    setSpinners(HIGH_SHOOTER_SPEED_R);
+                    break;
+
+                case POWER_SHOT:
+                    setSpinners(POWER_SHOT_SHOOTER_SPEED_R);
+                    break;
+            }
+        }
     }
 
-    public boolean spinnerAtSpeed(double spinnerSpeed) {
-        runSpinners(spinnerSpeed);
-        return (Math.abs(targetSpinnerSpeed - leftShooter.getVelocity()) < SHOOTER_SPEED_TEST);
+    private void setSpinners(double spinnerSpeed) {
+        setSpinners(spinnerSpeed, spinnerSpeed);
+    }
+
+    private void setSpinners(double leftSpinnerIPS, double rightSpinnerIPS) {
+        if (DUAL_SPEED_SPINNER) {
+            targetLeftSpinnerSpeed = leftSpinnerIPS / INCH_PER_COUNT_6000;
+            targetRightSpinnerSpeed = rightSpinnerIPS  / INCH_PER_COUNT_1150;
+        } else {
+            targetLeftSpinnerSpeed = leftSpinnerIPS / INCH_PER_COUNT_1150;
+            targetRightSpinnerSpeed = rightSpinnerIPS  / INCH_PER_COUNT_1150;
+        }
+
+        if (shooterIsRunning) {
+            runSpinners();
+        }
+    }
+
+    public void jogSpinnerUp() {
+        targetLeftSpinnerSpeed *= 1.02;
+        targetRightSpinnerSpeed *= 1.02;
+        if (shooterIsRunning) {
+            runSpinners();
+        }
+    }
+
+    public void jogSpinnerDown() {
+        targetLeftSpinnerSpeed *= 0.98;
+        targetRightSpinnerSpeed *= 0.98;
+        if (shooterIsRunning) {
+            runSpinners();
+        }
+    }
+
+    public void runSpinners() {
+        leftShooter.setVelocity(targetLeftSpinnerSpeed);
+        rightShooter.setVelocity(targetRightSpinnerSpeed);
+        shooterIsRunning = true;
+    }
+
+    public void reverseSpinners() {
+        leftShooter.setVelocity(-targetLeftSpinnerSpeed);
+        rightShooter.setVelocity(-targetRightSpinnerSpeed);
+        shooterIsRunning = true;
+    }
+
+    public void stopSpinners() {
+        leftShooter.setVelocity(0);
+        rightShooter.setVelocity(0);
+        shooterIsRunning = false;
+    }
+
+    public boolean spinnerAtSpeed() {
+        return ((Math.abs(targetLeftSpinnerSpeed - leftShooter.getVelocity()) < SHOOTER_SPEED_TEST) &&
+                (Math.abs(targetRightSpinnerSpeed - rightShooter.getVelocity()) < SHOOTER_SPEED_TEST));
     }
 
     // ========================================================
