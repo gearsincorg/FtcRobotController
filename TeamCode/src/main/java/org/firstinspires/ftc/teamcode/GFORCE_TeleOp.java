@@ -34,7 +34,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public final double PRECISE_YAW_JS_SCALE    =  0.30;   // .15
     public final double SLOW_AXIAL_JS_SCALE     =  0.65;   // .2
     public final double SLOW_YAW_JS_SCALE       =  0.65;   // .15
-    public final double SHOOTER_SPEED_INCREASE  = 50.00;
 
     //Shooter Speed button Management
     public boolean shooterFast = false;
@@ -42,11 +41,15 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public boolean shooterSlow = false;
     public boolean lastShooterSlow = false;
 
+    private int feedPulser = 0;
+    private final int FEED_RATE   =  7 ;
+    private final int FEED_ACTIVE =  3 ;
+
     // click detector variables
-    boolean collectorPressed = false;
-    boolean lastCollectorPressed = false;
-    boolean spinnerPressed = false;
-    boolean lastSpinnerPressed = false;
+    private boolean collectorPressed = false;
+    private boolean lastCollectorPressed = false;
+    private boolean spinnerPressed = false;
+    private boolean lastSpinnerPressed = false;
 
     // Time Keeping
     private ElapsedTime neutralTime = new ElapsedTime();
@@ -68,6 +71,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         double yawVel;
         double lastAxialVel = 0;
         double desiredHeading = 0;
+
         boolean driving = true;
         boolean autoHeadingOn = false;
 
@@ -287,7 +291,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.runCollectors(1);
                     ringState = COLLECTING;
                 } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
-                    robot.runCollectors(1);
+                    feedPulser = (feedPulser + 1) % FEED_RATE ;
+                    if (feedPulser <= FEED_ACTIVE)
+                        robot.runCollectors(0.5);
+                    else
+                        robot.runCollectors(0);
                 } else {
                     robot.runCollectors(0);
                 }

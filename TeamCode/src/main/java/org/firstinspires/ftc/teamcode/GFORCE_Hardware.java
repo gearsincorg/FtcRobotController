@@ -591,10 +591,10 @@ public class GFORCE_Hardware {
     // ----               Motor Constants and Methods
     // ========================================================
     public final double INCH_PER_COUNT_1150                = (4 * 3.1415 / 146.4 ); // 0.08577
-    public final double INCH_PER_COUNT_6000                = (4 * 3.1415 / 28 );    // 0.44879
+    public final double INCH_PER_COUNT_6000                = (2 * 3.1415 / 28 );    // 0.2244
 
-    public final double HIGH_SHOOTER_SPEED_L          =  520; // IPS
-    public final double HIGH_SHOOTER_SPEED_R          =  208; // IPS
+    public final double HIGH_SHOOTER_SPEED_L          =  460; // IPS
+    public final double HIGH_SHOOTER_SPEED_R          =  100; // IPS
 
     public final double POWER_SHOT_SHOOTER_SPEED_L    =  197; // IPS
     public final double POWER_SHOT_SHOOTER_SPEED_R    =  197; // IPS
@@ -632,7 +632,7 @@ public class GFORCE_Hardware {
                     break;
 
                 case HIGH_GOAL:
-                    setSpinners(HIGH_SHOOTER_SPEED_L, -10);
+                    setSpinners(HIGH_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
                     break;
 
                 case POWER_SHOT:
