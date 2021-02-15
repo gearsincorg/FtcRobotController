@@ -9,8 +9,10 @@ import android.util.Log;
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -18,6 +20,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
 
+import org.firstinspires.ftc.robotcontroller.external.samples.SensorColor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -57,6 +60,7 @@ public class GFORCE_Hardware {
     public Servo ringStop         = null;
     public Servo ringDrop         = null;
 
+    public ColorRangeSensor ringColor = null;
     public RevTouchSensor midCollectorDown = null;
     public static BNO055IMU imu = null;
 
@@ -155,6 +159,8 @@ public class GFORCE_Hardware {
 
         leftShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        leftShooter.setVelocityPIDFCoefficients(15, 1, 0, 14 );
+        rightShooter.setVelocityPIDFCoefficients(15, 1, 0, 14 );
 
         //Define and Initialize Sensors
         midCollectorDown = myOpMode.hardwareMap.get(RevTouchSensor.class, "midTouch");
@@ -165,8 +171,10 @@ public class GFORCE_Hardware {
         ringStop = myOpMode.hardwareMap.get(Servo.class, "ring_stop");
         ringDrop = myOpMode.hardwareMap.get(Servo.class, "ring_drop");
         releaseWobbleGoal();
-        liftRingDrop();
+        disableRingDrop();
         stopRings();
+
+        ringColor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "color");
 
         // Set all Expansion hubs to use the MANUAL Bulk Caching mode
         allHubs = myOpMode.hardwareMap.getAll(LynxModule.class);
@@ -413,6 +421,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("Shooter (IPS)", "L/R  %6.0f / %6.0f",
                                     leftShooter.getVelocity() * (DUAL_SPEED_SPINNER ? INCH_PER_COUNT_6000 : INCH_PER_COUNT_1150),
                                            rightShooter.getVelocity() * INCH_PER_COUNT_1150);
+        myOpMode.telemetry.addData( "Ring" , ringColor.getRawLightDetected() );
         myOpMode.telemetry.update();
     }
 
@@ -607,8 +616,8 @@ public class GFORCE_Hardware {
     public final double LOW_SHOOTER_SPEED_L           =  200; // IPS
     public final double LOW_SHOOTER_SPEED_R           =   50; // IPS
 
-    public final double WOBBLE_SHOOTER_SPEED_L        =   45; // IPS
-    public final double WOBBLE_SHOOTER_SPEED_R        =   45; // IPS
+    public final double WOBBLE_SHOOTER_SPEED_L        =   50; // IPS
+    public final double WOBBLE_SHOOTER_SPEED_R        =   50; // IPS
 
     public final double SHOOTER_SPEED_TEST            =  100; // CPS
 
@@ -686,7 +695,7 @@ public class GFORCE_Hardware {
     }
 
     public double setSpinnersByRange(double rangeInMm) {
-        double leftSpinner = (0.0597 * rangeInMm ) + 340 ;
+        double leftSpinner = (0.0597 * rangeInMm ) + 355 ;
         double rightSpinner = leftSpinner / 4;
 
         setSpinners(leftSpinner, rightSpinner);
@@ -754,19 +763,20 @@ public class GFORCE_Hardware {
         ringStop.setPosition(RING_RELEASE);
     }
 
-    public void liftRingDrop() {
-        stopSpinners();
-        runCollectors(0);
-        stopRings();
-        ringDrop.setPosition(RING_DROP_DISABLE);
-    }
-
-    public void lowerRingDrop() {
+    public void enableRingDrop() {
+        grabWobbleGoal();
         runCollectors(0);
         setSpinnerTarget(Target.WOBBLE_GOAL);
         runSpinners();
         releaseRings();
         ringDrop.setPosition(RING_DROP_ENABLE);
+    }
+
+    public void disableRingDrop() {
+        stopSpinners();
+        runCollectors(0);
+        stopRings();
+        ringDrop.setPosition(RING_DROP_DISABLE);
     }
 
     // ========================================================

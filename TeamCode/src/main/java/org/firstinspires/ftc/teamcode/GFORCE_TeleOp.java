@@ -8,17 +8,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
-
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
-import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 
 import static org.firstinspires.ftc.teamcode.RingHandler.COLLECTING;
 import static org.firstinspires.ftc.teamcode.RingHandler.IDLE;
@@ -44,6 +34,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
     private int feedPulser = 0;
     private final int FEED_RATE   =  7 ;
     private final int FEED_ACTIVE =  3 ;
+    private final double EJECT_VELOCITY = 300 ;
 
     // click detector variables
     private boolean collectorPressed = false;
@@ -96,7 +87,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
         while (opModeIsActive()) {
             robot.updateMotion();  // Read all sensors and calculate motions
             setSpinnerSpeed();     // Set the shooter speed according to buttons
-            runRingHandler();      // Manage the conveyor and spinner
             runWobbleGrabber();    // Mamage the wobble goal grabber
 
             //Driver Controls
@@ -174,6 +164,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             // send outputs to drive motors
             robot.setAxialVelocity(axialVel);
+
+            runRingHandler();      // Manage the conveyor and spinner
             robot.moveRobotVelocity();
 
             // Send telemetry message to signify robot running
@@ -211,7 +203,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
         lastShooterSlow = shooterSlow;
     }
 
-
     private void runRingHandler() {
         switch (ringState) {
             case IDLE:
@@ -223,12 +214,13 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.releaseRings();
                     ringState = SPIN_UP;
                 } else if (gamepad2.b) {
-                    robot.lowerRingDrop();
+                    robot.enableRingDrop();
                     ringState = WOBBLE_LOADING;
                 } else {
                     robot.stopRings();
                     if (gamepad2.left_trigger > 0.5) {
                         robot.runCollectors(-1);
+                        robot.setAxialVelocity(EJECT_VELOCITY);
                     } else {
                         robot.runCollectors(0);
                     }
@@ -250,13 +242,16 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     stateTimer.reset();
                     ringState = STOP_COLLECT;
                 } else if (gamepad2.b) {
-                    robot.lowerRingDrop();
+                    robot.enableRingDrop();
                     ringState = WOBBLE_LOADING;
                 } else {
                     if (gamepad2.left_trigger > 0.5) {
                         robot.runCollectors(-1);
+                        robot.setAxialVelocity(EJECT_VELOCITY);
+                    } else if (stateTimer.time() > 0.2) {
+                        robot.runCollectors(1);  //  Run after giving Stop time to come down.
                     } else {
-                        robot.runCollectors(1);
+                        robot.runCollectors(0);
                     }
                 }
                 break;
@@ -270,7 +265,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             case WOBBLE_LOADING:
                 if (gamepad2.x) {
-                    robot.liftRingDrop();
+                    robot.disableRingDrop();
                     ringState = IDLE;
                 } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
                     robot.runCollectors(0.5);
@@ -287,17 +282,24 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 } else if (toggleCollector()) {
                     robot.stopRings();
                     robot.stopSpinners();
-                    robot.runCollectors(1);
+                    stateTimer.reset();  // enable time to stop shooter & engage ring stop.
                     ringState = COLLECTING;
                 } else if (gamepad2.b) {
-                    robot.lowerRingDrop();
+                    robot.enableRingDrop();
                     ringState = WOBBLE_LOADING;
                 } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
-                    feedPulser = (feedPulser + 1) % FEED_RATE ;
+                    /*feedPulser = (feedPulser + 1) % FEED_RATE ;
                     if (feedPulser <= FEED_ACTIVE)
                         robot.runCollectors(0.5);
                     else
                         robot.runCollectors(0);
+                    */
+                    // Run collector/feder fast until ring is near wheels, then slow down
+                    if (robot.ringColor.getRawLightDetected() < 500) {
+                        robot.runCollectors(.5);
+                    } else {
+                        robot.runCollectors(.2);
+                    }
                 } else {
                     robot.runCollectors(0);
                 }
