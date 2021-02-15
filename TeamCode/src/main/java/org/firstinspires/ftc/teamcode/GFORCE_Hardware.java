@@ -405,12 +405,14 @@ public class GFORCE_Hardware {
     }
 
     public void showEncoders() {
-        myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
         // myOpMode.telemetry.addData("Req Vel (mmPS)",  "A:Y %6.0f %6.0f ", driveAxial, driveYaw);
-        myOpMode.telemetry.addData("Act Vel (MMPS)", "L:R %6.0f %6.0f ", leftDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM, rightDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM);
-        myOpMode.telemetry.addData("motion (mm)", "axial %6.1f", getAxialMotion());
-        //myOpMode.telemetry.addData("Drive (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("Shooter (CPS)", "Left %6.0fd, Right %6.0f", leftShooter.getVelocity(), rightShooter.getVelocity());
+        // myOpMode.telemetry.addData("Act Vel (MMPS)", "L:R %6.0f %6.0f ", leftDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM, rightDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM);
+        // myOpMode.telemetry.addData("motion (mm)", "axial %6.1f", getAxialMotion());
+        // myOpMode.telemetry.addData("Drive (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
+        myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
+        myOpMode.telemetry.addData("Shooter (IPS)", "L/R  %6.0f / %6.0f",
+                                    leftShooter.getVelocity() * (DUAL_SPEED_SPINNER ? INCH_PER_COUNT_6000 : INCH_PER_COUNT_1150),
+                                           rightShooter.getVelocity() * INCH_PER_COUNT_1150);
         myOpMode.telemetry.update();
     }
 
@@ -543,7 +545,7 @@ public class GFORCE_Hardware {
         double rate = velocities.xRotationRate;
 
         filteredTurnRate += ((rate - filteredTurnRate) * TURN_RATE_TC);
-        myOpMode.telemetry.addData("Turn Rate", "%6.3f", filteredTurnRate);
+        // myOpMode.telemetry.addData("Turn Rate", "%6.3f", filteredTurnRate);
 
         return (Math.abs(filteredTurnRate) < STOP_TURNRATE);
     }
@@ -579,7 +581,7 @@ public class GFORCE_Hardware {
         leftDrive.setVelocity(leftVel);
         rightDrive.setVelocity(rightVel);
 
-        myOpMode.telemetry.addData("Motor Vel (CPS)", "%3.1f %3.1f", leftVel, rightVel);
+        //myOpMode.telemetry.addData("Motor Vel (CPS)", "%3.1f %3.1f", leftVel, rightVel);
         if (LOGGING) Log.d("G-FORCE AUTO", String.format("MV (CPS) %5.1f %5.1f ", leftVel, rightVel));
     }
 
@@ -590,23 +592,23 @@ public class GFORCE_Hardware {
     // ========================================================
     // ----               Motor Constants and Methods
     // ========================================================
-    public final double INCH_PER_COUNT_1150                = (4 * 3.1415 / 146.4 ); // 0.08577
-    public final double INCH_PER_COUNT_6000                = (2 * 3.1415 / 28 );    // 0.2244
+    public final double INCH_PER_COUNT_6000                = (2 * 3.1415 / 28 );       // 0.2244
+    public final double INCH_PER_COUNT_1150                = (3.8 * 3.1415 / 146.4 ); // 0.08154
 
     public final double HIGH_SHOOTER_SPEED_L          =  460; // IPS
-    public final double HIGH_SHOOTER_SPEED_R          =  100; // IPS
+    public final double HIGH_SHOOTER_SPEED_R          =  115; // IPS
 
-    public final double POWER_SHOT_SHOOTER_SPEED_L    =  197; // IPS
-    public final double POWER_SHOT_SHOOTER_SPEED_R    =  197; // IPS
+    public final double POWER_SHOT_SHOOTER_SPEED_L    =  420; // IPS
+    public final double POWER_SHOT_SHOOTER_SPEED_R    =  105; // IPS
 
-    public final double MID_SHOOTER_SPEED_L           =  189; // IPS
-    public final double MID_SHOOTER_SPEED_R           =  189; // IPS
+    public final double MID_SHOOTER_SPEED_L           =  400; // IPS
+    public final double MID_SHOOTER_SPEED_R           =  100; // IPS
 
-    public final double LOW_SHOOTER_SPEED_L           =   69; // IPS
-    public final double LOW_SHOOTER_SPEED_R           =   69; // IPS
+    public final double LOW_SHOOTER_SPEED_L           =  200; // IPS
+    public final double LOW_SHOOTER_SPEED_R           =   50; // IPS
 
-    public final double WOBBLE_SHOOTER_SPEED_L        =   51; // IPS
-    public final double WOBBLE_SHOOTER_SPEED_R        =   51; // IPS
+    public final double WOBBLE_SHOOTER_SPEED_L        =   45; // IPS
+    public final double WOBBLE_SHOOTER_SPEED_R        =   45; // IPS
 
     public final double SHOOTER_SPEED_TEST            =  100; // CPS
 
@@ -745,14 +747,19 @@ public class GFORCE_Hardware {
     }
 
     public void liftRingDrop() {
+        stopSpinners();
+        runCollectors(0);
+        stopRings();
         ringDrop.setPosition(RING_DROP_DISABLE);
     }
 
     public void lowerRingDrop() {
+        runCollectors(0);
+        setSpinnerTarget(Target.WOBBLE_GOAL);
+        runSpinners();
+        releaseRings();
         ringDrop.setPosition(RING_DROP_ENABLE);
     }
-
-
 
     // ========================================================
     // ----               Sound Methods

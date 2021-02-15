@@ -220,10 +220,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.releaseRings();
                     ringState = SPIN_UP;
                 } else if (gamepad2.b) {
-                    robot.runCollectors(0);
-                    robot.setSpinnerTarget(Target.WOBBLE_GOAL);
-                    robot.runSpinners();
-                    robot.releaseRings();
                     robot.lowerRingDrop();
                     ringState = WOBBLE_LOADING;
                 } else {
@@ -250,6 +246,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.runSpinners();
                     stateTimer.reset();
                     ringState = STOP_COLLECT;
+                } else if (gamepad2.b) {
+                    robot.lowerRingDrop();
+                    ringState = WOBBLE_LOADING;
                 } else {
                     if (gamepad2.left_trigger > 0.5) {
                         robot.runCollectors(-1);
@@ -269,12 +268,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
             case WOBBLE_LOADING:
                 if (gamepad2.x) {
                     robot.liftRingDrop();
-                    robot.stopSpinners();
-                    robot.runCollectors(0);
-                    robot.stopRings();
                     ringState = IDLE;
                 } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
-                    robot.runCollectors(1);
+                    robot.runCollectors(0.5);
                 } else {
                     robot.runCollectors(0);
                 }
@@ -290,6 +286,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.stopSpinners();
                     robot.runCollectors(1);
                     ringState = COLLECTING;
+                } else if (gamepad2.b) {
+                    robot.lowerRingDrop();
+                    ringState = WOBBLE_LOADING;
                 } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
                     feedPulser = (feedPulser + 1) % FEED_RATE ;
                     if (feedPulser <= FEED_ACTIVE)
