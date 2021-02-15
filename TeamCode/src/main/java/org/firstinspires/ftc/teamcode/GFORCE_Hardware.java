@@ -685,6 +685,14 @@ public class GFORCE_Hardware {
         }
     }
 
+    public double setSpinnersByRange(double rangeInMm) {
+        double leftSpinner = (0.0597 * rangeInMm ) + 340 ;
+        double rightSpinner = leftSpinner / 4;
+
+        setSpinners(leftSpinner, rightSpinner);
+        return (leftSpinner);
+    }
+
     public void jogSpinnerUp() {
         targetLeftSpinnerSpeed *= 1.02;
         targetRightSpinnerSpeed *= 1.02;

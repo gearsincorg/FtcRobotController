@@ -139,6 +139,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     RobotLog.ii("TARGET", "New Position");
                     autoHeadingOn = true;
                     desiredHeading = robot.currentHeading + vision.relativeBearing;
+
+                    // Adjust speed of spinner based on range
+                    robot.setSpinnersByRange(vision.targetRange);
                 }
 
                 if (robot.LOGGING) RobotLog.ii("TARGET", String.format("H:R:T:RB:S, %.1f, %.1f, %.1f, %.1f, %.1f ",
