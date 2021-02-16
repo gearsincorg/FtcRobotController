@@ -288,18 +288,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.enableRingDrop();
                     ringState = WOBBLE_LOADING;
                 } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
-                    /*feedPulser = (feedPulser + 1) % FEED_RATE ;
-                    if (feedPulser <= FEED_ACTIVE)
-                        robot.runCollectors(0.5);
-                    else
-                        robot.runCollectors(0);
-                    */
-                    // Run collector/feder fast until ring is near wheels, then slow down
-                    if (robot.ringColor.getRawLightDetected() < 500) {
-                        robot.runCollectors(.5);
-                    } else {
-                        robot.runCollectors(.2);
-                    }
+                    robot.runShooterFeeder();  // vary speed based on presence of ring.
                 } else {
                     robot.runCollectors(0);
                 }

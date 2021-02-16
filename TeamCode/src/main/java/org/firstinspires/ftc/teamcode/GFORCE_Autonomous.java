@@ -166,9 +166,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.setSpinnerTarget(Target.HIGH_GOAL);
         robot.runSpinners();
         robot.turnToHeading(goalHeading,2);
-        robot.turnToTarget(5);
-        robot.runCollectors(1);
-        sleep(2000);
+        robot.turnToTarget(3, true);  // Adjust speed based on range
+        robot.runShooterFeeder(3.0);
         robot.runCollectors(0);
         robot.stopSpinners();
         robot.turnToHeading(0,1);

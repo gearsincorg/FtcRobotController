@@ -432,7 +432,7 @@ public class GFORCE_Hardware {
     // --------------------------------------------------------------------
     // Target Tracking
     // --------------------------------------------------------------------
-    public boolean turnToTarget (double timeOutSEC) {
+    public boolean turnToTarget (double timeOutSEC, boolean adjustSpeed) {
         boolean inPosition = false;
         boolean seenTarget = false;
         double heading;
@@ -447,6 +447,10 @@ public class GFORCE_Hardware {
                 ( !(inPosition && seenTarget)) ) {
             if (myVision.newTargetPosition()) {
                 heading = currentHeading + myVision.relativeBearing;
+                if (adjustSpeed) {
+                    // Adjust speed of spinner based on range
+                    setSpinnersByRange(myVision.targetRange);
+                }
                 seenTarget = true;
             }
             inPosition = setYawVelocityToHoldHeading(heading);
@@ -740,6 +744,35 @@ public class GFORCE_Hardware {
         return ((Math.abs(targetLeftSpinnerSpeed - leftShooter.getVelocity()) < SHOOTER_SPEED_TEST) &&
                 (Math.abs(targetRightSpinnerSpeed - rightShooter.getVelocity()) < SHOOTER_SPEED_TEST));
     }
+
+    public void takeOneShot() {
+        // put code in here !!!!!!
+    }
+
+    public void runShooterFeeder(double runTime) {
+        navTime.reset();
+        while (myOpMode.opModeIsActive()  &&  (navTime.time() < runTime)) {
+            runShooterFeeder();
+        }
+    }
+
+    public boolean runShooterFeeder() {
+        // Run collector/feeder fast until ring is near wheels, then slow down
+        boolean inPlace = ringInPlace();
+        if (inPlace) {
+            runCollectors(.2);
+        } else {
+            runCollectors(.5);
+        }
+
+        return (inPlace);
+    }
+
+    public boolean ringInPlace() {
+        return (ringColor.getRawLightDetected() > 500);
+    }
+    
+
 
     // ========================================================
     // ----               SERVO Methods
