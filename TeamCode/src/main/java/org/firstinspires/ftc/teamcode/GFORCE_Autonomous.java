@@ -142,32 +142,33 @@ public class GFORCE_Autonomous extends LinearOpMode {
             robot.driveAxialVelocity(runDistance, 0, 900, 2);
         } else {
             // drive out to edge of launch zone to attempt shots
-            robot.driveAxialVelocity(runDistance + 200, 0, 900, 2);
+            robot.driveAxialVelocity(runDistance + 200, 0, 700, 2);
         }
     }
 
     private void shootPowerShot() {
-        double goalHeading = autoConfig.autoOptions.startCenter ? 0  : -27;
+        double goalHeading = autoConfig.autoOptions.startCenter ? 3  : -27;
         robot.releaseRings();
         robot.setSpinnerTarget(autoConfig.autoOptions.startCenter ? Target.POWER_SHOT : Target.HIGH_GOAL);
         robot.runSpinners();
         robot.sleepAndHoldHeading(goalHeading,2);
-        robot.runCollectors(1);
-        robot.sleepAndHoldHeading(goalHeading,0.25);
-        robot.sleepAndHoldHeading(goalHeading - 6,2);
-        robot.runCollectors(0);
+        robot.takeOneShot();
+        robot.sleepAndHoldHeading(goalHeading - 5,2);
+        robot.takeOneShot();
+        robot.sleepAndHoldHeading(goalHeading - 10,2);
+        robot.takeOneShot();
         robot.stopSpinners();
         robot.turnToHeading(0,1);
-
     }
+
     private void shootHighGoal() {
         double goalHeading = autoConfig.autoOptions.startCenter ? 19  : -19; //19 : -19
         robot.releaseRings();
         robot.setSpinnerTarget(Target.HIGH_GOAL);
         robot.runSpinners();
-        robot.turnToHeading(goalHeading,2);
-        robot.turnToTarget(3, true);  // Adjust speed based on range
-        robot.runShooterFeeder(3.0);
+        robot.turnToHeading(goalHeading,1.5);
+        robot.turnToTarget(2, true);  // Adjust speed based on range
+        robot.runShooterFeeder(4.0);
         robot.runCollectors(0);
         robot.stopSpinners();
         robot.turnToHeading(0,1);

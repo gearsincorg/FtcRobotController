@@ -74,7 +74,7 @@ public class GFORCE_Hardware {
     public final double ACCELERATION_LIMIT  = 3000;  // MM per second per second
 
     // Driving constants Yaw heading
-    final double HEADING_GAIN       =   0.0075;  // was 0.01
+    final double HEADING_GAIN       =   0.0090;  // was 0.0075
     final double TURN_RATE_TC       =   0.6;
     final double STOP_TURNRATE      =   0.020;
     final double GYRO_360_READING   = 360.0;
@@ -608,11 +608,11 @@ public class GFORCE_Hardware {
     public final double INCH_PER_COUNT_6000                = (2 * 3.1415 / 28 );       // 0.2244
     public final double INCH_PER_COUNT_1150                = (3.8 * 3.1415 / 146.4 ); // 0.08154
 
-    public final double HIGH_SHOOTER_SPEED_L          =  460; // IPS
+    public final double HIGH_SHOOTER_SPEED_L          =  455; // IPS
     public final double HIGH_SHOOTER_SPEED_R          =  115; // IPS
 
-    public final double POWER_SHOT_SHOOTER_SPEED_L    =  420; // IPS
-    public final double POWER_SHOT_SHOOTER_SPEED_R    =  105; // IPS
+    public final double POWER_SHOT_SHOOTER_SPEED_L    =  440; // IPS
+    public final double POWER_SHOT_SHOOTER_SPEED_R    =  110; // IPS
 
     public final double MID_SHOOTER_SPEED_L           =  400; // IPS
     public final double MID_SHOOTER_SPEED_R           =  100; // IPS
@@ -624,6 +624,9 @@ public class GFORCE_Hardware {
     public final double WOBBLE_SHOOTER_SPEED_R        =   50; // IPS
 
     public final double SHOOTER_SPEED_TEST            =  100; // CPS
+    public final double MINIMUM_RANGE                 = 1760; // mm at line
+    public final double RANGE_SCALE                   = 0.05; // IPS per mm extra
+
 
 
     public void runCollectors(double power) {
@@ -699,7 +702,7 @@ public class GFORCE_Hardware {
     }
 
     public double setSpinnersByRange(double rangeInMm) {
-        double leftSpinner = (0.0597 * rangeInMm ) + 355 ;
+        double leftSpinner = HIGH_SHOOTER_SPEED_L + ((rangeInMm - MINIMUM_RANGE) * RANGE_SCALE) ;
         double rightSpinner = leftSpinner / 4;
 
         setSpinners(leftSpinner, rightSpinner);
@@ -746,7 +749,22 @@ public class GFORCE_Hardware {
     }
 
     public void takeOneShot() {
-        // put code in here !!!!!!
+        // feed the ring if it's not ready now
+        if (!ringInPlace()) {
+            while(myOpMode.opModeIsActive() && !runShooterFeeder()) {
+            }
+        }
+
+        // Now shoot the next ring
+        while(myOpMode.opModeIsActive() && runShooterFeeder()) {
+        }
+
+        // feed the next ring till we see it (unless there aren't any)
+        navTime.reset();
+        while(myOpMode.opModeIsActive() && !runShooterFeeder() && (navTime.time() < 1)) {
+        }
+
+        runCollectors(0);
     }
 
     public void runShooterFeeder(double runTime) {
@@ -760,9 +778,9 @@ public class GFORCE_Hardware {
         // Run collector/feeder fast until ring is near wheels, then slow down
         boolean inPlace = ringInPlace();
         if (inPlace) {
-            runCollectors(.2);
+            runCollectors(.20);
         } else {
-            runCollectors(.5);
+            runCollectors(.60);
         }
 
         return (inPlace);
@@ -771,8 +789,6 @@ public class GFORCE_Hardware {
     public boolean ringInPlace() {
         return (ringColor.getRawLightDetected() > 500);
     }
-    
-
 
     // ========================================================
     // ----               SERVO Methods
