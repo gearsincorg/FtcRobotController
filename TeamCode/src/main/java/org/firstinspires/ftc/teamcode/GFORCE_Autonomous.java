@@ -149,10 +149,13 @@ public class GFORCE_Autonomous extends LinearOpMode {
     private void shootPowerShot() {
         double goalHeading = autoConfig.autoOptions.startCenter ? 3  : -27;
         robot.releaseRings();
-        robot.setSpinnerTarget(autoConfig.autoOptions.startCenter ? Target.POWER_SHOT : Target.HIGH_GOAL);
+        robot.setSpinnerTarget(autoConfig.autoOptions.startCenter ? Target.CENTER_POWER_SHOT : Target.WALL_POWER_SHOT);
         robot.runSpinners();
         robot.sleepAndHoldHeading(goalHeading,2);
         robot.takeOneShot();
+        if(!autoConfig.autoOptions.startCenter) {
+            robot.jogSpinnerUp();
+        }
         robot.sleepAndHoldHeading(goalHeading - 5,2);
         robot.takeOneShot();
         robot.sleepAndHoldHeading(goalHeading - 10,2);
@@ -179,7 +182,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
             switch (ringsStacked) {
                 case 0:
                 default:
-                    placeWobbleGoal(900, 70, 700, 2);
+                    placeWobbleGoal(900, 70, 700, 4);
                     break;
                 case 1:
                     placeWobbleGoal(900, 30, 700, 3);
@@ -194,13 +197,13 @@ public class GFORCE_Autonomous extends LinearOpMode {
             switch (ringsStacked) {
                 case 0:
                 default:
-                    placeWobbleGoal(190, 0, 200, 2);
+                    placeWobbleGoal(190, 20, 200, 2);
                     break;
                 case 1:
-                    placeWobbleGoal(850, -27, 900, 3);
+                    placeWobbleGoal(850, -27, 300, 5);
                     break;
                 case 4:
-                    placeWobbleGoal(1250, 0, 900, 4);
+                    placeWobbleGoal(1250, 0, 300, 6);
                     break;
             }
         }
@@ -216,10 +219,16 @@ public class GFORCE_Autonomous extends LinearOpMode {
         if (autoConfig.autoOptions.park) {
             if (ringsStacked == 0) {
                 // Just backoff the minimum
-                robot.driveAxialVelocity(60, heading, -300, timeout);
+                if (autoConfig.autoOptions.startCenter) {
+                    robot.driveAxialVelocity(distance, 90, -300, timeout);
+                } else {
+                    robot.enableRingDrop();
+                    robot.driveAxialVelocity(100,heading,-300,timeout);
+                }
+
             } else {
                 // roll back over starting location
-                robot.driveAxialVelocity(distance - 400, heading, -speed, timeout);
+                robot.driveAxialVelocity(distance - 400, heading, -900, timeout);
             }
 
             robot.grabWobbleGoal();

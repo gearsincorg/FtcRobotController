@@ -9,7 +9,6 @@ import android.util.Log;
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorRangeSensor;
@@ -20,7 +19,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
 
-import org.firstinspires.ftc.robotcontroller.external.samples.SensorColor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -134,7 +132,7 @@ public class GFORCE_Hardware {
     public final double RING_RELEASE = 1.0;
 
     public final double RING_DROP_DISABLE = 0.0;
-    public final double RING_DROP_ENABLE = 1.0;
+    public final double RING_DROP_ENABLE = 0.9;
 
     /* Constructor */
     public GFORCE_Hardware() {
@@ -611,8 +609,10 @@ public class GFORCE_Hardware {
     public final double HIGH_SHOOTER_SPEED_L          =  455; // IPS
     public final double HIGH_SHOOTER_SPEED_R          =  115; // IPS
 
-    public final double POWER_SHOT_SHOOTER_SPEED_L    =  440; // IPS
-    public final double POWER_SHOT_SHOOTER_SPEED_R    =  110; // IPS
+    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L    =  440; // IPS
+    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_R =  110; // IPS
+    public final double WALL_POWER_SHOT_SHOOTER_SPEED_L = 460;
+    public final double WALL_POWER_SHOT_SHOOTER_SPEED_R = 120;
 
     public final double MID_SHOOTER_SPEED_L           =  400; // IPS
     public final double MID_SHOOTER_SPEED_R           =  100; // IPS
@@ -653,8 +653,12 @@ public class GFORCE_Hardware {
                     setSpinners(HIGH_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
                     break;
 
-                case POWER_SHOT:
-                    setSpinners(POWER_SHOT_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
+                case CENTER_POWER_SHOT:
+                    setSpinners(CENTER_POWER_SHOT_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
+                    break;
+
+                case WALL_POWER_SHOT:
+                    setSpinners(WALL_POWER_SHOT_SHOOTER_SPEED_L, WALL_POWER_SHOT_SHOOTER_SPEED_R);
                     break;
             }
 
@@ -676,8 +680,8 @@ public class GFORCE_Hardware {
                     setSpinners(HIGH_SHOOTER_SPEED_R);
                     break;
 
-                case POWER_SHOT:
-                    setSpinners(POWER_SHOT_SHOOTER_SPEED_R);
+                case CENTER_POWER_SHOT:
+                    setSpinners(CENTER_POWER_SHOT_SHOOTER_SPEED_R);
                     break;
             }
         }

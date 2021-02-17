@@ -5,5 +5,6 @@ public enum Target {
     LOW_GOAL,
     MID_GOAL,
     HIGH_GOAL,
-    POWER_SHOT
+    CENTER_POWER_SHOT,
+    WALL_POWER_SHOT
 }

@@ -188,7 +188,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         else if (gamepad2.dpad_down)
             robot.setSpinnerTarget(Target.WOBBLE_GOAL);
         else if (gamepad2.dpad_left)
-            robot.setSpinnerTarget(Target.POWER_SHOT);
+            robot.setSpinnerTarget(Target.CENTER_POWER_SHOT);
 
 
         //Look for button clicks and adjust speed
@@ -267,8 +267,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 if (gamepad2.x) {
                     robot.disableRingDrop();
                     ringState = IDLE;
-                } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
-                    robot.runCollectors(0.5);
+                } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper || gamepad2.left_bumper)) {
+                    robot.runCollectors(1);
                 } else {
                     robot.runCollectors(0);
                 }
