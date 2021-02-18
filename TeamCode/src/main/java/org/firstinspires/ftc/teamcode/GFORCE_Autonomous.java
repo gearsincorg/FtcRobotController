@@ -63,8 +63,11 @@ public class GFORCE_Autonomous extends LinearOpMode {
         autoTime.reset();
 
         if (opModeIsActive() && autoConfig.autoOptions.enabled) {
-            // Wait for the required delay
-            robot.delayWithSound(autoConfig.autoOptions.delayInSec);
+
+            // Wait for the required delay, unless we ar taking the spare action (double wobble)
+            if (!autoConfig.autoOptions.spare) {
+                robot.delayWithSound(autoConfig.autoOptions.delayInSec);
+            }
 
             driveToLine();
             if (autoConfig.autoOptions.scoreRingsHigh) {
@@ -200,10 +203,10 @@ public class GFORCE_Autonomous extends LinearOpMode {
                     placeWobbleGoal(190, 20, 200, 2);
                     break;
                 case 1:
-                    placeWobbleGoal(850, -27, 300, 5);
+                    placeWobbleGoal(850, -27, 700, 5);
                     break;
                 case 4:
-                    placeWobbleGoal(1250, 0, 300, 6);
+                    placeWobbleGoal(1250, 0, 900, 6);
                     break;
             }
         }
@@ -212,9 +215,24 @@ public class GFORCE_Autonomous extends LinearOpMode {
     private void placeWobbleGoal(double distance, double heading, double speed, double timeout) {
 
         robot.turnToHeading(heading, 1);
+
+        // slow down if this is a single wobble
+        if (!autoConfig.autoOptions.startCenter && !autoConfig.autoOptions.spare && (ringsStacked > 0)) {
+            speed = 300;
+        }
+
         robot.driveAxialVelocity(distance, heading, speed, timeout);
         robot.releaseWobbleGoal();
         robot.sleepAndHoldHeading(heading,0.5);
+
+        // See if we can pickup the other goal
+        if (!autoConfig.autoOptions.startCenter && autoConfig.autoOptions.spare && (ringsStacked > 0)) {
+            robot.driveAxialVelocity(distance, heading, -speed, timeout);
+
+            // Wait for the required delay, unless we ar taking the spare action (double wobble)
+            robot.delayWithSound(autoConfig.autoOptions.delayInSec);
+            robot.driveAxialVelocity(distance, heading, speed, timeout);
+        }
 
         if (autoConfig.autoOptions.park) {
             if (ringsStacked == 0) {
