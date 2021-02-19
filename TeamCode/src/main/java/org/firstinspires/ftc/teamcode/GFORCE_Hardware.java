@@ -59,7 +59,6 @@ public class GFORCE_Hardware {
     public Servo ringDrop         = null;
 
     public ColorRangeSensor ringColor = null;
-    public RevTouchSensor midCollectorDown = null;
     public static BNO055IMU imu = null;
 
     public final boolean DUAL_SPEED_SPINNER = true;  // Configure the spinner configuration
@@ -159,9 +158,6 @@ public class GFORCE_Hardware {
         rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         leftShooter.setVelocityPIDFCoefficients(15, 1, 0, 14 );
         rightShooter.setVelocityPIDFCoefficients(15, 1, 0, 14 );
-
-        //Define and Initialize Sensors
-        midCollectorDown = myOpMode.hardwareMap.get(RevTouchSensor.class, "midTouch");
 
         //Define and Initialize Ring Servos
         leftWobbleGrab = myOpMode.hardwareMap.get(Servo.class, "left_wobble");

@@ -11,7 +11,6 @@
             <Servo name="ring_drop" port="3" />
             <Servo name="left_wobble" port="4" />
             <Servo name="right_wobble" port="5" />
-
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
         </LynxModule>
         <LynxModule name="Control Hub" port="173">
@@ -19,8 +18,7 @@
             <goBILDA5202SeriesMotor name="right_drive" port="1" />
             <goBILDA5202SeriesMotor name="left_shooter" port="2" />
             <goBILDA5202SeriesMotor name="right_shooter" port="3" />
-            <RevTouchSensor name="midTouch" port="0" />
-            <LynxEmbeddedIMU name="imu 1" port="0" bus="0" />
+            <LynxColorSensor name="color" port="0" bus="1" />
         </LynxModule>
     </LynxUsbDevice>
 </Robot>
