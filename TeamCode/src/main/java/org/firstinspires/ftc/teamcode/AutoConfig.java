@@ -197,7 +197,7 @@ public class AutoConfig
       opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > SCORE HIGH GOAL"   : "5   Score High Goal", autoOptions.scoreRingsHigh ? "YES" : "no");
       opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > SCORE POWERSHOT"   : "6  Score Powershot", autoOptions.scorePowerShot ? "YES" : "no");
       opMode.telemetry.addData((currentMenuIndex == 7) ? "7 > PARK"   : "7  Park", autoOptions.park ? "YES" : "No");
-      opMode.telemetry.addData((currentMenuIndex == 8) ? "8 > SPARE"   : "8  Spare", autoOptions.spare ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 8) ? "8 > DOUBLE WOBBLE"   : "8  Double Wobble", autoOptions.spare ? "YES" : "no");
       opMode.telemetry.update();
   }
 }

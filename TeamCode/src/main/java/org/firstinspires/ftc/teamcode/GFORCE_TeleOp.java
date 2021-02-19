@@ -31,9 +31,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public boolean shooterSlow = false;
     public boolean lastShooterSlow = false;
 
-    private int feedPulser = 0;
-    private final int FEED_RATE   =  7 ;
-    private final int FEED_ACTIVE =  3 ;
     private final double EJECT_VELOCITY = 300 ;
 
     // click detector variables
@@ -41,6 +38,13 @@ public class GFORCE_TeleOp extends LinearOpMode {
     private boolean lastCollectorPressed = false;
     private boolean spinnerPressed = false;
     private boolean lastSpinnerPressed = false;
+    private boolean fiveLeftPressed = false;
+    private boolean lastFiveLeftPressed = false;
+    private boolean fiveRightPressed = false;
+    private boolean lastFiveRightPressed = false;
+
+    double  desiredHeading = 0;
+    boolean autoHeadingOn = false;
 
     // Time Keeping
     private ElapsedTime neutralTime = new ElapsedTime();
@@ -61,10 +65,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
         double axialVel;
         double yawVel;
         double lastAxialVel = 0;
-        double desiredHeading = 0;
 
         boolean driving = true;
-        boolean autoHeadingOn = false;
 
         /* Initialize the hardware variables.
          * The init() method of the Hardware class does all the work here
@@ -121,6 +123,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             lastAxialVel = axialVel;
             cycleTimer.reset();
 
+
             // Control Yaw, using manual or auto correction or target tracking
             boolean newTarget = vision.newTargetPosition();
             if (gamepad1.left_bumper) {
@@ -153,6 +156,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
             driving = ((forwardBack != 0) || (rotate != 0));
             if (driving)
                 neutralTime.reset();
+
+            jogHeading();          // change heading setpoint with X B buttons
 
             // determine yaw velocity from either manual or auto control
             if (autoHeadingOn && (neutralTime.time() < 3)) {
@@ -319,6 +324,26 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.grabWobbleGoal();
         else if (gamepad2.a)
             robot.releaseWobbleGoal();
+    }
+
+    private void jogHeading() {
+        fiveLeftPressed = gamepad1.x;
+        fiveRightPressed = gamepad1.b;
+
+        if (fiveLeftPressed && !lastFiveLeftPressed) {
+            neutralTime.reset();
+            autoHeadingOn = true;
+            desiredHeading  += 5.0;
+        }
+
+        if (fiveRightPressed && !lastFiveRightPressed) {
+            neutralTime.reset();
+            autoHeadingOn = true;
+            desiredHeading  -= 5.0;
+        }
+
+        lastFiveLeftPressed = fiveLeftPressed;
+        lastFiveRightPressed = fiveRightPressed;
     }
 
 }

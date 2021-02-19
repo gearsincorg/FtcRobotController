@@ -606,7 +606,7 @@ public class GFORCE_Hardware {
     public final double INCH_PER_COUNT_6000                = (2 * 3.1415 / 28 );       // 0.2244
     public final double INCH_PER_COUNT_1150                = (3.8 * 3.1415 / 146.4 ); // 0.08154
 
-    public final double HIGH_SHOOTER_SPEED_L          =  455; // IPS
+    public final double HIGH_SHOOTER_SPEED_L          =  458; // IPS
     public final double HIGH_SHOOTER_SPEED_R          =  115; // IPS
 
     public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L    =  440; // IPS
@@ -784,7 +784,7 @@ public class GFORCE_Hardware {
         if (inPlace) {
             runCollectors(.20);
         } else {
-            runCollectors(.60);
+            runCollectors(.50);
         }
 
         return (inPlace);
