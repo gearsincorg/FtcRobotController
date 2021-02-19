@@ -607,8 +607,8 @@ public class GFORCE_Hardware {
 
     public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L    =  440; // IPS
     public final double CENTER_POWER_SHOT_SHOOTER_SPEED_R =  110; // IPS
-    public final double WALL_POWER_SHOT_SHOOTER_SPEED_L = 460;
-    public final double WALL_POWER_SHOT_SHOOTER_SPEED_R = 120;
+    public final double WALL_POWER_SHOT_SHOOTER_SPEED_L = 455;
+    public final double WALL_POWER_SHOT_SHOOTER_SPEED_R = 110;
 
     public final double MID_SHOOTER_SPEED_L           =  400; // IPS
     public final double MID_SHOOTER_SPEED_R           =  100; // IPS
@@ -710,8 +710,8 @@ public class GFORCE_Hardware {
     }
 
     public void jogSpinnerUp() {
-        targetLeftSpinnerSpeed *= 1.02;
-        targetRightSpinnerSpeed *= 1.02;
+        targetLeftSpinnerSpeed *= 1.018;
+        targetRightSpinnerSpeed *= 1.018;
         if (shooterIsRunning) {
             runSpinners();
         }

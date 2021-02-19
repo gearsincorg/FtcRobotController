@@ -150,7 +150,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
     }
 
     private void shootPowerShot() {
-        double goalHeading = autoConfig.autoOptions.startCenter ? 3  : -27;
+        double goalHeading = autoConfig.autoOptions.startCenter ? 5  : -27;
         robot.releaseRings();
         robot.setSpinnerTarget(autoConfig.autoOptions.startCenter ? Target.CENTER_POWER_SHOT : Target.WALL_POWER_SHOT);
         robot.runSpinners();
@@ -161,14 +161,17 @@ public class GFORCE_Autonomous extends LinearOpMode {
         }
         robot.sleepAndHoldHeading(goalHeading - 5,2);
         robot.takeOneShot();
-        robot.sleepAndHoldHeading(goalHeading - 10,2);
+        if(!autoConfig.autoOptions.startCenter) {
+            robot.jogSpinnerUp();
+        }
+        robot.sleepAndHoldHeading(goalHeading - 9,2);
         robot.takeOneShot();
         robot.stopSpinners();
         robot.turnToHeading(0,1);
     }
 
     private void shootHighGoal() {
-        double goalHeading = autoConfig.autoOptions.startCenter ? 19  : -19; //19 : -19
+        double goalHeading = autoConfig.autoOptions.startCenter ? 18  : -19; //19 : -19
         robot.releaseRings();
         robot.setSpinnerTarget(Target.HIGH_GOAL);
         robot.runSpinners();
