@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.util.RobotLog;
 
 import static org.firstinspires.ftc.teamcode.RingHandler.COLLECTING;
 import static org.firstinspires.ftc.teamcode.RingHandler.IDLE;
-import static org.firstinspires.ftc.teamcode.RingHandler.SPIN_UP;
+import static org.firstinspires.ftc.teamcode.RingHandler.SPUN_UP;
 import static org.firstinspires.ftc.teamcode.RingHandler.STOP_COLLECT;
 import static org.firstinspires.ftc.teamcode.RingHandler.WOBBLE_LOADING;
 
@@ -102,7 +102,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             rotate = -gamepad1.right_stick_x;
 
             // Go super slow for shoot and collect, or Go sorta slow if not pressing Turbo Button
-            if ((ringState == COLLECTING) || (ringState == SPIN_UP)) {
+            if ((ringState == COLLECTING) || (ringState == SPUN_UP)) {
                 forwardBack *= PRECISE_AXIAL_JS_SCALE;
                 rotate *= PRECISE_YAW_JS_SCALE;
             } else if (gamepad1.left_trigger < 0.5) {
@@ -208,20 +208,31 @@ public class GFORCE_TeleOp extends LinearOpMode {
         lastShooterSlow = shooterSlow;
     }
 
+    /* #####   Ring Handler State Machine   #####
+    // Use single click to transition between Collecting and Shooting
+    // Ensure that the collectors are stopped before releasing the Ring Stop
+    // Control the Ring Feed speed to get consistent insertion.
+    // States:
+    //  IDLE            Normal driving, look for shooter or collector reverse requests
+    //  COLLECTING      Collectors running, Ring Stop engaged
+    //  STOP_COLLECT    Transitioning to Shoot. Wait for collector to stop turning
+    //  SPUN_UP         Spinners running, Ring Stop lifted to enable shooting
+    //  WOBBLE_LOADING  RingDrop engaged, Wobble Goals held, Spinners at slow, transport enabled
+    */
     private void runRingHandler() {
         switch (ringState) {
             case IDLE:
-                if (toggleCollector()) {
+                if (toggleCollector()) {                                // Transition to COLLECTING
                     robot.runCollectors(1);
                     ringState = COLLECTING;
-                } else if (toggleSpinner() || gamepad1.right_bumper) {
+                } else if (toggleSpinner() || gamepad1.right_bumper) {  // Transition to SPIN_UP
                     robot.runSpinners();
                     robot.releaseRings();
-                    ringState = SPIN_UP;
-                } else if (gamepad2.b) {
+                    ringState = SPUN_UP;
+                } else if (gamepad2.b) {                                // Transition to WOBBLE_LOADING
                     robot.enableRingDrop();
                     ringState = WOBBLE_LOADING;
-                } else {
+                } else {                                                // Manage IDLE Activities
                     robot.stopRings();
                     if (gamepad2.left_trigger > 0.5) {
                         robot.runCollectors(-1);
@@ -238,18 +249,18 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 break;
 
             case COLLECTING:
-                if (toggleCollector()){
+                if (toggleCollector()){                                 // Transition to IDLE
                     robot.runCollectors(0);
                     ringState = IDLE;
-                } else if (toggleSpinner() || gamepad1.right_bumper) {
+                } else if (toggleSpinner() || gamepad1.right_bumper) {  // Transition to STOP_COLLECT
                     robot.runCollectors(0);
                     robot.runSpinners();
                     stateTimer.reset();
                     ringState = STOP_COLLECT;
-                } else if (gamepad2.b) {
+                } else if (gamepad2.b) {                                // Transition to WOBBLE_LOADING
                     robot.enableRingDrop();
                     ringState = WOBBLE_LOADING;
-                } else {
+                } else {                                                // Manage COLLECTING Activities
                     if (gamepad2.left_trigger > 0.5) {
                         robot.runCollectors(-1);
                         robot.setAxialVelocity(EJECT_VELOCITY);
@@ -262,14 +273,14 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 break;
 
             case STOP_COLLECT:
-                if (stateTimer.time() > 0.2) {
+                if (stateTimer.time() > 0.2) {                          // Transition to SPIN_UP
                     robot.releaseRings();
-                    ringState = SPIN_UP;
+                    ringState = SPUN_UP;
                 }
                 break;
 
             case WOBBLE_LOADING:
-                if (gamepad2.x) {
+                if (gamepad2.x) {                                       // Transition to IDLE
                     robot.disableRingDrop();
                     ringState = IDLE;
                 } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper || gamepad2.left_bumper)) {
@@ -279,17 +290,17 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 }
                 break;
 
-            case SPIN_UP:
-                if (toggleSpinner() || (gamepad1.right_trigger > 0.5)) {
+            case SPUN_UP:
+                if (toggleSpinner() || (gamepad1.right_trigger > 0.5)) { // Transition to IDLE
                     robot.stopSpinners();
                     robot.stopRings();
                     ringState = IDLE;
-                } else if (toggleCollector()) {
+                } else if (toggleCollector()) {                         // Transition to COLLECTING
                     robot.stopRings();
                     robot.stopSpinners();
                     stateTimer.reset();  // enable time to stop shooter & engage ring stop.
                     ringState = COLLECTING;
-                } else if (gamepad2.b) {
+                } else if (gamepad2.b) {                                // Transition to WOBBLE_LOADING
                     robot.enableRingDrop();
                     ringState = WOBBLE_LOADING;
                 } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
