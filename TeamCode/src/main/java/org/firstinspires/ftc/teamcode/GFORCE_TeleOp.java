@@ -7,6 +7,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -91,11 +92,19 @@ public class GFORCE_TeleOp extends LinearOpMode {
             setSpinnerSpeed();     // Set the shooter speed according to buttons
             runWobbleGrabber();    // Mamage the wobble goal grabber
 
+
+            if (gamepad2.right_stick_button) {
+                robot.tiltShot.setPower(-gamepad2.left_stick_y);
+            } else {
+                robot.tiltShot.setPower(0.00);
+            }
+
             //Driver Controls
             if (gamepad1.back && gamepad1.start) {
                 robot.resetHeading();
                 desiredHeading = 0;
             }
+
 
             // Manual driving
             forwardBack = -gamepad1.left_stick_y;

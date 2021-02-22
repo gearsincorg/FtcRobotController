@@ -47,10 +47,6 @@ public class GFORCE_Hardware {
 
     public DcMotorEx leftShooter = null;
     public DcMotorEx rightShooter = null;
-
-    public DcMotorEx ringLift = null;
-    public DcMotorEx ringFeed = null;
-
     public DcMotorEx tiltShot = null;
 
     List<LynxModule> allHubs = null;
@@ -115,6 +111,7 @@ public class GFORCE_Hardware {
     private double  targetRightSpinnerSpeed  = 0;
     private boolean shooterIsRunning         = false;
     private double  tiltSetPointDegrees      = 0;
+    private int     tiltEncoderCount         = 0;
     private int     tiltSetPointCounts       = 0;
     private boolean tiltPIDEnabled           = false;
 
@@ -154,14 +151,11 @@ public class GFORCE_Hardware {
         midCollector = configureMotor("mid_collector", DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftShooter = configureMotor("left_shooter", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
         rightShooter = configureMotor("right_shooter", DcMotor.Direction.REVERSE, DcMotor.RunMode.RUN_USING_ENCODER);
-        ringLift = configureMotor("ring_lift", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
-        ringFeed = configureMotor("ring_feed", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
         tiltShot = configureMotor("tilt_shot", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
 
         leftShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        tiltShot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        tiltShot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftShooter.setVelocityPIDFCoefficients(15, 1, 0, 14);
         rightShooter.setVelocityPIDFCoefficients(15, 1, 0, 14);
         tiltShot.setVelocityPIDFCoefficients(15, 1, 0, 14);
@@ -334,7 +328,7 @@ public class GFORCE_Hardware {
 
             encoderLeft = leftDrive.getCurrentPosition();
             encoderRight = rightDrive.getCurrentPosition();
-
+            tiltEncoderCount = tiltShot.getCurrentPosition();
             getHeading();
 
             intervalCycle = cycleTime.milliseconds() - lastCycle;
@@ -423,7 +417,8 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
         myOpMode.telemetry.addData("Shooter (IPS)", "L/R  %6.0f / %6.0f",
                 leftShooter.getVelocity() * INCH_PER_COUNT_6000 , rightShooter.getVelocity() * INCH_PER_COUNT_1150);
-        myOpMode.telemetry.addData("Ring", ringColor.getRawLightDetected());
+        // myOpMode.telemetry.addData("Ring", ringColor.getRawLightDetected());
+        myOpMode.telemetry.addData("Tilt (Counts/Deg)", "%6d / %6.0f", tiltEncoderCount, countsToDegrees(tiltEncoderCount));
         myOpMode.telemetry.update();
     }
 
@@ -782,8 +777,16 @@ public class GFORCE_Hardware {
 
     public void setTiltAngle(double degrees) {
         tiltSetPointDegrees      = degrees;
-        tiltSetPointCounts       = (int)((TILT_HOME_ANGLE - degrees) * TILT_COUNTS_PER_DEGREE);
+        tiltSetPointCounts       = degreesToCounts(degrees);
         tiltShot.setTargetPosition(tiltSetPointCounts);
+    }
+
+    private double countsToDegrees(int count) {
+        return( TILT_HOME_ANGLE - ((double)count / TILT_COUNTS_PER_DEGREE));
+    }
+
+    private int degreesToCounts(double degrees) {
+        return((int)((TILT_HOME_ANGLE - degrees) * TILT_COUNTS_PER_DEGREE));
     }
 
     public void gotoTiltHome() {
@@ -804,7 +807,6 @@ public class GFORCE_Hardware {
 
     public void turnOnTiltPID() {
         if (!tiltPIDEnabled) {
-            tiltShot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             tiltShot.setTargetPosition(tiltSetPointCounts);
             tiltShot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             tiltShot.setPower(0.5);
@@ -813,12 +815,9 @@ public class GFORCE_Hardware {
     }
 
     public void turnOffTiltPID() {
-        if (tiltPIDEnabled) {
-            tiltShot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            tiltShot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-            tiltShot.setPower(0.0);
-            tiltPIDEnabled = false;
-        }
+        tiltShot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        tiltPIDEnabled = false;
+        tiltShot.setPower(0.0);
     }
 
     // ========================================================
