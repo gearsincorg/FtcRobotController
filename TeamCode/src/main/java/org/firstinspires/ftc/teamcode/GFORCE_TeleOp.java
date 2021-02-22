@@ -227,6 +227,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     ringState = COLLECTING;
                 } else if (toggleSpinner() || gamepad1.right_bumper) {  // Transition to SPIN_UP
                     robot.runSpinners();
+                    robot.turnOnTiltPID();
                     robot.releaseRings();
                     ringState = SPUN_UP;
                 } else if (gamepad2.b) {                                // Transition to WOBBLE_LOADING
@@ -254,6 +255,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     ringState = IDLE;
                 } else if (toggleSpinner() || gamepad1.right_bumper) {  // Transition to STOP_COLLECT
                     robot.runCollectors(0);
+                    robot.turnOnTiltPID();
                     robot.runSpinners();
                     stateTimer.reset();
                     ringState = STOP_COLLECT;
@@ -293,11 +295,12 @@ public class GFORCE_TeleOp extends LinearOpMode {
             case SPUN_UP:
                 if (toggleSpinner() || (gamepad1.right_trigger > 0.5)) { // Transition to IDLE
                     robot.stopSpinners();
+                    robot.turnOffTiltPID();
                     robot.stopRings();
                     ringState = IDLE;
                 } else if (toggleCollector()) {                         // Transition to COLLECTING
-                    robot.stopRings();
                     robot.stopSpinners();
+                    robot.turnOffTiltPID();
                     stateTimer.reset();  // enable time to stop shooter & engage ring stop.
                     ringState = COLLECTING;
                 } else if (gamepad2.b) {                                // Transition to WOBBLE_LOADING

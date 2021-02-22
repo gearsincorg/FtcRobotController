@@ -39,44 +39,44 @@ public class GFORCE_Hardware {
 
     /* Public OpMode members. */
     public AllianceColor allianceColor = AllianceColor.UNKNOWN_COLOR;
-    public DcMotorEx leftDrive    = null;
-    public DcMotorEx rightDrive   = null;
+    public DcMotorEx leftDrive = null;
+    public DcMotorEx rightDrive = null;
 
     public DcMotorEx frontCollector = null;
     public DcMotorEx midCollector = null;
 
-    public DcMotorEx leftShooter  = null;
+    public DcMotorEx leftShooter = null;
     public DcMotorEx rightShooter = null;
 
-    public DcMotorEx ringLift     = null;
-    public DcMotorEx ringFeed     = null;
+    public DcMotorEx ringLift = null;
+    public DcMotorEx ringFeed = null;
 
-    List<LynxModule> allHubs      = null;
+    public DcMotorEx tiltShot = null;
 
-    public Servo leftWobbleGrab   = null;
-    public Servo rightWobbleGrab  = null;
-    public Servo ringStop         = null;
-    public Servo ringDrop         = null;
+    List<LynxModule> allHubs = null;
+
+    public Servo leftWobbleGrab = null;
+    public Servo rightWobbleGrab = null;
+    public Servo ringStop = null;
+    public Servo ringDrop = null;
 
     public ColorRangeSensor ringColor = null;
     public static BNO055IMU imu = null;
 
-    public final boolean DUAL_SPEED_SPINNER = true;  // Configure the spinner configuration
+    public final double MAX_VELOCITY = 2700;  // Counts per second
+    public final double AUTO_ROTATION_MMPS = 2400;  // MM Per Second
 
-    public final double MAX_VELOCITY        = 2700;  // Counts per second
-    public final double AUTO_ROTATION_MMPS  = 2400;  // MM Per Second
-
-    public final double MAX_AXIAL_MMPS      = 1500;  // MM Per Second
-    public final double MAX_YAW_MMPS        =  800;  // MM Per Second
-    public final double ACCELERATION_LIMIT  = 3000;  // MM per second per second
+    public final double MAX_AXIAL_MMPS = 1500;  // MM Per Second
+    public final double MAX_YAW_MMPS = 800;  // MM Per Second
+    public final double ACCELERATION_LIMIT = 3000;  // MM per second per second
 
     // Driving constants Yaw heading
-    final double HEADING_GAIN       =   0.0090;  // was 0.0075
-    final double TURN_RATE_TC       =   0.6;
-    final double STOP_TURNRATE      =   0.020;
-    final double GYRO_360_READING   = 360.0;
-    final double GYRO_SCALE_FACTOR  = 360.0 / GYRO_360_READING;
-    final double YAW_IS_CLOSE       =   1.5;  // angle within which we are "close"
+    final double HEADING_GAIN = 0.0090;  // was 0.0075
+    final double TURN_RATE_TC = 0.6;
+    final double STOP_TURNRATE = 0.020;
+    final double GYRO_360_READING = 360.0;
+    final double GYRO_SCALE_FACTOR = 360.0 / GYRO_360_READING;
+    final double YAW_IS_CLOSE = 1.5;  // angle within which we are "close"
     final double AXIAL_ENCODER_COUNTS_PER_MM = 1.78; // 537.6 Counts per (96 * 3.1415) mm
 
     // Robot states that we share with others
@@ -107,13 +107,16 @@ public class GFORCE_Hardware {
     private double integratedZAxis = 0;
     private double adjustedIntegratedZAxis = 0;
     private double headingSetpoint = 0;
-    private int     delaySoundID = 0;
+    private int    delaySoundID = 0;
 
     // Scoring Status variables
-    private int timeoutSoundID = 0;
-    private double targetLeftSpinnerSpeed = 0;
-    private double targetRightSpinnerSpeed = 0;
-    private boolean shooterIsRunning = false;
+    private int timeoutSoundID               = 0;
+    private double  targetLeftSpinnerSpeed   = 0;
+    private double  targetRightSpinnerSpeed  = 0;
+    private boolean shooterIsRunning         = false;
+    private double  tiltSetPointDegrees      = 0;
+    private int     tiltSetPointCounts       = 0;
+    private boolean tiltPIDEnabled           = false;
 
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
@@ -127,7 +130,7 @@ public class GFORCE_Hardware {
     public final double LEFT_GOAL_RELEASE = 0.80;
     public final double RIGHT_GOAL_RELEASE = 0.15;
 
-    public final double RING_STOP    = 0.0;
+    public final double RING_STOP = 0.0;
     public final double RING_RELEASE = 1.0;
 
     public final double RING_DROP_DISABLE = 0.0;
@@ -154,10 +157,14 @@ public class GFORCE_Hardware {
         ringLift = configureMotor("ring_lift", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
         ringFeed = configureMotor("ring_feed", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        tiltShot = configureMotor("tilt_shot", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_USING_ENCODER);
+
         leftShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        leftShooter.setVelocityPIDFCoefficients(15, 1, 0, 14 );
-        rightShooter.setVelocityPIDFCoefficients(15, 1, 0, 14 );
+        tiltShot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        leftShooter.setVelocityPIDFCoefficients(15, 1, 0, 14);
+        rightShooter.setVelocityPIDFCoefficients(15, 1, 0, 14);
+        tiltShot.setVelocityPIDFCoefficients(15, 1, 0, 14);
 
         //Define and Initialize Ring Servos
         leftWobbleGrab = myOpMode.hardwareMap.get(Servo.class, "left_wobble");
@@ -167,6 +174,7 @@ public class GFORCE_Hardware {
         releaseWobbleGoal();
         disableRingDrop();
         stopRings();
+        turnOffTiltPID();
 
         ringColor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "color");
 
@@ -177,7 +185,7 @@ public class GFORCE_Hardware {
         }
 
         // PreLoad sound files
-        delaySoundID   = myOpMode.hardwareMap.appContext.getResources().getIdentifier("jeopardy",   "raw", myOpMode.hardwareMap.appContext.getPackageName());
+        delaySoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("jeopardy", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (delaySoundID != 0)
             SoundPlayer.getInstance().preload(myOpMode.hardwareMap.appContext, delaySoundID);
 
@@ -215,6 +223,7 @@ public class GFORCE_Hardware {
     }
 
     // Autonomous driving methods
+
     /**
      * Drive a set distance at a set heading at a set speed until the timeout occurs
      *
@@ -413,9 +422,8 @@ public class GFORCE_Hardware {
         // myOpMode.telemetry.addData("Drive (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
         myOpMode.telemetry.addData("Shooter (IPS)", "L/R  %6.0f / %6.0f",
-                                    leftShooter.getVelocity() * (DUAL_SPEED_SPINNER ? INCH_PER_COUNT_6000 : INCH_PER_COUNT_1150),
-                                           rightShooter.getVelocity() * INCH_PER_COUNT_1150);
-        myOpMode.telemetry.addData( "Ring" , ringColor.getRawLightDetected() );
+                leftShooter.getVelocity() * INCH_PER_COUNT_6000 , rightShooter.getVelocity() * INCH_PER_COUNT_1150);
+        myOpMode.telemetry.addData("Ring", ringColor.getRawLightDetected());
         myOpMode.telemetry.update();
     }
 
@@ -423,10 +431,11 @@ public class GFORCE_Hardware {
         leftDrive.setMode(mode);
         rightDrive.setMode(mode);
     }
+
     // --------------------------------------------------------------------
     // Target Tracking
     // --------------------------------------------------------------------
-    public boolean turnToTarget (double timeOutSEC, boolean adjustSpeed) {
+    public boolean turnToTarget(double timeOutSEC, boolean adjustSpeed) {
         boolean inPosition = false;
         boolean seenTarget = false;
         double heading;
@@ -438,7 +447,7 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() &&
                 updateMotion() &&
                 (navTime.time() < timeOutSEC) &&
-                ( !(inPosition && seenTarget)) ) {
+                (!(inPosition && seenTarget))) {
             if (myVision.newTargetPosition()) {
                 heading = currentHeading + myVision.relativeBearing;
                 if (adjustSpeed) {
@@ -516,7 +525,8 @@ public class GFORCE_Hardware {
 
         setYawVelocity(yaw * AUTO_ROTATION_MMPS);
 
-        if (LOGGING) RobotLog.ii("TARGET", String.format("YAW %.1f, %.1f", yaw, yaw * AUTO_ROTATION_MMPS));
+        if (LOGGING)
+            RobotLog.ii("TARGET", String.format("YAW %.1f, %.1f", yaw, yaw * AUTO_ROTATION_MMPS));
 
         return (Math.abs(error) < YAW_IS_CLOSE);
     }
@@ -589,7 +599,8 @@ public class GFORCE_Hardware {
         rightDrive.setVelocity(rightVel);
 
         //myOpMode.telemetry.addData("Motor Vel (CPS)", "%3.1f %3.1f", leftVel, rightVel);
-        if (LOGGING) Log.d("G-FORCE AUTO", String.format("MV (CPS) %5.1f %5.1f ", leftVel, rightVel));
+        if (LOGGING)
+            Log.d("G-FORCE AUTO", String.format("MV (CPS) %5.1f %5.1f ", leftVel, rightVel));
     }
 
     public void stopRobot() {
@@ -597,33 +608,40 @@ public class GFORCE_Hardware {
     }
 
     // ========================================================
-    // ----               Motor Constants and Methods
+    // ----    Shooter Motor Constants and Methods
     // ========================================================
-    public final double INCH_PER_COUNT_6000                = (2 * 3.1415 / 28 );       // 0.2244
-    public final double INCH_PER_COUNT_1150                = (3.8 * 3.1415 / 146.4 ); // 0.08154
+    public final double INCH_PER_COUNT_6000 = (4 * 3.1415 / 28);       // 0.4488
+    public final double INCH_PER_COUNT_1150 = (3.8 * 3.1415 / 146.4);  // 0.08154
 
-    public final double HIGH_SHOOTER_SPEED_L          =  458; // IPS
-    public final double HIGH_SHOOTER_SPEED_R          =  115; // IPS
+    public final double TILT_COUNTS_PER_DEGREE = (2786 / 360.0) * (30.0 / 14.0);  // 16.583
+    public final double TILT_HOME_ANGLE = 39.0;
 
-    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L    =  440; // IPS
-    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_R =  110; // IPS
+    public final double HIGH_SHOOTER_SPEED_L = 900; // IPS
+    public final double HIGH_SHOOTER_SPEED_R = 250; // IPS
+    public final double HIGH_SHOOTER_ANGLE   =  20; // degrees
+
+    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L = 440; // IPS
+    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_R = 110; // IPS
+    public final double CENTER_POWER_SHOT_SHOOTER_ANGLE   =  18; // degrees
+
     public final double WALL_POWER_SHOT_SHOOTER_SPEED_L = 455;
     public final double WALL_POWER_SHOT_SHOOTER_SPEED_R = 110;
+    public final double WALL_POWER_SHOT_SHOOTER_ANGLE   = 19;
 
-    public final double MID_SHOOTER_SPEED_L           =  400; // IPS
-    public final double MID_SHOOTER_SPEED_R           =  100; // IPS
+    public final double MID_SHOOTER_SPEED_L = 400; // IPS
+    public final double MID_SHOOTER_SPEED_R = 100; // IPS
+    public final double MID_SHOOTER_ANGLE   = 10; // IPS
 
-    public final double LOW_SHOOTER_SPEED_L           =  200; // IPS
-    public final double LOW_SHOOTER_SPEED_R           =   50; // IPS
+    public final double LOW_SHOOTER_SPEED_L = 200; // IPS
+    public final double LOW_SHOOTER_SPEED_R = 50; // IPS
+    public final double LOW_SHOOTER_ANGLE   =  0; // IPS
 
-    public final double WOBBLE_SHOOTER_SPEED_L        =   50; // IPS
-    public final double WOBBLE_SHOOTER_SPEED_R        =   50; // IPS
+    public final double WOBBLE_SHOOTER_SPEED_L = 50; // IPS
+    public final double WOBBLE_SHOOTER_SPEED_R = 50; // IPS
+    public final double WOBBLE_SHOOTER_ANGLE   = TILT_HOME_ANGLE; // IPS
 
-    public final double SHOOTER_SPEED_TEST            =  100; // CPS
-    public final double MINIMUM_RANGE                 = 1760; // mm at line
-    public final double RANGE_SCALE                   = 0.05; // IPS per mm extra
-
-
+    public final double SHOOTER_SPEED_TEST = 100; // CPS
+    public final double MINIMUM_RANGE = 1760; // mm at line
 
     public void runCollectors(double power) {
         frontCollector.setPower(power);
@@ -631,70 +649,42 @@ public class GFORCE_Hardware {
     }
 
     public void setSpinnerTarget(Target spinnerTarget) {
-        if (DUAL_SPEED_SPINNER) {
-            switch (spinnerTarget) {
-                case WOBBLE_GOAL:
-                    setSpinners(WOBBLE_SHOOTER_SPEED_L, WOBBLE_SHOOTER_SPEED_R);
-                    break;
+        switch (spinnerTarget) {
+            case WOBBLE_GOAL:
+                setSpinners(WOBBLE_SHOOTER_SPEED_L, WOBBLE_SHOOTER_SPEED_R);
+                setTiltAngle(WOBBLE_SHOOTER_ANGLE);
+                break;
 
-                case LOW_GOAL:
-                    setSpinners(LOW_SHOOTER_SPEED_L, LOW_SHOOTER_SPEED_R);
-                    break;
+            case LOW_GOAL:
+                setSpinners(LOW_SHOOTER_SPEED_L, LOW_SHOOTER_SPEED_R);
+                setTiltAngle(LOW_SHOOTER_ANGLE);
+                break;
 
-                case MID_GOAL:
-                    setSpinners(MID_SHOOTER_SPEED_L, MID_SHOOTER_SPEED_R);
-                    break;
+            case MID_GOAL:
+                setSpinners(MID_SHOOTER_SPEED_L, MID_SHOOTER_SPEED_R);
+                setTiltAngle(MID_SHOOTER_ANGLE);
+                break;
 
-                case HIGH_GOAL:
-                    setSpinners(HIGH_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
-                    break;
+            case HIGH_GOAL:
+                setSpinners(HIGH_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
+                setTiltAngle(HIGH_SHOOTER_ANGLE);
+                break;
 
-                case CENTER_POWER_SHOT:
-                    setSpinners(CENTER_POWER_SHOT_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
-                    break;
+            case CENTER_POWER_SHOT:
+                setSpinners(CENTER_POWER_SHOT_SHOOTER_SPEED_L, CENTER_POWER_SHOT_SHOOTER_SPEED_R);
+                setTiltAngle(CENTER_POWER_SHOT_SHOOTER_ANGLE);
+                break;
 
-                case WALL_POWER_SHOT:
-                    setSpinners(WALL_POWER_SHOT_SHOOTER_SPEED_L, WALL_POWER_SHOT_SHOOTER_SPEED_R);
-                    break;
-            }
-
-        } else {
-            switch (spinnerTarget) {
-                case WOBBLE_GOAL:
-                    setSpinners(WOBBLE_SHOOTER_SPEED_R);
-                    break;
-
-                case LOW_GOAL:
-                    setSpinners(LOW_SHOOTER_SPEED_R);
-                    break;
-
-                case MID_GOAL:
-                    setSpinners(MID_SHOOTER_SPEED_R);
-                    break;
-
-                case HIGH_GOAL:
-                    setSpinners(HIGH_SHOOTER_SPEED_R);
-                    break;
-
-                case CENTER_POWER_SHOT:
-                    setSpinners(CENTER_POWER_SHOT_SHOOTER_SPEED_R);
-                    break;
-            }
+            case WALL_POWER_SHOT:
+                setSpinners(WALL_POWER_SHOT_SHOOTER_SPEED_L, WALL_POWER_SHOT_SHOOTER_SPEED_R);
+                setTiltAngle(WALL_POWER_SHOT_SHOOTER_ANGLE);
+                break;
         }
-    }
-
-    private void setSpinners(double spinnerSpeed) {
-        setSpinners(spinnerSpeed, spinnerSpeed);
     }
 
     private void setSpinners(double leftSpinnerIPS, double rightSpinnerIPS) {
-        if (DUAL_SPEED_SPINNER) {
-            targetLeftSpinnerSpeed = leftSpinnerIPS / INCH_PER_COUNT_6000;
-            targetRightSpinnerSpeed = rightSpinnerIPS  / INCH_PER_COUNT_1150;
-        } else {
-            targetLeftSpinnerSpeed = leftSpinnerIPS / INCH_PER_COUNT_1150;
-            targetRightSpinnerSpeed = rightSpinnerIPS  / INCH_PER_COUNT_1150;
-        }
+        targetLeftSpinnerSpeed = leftSpinnerIPS / INCH_PER_COUNT_6000;
+        targetRightSpinnerSpeed = rightSpinnerIPS / INCH_PER_COUNT_1150;
 
         if (shooterIsRunning) {
             runSpinners();
@@ -702,7 +692,7 @@ public class GFORCE_Hardware {
     }
 
     public double setSpinnersByRange(double rangeInMm) {
-        double leftSpinner = HIGH_SHOOTER_SPEED_L + ((rangeInMm - MINIMUM_RANGE) * RANGE_SCALE) ;
+        double leftSpinner = HIGH_SHOOTER_SPEED_L;
         double rightSpinner = leftSpinner / 4;
 
         setSpinners(leftSpinner, rightSpinner);
@@ -751,17 +741,17 @@ public class GFORCE_Hardware {
     public void takeOneShot() {
         // feed the ring if it's not ready now
         if (!ringInPlace()) {
-            while(myOpMode.opModeIsActive() && !runShooterFeeder()) {
+            while (myOpMode.opModeIsActive() && !runShooterFeeder()) {
             }
         }
 
         // Now shoot the next ring
-        while(myOpMode.opModeIsActive() && runShooterFeeder()) {
+        while (myOpMode.opModeIsActive() && runShooterFeeder()) {
         }
 
         // feed the next ring till we see it (unless there aren't any)
         navTime.reset();
-        while(myOpMode.opModeIsActive() && !runShooterFeeder() && (navTime.time() < 1)) {
+        while (myOpMode.opModeIsActive() && !runShooterFeeder() && (navTime.time() < 1)) {
         }
 
         runCollectors(0);
@@ -769,7 +759,7 @@ public class GFORCE_Hardware {
 
     public void runShooterFeeder(double runTime) {
         navTime.reset();
-        while (myOpMode.opModeIsActive()  &&  (navTime.time() < runTime)) {
+        while (myOpMode.opModeIsActive() && (navTime.time() < runTime)) {
             runShooterFeeder();
         }
     }
@@ -788,6 +778,47 @@ public class GFORCE_Hardware {
 
     public boolean ringInPlace() {
         return (ringColor.getRawLightDetected() > 500);
+    }
+
+    public void setTiltAngle(double degrees) {
+        tiltSetPointDegrees      = degrees;
+        tiltSetPointCounts       = (int)((TILT_HOME_ANGLE - degrees) * TILT_COUNTS_PER_DEGREE);
+        tiltShot.setTargetPosition(tiltSetPointCounts);
+    }
+
+    public void gotoTiltHome() {
+        turnOffTiltPID();
+    }
+
+    public void resetTiltHome() {
+        tiltShot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        tiltSetPointDegrees      = TILT_HOME_ANGLE;
+        tiltSetPointCounts       = 0;
+        tiltShot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void turnOnTiltPID(double degrees) {
+        setTiltAngle(degrees);
+        turnOnTiltPID();
+    }
+
+    public void turnOnTiltPID() {
+        if (!tiltPIDEnabled) {
+            tiltShot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            tiltShot.setTargetPosition(tiltSetPointCounts);
+            tiltShot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            tiltShot.setPower(0.5);
+            tiltPIDEnabled = true;
+        }
+    }
+
+    public void turnOffTiltPID() {
+        if (tiltPIDEnabled) {
+            tiltShot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            tiltShot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            tiltShot.setPower(0.0);
+            tiltPIDEnabled = false;
+        }
     }
 
     // ========================================================
@@ -816,6 +847,7 @@ public class GFORCE_Hardware {
         grabWobbleGoal();
         runCollectors(0);
         setSpinnerTarget(Target.WOBBLE_GOAL);
+        turnOffTiltPID();
         runSpinners();
         releaseRings();
         ringDrop.setPosition(RING_DROP_ENABLE);
@@ -826,6 +858,7 @@ public class GFORCE_Hardware {
         runCollectors(0);
         stopRings();
         ringDrop.setPosition(RING_DROP_DISABLE);
+        setSpinnerTarget(Target.HIGH_GOAL);
     }
 
     // ========================================================
