@@ -94,7 +94,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
 
             if (gamepad2.right_stick_button) {
-                robot.tiltShot.setTargetPosition(500);
+                robot.tiltShot.setTargetPosition(400);
                 robot.tiltShot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.tiltShot.setPower(0.40);
             } else {

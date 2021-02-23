@@ -156,9 +156,12 @@ public class GFORCE_Hardware {
         leftShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         tiltShot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftShooter.setVelocityPIDFCoefficients(15, 1, 0, 14);
-        rightShooter.setVelocityPIDFCoefficients(15, 1, 0, 14);
-        tiltShot.setVelocityPIDFCoefficients(15, 1, 0, 14);
+
+        leftShooter.setVelocityPIDFCoefficients(13, 0.5, 0, 12);
+        rightShooter.setVelocityPIDFCoefficients(13, 0.5, 0, 12);
+
+        tiltShot.setVelocityPIDFCoefficients(10, 2, 0, 12);
+        // tiltShot.setPositionPIDFCoefficients(2);
 
         //Define and Initialize Ring Servos
         leftWobbleGrab = myOpMode.hardwareMap.get(Servo.class, "left_wobble");
@@ -418,7 +421,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("Shooter (IPS)", "L/R  %6.0f / %6.0f",
                 leftShooter.getVelocity() * INCH_PER_COUNT_6000 , rightShooter.getVelocity() * INCH_PER_COUNT_1150);
         // myOpMode.telemetry.addData("Ring", ringColor.getRawLightDetected());
-        myOpMode.telemetry.addData("Tilt (Counts/Deg)", "%6d / %6.0f", tiltEncoderCount, countsToDegrees(tiltEncoderCount));
+        myOpMode.telemetry.addData("Tilt (Counts/Deg)", "%6d / %6.1f", tiltEncoderCount, countsToDegrees(tiltEncoderCount));
         myOpMode.telemetry.update();
     }
 
@@ -608,11 +611,11 @@ public class GFORCE_Hardware {
     public final double INCH_PER_COUNT_6000 = (4 * 3.1415 / 28);       // 0.4488
     public final double INCH_PER_COUNT_1150 = (3.8 * 3.1415 / 146.4);  // 0.08154
 
-    public final double TILT_COUNTS_PER_DEGREE = (2786 / 360.0) * (30.0 / 14.0);  // 16.583
-    public final double TILT_HOME_ANGLE = 39.0;
+    public final double TILT_COUNTS_PER_DEGREE = 20;
+    public final double TILT_HOME_ANGLE = 41.0;
 
     public final double HIGH_SHOOTER_SPEED_L = 900; // IPS
-    public final double HIGH_SHOOTER_SPEED_R = 250; // IPS
+    public final double HIGH_SHOOTER_SPEED_R = 220; // IPS
     public final double HIGH_SHOOTER_ANGLE   =  20; // degrees
 
     public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L = 440; // IPS
@@ -781,11 +784,11 @@ public class GFORCE_Hardware {
         tiltShot.setTargetPosition(tiltSetPointCounts);
     }
 
-    private double countsToDegrees(int count) {
+    public double countsToDegrees(int count) {
         return( TILT_HOME_ANGLE - ((double)count / TILT_COUNTS_PER_DEGREE));
     }
 
-    private int degreesToCounts(double degrees) {
+    public int degreesToCounts(double degrees) {
         return((int)((TILT_HOME_ANGLE - degrees) * TILT_COUNTS_PER_DEGREE));
     }
 
