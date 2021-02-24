@@ -7,7 +7,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 
@@ -73,8 +72,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
          * The init() method of the Hardware class does all the work here
          */
         robot.init(this, vision);
+        robot.startTiltCalibration();
         vision.init(this, robot);
         vision.activateVuforiaTargets(true);
+        robot.endTiltCalibration();
 
         // Wait for the game to start (Driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
@@ -92,7 +93,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             setSpinnerSpeed();     // Set the shooter speed according to buttons
             runWobbleGrabber();    // Mamage the wobble goal grabber
 
-
+            /*
             if (gamepad2.right_stick_button) {
                 robot.tiltShot.setTargetPosition(400);
                 robot.tiltShot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -101,6 +102,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 robot.tiltShot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 robot.tiltShot.setPower(0.00);
             }
+            */
 
             //Driver Controls
             if (gamepad1.back && gamepad1.start) {
@@ -146,7 +148,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     desiredHeading = robot.currentHeading + vision.relativeBearing;
 
                     // Adjust speed of spinner based on range
-                    robot.setSpinnersByRange(vision.targetRange);
+                    robot.setTiltByRange(vision.targetRange);
                 }
 
                 if (robot.LOGGING) RobotLog.ii("TARGET", String.format("H:R:T:RB:S, %.1f, %.1f, %.1f, %.1f, %.1f ",

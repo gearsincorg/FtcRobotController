@@ -9,7 +9,6 @@ import android.util.Log;
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -114,6 +113,7 @@ public class GFORCE_Hardware {
     private int     tiltEncoderCount         = 0;
     private int     tiltSetPointCounts       = 0;
     private boolean tiltPIDEnabled           = false;
+    private boolean tiltCalibrating          = false;
 
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
@@ -159,8 +159,7 @@ public class GFORCE_Hardware {
 
         leftShooter.setVelocityPIDFCoefficients(13, 0.5, 0, 12);
         rightShooter.setVelocityPIDFCoefficients(13, 0.5, 0, 12);
-
-        tiltShot.setVelocityPIDFCoefficients(10, 2, 0, 12);
+        tiltShot.setVelocityPIDFCoefficients(10, 2, 0, 11);
         // tiltShot.setPositionPIDFCoefficients(2);
 
         //Define and Initialize Ring Servos
@@ -420,7 +419,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
         myOpMode.telemetry.addData("Shooter (IPS)", "L/R  %6.0f / %6.0f",
                 leftShooter.getVelocity() * INCH_PER_COUNT_6000 , rightShooter.getVelocity() * INCH_PER_COUNT_1150);
-        // myOpMode.telemetry.addData("Ring", ringColor.getRawLightDetected());
+        myOpMode.telemetry.addData("Ring", ringColor.getRawLightDetected());
         myOpMode.telemetry.addData("Tilt (Counts/Deg)", "%6d / %6.1f", tiltEncoderCount, countsToDegrees(tiltEncoderCount));
         myOpMode.telemetry.update();
     }
@@ -450,7 +449,7 @@ public class GFORCE_Hardware {
                 heading = currentHeading + myVision.relativeBearing;
                 if (adjustSpeed) {
                     // Adjust speed of spinner based on range
-                    setSpinnersByRange(myVision.targetRange);
+                    setTiltByRange(myVision.targetRange);
                 }
                 seenTarget = true;
             }
@@ -612,19 +611,19 @@ public class GFORCE_Hardware {
     public final double INCH_PER_COUNT_1150 = (3.8 * 3.1415 / 146.4);  // 0.08154
 
     public final double TILT_COUNTS_PER_DEGREE = 20;
-    public final double TILT_HOME_ANGLE = 41.0;
+    public final double TILT_HOME_ANGLE = 39.0;
 
     public final double HIGH_SHOOTER_SPEED_L = 900; // IPS
     public final double HIGH_SHOOTER_SPEED_R = 220; // IPS
-    public final double HIGH_SHOOTER_ANGLE   =  20; // degrees
+    public final double HIGH_SHOOTER_ANGLE   =  21; // degrees
 
     public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L = 440; // IPS
     public final double CENTER_POWER_SHOT_SHOOTER_SPEED_R = 110; // IPS
-    public final double CENTER_POWER_SHOT_SHOOTER_ANGLE   =  18; // degrees
+    public final double CENTER_POWER_SHOT_SHOOTER_ANGLE   =  19; // degrees
 
     public final double WALL_POWER_SHOT_SHOOTER_SPEED_L = 455;
     public final double WALL_POWER_SHOT_SHOOTER_SPEED_R = 110;
-    public final double WALL_POWER_SHOT_SHOOTER_ANGLE   = 19;
+    public final double WALL_POWER_SHOT_SHOOTER_ANGLE   = 20;
 
     public final double MID_SHOOTER_SPEED_L = 400; // IPS
     public final double MID_SHOOTER_SPEED_R = 100; // IPS
@@ -639,7 +638,8 @@ public class GFORCE_Hardware {
     public final double WOBBLE_SHOOTER_ANGLE   = TILT_HOME_ANGLE; // IPS
 
     public final double SHOOTER_SPEED_TEST = 100; // CPS
-    public final double MINIMUM_RANGE = 1760; // mm at line
+    public final double STANDARD_RANGE     = 2000; // Center of robot from target when front of robot is on center of field
+    public final double DEGREES_PER_MM     = (0.5 / 30.0) ;      // 0.5 degrees per 30 mm)
 
     public void runCollectors(double power) {
         frontCollector.setPower(power);
@@ -689,17 +689,17 @@ public class GFORCE_Hardware {
         }
     }
 
-    public double setSpinnersByRange(double rangeInMm) {
-        double leftSpinner = HIGH_SHOOTER_SPEED_L;
-        double rightSpinner = leftSpinner / 4;
-
-        setSpinners(leftSpinner, rightSpinner);
-        return (leftSpinner);
+    //  This only works for high goal.  Reduce angle as range increases.
+    public double setTiltByRange(double rangeInMm) {
+        double tiltAngle = HIGH_SHOOTER_ANGLE + ((STANDARD_RANGE - rangeInMm) * DEGREES_PER_MM );
+        setTiltAngle(tiltAngle);
+        return (tiltAngle);
     }
 
     public void jogSpinnerUp() {
         targetLeftSpinnerSpeed *= 1.018;
         targetRightSpinnerSpeed *= 1.018;
+        setTiltAngle(getTiltAngle() + 0.5);
         if (shooterIsRunning) {
             runSpinners();
         }
@@ -708,6 +708,7 @@ public class GFORCE_Hardware {
     public void jogSpinnerDown() {
         targetLeftSpinnerSpeed *= 0.98;
         targetRightSpinnerSpeed *= 0.98;
+        setTiltAngle(getTiltAngle() - 0.5);
         if (shooterIsRunning) {
             runSpinners();
         }
@@ -784,6 +785,10 @@ public class GFORCE_Hardware {
         tiltShot.setTargetPosition(tiltSetPointCounts);
     }
 
+    public double getTiltAngle() {
+        return (tiltSetPointDegrees);
+    }
+
     public double countsToDegrees(int count) {
         return( TILT_HOME_ANGLE - ((double)count / TILT_COUNTS_PER_DEGREE));
     }
@@ -796,11 +801,18 @@ public class GFORCE_Hardware {
         turnOffTiltPID();
     }
 
-    public void resetTiltHome() {
+    public void startTiltCalibration() {
+        tiltCalibrating = true;
+        tiltShot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        tiltShot.setPower(0.15);
+    }
+
+    public void endTiltCalibration() {
         tiltShot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        tiltShot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         tiltSetPointDegrees      = TILT_HOME_ANGLE;
         tiltSetPointCounts       = 0;
-        tiltShot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        tiltCalibrating = false;
     }
 
     public void turnOnTiltPID(double degrees) {
@@ -809,10 +821,14 @@ public class GFORCE_Hardware {
     }
 
     public void turnOnTiltPID() {
+        if (tiltCalibrating) {
+            endTiltCalibration();
+        }
+
         if (!tiltPIDEnabled) {
             tiltShot.setTargetPosition(tiltSetPointCounts);
             tiltShot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            tiltShot.setPower(0.5);
+            tiltShot.setPower(0.4);
             tiltPIDEnabled = true;
         }
     }
