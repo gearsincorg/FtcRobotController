@@ -29,9 +29,12 @@ public class GFORCE_Autonomous extends LinearOpMode {
         // Initialize the hardware variables.
         autoConfig.init(hardwareMap.appContext, this);
         robot.init(this, vision);           // Motors, servos and Sensors.
+        robot.startTiltCalibration();
         vision.init(this, robot);          // Basic Vision connection
+
         vision.initVuforia(false);   // Vuforia
         vision.activateVuforiaTargets(false);
+        robot.endTiltCalibration();
         vision.initTFOD(true);       // Tensor flow
         vision.activateTFOD();               // Object Detaction
 
@@ -154,6 +157,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.releaseRings();
         robot.setSpinnerTarget(autoConfig.autoOptions.startCenter ? Target.CENTER_POWER_SHOT : Target.WALL_POWER_SHOT);
         robot.runSpinners();
+        robot.turnOnTiltPID();
         robot.sleepAndHoldHeading(goalHeading,2);
         robot.takeOneShot();
         if(!autoConfig.autoOptions.startCenter) {
@@ -167,19 +171,22 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.sleepAndHoldHeading(goalHeading - 9,2);
         robot.takeOneShot();
         robot.stopSpinners();
+        robot.turnOffTiltPID();
         robot.turnToHeading(0,1);
     }
 
     private void shootHighGoal() {
-        double goalHeading = autoConfig.autoOptions.startCenter ? 18  : -19; //19 : -19
+        double goalHeading = autoConfig.autoOptions.startCenter ? 14  : -17.5; //18 : -19
         robot.releaseRings();
-        robot.setSpinnerTarget(Target.HIGH_GOAL);
+        robot.setSpinnerTarget(Target.HIGH_GOAL_AUTO);
         robot.runSpinners();
+        robot.turnOnTiltPID();
         robot.turnToHeading(goalHeading,1.5);
         robot.turnToTarget(2, true);  // Adjust speed based on range
         robot.runShooterFeeder(4.0);
         robot.runCollectors(0);
         robot.stopSpinners();
+        robot.turnOffTiltPID();
         robot.turnToHeading(0,1);
     }
 

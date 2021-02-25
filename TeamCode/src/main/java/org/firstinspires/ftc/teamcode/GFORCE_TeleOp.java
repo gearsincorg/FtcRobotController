@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 
+import static org.firstinspires.ftc.teamcode.RingHandler.CALIBRATE_TILT;
 import static org.firstinspires.ftc.teamcode.RingHandler.COLLECTING;
 import static org.firstinspires.ftc.teamcode.RingHandler.IDLE;
 import static org.firstinspires.ftc.teamcode.RingHandler.SPUN_UP;
@@ -205,7 +206,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         else if (gamepad2.dpad_right)
             robot.setSpinnerTarget(Target.MID_GOAL);
         else if (gamepad2.dpad_down)
-            robot.setSpinnerTarget(Target.WOBBLE_GOAL);
+            robot.setSpinnerTarget(Target.LOW_GOAL);
         else if (gamepad2.dpad_left)
             robot.setSpinnerTarget(Target.CENTER_POWER_SHOT);
 
@@ -241,9 +242,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     ringState = COLLECTING;
                 } else if (toggleSpinner() || gamepad1.right_bumper) {  // Transition to SPIN_UP
                     robot.runSpinners();
-                    robot.turnOnTiltPID();
                     robot.releaseRings();
-                    ringState = SPUN_UP;
+                    stateTimer.reset();
+                    robot.startTiltCalibration();
+                    ringState = CALIBRATE_TILT;
                 } else if (gamepad2.b) {                                // Transition to WOBBLE_LOADING
                     robot.enableRingDrop();
                     ringState = WOBBLE_LOADING;
@@ -303,6 +305,14 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     robot.runCollectors(1);
                 } else {
                     robot.runCollectors(0);
+                }
+                break;
+
+            case CALIBRATE_TILT:
+                if (stateTimer.time() > 0.2) {
+                   robot.endTiltCalibration();
+                   robot.turnOnTiltPID();
+                   ringState = SPUN_UP;
                 }
                 break;
 

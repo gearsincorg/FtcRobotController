@@ -612,26 +612,29 @@ public class GFORCE_Hardware {
 
     public final double TILT_COUNTS_PER_DEGREE = 20;
     public final double TILT_HOME_ANGLE = 39.0;
+    public final double TOP_WHEEL_SPEED = 850;
+    public final double MINIMUM_SHOOTING_ANGLE = 10;
 
-    public final double HIGH_SHOOTER_SPEED_L = 900; // IPS
+    public final double HIGH_SHOOTER_SPEED_L = TOP_WHEEL_SPEED; // IPS
     public final double HIGH_SHOOTER_SPEED_R = 220; // IPS
     public final double HIGH_SHOOTER_ANGLE   =  21; // degrees
+    public final double HIGH_AUTO_SHOOTER_ANGLE = 21;
 
-    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L = 440; // IPS
-    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_R = 110; // IPS
-    public final double CENTER_POWER_SHOT_SHOOTER_ANGLE   =  19; // degrees
+    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L = TOP_WHEEL_SPEED; // IPS
+    public final double CENTER_POWER_SHOT_SHOOTER_SPEED_R = 220; // IPS
+    public final double CENTER_POWER_SHOT_SHOOTER_ANGLE   =  17; // degrees
 
-    public final double WALL_POWER_SHOT_SHOOTER_SPEED_L = 455;
-    public final double WALL_POWER_SHOT_SHOOTER_SPEED_R = 110;
-    public final double WALL_POWER_SHOT_SHOOTER_ANGLE   = 20;
+    public final double WALL_POWER_SHOT_SHOOTER_SPEED_L = TOP_WHEEL_SPEED;
+    public final double WALL_POWER_SHOT_SHOOTER_SPEED_R = 220;
+    public final double WALL_POWER_SHOT_SHOOTER_ANGLE   = 18;
 
-    public final double MID_SHOOTER_SPEED_L = 400; // IPS
-    public final double MID_SHOOTER_SPEED_R = 100; // IPS
-    public final double MID_SHOOTER_ANGLE   = 10; // IPS
+    public final double MID_SHOOTER_SPEED_L = TOP_WHEEL_SPEED; // IPS
+    public final double MID_SHOOTER_SPEED_R = 220; // IPS
+    public final double MID_SHOOTER_ANGLE   = 15; // IPS
 
-    public final double LOW_SHOOTER_SPEED_L = 200; // IPS
-    public final double LOW_SHOOTER_SPEED_R = 50; // IPS
-    public final double LOW_SHOOTER_ANGLE   =  0; // IPS
+    public final double LOW_SHOOTER_SPEED_L = 700; // IPS
+    public final double LOW_SHOOTER_SPEED_R = 220; // IPS
+    public final double LOW_SHOOTER_ANGLE   =  12; // IPS
 
     public final double WOBBLE_SHOOTER_SPEED_L = 50; // IPS
     public final double WOBBLE_SHOOTER_SPEED_R = 50; // IPS
@@ -639,7 +642,7 @@ public class GFORCE_Hardware {
 
     public final double SHOOTER_SPEED_TEST = 100; // CPS
     public final double STANDARD_RANGE     = 2000; // Center of robot from target when front of robot is on center of field
-    public final double DEGREES_PER_MM     = (0.5 / 30.0) ;      // 0.5 degrees per 30 mm)
+    public final double DEGREES_PER_MM     = 0.0033 ; // 1 degree per 300 mm)
 
     public void runCollectors(double power) {
         frontCollector.setPower(power);
@@ -666,6 +669,11 @@ public class GFORCE_Hardware {
             case HIGH_GOAL:
                 setSpinners(HIGH_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
                 setTiltAngle(HIGH_SHOOTER_ANGLE);
+                break;
+
+            case HIGH_GOAL_AUTO:
+                setSpinners(HIGH_SHOOTER_SPEED_L, HIGH_SHOOTER_SPEED_R);
+                setTiltAngle(HIGH_AUTO_SHOOTER_ANGLE);
                 break;
 
             case CENTER_POWER_SHOT:
@@ -697,8 +705,8 @@ public class GFORCE_Hardware {
     }
 
     public void jogSpinnerUp() {
-        targetLeftSpinnerSpeed *= 1.018;
-        targetRightSpinnerSpeed *= 1.018;
+        // targetLeftSpinnerSpeed *= 1.018;
+        // targetRightSpinnerSpeed *= 1.018;
         setTiltAngle(getTiltAngle() + 0.5);
         if (shooterIsRunning) {
             runSpinners();
@@ -706,8 +714,8 @@ public class GFORCE_Hardware {
     }
 
     public void jogSpinnerDown() {
-        targetLeftSpinnerSpeed *= 0.98;
-        targetRightSpinnerSpeed *= 0.98;
+        // targetLeftSpinnerSpeed *= 0.98;
+        // targetRightSpinnerSpeed *= 0.98;
         setTiltAngle(getTiltAngle() - 0.5);
         if (shooterIsRunning) {
             runSpinners();
@@ -780,6 +788,9 @@ public class GFORCE_Hardware {
     }
 
     public void setTiltAngle(double degrees) {
+        if (degrees < MINIMUM_SHOOTING_ANGLE) {
+            degrees =  MINIMUM_SHOOTING_ANGLE;
+        }
         tiltSetPointDegrees      = degrees;
         tiltSetPointCounts       = degreesToCounts(degrees);
         tiltShot.setTargetPosition(tiltSetPointCounts);
@@ -809,9 +820,9 @@ public class GFORCE_Hardware {
 
     public void endTiltCalibration() {
         tiltShot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        tiltShot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        tiltSetPointDegrees      = TILT_HOME_ANGLE;
-        tiltSetPointCounts       = 0;
+        //tiltSetPointDegrees      = TILT_HOME_ANGLE;
+        //tiltSetPointCounts       = 0;
+        turnOffTiltPID();
         tiltCalibrating = false;
     }
 
