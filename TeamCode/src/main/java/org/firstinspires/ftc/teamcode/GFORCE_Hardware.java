@@ -157,9 +157,9 @@ public class GFORCE_Hardware {
         rightShooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         tiltShot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        leftShooter.setVelocityPIDFCoefficients(13, 0.5, 0, 12);
-        rightShooter.setVelocityPIDFCoefficients(13, 0.5, 0, 12);
-        tiltShot.setVelocityPIDFCoefficients(10, 2, 0, 11);
+        leftShooter.setVelocityPIDFCoefficients(13, 0.75, 0, 11);
+        rightShooter.setVelocityPIDFCoefficients(13, 0.75, 0, 11);
+        tiltShot.setVelocityPIDFCoefficients(10, 2.5, 0, 12);
         // tiltShot.setPositionPIDFCoefficients(2);
 
         //Define and Initialize Ring Servos
@@ -417,10 +417,10 @@ public class GFORCE_Hardware {
         // myOpMode.telemetry.addData("motion (mm)", "axial %6.1f", getAxialMotion());
         // myOpMode.telemetry.addData("Drive (counts)","Left %6d, Right %6d", leftDrive.getCurrentPosition(), rightDrive.getCurrentPosition());
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
-        myOpMode.telemetry.addData("Shooter (IPS)", "L/R  %6.0f / %6.0f",
-                leftShooter.getVelocity() * INCH_PER_COUNT_6000 , rightShooter.getVelocity() * INCH_PER_COUNT_1150);
+        myOpMode.telemetry.addData("Shooter (IPS)", "[%6.0f]  %6.0f / %6.0f",
+                targetLeftSpinnerSpeed * INCH_PER_COUNT_6000, leftShooter.getVelocity() * INCH_PER_COUNT_6000 , rightShooter.getVelocity() * INCH_PER_COUNT_1150);
         myOpMode.telemetry.addData("Ring", ringColor.getRawLightDetected());
-        myOpMode.telemetry.addData("Tilt (Counts/Deg)", "%6d / %6.1f", tiltEncoderCount, countsToDegrees(tiltEncoderCount));
+        myOpMode.telemetry.addData("Tilt (Counts/Deg)", "[%6.0f] %6d / %6.1f", tiltSetPointDegrees, tiltEncoderCount, countsToDegrees(tiltEncoderCount));
         myOpMode.telemetry.update();
     }
 
@@ -432,13 +432,13 @@ public class GFORCE_Hardware {
     // --------------------------------------------------------------------
     // Target Tracking
     // --------------------------------------------------------------------
-    public boolean turnToTarget(double timeOutSEC, boolean adjustSpeed) {
+    public boolean turnToTarget(double timeOutSEC, boolean adjustSpeed, double defaultHeading) {
         boolean inPosition = false;
         boolean seenTarget = false;
         double heading;
 
         setAxialVelocity(0);
-        heading = getHeading();
+        heading = defaultHeading;
         navTime.reset();
 
         while (myOpMode.opModeIsActive() &&
@@ -612,17 +612,17 @@ public class GFORCE_Hardware {
 
     public final double TILT_COUNTS_PER_DEGREE = 20;
     public final double TILT_HOME_ANGLE = 39.0;
-    public final double TOP_WHEEL_SPEED = 850;
+    public final double TOP_WHEEL_SPEED = 750;  // was 850
     public final double MINIMUM_SHOOTING_ANGLE = 10;
 
     public final double HIGH_SHOOTER_SPEED_L = TOP_WHEEL_SPEED; // IPS
     public final double HIGH_SHOOTER_SPEED_R = 220; // IPS
-    public final double HIGH_SHOOTER_ANGLE   =  21; // degrees
-    public final double HIGH_AUTO_SHOOTER_ANGLE = 21;
+    public final double HIGH_SHOOTER_ANGLE   =  21.5; // degrees
+    public final double HIGH_AUTO_SHOOTER_ANGLE = 21.75;
 
     public final double CENTER_POWER_SHOT_SHOOTER_SPEED_L = TOP_WHEEL_SPEED; // IPS
     public final double CENTER_POWER_SHOT_SHOOTER_SPEED_R = 220; // IPS
-    public final double CENTER_POWER_SHOT_SHOOTER_ANGLE   =  17; // degrees
+    public final double CENTER_POWER_SHOT_SHOOTER_ANGLE   =  17.5; // degrees
 
     public final double WALL_POWER_SHOT_SHOOTER_SPEED_L = TOP_WHEEL_SPEED;
     public final double WALL_POWER_SHOT_SHOOTER_SPEED_R = 220;
@@ -774,10 +774,14 @@ public class GFORCE_Hardware {
     public boolean runShooterFeeder() {
         // Run collector/feeder fast until ring is near wheels, then slow down
         boolean inPlace = ringInPlace();
-        if (inPlace) {
-            runCollectors(.20);
+        if (spinnerAtSpeed()) {
+            if (inPlace) {
+                runCollectors(.20);
+            } else {
+                runCollectors(.50);
+            }
         } else {
-            runCollectors(.50);
+            runCollectors(0);
         }
 
         return (inPlace);
@@ -911,7 +915,4 @@ public class GFORCE_Hardware {
             SoundPlayer.getInstance().startPlaying(myOpMode.hardwareMap.appContext, timeoutSoundID);
         }
     }
-
-
-
 }

@@ -330,7 +330,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 } else if (gamepad2.b) {                                // Transition to WOBBLE_LOADING
                     robot.enableRingDrop();
                     ringState = WOBBLE_LOADING;
-                } else if (robot.spinnerAtSpeed() && (gamepad1.right_bumper) ) {
+                } else if (gamepad1.right_bumper ) {
                     robot.runShooterFeeder();  // vary speed based on presence of ring.
                 } else {
                     robot.runCollectors(0);
@@ -371,13 +371,13 @@ public class GFORCE_TeleOp extends LinearOpMode {
         if (fiveLeftPressed && !lastFiveLeftPressed) {
             neutralTime.reset();
             autoHeadingOn = true;
-            desiredHeading  += 5.0;
+            desiredHeading  += 4.0;
         }
 
         if (fiveRightPressed && !lastFiveRightPressed) {
             neutralTime.reset();
             autoHeadingOn = true;
-            desiredHeading  -= 5.0;
+            desiredHeading  -= 4.0;
         }
 
         lastFiveLeftPressed = fiveLeftPressed;
