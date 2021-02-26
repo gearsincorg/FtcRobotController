@@ -163,40 +163,38 @@ public class GFORCE_Autonomous extends LinearOpMode {
     }
 
     private void shootPowerShot() {
-        double goalHeading = autoConfig.autoOptions.startCenter ? 5  : -27;
+        double goalHeading = autoConfig.autoOptions.startCenter ? 5  : -26;
         robot.releaseRings();
         robot.setSpinnerTarget(autoConfig.autoOptions.startCenter ? Target.CENTER_POWER_SHOT : Target.WALL_POWER_SHOT);
-
-        robot.releaseWobbleGoal();
-        robot.driveAxialVelocity(200,0,450,2);
-        robot.sleepAndHoldHeading(goalHeading,0.25);
-        robot.driveAxialVelocity(200, 0,-450,2);
-
         robot.runSpinners();
-        robot.turnOnTiltPID();
+
         robot.sleepAndHoldHeading(goalHeading,2);
+        robot.releaseWobbleGoal();
+        robot.turnOnTiltPID();
+
+        robot.driveAxialVelocity(200,goalHeading,450,2);
+        robot.sleepAndHoldHeading(goalHeading,0.25);
+        robot.driveAxialVelocity(200,goalHeading,-450,2);
 
         robot.takeOneShot();
         if(!autoConfig.autoOptions.startCenter) {
             robot.jogSpinnerUp();
         }
-        robot.sleepAndHoldHeading(goalHeading - 5,1);
+        robot.sleepAndHoldHeading(goalHeading - (autoConfig.autoOptions.startCenter ? 5 : 3.5),1);
         robot.takeOneShot();
         if(!autoConfig.autoOptions.startCenter) {
             robot.jogSpinnerUp();
         }
-        robot.sleepAndHoldHeading(goalHeading - 9,1);
+        robot.sleepAndHoldHeading(goalHeading -(autoConfig.autoOptions.startCenter ? 9 : 7), 1);
         robot.takeOneShot();
         robot.stopSpinners();
         robot.turnOffTiltPID();
-        robot.turnToHeading(0,1);
 
-        if (autoConfig.autoOptions.startCenter || ringsStacked > 0) {
-            robot.driveAxialVelocity(250, 0, 300, 2);
-            robot.grabWobbleGoal();
-            robot.sleepAndHoldHeading(goalHeading, 0.75);
-            robot.driveAxialVelocity(250, 0, -300, 2);
-        }
+        //  Get the wobble
+        robot.turnToHeading(goalHeading, 0.5);
+        robot.driveAxialVelocity(250, goalHeading, 300, 2);
+        robot.grabWobbleGoal();
+        robot.sleepAndHoldHeading(goalHeading, 0.75);
     }
 
     private void shootHighGoal() {
@@ -218,9 +216,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.turnOnTiltPID();
         robot.driveAxialVelocity(200,goalHeading,450,2);
         robot.sleepAndHoldHeading(goalHeading,0.25);
-
-        // Soot the goals
         robot.driveAxialVelocity(200,goalHeading,-450,2);
+
+        // Shot the goals
         robot.runShooterFeeder(4.0);
         robot.runCollectors(0);
         robot.stopSpinners();
@@ -230,15 +228,6 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.driveAxialVelocity(250, goalHeading, 300, 2);
         robot.grabWobbleGoal();
         robot.sleepAndHoldHeading(goalHeading, 0.75);
-
-        /*
-        if (autoConfig.autoOptions.startCenter || (ringsStacked > 0)) {
-            robot.driveAxialVelocity(250, goalHeading, -300, 2);
-        } else {
-            robot.driveAxialVelocity(100, goalHeading, -300, 2);  // just pull back a bit
-        }
-        */
-
     }
 
     private void scoreWobbleGoal() {
