@@ -89,6 +89,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
         }
         robot.stopRobot();
         vision.shutdownTFOD();
+        telemetry.addData("Status", "Done");
+        telemetry.update();
+        sleep(1000);
     }
 
     private int findRings() {
@@ -136,7 +139,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         if (autoConfig.autoOptions.scoreWobble) {
             // go and look at ring stack;
             robot.grabWobbleGoal();
-            robot.sleepAndHoldHeading(0, 1);
+            //  robot.sleepAndHoldHeading(0, 1);  save this time.
             robot.driveAxialVelocity(200, 0, 700, 2);
 
             // look at ring stack
@@ -144,9 +147,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
             robot.sleepAndHoldHeading(goalHeading, 1);
             findRings();
             robot.turnToHeading(0, 1);
-            robot.sleepAndHoldHeading(0, 1);
+            robot.sleepAndHoldHeading(0, 0.5);
 
-            // See if we can pickup the other goal
+            // Wait for team to pickup and score rings
             if (autoConfig.autoOptions.spare) {
                 // Wait for the required delay, unless we ar taking the spare action (double wobble)
                 robot.delayWithSound(autoConfig.autoOptions.delayInSec);
@@ -204,23 +207,38 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         robot.turnToTarget(2, true, goalHeading);  // Adjust speed based on range
         robot.releaseWobbleGoal();
+
+        //  Save current heading but flip for alliance color since we are using it for a new heading.
         goalHeading = robot.getHeading();
+        if (robot.allianceColor == GFORCE_Hardware.AllianceColor.RED) {
+            goalHeading = -goalHeading;
+        }
 
         // Push the wobble goal forward
         robot.turnOnTiltPID();
         robot.driveAxialVelocity(200,goalHeading,450,2);
         robot.sleepAndHoldHeading(goalHeading,0.25);
 
+        // Soot the goals
         robot.driveAxialVelocity(200,goalHeading,-450,2);
         robot.runShooterFeeder(4.0);
         robot.runCollectors(0);
         robot.stopSpinners();
         robot.turnOffTiltPID();
-        robot.driveAxialVelocity(250,goalHeading,300,2);
+
+        //  Get the wobble
+        robot.driveAxialVelocity(250, goalHeading, 300, 2);
         robot.grabWobbleGoal();
-        robot.sleepAndHoldHeading(goalHeading,0.75);
-        robot.driveAxialVelocity(250,goalHeading,-300,2);
-        // robot.turnToHeading(0,1);
+        robot.sleepAndHoldHeading(goalHeading, 0.75);
+
+        /*
+        if (autoConfig.autoOptions.startCenter || (ringsStacked > 0)) {
+            robot.driveAxialVelocity(250, goalHeading, -300, 2);
+        } else {
+            robot.driveAxialVelocity(100, goalHeading, -300, 2);  // just pull back a bit
+        }
+        */
+
     }
 
     private void scoreWobbleGoal() {
@@ -228,13 +246,13 @@ public class GFORCE_Autonomous extends LinearOpMode {
             switch (ringsStacked) {
                 case 0:
                 default:
-                    placeWobbleGoal(900, 70, 700, 4);
+                    placeWobbleGoal(700, 87, 700, 4);
                     break;
                 case 1:
-                    placeWobbleGoal(900, 30, 700, 3);
+                    placeWobbleGoal(500, 35, 500, 4);
                     break;
                 case 4:
-                    placeWobbleGoal(1500, 35, 900, 4);
+                    placeWobbleGoal(1400, 37, 900, 6);
                     break;
 
             }
@@ -243,13 +261,13 @@ public class GFORCE_Autonomous extends LinearOpMode {
             switch (ringsStacked) {
                 case 0:
                 default:
-                    placeWobbleGoal(190, 5, 200, 2);
+                    placeWobbleGoal(0, 0, 200, 2);
                     break;
                 case 1:
-                    placeWobbleGoal(850, -27, 700, 5);
+                    placeWobbleGoal(500, -27, 500, 5);
                     break;
                 case 4:
-                    placeWobbleGoal(1200, 0, 900, 6);
+                    placeWobbleGoal(950, 5, 700, 6);
                     break;
             }
         }
@@ -259,9 +277,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         robot.turnToHeading(heading, 0.5);
 
-        // slow down if this is a single wobble
-        if (!autoConfig.autoOptions.startCenter && !autoConfig.autoOptions.spare && (ringsStacked > 0)) {
-            speed = 300;
+        // slow down if we are pushing wobble out
+        if (ringsStacked == 1) {
+            speed = 500;
         }
 
         robot.driveAxialVelocity(distance, heading, speed, timeout);
@@ -274,13 +292,13 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 if (autoConfig.autoOptions.startCenter) {
                     robot.driveAxialVelocity(distance, 90, -600, timeout);
                 } else {
-                    robot.enableRingDrop();
                     robot.driveAxialVelocity(100,heading,-300,timeout);
+                    robot.enableRingDrop();
                 }
 
             } else {
                 // roll back over starting location
-                robot.driveAxialVelocity(distance - 400, heading, -900, timeout);
+                robot.driveAxialVelocity(distance - 200, heading, -900, timeout);
             }
 
             robot.grabWobbleGoal();

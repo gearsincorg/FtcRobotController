@@ -441,6 +441,11 @@ public class GFORCE_Hardware {
         heading = defaultHeading;
         navTime.reset();
 
+        if (allianceColor == GFORCE_Hardware.AllianceColor.RED) {
+            heading = -heading;
+        }
+
+
         while (myOpMode.opModeIsActive() &&
                 updateMotion() &&
                 (navTime.time() < timeOutSEC) &&
