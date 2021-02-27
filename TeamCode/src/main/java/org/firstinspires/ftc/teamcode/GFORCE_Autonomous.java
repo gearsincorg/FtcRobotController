@@ -102,7 +102,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
            // getUpdatedRecognitions() will return null if no new information is available since
            // the last time that call was made.
-           while (!isStopRequested() && (autoTime.time() < 2.0)) {
+           while (!isStopRequested() && (autoTime.time() < 2.25)) {
                List<Recognition> updatedRecognitions = vision.tfod.getUpdatedRecognitions();
                if (updatedRecognitions != null) {
                    telemetry.addData("# Object Detected =====================", updatedRecognitions.size());
@@ -225,9 +225,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.turnOffTiltPID();
 
         //  Get the wobble
-        robot.driveAxialVelocity(250, goalHeading, 300, 2);
+        robot.driveAxialVelocity(250, goalHeading, 400, 2);
         robot.grabWobbleGoal();
-        robot.sleepAndHoldHeading(goalHeading, 0.75);
+        robot.sleepAndHoldHeading(goalHeading, 0.50);
     }
 
     private void scoreWobbleGoal() {
@@ -238,7 +238,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                     placeWobbleGoal(700, 87, 700, 4);
                     break;
                 case 1:
-                    placeWobbleGoal(500, 35, 500, 4);
+                    placeWobbleGoal(450, 35, 500, 4);
                     break;
                 case 4:
                     placeWobbleGoal(1400, 37, 900, 6);
@@ -250,7 +250,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
             switch (ringsStacked) {
                 case 0:
                 default:
-                    placeWobbleGoal(0, 0, 200, 2);
+                    placeWobbleGoal(0, 5, 200, 2);
                     break;
                 case 1:
                     placeWobbleGoal(500, -27, 500, 5);

@@ -22,7 +22,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     // Constants
     public final double PRECISE_AXIAL_JS_SCALE  =  0.30;   // .2
-    public final double PRECISE_YAW_JS_SCALE    =  0.30;   // .15
+    public final double PRECISE_YAW_JS_SCALE    =  0.40;   // .15
     public final double SLOW_AXIAL_JS_SCALE     =  0.65;   // .2
     public final double SLOW_YAW_JS_SCALE       =  0.65;   // .15
 
