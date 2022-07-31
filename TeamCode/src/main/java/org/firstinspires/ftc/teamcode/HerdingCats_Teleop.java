@@ -30,13 +30,11 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
-
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -52,58 +50,93 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="Herding Cats TELEOP", group="Competition")
-
 public class HerdingCats_Teleop extends LinearOpMode {
 
     final double TURN_RATE  = 0.50;
     final double DRIVE_RATE = 1.00;
-    
+    final int    NOT_MOVING = 5;
+
+    // Collector Preset Positions
+    final int    LIFTER_PICKUP    =   35 ;
+    final int    LIFTER_HOVER     =  150 ;
+    final int    LIFTER_STANDBY   =  930 ;
+    final int    LIFTER_DUMP_DROP = 1100 ;
+
+    final int    LIFTER_THROW     =  120 ;
+
+    final int    GRABBER_NARROW   =   80 ;
+    final int    GRABBER_OPEN     =  120 ;
+    final int    GRABBER_WIDE     =  150 ;
+
     // Declare OpMode members.
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftDrive = null;
-    private DcMotor rightDrive = null;
+    private ElapsedTime stateTime = new ElapsedTime();
+    private DcMotor leftDrive   = null;
+    private DcMotor rightDrive  = null;
+    private DcMotor grabber     = null;
+    private DcMotor lifter      = null;
+    private DcMotorSimple dumper = null;
+    private DigitalChannel dumperReady = null;
+
+    private boolean lastGrabberButton = false;
+    private boolean lastLifterButton  = false;
+
+    private CollectorState currentCollectorState = CollectorState.UNKNOWN;
 
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
-        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
-        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        // Initialize the hardware variables
 
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
+        leftDrive   = hardwareMap.get(DcMotor.class, "left_drive");
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
-        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODERS);
+        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        rightDrive  = hardwareMap.get(DcMotor.class, "right_drive");
+        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        grabber     = hardwareMap.get(DcMotor.class, "grabber");
+        grabber.setDirection(DcMotor.Direction.FORWARD);
+        grabber.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        lifter      = hardwareMap.get(DcMotor.class, "lifter");
+        lifter.setDirection(DcMotor.Direction.REVERSE);
+        lifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        dumper      = hardwareMap.get(DcMotorSimple.class, "dumper");
+        dumper.setDirection(DcMotor.Direction.FORWARD);
+
+        dumperReady = hardwareMap.get(DigitalChannel.class, "dumperReady");
+
+        // Home the collector
+        homeCollector();
+        telemetry.setMsTransmissionInterval(50);
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
-        runtime.reset();
+        stateTime.reset();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            // Setup a variable for each drive wheel to save power level for telemetry
-            double leftPower;
-            double rightPower;
+            // Manual Homing.
+            if (gamepad1.back && gamepad1.start) {
+                leftDrive.setPower(0);
+                rightDrive.setPower(0);
 
-            // Choose to drive using either Tank Mode, or POV Mode
-            // Comment out the method that's not used.  The default below is POV.
+                homeCollector();
+            }
 
+            // ##  Driving Code  ##############################################################
             // POV Mode uses left stick to go forward, and right stick to turn.
-            // - This uses basic math to combine motions and is easier to drive straight.
             double drive = -gamepad1.left_stick_y * DRIVE_RATE;
             double turn  =  gamepad1.right_stick_x * TURN_RATE;
-            leftPower    = drive + turn;
-            rightPower   = drive - turn;
+            double leftPower    = drive + turn;
+            double rightPower   = drive - turn;
             
             // Normaloze power to motors.
             double max = Math.abs(Math.max(leftPower, rightPower));
@@ -111,16 +144,219 @@ public class HerdingCats_Teleop extends LinearOpMode {
                 leftPower /= max;
                 rightPower /= max;
             }
-            
 
             // Send calculated power to wheels
             leftDrive.setPower(leftPower);
             rightDrive.setPower(rightPower);
 
+            // ##  Dumper Code  ##############################################################
+            runDumperControl();
+
+            // ##  Lifter  Code  ##############################################################
+            runCollectorControl();
+
             // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            telemetry.addData("Collector", currentCollectorState.toString());
+            telemetry.addData("State Time", "%3.1f", stateTime.time());
+            telemetry.addData("Dumper", "%s", dumperReady.getState()? "Dumping": "Ready");
+            telemetry.addData("Grabber", "%d", grabber.getCurrentPosition());
+            telemetry.addData("Lifter", "%d", lifter.getCurrentPosition());
             telemetry.update();
         }
+    }
+
+    public void runCollectorControl() {
+        switch (currentCollectorState) {
+            case STANDBY:
+                if (lifterClicked()) {
+                    lifter.setTargetPosition(LIFTER_PICKUP);
+                    grabber.setTargetPosition(GRABBER_OPEN);
+                    setCollectorState(CollectorState.LOWERING);
+                }
+                break;
+
+            case LOWERING:
+                if (!(lifter.isBusy() || grabber.isBusy())) {
+                    setCollectorState(CollectorState.READY);
+                }
+                break;
+
+            case READY:
+                if (grabberClicked()) {
+                    grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    grabber.setPower(-0.30);
+                    setCollectorState(CollectorState.MANUAL_GRABBING);
+                } else if (lifterClicked()) {
+                    grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    grabber.setPower(-0.30);
+                    setCollectorState(CollectorState.AUTO_GRABBING);
+                } else if (gamepad1.x) {
+                    grabber.setTargetPosition(GRABBER_OPEN);
+                }  else if (gamepad1.b) {
+                    grabber.setTargetPosition(GRABBER_WIDE);
+                } else if (gamepad1.y) {
+                    lifter.setTargetPosition(LIFTER_HOVER);
+                } else if (gamepad1.a) {
+                    lifter.setTargetPosition(LIFTER_PICKUP);
+                }
+                break;
+
+            case MANUAL_GRABBING:
+                if (lifterClicked()) {
+                    grabber.setPower(-0.6);
+                    lifter.setTargetPosition(LIFTER_DUMP_DROP);
+                    setCollectorState(CollectorState.LIFTING);
+                } else if (grabberClicked()) {
+                    grabber.setPower(0.0);
+                    grabber.setTargetPosition(GRABBER_OPEN);
+                    grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    grabber.setPower(0.5);
+                    setCollectorState(CollectorState.READY);
+                } else if (gamepad1.y) {
+                    lifter.setTargetPosition(LIFTER_HOVER);
+                } else if (gamepad1.a) {
+                    lifter.setTargetPosition(LIFTER_PICKUP);
+                }
+                break;
+
+            case AUTO_GRABBING:
+                if (stateTime.time() > 0.5) {
+                    grabber.setPower(-0.6);
+                    lifter.setTargetPosition(LIFTER_DUMP_DROP);
+                    setCollectorState(CollectorState.LIFTING);
+                }
+                break;
+
+            case LIFTING:
+                if (lifter.getCurrentPosition() > (LIFTER_DUMP_DROP - LIFTER_THROW)) {
+                    grabber.setPower(1.0);
+                    grabber.setTargetPosition(GRABBER_WIDE);
+                    grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    grabber.setPower(0.5);
+                    setCollectorState(CollectorState.DUMPING);
+                } else if (lifterClicked()) {
+                    grabber.setPower(0.5);
+                    grabber.setTargetPosition(GRABBER_OPEN);
+                    grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    lifter.setTargetPosition(LIFTER_PICKUP);
+                    setCollectorState(CollectorState.LOWERING);
+                }
+                break;
+
+            case DUMPING:
+                if (stateTime.time() > 0.25) {
+                    lifter.setTargetPosition(LIFTER_PICKUP);
+                    grabber.setTargetPosition(GRABBER_OPEN);
+                    setCollectorState(CollectorState.LOWERING);
+                }
+                break;
+
+            case UNKNOWN:
+            default:
+                break;
+        }
+    }
+
+    public void runDumperControl() {
+        //  Raise the dumper if left bumper pressed.
+        if (gamepad1.dpad_down) {
+            dumper.setPower(-0.4);
+        } else {
+            // Run the motor backwards unless it's in it's home position
+            if (dumperReady.getState()) {
+                dumper.setPower(0.2);
+            } else {
+                dumper.setPower(0);
+            }
+        }
+    }
+    public void setCollectorState(CollectorState newState) {
+        currentCollectorState = newState;
+        stateTime.reset();
+    }
+
+    public boolean grabberClicked() {
+        boolean now = gamepad1.right_bumper;
+        boolean clicked = (now && !lastGrabberButton) ;
+        lastGrabberButton = now;
+        return clicked;
+    }
+
+    public boolean lifterClicked() {
+        boolean now = gamepad1.left_bumper;
+        boolean clicked = (now && !lastLifterButton) ;
+        lastLifterButton = now;
+        return clicked;
+    }
+
+    public void homeCollector() {
+        grabber.setPower(0.0);
+        lifter.setPower(0.0);
+        grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        lifter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        int grabberPos = grabber.getCurrentPosition();
+        int lifterPos  = lifter.getCurrentPosition();
+        int lastGrabberPos = grabberPos;
+        int lastLifterPos  = lifterPos;
+
+        // First close the grabber.
+        grabber.setPower(-0.2);
+        sleep(200);
+        while (!isStopRequested()){
+            grabberPos = grabber.getCurrentPosition();
+            int dif = Math.abs(grabberPos - lastGrabberPos);
+            telemetry.addData("Grabber", "Dif = %d", dif);
+            telemetry.update();
+            if (dif < NOT_MOVING) {
+                // Stop motor and reset encoder.
+                grabber.setPower(0.0);
+                grabber.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                break;
+            } else {
+                sleep(100);
+            }
+            lastGrabberPos = grabberPos;
+            runDumperControl();
+        }
+        grabber.setPower(0.0);
+
+        // Now lower the lifter to the ground.
+        lifter.setPower(-0.15);
+        sleep(200);
+        while (!isStopRequested()){
+            lifterPos = lifter.getCurrentPosition();
+            int dif = Math.abs(lifterPos - lastLifterPos);
+            telemetry.addData("Lifter", "Dif = %d", dif);
+            telemetry.update();
+            if (Math.abs(lifterPos - lastLifterPos) < NOT_MOVING) {
+                // Stop motor and reset encoder.
+                lifter.setPower(0.0);
+                lifter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                lifter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                break;
+            } else {
+                sleep(100);
+            }
+            lastLifterPos = lifterPos;
+            runDumperControl();
+        }
+
+        // Move to standby position.
+
+        lifter.setPower(0.0);
+        lifter.setTargetPosition(LIFTER_STANDBY);
+        lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        lifter.setPower(0.7);
+
+        grabber.setPower(0.0);
+        grabber.setTargetPosition(GRABBER_OPEN);
+        grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        grabber.setPower(0.5);
+
+        setCollectorState(CollectorState.STANDBY);
+
+        telemetry.addData("Collector", "STANDBY");
+        telemetry.update();
     }
 }
