@@ -59,6 +59,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
     // Collector Preset Positions
     final int    LIFTER_PICKUP    =   35 ;
     final int    LIFTER_HOVER     =  150 ;
+    final int    LIFTER_RAISED    =  600 ;
     final int    LIFTER_STANDBY   =  930 ;
     final int    LIFTER_DUMP_DROP = 1100 ;
 
@@ -191,10 +192,10 @@ public class HerdingCats_Teleop extends LinearOpMode {
                     grabber.setPower(-0.30);
                     setCollectorState(CollectorState.AUTO_GRABBING);
                 } else if (gamepad1.x) {
-                    grabber.setTargetPosition(GRABBER_OPEN);
-                }  else if (gamepad1.b) {
                     grabber.setTargetPosition(GRABBER_WIDE);
                 } else if (gamepad1.y) {
+                    lifter.setTargetPosition(LIFTER_RAISED);
+                } else if (gamepad1.b) {
                     lifter.setTargetPosition(LIFTER_HOVER);
                 } else if (gamepad1.a) {
                     lifter.setTargetPosition(LIFTER_PICKUP);
@@ -213,6 +214,8 @@ public class HerdingCats_Teleop extends LinearOpMode {
                     grabber.setPower(0.5);
                     setCollectorState(CollectorState.READY);
                 } else if (gamepad1.y) {
+                    lifter.setTargetPosition(LIFTER_RAISED);
+                } else if (gamepad1.b) {
                     lifter.setTargetPosition(LIFTER_HOVER);
                 } else if (gamepad1.a) {
                     lifter.setTargetPosition(LIFTER_PICKUP);
@@ -220,7 +223,8 @@ public class HerdingCats_Teleop extends LinearOpMode {
                 break;
 
             case AUTO_GRABBING:
-                if (stateTime.time() > 0.5) {
+                // Wait for gripper to close then lift.
+                if (stateTime.time() > 0.3) {
                     grabber.setPower(-0.6);
                     lifter.setTargetPosition(LIFTER_DUMP_DROP);
                     setCollectorState(CollectorState.LIFTING);
