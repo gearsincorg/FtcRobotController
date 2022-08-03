@@ -52,11 +52,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="Herding Cats TELEOP", group="Competition")
 public class HerdingCats_Teleop extends LinearOpMode {
 
-    final double TURN_RATE  = 0.50;
-    final double DRIVE_RATE = 1.00;
+    final double TURN_RATE  = 0.25;
+    final double DRIVE_RATE = 0.60;
+    final double TURBO_TURN_RATE  = 0.50;
+    final double TURBO_DRIVE_RATE = 1.00;
     final int    NOT_MOVING = 5;
 
     // Collector Preset Positions
+    final int    LIFTER_PRESSED   =   10 ;
     final int    LIFTER_PICKUP    =   35 ;
     final int    LIFTER_HOVER     =  150 ;
     final int    LIFTER_RAISED    =  600 ;
@@ -134,8 +137,22 @@ public class HerdingCats_Teleop extends LinearOpMode {
 
             // ##  Driving Code  ##############################################################
             // POV Mode uses left stick to go forward, and right stick to turn.
-            double drive = -gamepad1.left_stick_y * DRIVE_RATE;
-            double turn  =  gamepad1.right_stick_x * TURN_RATE;
+            double drive = -gamepad1.left_stick_y;
+            double turn  =  gamepad1.right_stick_x;
+
+            // Run standard or TURBO
+            if (gamepad1.left_stick_button) {
+                drive *= TURBO_DRIVE_RATE;
+            } else {
+                drive *= DRIVE_RATE;
+            }
+
+            if (gamepad1.right_stick_button) {
+                turn *= TURBO_TURN_RATE;
+            } else {
+                turn *= TURN_RATE;
+            }
+
             double leftPower    = drive + turn;
             double rightPower   = drive - turn;
             
@@ -184,10 +201,12 @@ public class HerdingCats_Teleop extends LinearOpMode {
 
             case READY:
                 if (grabberClicked()) {
+                    lifter.setTargetPosition(LIFTER_PRESSED);
                     grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     grabber.setPower(-0.30);
                     setCollectorState(CollectorState.MANUAL_GRABBING);
                 } else if (lifterClicked()) {
+                    lifter.setTargetPosition(LIFTER_PRESSED);
                     grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     grabber.setPower(-0.30);
                     setCollectorState(CollectorState.AUTO_GRABBING);
@@ -208,6 +227,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
                     lifter.setTargetPosition(LIFTER_DUMP_DROP);
                     setCollectorState(CollectorState.LIFTING);
                 } else if (grabberClicked()) {
+                    lifter.setTargetPosition(LIFTER_PICKUP);
                     grabber.setPower(0.0);
                     grabber.setTargetPosition(GRABBER_OPEN);
                     grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
