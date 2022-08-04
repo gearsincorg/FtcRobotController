@@ -29,13 +29,17 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cGyro;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 /**
  * This file illustrates the concept of driving a path based on Gyro heading and encoder counts.
@@ -44,41 +48,41 @@ import com.qualcomm.robotcore.util.Range;
  * The code REQUIRES that you DO have encoders on the wheels,
  *   otherwise you would use: RobotAutoDriveByTime;
  *
- *  This code ALSO requires that you have a Modern Robotics I2C gyro with the name "gyro"
- *   otherwise you would use: RobotAutoDriveByEncoder;
+ *  This code ALSO requires that you have gyro or IMU otherwise you would use: RobotAutoDriveByEncoder;
+ *  This sample program assumes that you have a BOSCH BNO055 Inertial Measurement Unit (IMU)
+ *  This IMU is found in REV Expansion Hubs and Control Hubs produced prior to the 2023 FTC season.
  *
  *  This code requires that the drive Motors have been configured such that a positive
- *  power command moves them forward, and causes the encoders to count UP.
+ *  power command moves them forward, and causes the encoders to count UP.  So please
+ *  test your motors and set the correct direction (see runOpMode())
  *
- *  This code uses the RUN_TO_POSITION mode to enable the Motor controllers to generate the run profile
+ *  This code uses the RUN_TO_POSITION mode to enable the Motor controllers to generate the movement profile
  *
- *  In order to calibrate the Gyro correctly, the robot must remain stationary during calibration.
- *  This is performed when the INIT button is pressed on the Driver Station.
- *  This code assumes that the robot is stationary when the INIT button is pressed.
- *  If this is not the case, then the INIT should be performed again.
- *
- *  Note: in this example, all angles are referenced to the initial coordinate frame set during the
- *  the Gyro Calibration process, or whenever the program issues a resetZAxisIntegrator() call on the Gyro.
+ *  Note: in this example, all angles are referenced to the initial coordinate frame set when resetHeading() is called.
+ *  This is done when the Play button is pressed on the Driver station.
  *
  *  The angle of movement/rotation is assumed to be a standardized rotation around the robot Z axis,
  *  which means that a Positive rotation is Counter Clockwise, looking down on the field.
  *  This is consistent with the FTC field coordinate conventions set out in the document:
  *  ftc_app\doc\tutorial\FTC_FieldCoordinateSystemDefinition.pdf
  *
- *  Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- *  Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
+ *  Use Android Studio to Copy this Class, and Paste it into your "TeamCode" folder with a new name.
+ *  Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
 @Autonomous(name="Herding Cats Autonomous", group="Competition")
-@Disabled
+//@Autonomous(name="Robot: Auto Drive By Gyro", group="Robot")
+//@Disable
 public class HerdingCats_Auto extends LinearOpMode {
 
     /* Declare OpMode members. */
     private DcMotor         leftDrive   = null;
     private DcMotor         rightDrive  = null;
-    ModernRoboticsI2cGyro   gyro    = null;                    // Additional Gyro device
+    private BNO055IMU       imu         = null;      // Control Hub IMU
 
-    private double          robotHeading = 0;
+    private double          robotHeading  = 0;
+    private double          headingOffset = 0;
+
 
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
@@ -86,9 +90,9 @@ public class HerdingCats_Auto extends LinearOpMode {
     // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
-    static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
+    static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;   // eg: GoBILDA 312 RPM Yellow Jacket
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
-    static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // For figuring circumference
+    static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // Used to calculate circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                                                       (WHEEL_DIAMETER_INCHES * 3.1415);
 
@@ -98,8 +102,11 @@ public class HerdingCats_Auto extends LinearOpMode {
     static final double     TURN_SPEED              = 0.5;     // Nominal half speed for better accuracy.
 
     static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
-    static final double     P_TURN_COEFF            = 0.1;     // Larger is more responsive, but also less stable
-    static final double     P_DRIVE_COEFF           = 0.15;     // Larger is more responsive, but also less stable
+
+    // Define the Proportional control coefficient for "heading control".
+    // We define one value when rotating (larger errors), and the other is used when driving straight (smaller errors).
+    static final double     P_TURN_COEFF            = 0.1;     // greater value is more responsive, but also less stable
+    static final double     P_DRIVE_COEFF           = 0.15;    // greater value is more responsive, but also less stable
 
 
     @Override
@@ -115,29 +122,18 @@ public class HerdingCats_Auto extends LinearOpMode {
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        gyro = (ModernRoboticsI2cGyro)hardwareMap.gyroSensor.get("gyro");
+        // define initialization values for IMU, and then initialize it.
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit            = BNO055IMU.AngleUnit.DEGREES;
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
 
-        // Ensure the robot it stationary, then reset the encoders and calibrate the gyro.
+        // Ensure the robot it stationary
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        // Send telemetry message to alert driver that we are calibrating;
-        telemetry.addData(">", "Calibrating Gyro");    //
-        telemetry.update();
-
-        gyro.calibrate();
-
-        // make sure the gyro is calibrated before continuing
-        while (!isStopRequested() && gyro.isCalibrating())  {
-            sleep(50);
-            idle();
-        }
-
         telemetry.addData(">", "Robot Ready.");    //
         telemetry.update();
-
-        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Wait for the game to start (Display Gyro value)
         while (opModeInInit()) {
@@ -145,9 +141,10 @@ public class HerdingCats_Auto extends LinearOpMode {
             telemetry.update();
         }
 
-        // Reset gyro before we move..
-        gyro.resetZAxisIntegrator();
-        getHeading();
+        // Reset the encoders for distance tracking. and zero the robot heading.
+        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        resetHeading();
 
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
@@ -169,16 +166,16 @@ public class HerdingCats_Auto extends LinearOpMode {
     }
 
    /**
-    *  Method to drive on a fixed compass bearing (angle), based on encoder counts.
+    *  Method to drive on a fixed compass heading (angle), for the requested number of Inches.
     *  Move will stop if either of these conditions occur:
     *  1) Move gets to the desired position
     *  2) Driver stops the opmode running.
     *
     * @param speed      Target speed for forward motion.  Should allow for +/- variance for adjusting heading
     * @param distance   Distance (in inches) to move from current position.  Negative distance means move backward.
-    * @param angle      Absolute Angle (in Degrees) relative to last gyro reset.
+    * @param angle      Absolute Angle (in Degrees) relative to last resetHeading() call.
     *                   0 = fwd. +ve is CCW from fwd. -ve is CW from forward.
-    *                   If a relative angle is required, add/subtract from current heading.
+    *                   If a relative angle is required, add/subtract from robotHeading.
     */
     public void gyroDrive ( double speed,
                             double distance,
@@ -275,7 +272,6 @@ public class HerdingCats_Auto extends LinearOpMode {
         // keep looping while we are still active, and not on heading.
         while (opModeIsActive() && !onHeading(speed, angle, P_TURN_COEFF)) {
             // Update telemetry & Allow time for other processes to run.
-            telemetry.update();
         }
     }
 
@@ -298,7 +294,6 @@ public class HerdingCats_Auto extends LinearOpMode {
         while (opModeIsActive() && (holdTimer.time() < holdTime)) {
             // Update telemetry & Allow time for other processes to run.
             onHeading(speed, angle, P_TURN_COEFF);
-            telemetry.update();
         }
 
         // Stop all motion;
@@ -320,8 +315,8 @@ public class HerdingCats_Auto extends LinearOpMode {
         double   error ;
         double   steer ;
         boolean  onTarget = false ;
-        double leftSpeed;
-        double rightSpeed;
+        double   leftSpeed;
+        double   rightSpeed;
 
         // determine turn power based on +/- error
         error = getError(angle);
@@ -346,6 +341,7 @@ public class HerdingCats_Auto extends LinearOpMode {
         telemetry.addData("Target/Current", "%5.2f / %5.0f", angle, robotHeading);
         telemetry.addData("Error/Steer", "%5.2f / %5.2f", error, steer);
         telemetry.addData("Speed.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
+        telemetry.update();
 
         return onTarget;
     }
@@ -358,21 +354,41 @@ public class HerdingCats_Auto extends LinearOpMode {
      */
     public double getError(double targetAngle) {
 
-        double robotError;
-
         // calculate error in -179 to +180 range  (
-        robotError = targetAngle - getHeading();
-        while (robotError > 180)  robotError -= 360;
-        while (robotError <= -180) robotError += 360;
-        return robotError;
+        return (normalizeHeading(targetAngle - getHeading()));
     }
 
     /**
      * read and save the current robot heading
      */
     public double getHeading() {
-        robotHeading = (double)gyro.getIntegratedZValue();
+        robotHeading = normalizeHeading(getRawHeading() - headingOffset);
         return robotHeading;
+    }
+
+    /**
+     * Return a normalized heading.  This means, convert it to a +/- 180 degree value
+     */
+    public double normalizeHeading(double nHeading) {
+        while (nHeading > 180)  nHeading -= 360;
+        while (nHeading <= -180) nHeading += 360;
+        return (nHeading);
+    }
+
+    /**
+     * read the raw (un-offset Gyro heading) directly from the IMU
+     */
+    public double getRawHeading() {
+        Orientation angles   = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        return angles.firstAngle;
+    }
+
+    /**
+     * Reset the heading back to zero
+     */
+    public void resetHeading() {
+        headingOffset = getRawHeading();
+        robotHeading = 0;
     }
 
     /**
@@ -384,5 +400,4 @@ public class HerdingCats_Auto extends LinearOpMode {
     public double getSteer(double error, double PCoeff) {
         return Range.clip(error * PCoeff, -1, 1);
     }
-
 }
