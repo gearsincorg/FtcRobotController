@@ -90,7 +90,8 @@ public class HerdingCats_Auto extends LinearOpMode {
     // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
-    static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;   // eg: GoBILDA 312 RPM Yellow Jacket
+    // static final double     COUNTS_PER_MOTOR_REV    = 537.7 ;   // eg: GoBILDA 312 RPM Yellow Jacket
+    static final double     COUNTS_PER_MOTOR_REV    = 526 ;   // eg: GoBILDA 312 RPM Yellow Jacket
     static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
     static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // Used to calculate circumference
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -98,15 +99,15 @@ public class HerdingCats_Auto extends LinearOpMode {
 
     // These constants define the desired driving/control characteristics
     // The can/should be tweaked to suite the specific robot drive train.
-    static final double     DRIVE_SPEED             = 0.7;     // Nominal speed for better accuracy.
-    static final double     TURN_SPEED              = 0.5;     // Nominal half speed for better accuracy.
+    static final double     DRIVE_SPEED             = 0.4;     // Nominal speed for better accuracy.
+    static final double     TURN_SPEED              = 0.2;     // Nominal half speed for better accuracy.
 
     static final double     HEADING_THRESHOLD       = 1 ;      // As tight as we can make it with an integer gyro
 
     // Define the Proportional control coefficient for "heading control".
     // We define one value when rotating (larger errors), and the other is used when driving straight (smaller errors).
-    static final double     P_TURN_COEFF            = 0.1;     // greater value is more responsive, but also less stable
-    static final double     P_DRIVE_COEFF           = 0.15;    // greater value is more responsive, but also less stable
+    static final double     P_TURN_COEFF            = 0.04;     // greater value is more responsive, but also less stable
+    static final double     P_DRIVE_COEFF           = 0.03;     // greater value is more responsive, but also less stable
 
 
     @Override
@@ -131,6 +132,8 @@ public class HerdingCats_Auto extends LinearOpMode {
         // Ensure the robot it stationary
         leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         telemetry.addData(">", "Robot Ready.");    //
         telemetry.update();
@@ -149,7 +152,13 @@ public class HerdingCats_Auto extends LinearOpMode {
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
         // Put a hold after each turn
-        gyroDrive(DRIVE_SPEED, 48.0, 0.0);  // Drive FWD 48 inches
+        gyroDrive(DRIVE_SPEED, 102, 0);
+        gyroHold(TURN_SPEED, 0,1);
+        gyroTurn(TURN_SPEED, 90);
+        gyroHold(TURN_SPEED,90, 2);
+        gyroDrive(TURN_SPEED,19,90);
+        /*gyroDrive(DRIVE_SPEED, 96.0, 0.0);  // Drive FWD 48 inches
+        gyroHold( TURN_SPEED,   0.0, 5.0);    // Hold  0 Deg heading for a 1 second
         gyroTurn( TURN_SPEED, -45.0);               // Turn  CW to -45 Degrees
         gyroHold( TURN_SPEED, -45.0, 0.5); // Hold -45 Deg heading for a 1/2 second
         gyroDrive(DRIVE_SPEED, 12.0, -45.0);  // Drive FWD 12 inches at 45 degrees
@@ -157,7 +166,7 @@ public class HerdingCats_Auto extends LinearOpMode {
         gyroHold( TURN_SPEED,  45.0, 0.5);    // Hold  45 Deg heading for a 1/2 second
         gyroTurn( TURN_SPEED,   0.0);               // Turn  CW  to   0 Degrees
         gyroHold( TURN_SPEED,   0.0, 1.0);    // Hold  0 Deg heading for a 1 second
-        gyroDrive(DRIVE_SPEED,-48.0, 0.0);    // Drive REV 48 inches
+        gyroDrive(DRIVE_SPEED,-48.0, 0.0);    // Drive REV 48 inches*/
 
         telemetry.addData("Path", "Complete");
         telemetry.addData("Final Heading", "%5.0f", getHeading());

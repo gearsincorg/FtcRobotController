@@ -52,8 +52,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="Herding Cats TELEOP", group="Competition")
 public class HerdingCats_Teleop extends LinearOpMode {
 
-    final double TURN_RATE  = 0.25;
-    final double DRIVE_RATE = 0.60;
+    final double TURN_RATE  = 0.20;
+    final double DRIVE_RATE = 0.45;
     final double TURBO_TURN_RATE  = 0.50;
     final double TURBO_DRIVE_RATE = 1.00;
     final int    NOT_MOVING = 5;
@@ -62,7 +62,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
     final int    LIFTER_PRESSED   =   10 ;
     final int    LIFTER_PICKUP    =   35 ;
     final int    LIFTER_HOVER     =  150 ;
-    final int    LIFTER_RAISED    =  600 ;
+    final int    LIFTER_RAISED    =  800 ;
     final int    LIFTER_STANDBY   =  930 ;
     final int    LIFTER_DUMP_DROP = 1100 ;
 
@@ -227,7 +227,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
                     lifter.setTargetPosition(LIFTER_DUMP_DROP);
                     setCollectorState(CollectorState.LIFTING);
                 } else if (grabberClicked()) {
-                    lifter.setTargetPosition(LIFTER_PICKUP);
+                    // lifter.setTargetPosition(LIFTER_PICKUP);
                     grabber.setPower(0.0);
                     grabber.setTargetPosition(GRABBER_OPEN);
                     grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
