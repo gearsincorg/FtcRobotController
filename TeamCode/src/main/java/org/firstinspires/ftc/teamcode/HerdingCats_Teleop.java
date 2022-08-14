@@ -260,12 +260,20 @@ public class HerdingCats_Teleop extends LinearOpMode {
                     grabber.setTargetPosition(GRABBER_WIDE);
                     grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     grabber.setPower(0.5);
-                    setCollectorState(CollectorState.DUMPING);
+                    setCollectorState(CollectorState.UP_TOP);
                 } else if (lifterClicked()) {
                     grabber.setPower(0.5);
                     grabber.setTargetPosition(GRABBER_OPEN);
                     grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     lifter.setTargetPosition(LIFTER_PICKUP);
+                    setCollectorState(CollectorState.LOWERING);
+                }
+                break;
+
+            case UP_TOP:
+                if (lifterClicked()) {
+                    lifter.setTargetPosition(LIFTER_PICKUP);
+                    grabber.setTargetPosition(GRABBER_OPEN);
                     setCollectorState(CollectorState.LOWERING);
                 }
                 break;
