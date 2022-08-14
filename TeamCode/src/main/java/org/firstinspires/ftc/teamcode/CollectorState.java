@@ -5,6 +5,7 @@ public enum CollectorState {
     STANDBY,
     READY,
     AUTO_GRABBING,
+    AUTO_GRABBING_PAUSE,
     MANUAL_GRABBING,
     LIFTING,
     DUMPING,

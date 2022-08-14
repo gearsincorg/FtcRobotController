@@ -70,7 +70,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  *  Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Herding Cats Autonomous", group="Competition")
+@Autonomous(name="Herding Cats Autonomous", group="Competition", preselectTeleOp="Herding Cats TELEOP")
 //@Autonomous(name="Robot: Auto Drive By Gyro", group="Robot")
 //@Disable
 public class HerdingCats_Auto extends LinearOpMode {
@@ -465,7 +465,7 @@ public class HerdingCats_Auto extends LinearOpMode {
         grabber.setPower(0.0);
 
         // Now lower the lifter to the ground.
-        lifter.setPower(-0.15);
+        lifter.setPower(-0.10);
         sleep(200);
         while (!isStopRequested()){
             lifterPos = lifter.getCurrentPosition();

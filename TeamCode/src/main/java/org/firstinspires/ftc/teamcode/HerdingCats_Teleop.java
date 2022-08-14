@@ -59,18 +59,16 @@ public class HerdingCats_Teleop extends LinearOpMode {
 
     // Collector Preset Positions
     final int    NOT_MOVING = 5;
-    final int    LIFTER_PRESSED   =   10 ;
+    final int    LIFTER_PRESSED   =   15 ;
     final int    LIFTER_PICKUP    =   35 ;
-    final int    LIFTER_HOVER     =  150 ;
-    final int    LIFTER_RAISED    =  800 ;
+    final int    LIFTER_HOVER     =  110 ;
     final int    LIFTER_STANDBY   =  930 ;
-    final int    LIFTER_DUMP_DROP = 1100 ;
-
+    final int    LIFTER_UP_TOP    = 1000 ;
+    final int    LIFTER_DUMP_DROP = 1070 ;
     final int    LIFTER_THROW     =  120 ;
 
-
-    final int    GRABBER_OPEN     =  120 ;
-    final int    GRABBER_WIDE     =  150 ;
+    final int    GRABBER_OPEN     =  130 ;
+    final int    GRABBER_WIDE     =  170 ;
 
     // Declare OpMode members.
     private ElapsedTime stateTime = new ElapsedTime();
@@ -83,6 +81,8 @@ public class HerdingCats_Teleop extends LinearOpMode {
 
     private boolean lastGrabberButton = false;
     private boolean lastLifterButton  = false;
+    private boolean lastSafeButton    = false;
+    private int currentLifterSetpoint = 0;
 
     private CollectorState currentCollectorState = CollectorState.UNKNOWN;
 
@@ -119,7 +119,19 @@ public class HerdingCats_Teleop extends LinearOpMode {
         // Home the collector
         if (!LifterStatus.lifterHomed) {
             homeCollector();
+        } else {
+            // Lock in current position, and set motor modes.
+            setLifterTarget(lifter.getCurrentPosition());
+            lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            lifter.setPower(0.7);
+
+            grabber.setTargetPosition(grabber.getTargetPosition());
+            grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            grabber.setPower(0.5);
+
+            setCollectorState(CollectorState.STANDBY);
         }
+
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -132,7 +144,6 @@ public class HerdingCats_Teleop extends LinearOpMode {
             if (gamepad1.back && gamepad1.start) {
                 leftDrive.setPower(0);
                 rightDrive.setPower(0);
-
                 homeCollector();
             }
 
@@ -190,7 +201,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
         switch (currentCollectorState) {
             case STANDBY:
                 if (lifterClicked()) {
-                    lifter.setTargetPosition(LIFTER_PICKUP);
+                    setLifterTarget(LIFTER_PICKUP);
                     grabber.setTargetPosition(GRABBER_OPEN);
                     setCollectorState(CollectorState.LOWERING);
                 }
@@ -204,44 +215,49 @@ public class HerdingCats_Teleop extends LinearOpMode {
 
             case READY:
                 if (grabberClicked()) {
-                    lifter.setTargetPosition(LIFTER_PRESSED);
+                    // lifter.setTargetPosition(LIFTER_PRESSED);
                     grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                     grabber.setPower(-0.30);
                     setCollectorState(CollectorState.MANUAL_GRABBING);
                 } else if (lifterClicked()) {
-                    lifter.setTargetPosition(LIFTER_PRESSED);
-                    grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    grabber.setPower(-0.30);
-                    setCollectorState(CollectorState.AUTO_GRABBING);
-                } else if (gamepad1.x) {
+                    if (currentLifterSetpoint <= LIFTER_PICKUP) {
+                        setLifterTarget(LIFTER_PRESSED);
+                        grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                        grabber.setPower(-0.30);
+                        setCollectorState(CollectorState.AUTO_GRABBING);
+                    } else {
+                        setLifterTarget(LIFTER_PRESSED);
+                        setCollectorState(CollectorState.AUTO_GRABBING_PAUSE);
+                    }
+                } else if (gamepad1.right_trigger > 0.25) {
                     grabber.setTargetPosition(GRABBER_WIDE);
-                } else if (gamepad1.y) {
-                    lifter.setTargetPosition(LIFTER_RAISED);
-                } else if (gamepad1.b) {
-                    lifter.setTargetPosition(LIFTER_HOVER);
-                } else if (gamepad1.a) {
-                    lifter.setTargetPosition(LIFTER_PICKUP);
+                } else {
+                    checkSafeClick();
                 }
                 break;
 
             case MANUAL_GRABBING:
                 if (lifterClicked()) {
                     grabber.setPower(-0.6);
-                    lifter.setTargetPosition(LIFTER_DUMP_DROP);
+                    setLifterTarget(LIFTER_DUMP_DROP);
                     setCollectorState(CollectorState.LIFTING);
                 } else if (grabberClicked()) {
-                    // lifter.setTargetPosition(LIFTER_PICKUP);
+                    //lifter.setTargetPosition(LIFTER_PICKUP);
                     grabber.setPower(0.0);
                     grabber.setTargetPosition(GRABBER_OPEN);
                     grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     grabber.setPower(0.5);
                     setCollectorState(CollectorState.READY);
-                } else if (gamepad1.y) {
-                    lifter.setTargetPosition(LIFTER_RAISED);
-                } else if (gamepad1.b) {
-                    lifter.setTargetPosition(LIFTER_HOVER);
-                } else if (gamepad1.a) {
-                    lifter.setTargetPosition(LIFTER_PICKUP);
+                } else {
+                    checkSafeClick();
+                }
+                break;
+
+            case AUTO_GRABBING_PAUSE:
+                if (stateTime.time() > 0.25) {
+                    grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    grabber.setPower(-0.30);
+                    setCollectorState(CollectorState.AUTO_GRABBING);
                 }
                 break;
 
@@ -249,7 +265,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
                 // Wait for gripper to close then lift.
                 if (stateTime.time() > 0.3) {
                     grabber.setPower(-0.6);
-                    lifter.setTargetPosition(LIFTER_DUMP_DROP);
+                    setLifterTarget(LIFTER_DUMP_DROP);
                     setCollectorState(CollectorState.LIFTING);
                 }
                 break;
@@ -257,7 +273,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
             case LIFTING:
                 if (lifter.getCurrentPosition() > (LIFTER_DUMP_DROP - LIFTER_THROW)) {
                     grabber.setPower(1.0);
-                    grabber.setTargetPosition(GRABBER_WIDE);
+                    grabber.setTargetPosition(GRABBER_OPEN);
                     grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     grabber.setPower(0.5);
                     setCollectorState(CollectorState.UP_TOP);
@@ -265,23 +281,26 @@ public class HerdingCats_Teleop extends LinearOpMode {
                     grabber.setPower(0.5);
                     grabber.setTargetPosition(GRABBER_OPEN);
                     grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    lifter.setTargetPosition(LIFTER_PICKUP);
+                    setLifterTarget(LIFTER_PICKUP);
                     setCollectorState(CollectorState.LOWERING);
                 }
                 break;
 
             case UP_TOP:
                 if (lifterClicked()) {
-                    lifter.setTargetPosition(LIFTER_PICKUP);
-                    grabber.setTargetPosition(GRABBER_OPEN);
+                    setLifterTarget(LIFTER_PICKUP);
                     setCollectorState(CollectorState.LOWERING);
+                } else if (safeClicked()) {
+                    setLifterTarget(LIFTER_HOVER);
+                    setCollectorState(CollectorState.LOWERING);
+                } else if (stateTime.time() > 0.25) {
+                    setLifterTarget(LIFTER_UP_TOP);
                 }
                 break;
 
             case DUMPING:
                 if (stateTime.time() > 0.25) {
-                    lifter.setTargetPosition(LIFTER_PICKUP);
-                    grabber.setTargetPosition(GRABBER_OPEN);
+                    setLifterTarget(LIFTER_PICKUP);
                     setCollectorState(CollectorState.LOWERING);
                 }
                 break;
@@ -289,6 +308,21 @@ public class HerdingCats_Teleop extends LinearOpMode {
             case UNKNOWN:
             default:
                 break;
+        }
+    }
+
+    void setLifterTarget(int newPos) {
+        lifter.setTargetPosition(newPos);
+        currentLifterSetpoint = newPos;
+    }
+
+    void checkSafeClick() {
+        if (safeClicked()) {
+            if (currentLifterSetpoint == LIFTER_PICKUP) {
+                setLifterTarget(LIFTER_HOVER);
+            } else {
+                setLifterTarget(LIFTER_PICKUP);
+            }
         }
     }
 
@@ -321,6 +355,13 @@ public class HerdingCats_Teleop extends LinearOpMode {
         boolean now = gamepad1.left_bumper;
         boolean clicked = (now && !lastLifterButton) ;
         lastLifterButton = now;
+        return clicked;
+    }
+
+    public boolean safeClicked() {
+        boolean now = gamepad1.a;
+        boolean clicked = (now && !lastSafeButton) ;
+        lastSafeButton = now;
         return clicked;
     }
 
@@ -357,7 +398,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
         grabber.setPower(0.0);
 
         // Now lower the lifter to the ground.
-        lifter.setPower(-0.15);
+        lifter.setPower(-0.10);
         sleep(200);
         while (!isStopRequested()){
             lifterPos = lifter.getCurrentPosition();
@@ -380,7 +421,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
         // Move to standby position.
 
         lifter.setPower(0.0);
-        lifter.setTargetPosition(LIFTER_STANDBY);
+        setLifterTarget(LIFTER_STANDBY);
         lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         lifter.setPower(0.7);
 
@@ -390,7 +431,6 @@ public class HerdingCats_Teleop extends LinearOpMode {
         grabber.setPower(0.5);
 
         setCollectorState(CollectorState.STANDBY);
-
         LifterStatus.lifterHomed = true;
 
         telemetry.addData("Collector", "STANDBY");
