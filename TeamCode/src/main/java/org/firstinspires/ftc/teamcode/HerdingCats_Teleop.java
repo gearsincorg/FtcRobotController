@@ -56,9 +56,9 @@ public class HerdingCats_Teleop extends LinearOpMode {
     final double DRIVE_RATE = 0.45;
     final double TURBO_TURN_RATE  = 0.50;
     final double TURBO_DRIVE_RATE = 1.00;
-    final int    NOT_MOVING = 5;
 
     // Collector Preset Positions
+    final int    NOT_MOVING = 5;
     final int    LIFTER_PRESSED   =   10 ;
     final int    LIFTER_PICKUP    =   35 ;
     final int    LIFTER_HOVER     =  150 ;
@@ -68,7 +68,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
 
     final int    LIFTER_THROW     =  120 ;
 
-    final int    GRABBER_NARROW   =   80 ;
+
     final int    GRABBER_OPEN     =  120 ;
     final int    GRABBER_WIDE     =  150 ;
 
@@ -117,8 +117,9 @@ public class HerdingCats_Teleop extends LinearOpMode {
         dumperReady = hardwareMap.get(DigitalChannel.class, "dumperReady");
 
         // Home the collector
-        homeCollector();
-        telemetry.setMsTransmissionInterval(50);
+        if (!LifterStatus.lifterHomed) {
+            homeCollector();
+        }
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -181,6 +182,8 @@ public class HerdingCats_Teleop extends LinearOpMode {
             telemetry.addData("Lifter", "%d", lifter.getCurrentPosition());
             telemetry.update();
         }
+
+        LifterStatus.lifterHomed = false;
     }
 
     public void runCollectorControl() {
@@ -379,6 +382,8 @@ public class HerdingCats_Teleop extends LinearOpMode {
         grabber.setPower(0.5);
 
         setCollectorState(CollectorState.STANDBY);
+
+        LifterStatus.lifterHomed = true;
 
         telemetry.addData("Collector", "STANDBY");
         telemetry.update();

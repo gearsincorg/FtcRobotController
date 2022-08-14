@@ -8,6 +8,7 @@ public enum CollectorState {
     MANUAL_GRABBING,
     LIFTING,
     DUMPING,
+    UP_TOP,
     LOWERING
 }
 

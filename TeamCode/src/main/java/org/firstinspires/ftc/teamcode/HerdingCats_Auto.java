@@ -76,9 +76,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 public class HerdingCats_Auto extends LinearOpMode {
 
     /* Declare OpMode members. */
-    private DcMotor         leftDrive   = null;
-    private DcMotor         rightDrive  = null;
-    private BNO055IMU       imu         = null;      // Control Hub IMU
+    private DcMotor     leftDrive   = null;
+    private DcMotor     rightDrive  = null;
+    private DcMotor     grabber     = null;
+    private DcMotor     lifter      = null;
+    private BNO055IMU   imu         = null;      // Control Hub IMU
 
     private double          robotHeading  = 0;
     private double          headingOffset = 0;
@@ -109,19 +111,32 @@ public class HerdingCats_Auto extends LinearOpMode {
     static final double     P_TURN_COEFF            = 0.04;     // greater value is more responsive, but also less stable
     static final double     P_DRIVE_COEFF           = 0.03;     // greater value is more responsive, but also less stable
 
+    //  Manipulator controls
+    final int    NOT_MOVING = 5;
+    final int    LIFTER_STANDBY   =  930 ;
+    final int    GRABBER_OPEN     =  120 ;
 
     @Override
     public void runOpMode() {
 
         // Initialize the drive system variables.
-        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
-        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
-
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
+        leftDrive   = hardwareMap.get(DcMotor.class, "left_drive");
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        rightDrive  = hardwareMap.get(DcMotor.class, "right_drive");
         rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        grabber     = hardwareMap.get(DcMotor.class, "grabber");
+        grabber.setDirection(DcMotor.Direction.FORWARD);
+        grabber.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        lifter      = hardwareMap.get(DcMotor.class, "lifter");
+        lifter.setDirection(DcMotor.Direction.REVERSE);
+        lifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // define initialization values for IMU, and then initialize it.
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -134,6 +149,11 @@ public class HerdingCats_Auto extends LinearOpMode {
         rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        // Home the collector
+        if (!LifterStatus.lifterHomed) {
+            homeCollector();
+        }
 
         telemetry.addData(">", "Robot Ready.");    //
         telemetry.update();
@@ -409,4 +429,76 @@ public class HerdingCats_Auto extends LinearOpMode {
     public double getSteer(double error, double PCoeff) {
         return Range.clip(error * PCoeff, -1, 1);
     }
+    public void homeCollector() {
+
+        telemetry.addData(">", "Homing Collector.");    //
+        telemetry.update();
+
+        grabber.setPower(0.0);
+        lifter.setPower(0.0);
+        grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        lifter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        int grabberPos = grabber.getCurrentPosition();
+        int lifterPos  = lifter.getCurrentPosition();
+        int lastGrabberPos = grabberPos;
+        int lastLifterPos  = lifterPos;
+
+        // First close the grabber.
+        grabber.setPower(-0.2);
+        sleep(200);
+        while (!isStopRequested()){
+            grabberPos = grabber.getCurrentPosition();
+            int dif = Math.abs(grabberPos - lastGrabberPos);
+            telemetry.addData("Grabber", "Dif = %d", dif);
+            telemetry.update();
+            if (dif < NOT_MOVING) {
+                // Stop motor and reset encoder.
+                grabber.setPower(0.0);
+                grabber.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                grabber.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                break;
+            } else {
+                sleep(100);
+            }
+            lastGrabberPos = grabberPos;
+        }
+        grabber.setPower(0.0);
+
+        // Now lower the lifter to the ground.
+        lifter.setPower(-0.15);
+        sleep(200);
+        while (!isStopRequested()){
+            lifterPos = lifter.getCurrentPosition();
+            int dif = Math.abs(lifterPos - lastLifterPos);
+            telemetry.addData("Lifter", "Dif = %d", dif);
+            telemetry.update();
+            if (Math.abs(lifterPos - lastLifterPos) < NOT_MOVING) {
+                // Stop motor and reset encoder.
+                lifter.setPower(0.0);
+                lifter.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                lifter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                break;
+            } else {
+                sleep(100);
+            }
+            lastLifterPos = lifterPos;
+        }
+
+        // Move to standby position.
+        lifter.setPower(0.0);
+        lifter.setTargetPosition(LIFTER_STANDBY);
+        lifter.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        lifter.setPower(0.7);
+
+        grabber.setPower(0.0);
+        grabber.setTargetPosition(GRABBER_OPEN);
+        grabber.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        grabber.setPower(0.5);
+
+        LifterStatus.lifterHomed = true;
+
+        telemetry.addData("Collector", "STANDBY");
+        telemetry.update();
+    }
+
 }
