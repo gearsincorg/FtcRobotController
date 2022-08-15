@@ -56,6 +56,8 @@ public class HerdingCats_Teleop extends LinearOpMode {
     final double DRIVE_RATE = 0.45;
     final double TURBO_TURN_RATE  = 0.50;
     final double TURBO_DRIVE_RATE = 1.00;
+    final double TURN_CRAWL  = 0.10;
+    final double DRIVE_CRAWL = 0.2;
 
     // Collector Preset Positions
     final int    NOT_MOVING = 5;
@@ -163,6 +165,16 @@ public class HerdingCats_Teleop extends LinearOpMode {
                 turn *= TURBO_TURN_RATE;
             } else {
                 turn *= TURN_RATE;
+            }
+
+            if (gamepad1.dpad_up) {
+                drive = DRIVE_CRAWL;
+            } else if (gamepad1.dpad_down) {
+                drive = -DRIVE_CRAWL;
+            } else if (gamepad1.dpad_left) {
+                turn = -TURN_CRAWL;
+            } else if (gamepad1.dpad_right) {
+                turn = TURN_CRAWL;
             }
 
             double leftPower    = drive + turn;
@@ -328,7 +340,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
 
     public void runDumperControl() {
         //  Raise the dumper if left bumper pressed.
-        if (gamepad1.dpad_down) {
+        if (gamepad1.x) {
             dumper.setPower(-0.4);
         } else {
             // Run the motor backwards unless it's in it's home position
