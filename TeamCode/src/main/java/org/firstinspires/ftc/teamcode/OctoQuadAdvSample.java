@@ -30,7 +30,11 @@ public class OctoQuadAdvSample extends LinearOpMode
     {
         OctoQuad octoquad = hardwareMap.get(OctoQuad.class, "octoquad");
         octoquad.setChannelBankConfig(OctoQuad.ChannelBankConfig.BANK1_QUADRATURE_BANK2_PULSE_WIDTH) ;   
-        octoquad.setSingleChannelPulseWidthParams(4, new OctoQuad.ChannelPulseWidthParams(1, 1045));
+
+        OctoQuad.ChannelPulseWidthParams params = new OctoQuad.ChannelPulseWidthParams();
+        params.min_length_us = 1;
+        params.max_length_us = 1045;
+        octoquad.setSingleChannelPulseWidthParams(4, params);
 
         DcMotor leftDrive = hardwareMap.dcMotor.get("left_drive");
         DcMotor rightDrive = hardwareMap.dcMotor.get("right_drive");

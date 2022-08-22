@@ -1,10 +1,3 @@
-/*
- * Copyright (c) 2022 Digital Chicken Labs
- * Permission is herby granted to use this software for the sole purpose
- * of evaluating the OctoQuad engineering sample boards. No warranty of any
- * kind is provided whether express of implied.
- */
-
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -12,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @TeleOp(name = "OctoQuad Sample", group="OctoQuad")
 public class OctoQuadSample extends LinearOpMode {
@@ -35,40 +29,39 @@ public class OctoQuadSample extends LinearOpMode {
     
     // Reverse one of the drive motors.
     // You will have to determine which motor to reverse for your robot.
-    // In this example, the right motor was reversed so that positive
-    // applied power makes it move the robot in the forward direction.
     left_drive.setDirection(DcMotorSimple.Direction.REVERSE);
     
     // Reverse the count-direction of an encoder being read by an
     // OctoQuad interface module.Pass the desired channel number
     // to the block. Valid values are 0 to 7. The direction
     // is inverted if the 'reverse' input is set to 'true'.
-    octoquad.reverseEncoderDirection(0, true);
+    octoquad.reverseEncoderDirection(7, true);
     
     waitForStart();
     
     while (opModeIsActive()) {
-      
+      telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
       telemetry.addData(">", "Press X to Reset Encoders");
-      
+    
       // Use left stick to drive and right stick to turn
+      // The Y axis of a joystick ranges from -1 in its topmost position
+      // to +1 in its bottommost position. We negate this value so that
+      // the topmost position corresponds to maximum forward power.
+    
       left_drive.setPower(-gamepad1.left_stick_y + gamepad1.right_stick_x);
       right_drive.setPower(-gamepad1.left_stick_y - gamepad1.right_stick_x);
-      
+    
       // Check for X button to reset encoders
       if (gamepad1.x) {
         // Reset the position of all encoders to zero.
         octoquad.resetAllEncoders();
       }
-      telemetry.addData("Left Power", JavaUtil.formatNumber(left_drive.getPower(), 2));
-      
-      // Read the position of encoder 0 connected to an OctoQuad.
-      telemetry.addData("Left Position ", octoquad.getPosition(0));
-      
-      telemetry.addData("Right Power", JavaUtil.formatNumber(right_drive.getPower(), 2));
-      
-      // Read the position of encoder 1 connected to an OctoQuad.
-      telemetry.addData("Right Position", octoquad.getPosition(1));
+    
+      // Read the position of an encoder connected to an OctoQuad.  Pass the desired channel number to the block.  Valid values are 0 to 7.
+      telemetry.addData("Left  Pwr / Pos", 
+          JavaUtil.formatNumber(left_drive.getPower(), 2) + " / " + octoquad.getPosition(0));
+      telemetry.addData("Right Pwr / Pos", 
+          JavaUtil.formatNumber(right_drive.getPower(), 2) + " / " + octoquad.getPosition(1));
       telemetry.update();
     }
   }
