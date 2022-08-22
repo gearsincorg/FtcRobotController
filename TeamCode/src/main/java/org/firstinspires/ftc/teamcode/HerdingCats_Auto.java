@@ -175,18 +175,8 @@ public class HerdingCats_Auto extends LinearOpMode {
         gyroDrive(DRIVE_SPEED, 102, 0);
         gyroHold(TURN_SPEED, 0,1);
         gyroTurn(TURN_SPEED, 90);
-        gyroHold(TURN_SPEED,90, 2);
-        gyroDrive(TURN_SPEED,19,90);
-        /*gyroDrive(DRIVE_SPEED, 96.0, 0.0);  // Drive FWD 48 inches
-        gyroHold( TURN_SPEED,   0.0, 5.0);    // Hold  0 Deg heading for a 1 second
-        gyroTurn( TURN_SPEED, -45.0);               // Turn  CW to -45 Degrees
-        gyroHold( TURN_SPEED, -45.0, 0.5); // Hold -45 Deg heading for a 1/2 second
-        gyroDrive(DRIVE_SPEED, 12.0, -45.0);  // Drive FWD 12 inches at 45 degrees
-        gyroTurn( TURN_SPEED,  45.0);               // Turn  CCW  to  45 Degrees
-        gyroHold( TURN_SPEED,  45.0, 0.5);    // Hold  45 Deg heading for a 1/2 second
-        gyroTurn( TURN_SPEED,   0.0);               // Turn  CW  to   0 Degrees
-        gyroHold( TURN_SPEED,   0.0, 1.0);    // Hold  0 Deg heading for a 1 second
-        gyroDrive(DRIVE_SPEED,-48.0, 0.0);    // Drive REV 48 inches*/
+        gyroHold(TURN_SPEED,90, 1);
+        gyroDrive(TURN_SPEED,18,90);
 
         telemetry.addData("Path", "Complete");
         telemetry.addData("Final Heading", "%5.0f", getHeading());

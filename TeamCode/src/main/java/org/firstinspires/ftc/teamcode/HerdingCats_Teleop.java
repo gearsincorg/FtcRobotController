@@ -36,6 +36,11 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
+import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
  * the autonomous or the teleop period of an FTC match. The names of OpModes appear on the menu
@@ -88,12 +93,29 @@ public class HerdingCats_Teleop extends LinearOpMode {
 
     private CollectorState currentCollectorState = CollectorState.UNKNOWN;
 
+    // VUFORIA variables
+    public VuforiaLocalizer vuforia;
+    private VuforiaLocalizer.Parameters parameters;
+    private VuforiaTrackables targetsUltimateGoal;
+    private static final String VUFORIA_KEY =
+            "ASFl1ib/////AAABmdtl1FqwZUIEqtOW/F+xX70YsCPMRYbusW+Av5TpUTDuB3VJT4z6ju8tkAzSKLD0cIwdp/o/3ggJzx27+OsIHWn8OTNfsAtxIzQVSCa75gI76/v006khzWpGV1wmdoEgK7JkvEns6BCzmgfSBSThg70Ej42wDF7l5FuIXUhm/AAMJ7sHLlMl5BboZg/vRyNRFTbEbFLyj98DOwLlaNl9DvUtf5bGBOHwFCNOBX8vlxWVU3aZZpGNxNTX/KyZ84TWECIxg8SeRSz3QcBEwsBYX97HXfj4nJxn93u8m5SZmoHF11MPkV0tlqemRwrCy/MJ3eGB3WCJ+MEeCAYeVa30E+WEkVTiFQAo4WW3vKuEVuBc";
+
     @Override
     public void runOpMode() {
-        telemetry.addData("Status", "Initialized");
+        telemetry.addData("Status", "Initializing Camera");
         telemetry.update();
 
         // Initialize the hardware variables
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+        parameters.useExtendedTracking = false;
+
+        telemetry.addData("Status", "Initializing Hardware");
+        telemetry.update();
+
+        //  Instantiate the Vuforia engine
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
         leftDrive   = hardwareMap.get(DcMotor.class, "left_drive");
         leftDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -116,7 +138,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
         dumper      = hardwareMap.get(DcMotorSimple.class, "dumper");
         dumper.setDirection(DcMotor.Direction.FORWARD);
 
-        dumperReady = hardwareMap.get(DigitalChannel.class, "dumperReady");
+        dumperReady = hardwareMap.get(DigitalChannel.class, "dumper_ready");
 
         // Home the collector
         if (!LifterStatus.lifterHomed) {
