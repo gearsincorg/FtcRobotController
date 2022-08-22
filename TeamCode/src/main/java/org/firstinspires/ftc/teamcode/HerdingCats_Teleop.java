@@ -171,10 +171,10 @@ public class HerdingCats_Teleop extends LinearOpMode {
                 drive = DRIVE_CRAWL;
             } else if (gamepad1.dpad_down) {
                 drive = -DRIVE_CRAWL;
-            } else if (gamepad1.dpad_left) {
-                turn = -TURN_CRAWL;
             } else if (gamepad1.dpad_right) {
                 turn = TURN_CRAWL;
+            } else if (gamepad1.dpad_left) {
+                turn = -TURN_CRAWL;
             }
 
             double leftPower    = drive + turn;
