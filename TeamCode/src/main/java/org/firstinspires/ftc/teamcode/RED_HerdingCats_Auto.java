@@ -70,10 +70,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  *  Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Herding Cats Autonomous", group="Competition", preselectTeleOp="Herding Cats TELEOP")
-//@Autonomous(name="Robot: Auto Drive By Gyro", group="Robot")
+@Autonomous(name="RED Autonomous RED", group="Competition", preselectTeleOp="Herding Cats TELEOP")
 //@Disable
-public class HerdingCats_Auto extends LinearOpMode {
+public class RED_HerdingCats_Auto extends LinearOpMode {
 
     /* Declare OpMode members. */
     private DcMotor     leftDrive   = null;
@@ -155,12 +154,12 @@ public class HerdingCats_Auto extends LinearOpMode {
             homeCollector();
         }
 
-        telemetry.addData(">", "Robot Ready.");    //
+        telemetry.addData(">", "RED Robot Ready.");    //
         telemetry.update();
 
         // Wait for the game to start (Display Gyro value)
         while (opModeInInit()) {
-            telemetry.addData(">", "Robot Heading = %4.0f", getHeading());
+            telemetry.addData(">", "! RED ! Robot Heading = %4.0f", getHeading());
             telemetry.update();
         }
 
@@ -174,9 +173,9 @@ public class HerdingCats_Auto extends LinearOpMode {
         // Put a hold after each turn
         gyroDrive(DRIVE_SPEED, 102, 0);
         gyroHold(TURN_SPEED, 0,1);
-        gyroTurn(TURN_SPEED, 90);
-        gyroHold(TURN_SPEED,90, 1);
-        gyroDrive(TURN_SPEED,18,90);
+        gyroTurn(TURN_SPEED, -90);
+        gyroHold(TURN_SPEED,-90, 1);
+        gyroDrive(TURN_SPEED,18,-90);
 
         telemetry.addData("Path", "Complete");
         telemetry.addData("Final Heading", "%5.0f", getHeading());
