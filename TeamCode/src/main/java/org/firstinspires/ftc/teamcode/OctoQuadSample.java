@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import org.firstinspires.ftc.robotcore.external.JavaUtil;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @TeleOp(name = "OctoQuad Sample", group="OctoQuad")
@@ -31,23 +31,22 @@ public class OctoQuadSample extends LinearOpMode {
     // You will have to determine which motor to reverse for your robot.
     left_drive.setDirection(DcMotorSimple.Direction.REVERSE);
     
-    // Reverse the count-direction of an encoder being read by an
-    // OctoQuad interface module.Pass the desired channel number
-    // to the block. Valid values are 0 to 7. The direction
-    // is inverted if the 'reverse' input is set to 'true'.
-    octoquad.reverseEncoderDirection(7, true);
-    
+    // Reverse the count-direction of an encoder being read by an OctoQuad interface module.
+    // You will REALLY need to test which one need to be flipped because the OctoQuad input
+    // will not be automatically Inverted for a motor that runs against the FTC default direction
+    octoquad.reverseEncoderDirection(0, true);
+    octoquad.reverseEncoderDirection(1, false);
+
     waitForStart();
-    
+
+    telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
     while (opModeIsActive()) {
-      telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
       telemetry.addData(">", "Press X to Reset Encoders");
     
-      // Use left stick to drive and right stick to turn
-      // The Y axis of a joystick ranges from -1 in its topmost position
-      // to +1 in its bottommost position. We negate this value so that
+      // Use left stick to drive and right stick to turn (POV mode)
+      // The Y axis of a joystick ranges from -1 in its top-most position
+      // to +1 in its bottom-most position. We negate this value so that
       // the topmost position corresponds to maximum forward power.
-    
       left_drive.setPower(-gamepad1.left_stick_y + gamepad1.right_stick_x);
       right_drive.setPower(-gamepad1.left_stick_y - gamepad1.right_stick_x);
     
@@ -57,11 +56,9 @@ public class OctoQuadSample extends LinearOpMode {
         octoquad.resetAllEncoders();
       }
     
-      // Read the position of an encoder connected to an OctoQuad.  Pass the desired channel number to the block.  Valid values are 0 to 7.
-      telemetry.addData("Left  Pwr / Pos", 
-          JavaUtil.formatNumber(left_drive.getPower(), 2) + " / " + octoquad.getPosition(0));
-      telemetry.addData("Right Pwr / Pos", 
-          JavaUtil.formatNumber(right_drive.getPower(), 2) + " / " + octoquad.getPosition(1));
+      // Read the position of an encoder connected to an OctoQuad.
+      telemetry.addData("Left  Pwr / Pos", "%5.2f / %d",left_drive.getPower(), octoquad.getPosition(0));
+      telemetry.addData("Right Pwr / Pos", "%5.2f / %d", right_drive.getPower(), octoquad.getPosition(1));
       telemetry.update();
     }
   }

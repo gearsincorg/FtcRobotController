@@ -15,10 +15,6 @@
 apply from: '../build.common.gradle'
 apply from: '../build.dependencies.gradle'
 
-repositories {
-    maven { url = 'https://s01.oss.sonatype.org/content/repositories/iogithubdigitalchickenlabs-1004/' }
-}
-
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
 }
