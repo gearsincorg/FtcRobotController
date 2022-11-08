@@ -57,11 +57,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 @TeleOp(name="Herding Cats TELEOP", group="Competition")
 public class HerdingCats_Teleop extends LinearOpMode {
 
-    final double TURN_RATE  = 0.20;
+    final double TURN_RATE  = 0.3;
     final double DRIVE_RATE = 0.45;
     final double TURBO_TURN_RATE  = 0.50;
     final double TURBO_DRIVE_RATE = 1.00;
-    final double TURN_CRAWL  = 0.10;
+    final double TURN_CRAWL  = 0.2;
     final double DRIVE_CRAWL = 0.2;
 
     // Collector Preset Positions
@@ -174,18 +174,14 @@ public class HerdingCats_Teleop extends LinearOpMode {
             // ##  Driving Code  ##############################################################
             // POV Mode uses left stick to go forward, and right stick to turn.
             double drive = -gamepad1.left_stick_y;
-            double turn  =  gamepad1.right_stick_x;
+            double turn  =  gamepad1.left_stick_x + gamepad1.right_stick_x;
 
             // Run standard or TURBO
-            if (gamepad1.left_stick_button) {
+            if (gamepad1.left_stick_button || gamepad1.right_stick_button ) {
                 drive *= TURBO_DRIVE_RATE;
-            } else {
-                drive *= DRIVE_RATE;
-            }
-
-            if (gamepad1.right_stick_button) {
                 turn *= TURBO_TURN_RATE;
             } else {
+                drive *= DRIVE_RATE;
                 turn *= TURN_RATE;
             }
 
@@ -225,6 +221,7 @@ public class HerdingCats_Teleop extends LinearOpMode {
             telemetry.addData("Dumper", "%s", dumperReady.getState()? "Dumping": "Ready");
             telemetry.addData("Grabber", "%d", grabber.getCurrentPosition());
             telemetry.addData("Lifter", "%d", lifter.getCurrentPosition());
+            telemetry.addData("Drive / Turn", "%.2f, %.2f", leftPower, rightPower);
             telemetry.update();
         }
 
