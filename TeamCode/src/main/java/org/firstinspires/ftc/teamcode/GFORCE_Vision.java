@@ -61,7 +61,7 @@ public class GFORCE_Vision {
         // Set initial exposure and gain.
         myExposureControl.setExposure(6, TimeUnit.MILLISECONDS);
         myOpMode.sleep(100);
-        myGainControl.setGain(255);
+        myGainControl.setGain(200);
         myOpMode.sleep(100);
 
         // Start tracking targets in the background
@@ -69,7 +69,7 @@ public class GFORCE_Vision {
     }
 
     public int getSignalNumber() {
-        int imageNumber = 0;
+        int imageNumber = 2;
         // Look for first visible target, and save its pose.
         for (VuforiaTrackable trackable : targetsPowerPlay)
         {
