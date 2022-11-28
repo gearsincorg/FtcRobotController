@@ -131,12 +131,12 @@ public class GFORCE_AUTO extends LinearOpMode {
                             if (autoConfig.autoOptions.park) {
                                 // we are red, starting at the front, scoring the junction, and the cone stack, and parking
                                 // we are red, starting at the front, scoring the junction and Not Conestack, and parking
-                                if (foundSignalImage == 3)
-                                    followGforceSequence(trjStackPark3);
-                                else if (foundSignalImage == 2)
-                                    followGforceSequence(trjStackPark2);
-                                else
+                                if (foundSignalImage == 1)
                                     followGforceSequence(trjStackPark1);
+                                else if (foundSignalImage == 3)
+                                    followGforceSequence(trjStackPark3);
+                                else
+                                    followGforceSequence(trjStackPark2);
                             } else {
                                 // we are red, starting at the front, scoring the junction and Conestack, but NOT parking
                                 followGforceSequence(trjJunctionLoop3);
@@ -147,12 +147,12 @@ public class GFORCE_AUTO extends LinearOpMode {
                             // we are red, starting at the front, scoring the junction and Not Conestack
                             if (autoConfig.autoOptions.park) {
                                 // we are red, starting at the front, scoring the junction and Not Conestack, and parking
-                                if (foundSignalImage == 3)
-                                    followGforceSequence(trjJunctionPark3);
-                                else if (foundSignalImage == 2)
-                                    followGforceSequence(trjJunctionPark2);
-                                else
+                                if (foundSignalImage == 1)
                                     followGforceSequence(trjJunctionPark1);
+                                else if (foundSignalImage == 3)
+                                    followGforceSequence(trjJunctionPark3);
+                                else
+                                    followGforceSequence(trjJunctionPark2);
                             }
                         }
                     } else {
@@ -162,12 +162,12 @@ public class GFORCE_AUTO extends LinearOpMode {
                             followGforceSequence(trjReadSignal);
 
                             // we are red, starting at the front, NOT scoring the junction and parking
-                            if (foundSignalImage == 3)
-                                followGforceSequence(trjSignalPark3);
-                            else if (foundSignalImage == 2)
-                                followGforceSequence(trjSignalPark2);
-                            else
+                            if (foundSignalImage == 1)
                                 followGforceSequence(trjSignalPark1);
+                            else if (foundSignalImage == 3)
+                                followGforceSequence(trjSignalPark3);
+                            else
+                                followGforceSequence(trjSignalPark2);
                         }
                     }
                 }
@@ -270,7 +270,7 @@ public class GFORCE_AUTO extends LinearOpMode {
                 lookForSignalImage = true;
             })
             .lineTo(new Vector2d(-TILEx2_0 - 10, sideFlip(TILEx1_5)))
-            .waitSeconds(1.0)
+            .waitSeconds(0.5)
             .build();
 
         //=========================================================================

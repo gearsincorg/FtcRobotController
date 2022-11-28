@@ -62,15 +62,15 @@ public class GFORCE_Vision {
         myOpMode.sleep(100);
         myGainControl.setGain(200);
         myOpMode.sleep(100);
-        */
 
+         */
 
         // Start tracking targets in the background
         targetsPowerPlay.activate();
     }
 
     public int getSignalNumber() {
-        int imageNumber = 2;
+        int imageNumber = 0;
         // Look for first visible target, and save its pose.
         for (VuforiaTrackable trackable : targetsPowerPlay)
         {
