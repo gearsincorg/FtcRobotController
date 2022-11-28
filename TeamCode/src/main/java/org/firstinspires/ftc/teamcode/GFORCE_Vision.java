@@ -17,6 +17,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 
+import java.util.concurrent.TimeUnit;
+
 public class GFORCE_Vision {
     private static final String VUFORIA_KEY =
             "ASFl1ib/////AAABmdtl1FqwZUIEqtOW/F+xX70YsCPMRYbusW+Av5TpUTDuB3VJT4z6ju8tkAzSKLD0cIwdp/o/3ggJzx27+OsIHWn8OTNfsAtxIzQVSCa75gI76/v006khzWpGV1wmdoEgK7JkvEns6BCzmgfSBSThg70Ej42wDF7l5FuIXUhm/AAMJ7sHLlMl5BboZg/vRyNRFTbEbFLyj98DOwLlaNl9DvUtf5bGBOHwFCNOBX8vlxWVU3aZZpGNxNTX/KyZ84TWECIxg8SeRSz3QcBEwsBYX97HXfj4nJxn93u8m5SZmoHF11MPkV0tlqemRwrCy/MJ3eGB3WCJ+MEeCAYeVa30E+WEkVTiFQAo4WW3vKuEVuBc";
@@ -53,17 +55,15 @@ public class GFORCE_Vision {
         ExposureControl myExposureControl = vuforia.getCamera().getControl(ExposureControl.class);
         GainControl myGainControl = vuforia.getCamera().getControl(GainControl.class);
 
-        /*
+
         myExposureControl.setMode(ExposureControl.Mode.Manual);
         myOpMode.sleep(100);
 
         // Set initial exposure and gain.
-        myExposureControl.setExposure(6, TimeUnit.MILLISECONDS);
+        myExposureControl.setExposure(5, TimeUnit.MILLISECONDS);
         myOpMode.sleep(100);
-        myGainControl.setGain(200);
+        myGainControl.setGain(220);
         myOpMode.sleep(100);
-
-         */
 
         // Start tracking targets in the background
         targetsPowerPlay.activate();

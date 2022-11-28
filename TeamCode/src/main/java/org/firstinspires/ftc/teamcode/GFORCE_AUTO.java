@@ -269,7 +269,7 @@ public class GFORCE_AUTO extends LinearOpMode {
                 elevator.setLiftTargetPosition(Elevator.ELEVATOR_LOW);
                 lookForSignalImage = true;
             })
-            .lineTo(new Vector2d(-TILEx2_0 - 10, sideFlip(TILEx1_5)))
+            .lineTo(new Vector2d(-TILEx2_0 - 6, sideFlip(TILEx1_5)))
             .waitSeconds(0.5)
             .build();
 
