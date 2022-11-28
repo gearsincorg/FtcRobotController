@@ -270,6 +270,7 @@ public class GFORCE_AUTO extends LinearOpMode {
                 lookForSignalImage = true;
             })
             .lineTo(new Vector2d(-TILEx2_0 - 10, sideFlip(TILEx1_5)))
+            .waitSeconds(1.0)
             .build();
 
         //=========================================================================
