@@ -104,71 +104,69 @@ public class GFORCE_AUTO extends LinearOpMode {
 
         if (opModeIsActive()) {
             if (autoConfig.autoOptions.enabled) {
-                if (autoConfig.autoOptions.startFront) {
-                    if (autoConfig.autoOptions.scoreJunction) {
-                        // we are red, starting at the front, scoring the junction
-                        followGforceSequence(trjReadSignal);
-                        followGforceSequence(trjScoreJunction);
-                        followGforceSequence(trjJunctionTransition);
+                if (autoConfig.autoOptions.scoreJunction) {
+                    // we are red, starting at the front, scoring the junction
+                    followGforceSequence(trjReadSignal);
+                    followGforceSequence(trjScoreJunction);
+                    followGforceSequence(trjJunctionTransition);
 
-                        if (autoConfig.autoOptions.scoreConeStack) {
-                            // we are red, starting at the front, scoring the junction, and the cone stack
+                    if (autoConfig.autoOptions.scoreConeStack) {
+                        // we are red, starting at the front, scoring the junction, and the cone stack
+                        followGforceSequence(trjJunctionLoop1);
+                        followGforceSequence(trjJunctionLoop2);
+
+                        // Score an extra cone if we have time
+                        if (autonomousTimer.time() < 19) {
+                            followGforceSequence(trjJunctionLoop3);
+
+                            if (autonomousTimer.time() < 21) {
+                                followGforceSequence(trjJunctionLoop1);
+
+                                if (autonomousTimer.time() < 24)
+                                    followGforceSequence(trjJunctionLoop2);
+                            }
+                        }
+
+                        if (autoConfig.autoOptions.park) {
+                            // we are red, starting at the front, scoring the junction, and the cone stack, and parking
+                            // we are red, starting at the front, scoring the junction and Not Conestack, and parking
+                            if (foundSignalImage == 1)
+                                followGforceSequence(trjStackPark1);
+                            else if (foundSignalImage == 3)
+                                followGforceSequence(trjStackPark3);
+                            else
+                                followGforceSequence(trjStackPark2);
+                        } else {
+                            // we are red, starting at the front, scoring the junction and Conestack, but NOT parking
+                            followGforceSequence(trjJunctionLoop3);
                             followGforceSequence(trjJunctionLoop1);
                             followGforceSequence(trjJunctionLoop2);
-
-                            // Score an extra cone if we have time
-                            if (autonomousTimer.time() < 19) {
-                                followGforceSequence(trjJunctionLoop3);
-
-                                if (autonomousTimer.time() < 21) {
-                                    followGforceSequence(trjJunctionLoop1);
-
-                                    if (autonomousTimer.time() < 24)
-                                        followGforceSequence(trjJunctionLoop2);
-                                }
-                            }
-
-                            if (autoConfig.autoOptions.park) {
-                                // we are red, starting at the front, scoring the junction, and the cone stack, and parking
-                                // we are red, starting at the front, scoring the junction and Not Conestack, and parking
-                                if (foundSignalImage == 1)
-                                    followGforceSequence(trjStackPark1);
-                                else if (foundSignalImage == 3)
-                                    followGforceSequence(trjStackPark3);
-                                else
-                                    followGforceSequence(trjStackPark2);
-                            } else {
-                                // we are red, starting at the front, scoring the junction and Conestack, but NOT parking
-                                followGforceSequence(trjJunctionLoop3);
-                                followGforceSequence(trjJunctionLoop1);
-                                followGforceSequence(trjJunctionLoop2);
-                            }
-                        } else {
-                            // we are red, starting at the front, scoring the junction and Not Conestack
-                            if (autoConfig.autoOptions.park) {
-                                // we are red, starting at the front, scoring the junction and Not Conestack, and parking
-                                if (foundSignalImage == 1)
-                                    followGforceSequence(trjJunctionPark1);
-                                else if (foundSignalImage == 3)
-                                    followGforceSequence(trjJunctionPark3);
-                                else
-                                    followGforceSequence(trjJunctionPark2);
-                            }
                         }
                     } else {
-                        // we are red, starting at the front, NOT scoring the junction
+                        // we are red, starting at the front, scoring the junction and Not Conestack
                         if (autoConfig.autoOptions.park) {
-                            // we are red, starting at the front, only parking
-                            followGforceSequence(trjReadSignal);
-
-                            // we are red, starting at the front, NOT scoring the junction and parking
+                            // we are red, starting at the front, scoring the junction and Not Conestack, and parking
                             if (foundSignalImage == 1)
-                                followGforceSequence(trjSignalPark1);
+                                followGforceSequence(trjJunctionPark1);
                             else if (foundSignalImage == 3)
-                                followGforceSequence(trjSignalPark3);
+                                followGforceSequence(trjJunctionPark3);
                             else
-                                followGforceSequence(trjSignalPark2);
+                                followGforceSequence(trjJunctionPark2);
                         }
+                    }
+                } else {
+                    // we are red, starting at the front, NOT scoring the junction
+                    if (autoConfig.autoOptions.park) {
+                        // we are red, starting at the front, only parking
+                        followGforceSequence(trjReadSignal);
+
+                        // we are red, starting at the front, NOT scoring the junction and parking
+                        if (foundSignalImage == 1)
+                            followGforceSequence(trjSignalPark1);
+                        else if (foundSignalImage == 3)
+                            followGforceSequence(trjSignalPark3);
+                        else
+                            followGforceSequence(trjSignalPark2);
                     }
                 }
             }

@@ -60,9 +60,9 @@ public class GFORCE_Vision {
         myOpMode.sleep(100);
 
         // Set initial exposure and gain.
-        myExposureControl.setExposure(5, TimeUnit.MILLISECONDS);
+        myExposureControl.setExposure(10, TimeUnit.MILLISECONDS);
         myOpMode.sleep(100);
-        myGainControl.setGain(220);
+        myGainControl.setGain(160);
         myOpMode.sleep(100);
 
         // Start tracking targets in the background

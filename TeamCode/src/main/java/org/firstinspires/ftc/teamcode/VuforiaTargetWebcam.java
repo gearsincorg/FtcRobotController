@@ -105,13 +105,17 @@ public class VuforiaTargetWebcam extends LinearOpMode
         ExposureControl myExposureControl = vuforia.getCamera().getControl(ExposureControl.class);
         GainControl myGainControl = vuforia.getCamera().getControl(GainControl.class);
 
+        // Retrieve from webcam its current exposure and gain values.
+        long curExp = myExposureControl.getExposure(TimeUnit.MILLISECONDS);
+        int curGain = myGainControl.getGain();
+
         myExposureControl.setMode(ExposureControl.Mode.Manual);
         sleep(100);
 
         // Set initial exposure and gain.
-        myExposureControl.setExposure(6, TimeUnit.MILLISECONDS);
+        myExposureControl.setExposure(10, TimeUnit.MILLISECONDS);
         sleep(100);
-        myGainControl.setGain(255);
+        myGainControl.setGain(160);
         sleep(100);
 
         // Start tracking targets in the background
@@ -130,6 +134,25 @@ public class VuforiaTargetWebcam extends LinearOpMode
 
         while (opModeIsActive())
         {
+            // Manually adjust the webcam exposure and gain variables.
+            float changeExp = -gamepad1.left_stick_y;
+            float changeGain = -gamepad1.right_stick_y;
+
+            int changeExpInt = (int) (changeExp*5);
+            int changeGainInt = (int) (changeGain*5);
+
+            curExp += changeExpInt;
+            curGain += changeGainInt;
+
+            // Ensure inputs are within webcam limits, if provided.
+            // Update the webcam's settings.
+            myExposureControl.setExposure(curExp, TimeUnit.MILLISECONDS);
+            myGainControl.setGain(curGain);
+
+            telemetry.addData("Exposure", "Current:%d", curExp);
+            telemetry.addData("Gain", "Current:%d", curGain);
+
+
             // Look for first visible target, and save its pose.
             targetFound = false;
             for (VuforiaTrackable trackable : targetsPowerPlay)

@@ -23,17 +23,14 @@ public class AutoConfig
 
   public class Param {
       public boolean redAlliance = false;
-      public int delayInSec = 0;
       public boolean enabled = true;
       public boolean startFront = false;
-      public boolean scoreTerminal = false;
       public boolean scoreJunction = false;
       public boolean scoreConeStack = false;
       public boolean park = false;
-      public boolean spare = false;
   }
 
-  private static int MENU_ITEMS = 9;
+  private static int MENU_ITEMS = 6;
 
   // variables used during the configuration process
   //AutoMenuItem currentMenuItem;
@@ -97,32 +94,19 @@ public class AutoConfig
               autoOptions.redAlliance = !autoOptions.redAlliance;
               break;
           case 1:
-              if (b1)
-                  autoOptions.delayInSec++;
-              else
-              if (autoOptions.delayInSec > 0)
-                  autoOptions.delayInSec--;
-              break;
-          case 2:
               autoOptions.enabled = !autoOptions.enabled;
               break;
-          case 3:
+          case 2:
               autoOptions.startFront = !autoOptions.startFront;
               break;
-          case 4:
-              autoOptions.scoreTerminal = !autoOptions.scoreTerminal;
-              break;
-          case 5:
+          case 3:
               autoOptions.scoreJunction = !autoOptions.scoreJunction;
               break;
-          case 6:
+          case 4:
               autoOptions.scoreConeStack = !autoOptions.scoreConeStack;
               break;
-          case 7:
+          case 5:
               autoOptions.park = !autoOptions.park;
-              break;
-          case 8:
-              autoOptions.spare = !autoOptions.spare;
               break;
       }
       saveConfig();
@@ -145,14 +129,11 @@ public class AutoConfig
 
       // write each configuration parameter as a string on its own line
         outputStreamWriter.write(Boolean.toString(autoOptions.redAlliance)   + "\n");
-        outputStreamWriter.write(Integer.toString(autoOptions.delayInSec)   + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.enabled)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.startFront)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.scoreTerminal)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.scoreJunction)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.scoreConeStack)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.park)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.spare)  + "\n");
 
       outputStreamWriter.close();
     }
@@ -173,14 +154,11 @@ public class AutoConfig
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
         autoOptions.redAlliance = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.delayInSec  = Integer.valueOf(bufferedReader.readLine());
         autoOptions.enabled = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.startFront = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.scoreTerminal = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.scoreJunction = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.scoreConeStack = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.park = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.spare = Boolean.valueOf(bufferedReader.readLine());
         inputStream.close();
       }
     } catch (Exception e)
@@ -191,15 +169,12 @@ public class AutoConfig
 
   private void updateMenu ()
   {
-      myOpMode.telemetry.addData((currentMenuIndex == 0) ? "0 > ALLIANCE"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "Blue");
-      myOpMode.telemetry.addData((currentMenuIndex == 1) ? "1 > START DELAY"   : "1   Start Delay", autoOptions.delayInSec);
-      myOpMode.telemetry.addData((currentMenuIndex == 2) ? "2 > RUN AUTO"   : "2   Run Auto", autoOptions.enabled ? "YES" : "no");
-      myOpMode.telemetry.addData((currentMenuIndex == 3) ? "3 > START POSITION"   : "3   Start Position", autoOptions.startFront ? "FRONT" : "Rear");
-      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > SCORE TERMINAL"   : "4   Score Terminal", autoOptions.scoreTerminal ? "--" : "--");
-      myOpMode.telemetry.addData((currentMenuIndex == 5) ? "5 > SCORE JUNCTION"   : "5   Score Junction", autoOptions.scoreJunction ? "YES" : "no");
-      myOpMode.telemetry.addData((currentMenuIndex == 6) ? "6 > SCORE CONESTACK"   : "6  Score Conestack", autoOptions.scoreConeStack ? "YES" : "no");
-      myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > PARK"   : "7  Park", autoOptions.park ? "YES" : "no");
-      myOpMode.telemetry.addData((currentMenuIndex == 8) ? "8 > SPARE"   : "8  spare", autoOptions.spare ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 0) ? "0 > ALLIANCE"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "blue");
+      myOpMode.telemetry.addData((currentMenuIndex == 1) ? "1 > RUN AUTO"   : "1   Run Auto", autoOptions.enabled ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 2) ? "2 > START POSITION"   : "2   Start Position", autoOptions.startFront ? "FRONT" : "rear");
+      myOpMode.telemetry.addData((currentMenuIndex == 3) ? "3 > SCORE JUNCTION"   : "3   Score Junction", autoOptions.scoreJunction ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > SCORE CONESTACK"   : "4  Score Conestack", autoOptions.scoreConeStack ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 5) ? "5 > PARK"   : "5  Park", autoOptions.park ? "YES" : "no");
       myOpMode.telemetry.update();
   }
 }
