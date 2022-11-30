@@ -57,7 +57,7 @@ public class ConeTracker {
 
         // Determine all the individual cone ranges and also the closest range
         coneRange = MAX_RANGE;
-        if (leftRange < MAX_RANGE) {
+        if (leftRange < MAX_RANGE) {  // should also limit by low range
             leftSeen = true;
             numberSeen++;
             coneRange = Math.min(leftRange, coneRange);
@@ -66,7 +66,7 @@ public class ConeTracker {
             leftRange = 0;
         }
 
-        if (centerRange < MAX_RANGE) {
+        if (centerRange < MAX_RANGE) {    // should also limit by low range
             centerSeen = true;
             numberSeen++;
             coneRange = Math.min(centerRange, coneRange);
@@ -75,7 +75,7 @@ public class ConeTracker {
             centerRange = 0;
         }
 
-        if (rightRange < MAX_RANGE) {
+        if (rightRange < MAX_RANGE) {    // should also limit by low range
             rightSeen = true;
             numberSeen++;
             coneRange = Math.min(rightRange, coneRange);

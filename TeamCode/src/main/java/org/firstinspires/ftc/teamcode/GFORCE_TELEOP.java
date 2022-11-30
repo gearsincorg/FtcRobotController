@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * See lines 42-57.
  */
-@TeleOp(name="G-FORCE TELEOP", group = "advanced")
+@TeleOp(name="G-FORCE TELEOP", group = "A Competition")
 public class GFORCE_TELEOP extends LinearOpMode {
 
     boolean weAreRed = false;

@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * is explained below.
  */
 
-@TeleOp(name="Vuforia Target", group = "Concept")
+@TeleOp(name="Vuforia Target", group = "X-Group")
 //@Disabled
 public class VuforiaTargetWebcam extends LinearOpMode
 {

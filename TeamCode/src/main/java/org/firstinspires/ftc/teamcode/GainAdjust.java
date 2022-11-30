@@ -23,7 +23,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 
 import java.util.concurrent.TimeUnit;
 
-@TeleOp(name="Gain Adjust", group ="Webcam Controls")
+@TeleOp(name="Gain Adjust", group ="X-Group")
 
 public class GainAdjust extends LinearOpMode {
 
