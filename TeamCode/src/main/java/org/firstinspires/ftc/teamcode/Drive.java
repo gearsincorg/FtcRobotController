@@ -25,27 +25,27 @@ import java.util.List;
 
 public class Drive {
 
-    // Public Variables
-
-
     // Adjust these numbers to suit your robot.
     private final double ODOM_COUNTS_PER_REV   = 8000.0 ;
     private final double ODOM_WHEEL_DIAM_INCH  = 2.0 ;
     private final double ODOM_INCHES_PER_COUNT =  (Math.PI * ODOM_WHEEL_DIAM_INCH) / ODOM_COUNTS_PER_REV;
 
-    private final double ODOM_AXIAL_SCALE   = ODOM_INCHES_PER_COUNT;  // change to negative value if odom reads -ve forward
-    private final double ODOM_LATERAL_SCALE = ODOM_INCHES_PER_COUNT;  // change to negative value if odom reads -ve left
+    private final double ODOM_AXIAL_SCALE   = ODOM_INCHES_PER_COUNT;  // change to negative value if odom reads -ve moving forward
+    private final double ODOM_LATERAL_SCALE = ODOM_INCHES_PER_COUNT;  // change to negative value if odom reads -ve moving left
 
-    private final double POSITION_ACCURACY  = 0.5; // this is how close to the desired position the robot must get before moving on.
-    private final double HEADING_ACCURACY   = 2.0; // this is how close to the desired heading the robot must get before moving on.
+    private final double POSITION_ACCURACY  = 0.5; // how close to the desired position the robot must get before stopping a movement
+    private final double HEADING_ACCURACY   = 2.0; // how close to the desired heading the robot must get before stopping a turn
 
     private static final double AXIAL_GAIN   = 0.01;
+    private static final double AXIAL_ACCEL  = 0.2;
     private static final double MAX_AXIAL    = 0.6;
 
     private static final double LATERAL_GAIN = 0.01;
+    private static final double LATERAL_ACCEL= 0.2;
     private static final double MAX_LATERAL  = 0.6;
 
-    private static final double HEADING_GAIN = 0.01;
+    private static final double YAW_GAIN     = 0.01;
+    private static final double YAW_ACCEL    = 0.2;
     private static final double MAX_YAW      = 0.6;
 
     // Hardware interface Objects
@@ -59,6 +59,11 @@ public class Drive {
 
     private LinearOpMode myOpMode;
     private IMU imu;
+
+    // Establish a proportional controller for each axis to determine the required power to achieve a setpoint.
+    private ProportionalControl axialController     = new ProportionalControl(AXIAL_GAIN, AXIAL_ACCEL, MAX_AXIAL, false);
+    private ProportionalControl lateralController   = new ProportionalControl(LATERAL_GAIN, LATERAL_ACCEL, MAX_LATERAL, false);
+    private ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, MAX_YAW, false);
 
     // Public Variables
     public double axialDistance      = 0; // scaled axial distance (+ = forward)
@@ -116,6 +121,9 @@ public class Drive {
                 new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,
                                              RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
         imu.initialize(new IMU.Parameters(orientationOnRobot));
+
+        // Configure the poroprtional controllers for the three axes.
+
     }
 
     /**
@@ -137,16 +145,19 @@ public class Drive {
     public void driveAxial(double distanceInches, double power) {
         //  Ensure that power is positive
         power = Math.abs(power);
+        axialController.reset(distanceInches);
+        lateralController.reset(0);
 
         resetOdometry();
         while (Math.abs(axialDistance - distanceInches) > POSITION_ACCURACY){
-            // calculate axial power to reach desired distance, Limit max value
-            // calculate lateral power to correct any lateral drift, Limit max value
-            double axialPower   = Range.clip((distanceInches - axialDistance) * AXIAL_GAIN, -MAX_AXIAL, MAX_AXIAL);
-            double lateralPower = Range.clip(-lateralDistance * LATERAL_GAIN, -MAX_LATERAL, MAX_LATERAL);
+            // calculate axial power to reach desired distance
+            // calculate lateral power to correct any lateral drift
+            double axialPower   = axialController.getOutput(axialDistance);
+            double lateralPower = lateralController.getOutput(lateralDistance);
+            double yawPower     = yawController.getOutput(heading);
 
             // implement desired axis powers
-            moveRobot(axialPower, lateralPower, headingCorrectionPower());
+            moveRobot(axialPower, lateralPower, yawPower);
             myOpMode.sleep(10);
         }
         stopRobot();
@@ -155,41 +166,46 @@ public class Drive {
     public void driveLateral(double distanceInches, double power) {
         //  Ensure that power is positive
         power = Math.abs(power);
+        axialController.reset(0);
+        lateralController.reset(distanceInches);
 
         resetOdometry();
         while (Math.abs(lateralDistance - distanceInches) > POSITION_ACCURACY){
-            // calculate axial power to correct and axial drift.  Limit max value
-            // calculate lateral power to correct any lateral drift, Limit max value
-            double axialPower = Range.clip(-axialDistance * AXIAL_GAIN, -MAX_AXIAL, MAX_AXIAL);
-            double lateralPower = Range.clip((distanceInches - lateralDistance) * LATERAL_GAIN, -MAX_LATERAL, MAX_LATERAL);
+            // calculate axial power to correct any axial drift.  Limit max value
+            // calculate lateral power to reach desired distance
+            double axialPower   = axialController.getOutput(axialDistance);
+            double lateralPower = lateralController.getOutput(lateralDistance);
+            double yawPower     = yawController.getOutput(heading);
 
             // implement desired axis powers
-            moveRobot(axialPower, lateralPower, headingCorrectionPower());
+            moveRobot(axialPower, lateralPower, yawPower);
             myOpMode.sleep(10);
         }
         stopRobot();
     }
 
-    public double headingCorrectionPower(){
-        double error = normalizeHeading(headingSetPoint - heading);
-        return Range.clip((error * HEADING_GAIN), -MAX_YAW, MAX_YAW);
-    }
-
     public void turnToHeading(double headingDeg, double power) {
+        yawController.reset(headingDeg);
+
         while (Math.abs(normalizeHeading(headingDeg - heading)) > HEADING_ACCURACY) {
 
+            // calculate yaw power to obtain desire heading
+            double yawPower     = yawController.getOutput(heading);
+
             // implement desired axis powers
-            moveRobot(0, 0, headingCorrectionPower());
+            moveRobot(0, 0, yawPower);
             myOpMode.sleep(10);
         }
     }
 
+    /**
+     * Normalize the heading to be within +/- 180 degrees
+     * @param heading  desired heading in degrees.
+     * @return
+     */
     public double normalizeHeading(double heading) {
-
-        // Normalize the error to be within +/- 180 degrees
         while (heading > 180)  heading -= 360;
         while (heading <= -180) heading += 360;
-
         return heading;
     }
 
@@ -229,5 +245,63 @@ public class Drive {
         lateralOdometerOffset = rawLateralOdometer;
         axialDistance = 0.0;
         lateralDistance = 0.0;
+    }
+}
+
+/***
+ * This class is used to implement a proportional controller which can calculate the desired output power
+ * to get an axis to the desired setpoint value.
+ * It also implements an acceleration limit
+ */
+class ProportionalControl {
+    double  lastOutput;
+    double  gain;
+    double  accelLimit;
+    double  outputLimit;
+    double  setPoint;
+    boolean circular;
+
+    public ProportionalControl(double gain, double accelLimit, double outputLimit, boolean circular) {
+        this.gain = gain;
+        this.accelLimit = accelLimit;
+        this.outputLimit = outputLimit;
+        this.circular = circular;
+        lastOutput = 0.0;
+        setPoint = 0.0;
+    }
+
+    /**
+     * Determines power required to obtain the desired setpoint value based on new input value.
+     * Uses proportional gain, and limits rate of change of output, as well as max output.
+     * @param input  Current live control input value (from sensors)
+     * @return desired output power.
+     */
+    public double getOutput(double input) {
+        double error = setPoint - input;
+
+        // normalize to +/- 180 if we are controlling heading
+        if (circular) {
+            while (error > 180)  error -= 360;
+            while (error <= -180) error += 360;
+        }
+
+        // calculate output power using gain and other limits.
+        double output = (error * gain);
+
+        if ((output - lastOutput) > accelLimit) {
+            output = lastOutput + accelLimit;
+        } else if ((output - lastOutput) < -accelLimit) {
+            output = lastOutput - accelLimit;
+        }
+
+        output = Range.clip(output, -outputLimit, outputLimit);
+        lastOutput = output;
+        return output;
+    }
+
+    // Saves a new setpoint and resets the output power history.
+    public void reset(double setPoint) {
+        this.setPoint = setPoint;
+        lastOutput = 0.0;
     }
 }

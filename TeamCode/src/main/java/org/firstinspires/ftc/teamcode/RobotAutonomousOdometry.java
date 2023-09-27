@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 @Autonomous(name="Autonomous Odometry", group = "Concept")
 @Disabled
-public class RobotSimpleOdometry extends LinearOpMode
+public class RobotAutonomousOdometry extends LinearOpMode
 {
     // get an instance of the "Drive" class.
     private Drive drive = new Drive(this);
@@ -31,7 +31,12 @@ public class RobotSimpleOdometry extends LinearOpMode
 
         if (opModeIsActive())
         {
-
+            // Drive a triangle
+            drive.driveAxial(48, 0.5);
+            drive.driveLateral(48, 0.5);
+            drive.turnToHeading(45, 0.25);
+            drive.driveAxial(48 * 1.41, 0.5);
+            drive.turnToHeading(0, 0.25);
         }
     }
 }
