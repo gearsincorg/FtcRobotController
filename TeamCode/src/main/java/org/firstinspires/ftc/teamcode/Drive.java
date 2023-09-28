@@ -33,8 +33,8 @@ public class Drive {
     private final double ODOM_AXIAL_SCALE   = ODOM_INCHES_PER_COUNT;  // change to negative value if odom reads -ve moving forward
     private final double ODOM_LATERAL_SCALE = ODOM_INCHES_PER_COUNT;  // change to negative value if odom reads -ve moving left
 
-    private final double POSITION_ACCURACY  = 0.5; // how close to the desired position the robot must get before stopping a movement
-    private final double HEADING_ACCURACY   = 2.0; // how close to the desired heading the robot must get before stopping a turn
+    private final double POSITION_ACCURACY  = 0.5; // Required position accuracy
+    private final double HEADING_ACCURACY   = 2.0; // Required heading accuracy
 
     private static final double AXIAL_GAIN   = 0.01;
     private static final double AXIAL_ACCEL  = 0.2;
@@ -44,18 +44,18 @@ public class Drive {
     private static final double LATERAL_ACCEL= 0.2;
     private static final double MAX_LATERAL  = 0.6;
 
-    private static final double YAW_GAIN     = 0.01;
+    private static final double YAW_GAIN     = 0.03;
     private static final double YAW_ACCEL    = 0.2;
     private static final double MAX_YAW      = 0.6;
 
     // Hardware interface Objects
-    private DcMotor leftFrontDrive;     //  Used to control the left front drive wheel
-    private DcMotor rightFrontDrive;    //  Used to control the right front drive wheel
-    private DcMotor leftBackDrive;      //  Used to control the left back drive wheel
-    private DcMotor rightBackDrive;     //  Used to control the right back drive wheel
+    private DcMotor leftFrontDrive;     //  control the left front drive wheel
+    private DcMotor rightFrontDrive;    //  control the right front drive wheel
+    private DcMotor leftBackDrive;      //  control the left back drive wheel
+    private DcMotor rightBackDrive;     //  control the right back drive wheel
 
-    private DcMotor axialEncoder;       //  Used to read the Axial (front/back) Odometry Module
-    private DcMotor lateralEncoder;     //  Used to read the Lateral (left/right) Odometry Module
+    private DcMotor axialEncoder;       //  the Axial (front/back) Odometry Module
+    private DcMotor lateralEncoder;     //  the Lateral (left/right) Odometry Module
 
     private LinearOpMode myOpMode;
     private IMU imu;
@@ -68,6 +68,7 @@ public class Drive {
     // Public Variables
     public double axialDistance      = 0; // scaled axial distance (+ = forward)
     public double lateralDistance    = 0; // scaled lateral distance (+ = left)
+    public double heading            = 0; // Latest Robot heading from IMU
 
     // Private Variables
     private int rawAxialOdometer      = 0; // Unmodified axial odometer count
@@ -75,9 +76,7 @@ public class Drive {
     private int axialOdometerOffset   = 0; // Used to offset axial odometer
     private int lateralOdometerOffset = 0; // Used to offset lateral odometer
 
-    private double heading            = 0; // Latest Robot heading from IMU
     private double turnRate           = 0; // Latest Robot Turn Rate from IMU
-    private double headingSetPoint    = 0; // Robot tries to hold this heading.
 
     // Drive Constructor
     public Drive (LinearOpMode opmode) {
@@ -121,9 +120,6 @@ public class Drive {
                 new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,
                                              RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
         imu.initialize(new IMU.Parameters(orientationOnRobot));
-
-        // Configure the poroprtional controllers for the three axes.
-
     }
 
     /**
@@ -142,6 +138,11 @@ public class Drive {
         turnRate = angularVelocity.zRotationRate;
     }
 
+    /**
+     * Drive in the axial (forward/reverse) direction and maintain the current heading and lateral position
+     * @param distanceInches  Distance to travel.  +ve = forward, -ve = reverse.
+     * @param power Maximum power to apply.  This number should always be positive.
+     */
     public void driveAxial(double distanceInches, double power) {
         //  Ensure that power is positive
         power = Math.abs(power);
@@ -163,6 +164,11 @@ public class Drive {
         stopRobot();
     }
 
+    /**
+     * Drive in the lateral (left/right strafe) direction and maintain the current heading and axial position
+     * @param distanceInches  Distance to travel.  +ve = left, -ve = right.
+     * @param power Maximum power to apply.  This number should always be positive.
+     */
     public void driveLateral(double distanceInches, double power) {
         //  Ensure that power is positive
         power = Math.abs(power);
@@ -184,6 +190,11 @@ public class Drive {
         stopRobot();
     }
 
+    /**
+     * Rotate to an absolute direction
+     * @param headingDeg  Heading to obtain.  +ve = CCW, -ve = CW.
+     * @param power Maximum power to apply.  This number should always be positive.
+     */
     public void turnToHeading(double headingDeg, double power) {
         yawController.reset(headingDeg);
 
@@ -209,6 +220,12 @@ public class Drive {
         return heading;
     }
 
+    /**
+     * Drive the wheel motors to obtain the requested axes motions
+     * @param axial
+     * @param lateral
+     * @param yaw
+     */
     public void moveRobot(double axial, double lateral, double yaw){
         double lF = axial - lateral - yaw;
         double rF = axial + lateral + yaw;
@@ -234,12 +251,17 @@ public class Drive {
         rightBackDrive.setPower(rB);
     }
 
+    /**
+     * Stop all motors.
+     */
     public void stopRobot() {
         moveRobot(0,0,0);
     }
 
+    /**
+     * Set odometry positions to zero.
+     */
     public void resetOdometry() {
-        // reset odometry encoders
         readSensors();
         axialOdometerOffset = rawAxialOdometer;
         lateralOdometerOffset = rawLateralOdometer;
