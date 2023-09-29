@@ -2,39 +2,37 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /*
  * This OpMode illustrates an autonomous opmode using simple Odometry
  * All robot functions are performed by an external Drive class that manages all hardware interactions.
  */
 
-@Autonomous(name="Autonomous Odometry", group = "Concept")
-public class RobotAutonomousOdometry extends LinearOpMode
+@TeleOp(name="Teleop Odometry", group = "Concept")
+public class RobotTeleopOdometry extends LinearOpMode
 {
     // get an instance of the "Drive" class.
     private Drive drive = new Drive(this);
-
 
     @Override public void runOpMode()
     {
         // Initialize the drive hardware
         drive.init();
+        drive.showTelemetry(true);
 
         // Wait for driver to press start
-        telemetry.addData(">", "Touch Play to run Auto");
+        telemetry.addData(">", "Touch Play drive");
         telemetry.update();
         waitForStart();
+        drive.resetOdometry();
 
-        if (opModeIsActive())
+        while (opModeIsActive())
         {
-            // Drive a triangle
-            drive.driveAxial(48, 0.5);
-            drive.driveLateral(48, 0.5);
-            drive.turnToHeading(45, 0.25);
-            drive.driveAxial(48 * 1.41, 0.5);
-            drive.turnToHeading(0, 0.25);
+            drive.readSensors();
+            drive.moveRobot(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
+            telemetry.update();
         }
     }
 }

@@ -27,7 +27,7 @@ public class Drive {
 
     // Adjust these numbers to suit your robot.
     private final double ODOM_COUNTS_PER_REV   = 8000.0 ;
-    private final double ODOM_WHEEL_DIAM_INCH  = 2.0 ;
+    private final double ODOM_WHEEL_DIAM_INCH  = 2.35 ;
     private final double ODOM_INCHES_PER_COUNT =  (Math.PI * ODOM_WHEEL_DIAM_INCH) / ODOM_COUNTS_PER_REV;
 
     private final double ODOM_AXIAL_SCALE   = ODOM_INCHES_PER_COUNT;  // change to negative value if odom reads -ve moving forward
@@ -77,6 +77,7 @@ public class Drive {
     private int lateralOdometerOffset = 0; // Used to offset lateral odometer
 
     private double turnRate           = 0; // Latest Robot Turn Rate from IMU
+    private boolean showTelemetry     = false;
 
     // Drive Constructor
     public Drive (LinearOpMode opmode) {
@@ -92,10 +93,11 @@ public class Drive {
     {
         // Initialize the hardware variables. Note that the strings used to 'get' each
         // device must match the names assigned during the robot configuration.
-        leftFrontDrive  = myOpMode.hardwareMap.get(DcMotor.class, "leftfront_drive");
-        rightFrontDrive = myOpMode.hardwareMap.get(DcMotor.class, "rightfront_drive");
-        leftBackDrive  = myOpMode.hardwareMap.get(DcMotor.class, "leftback_drive");
-        rightBackDrive = myOpMode.hardwareMap.get(DcMotor.class, "rightback_drive");
+        // Set the drive direction to ensure positive power drives each wheel forward.
+        leftFrontDrive  = setupDriveMotor("leftfront_drive", DcMotor.Direction.REVERSE);
+        rightFrontDrive = setupDriveMotor("rightfront_drive", DcMotor.Direction.REVERSE);
+        leftBackDrive  = setupDriveMotor( "leftback_drive", DcMotor.Direction.FORWARD);
+        rightBackDrive = setupDriveMotor( "rightback_drive",DcMotor.Direction.FORWARD);
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
 
         //  Connect to the encoder channels using the name of the motor on that channel.
@@ -123,6 +125,20 @@ public class Drive {
     }
 
     /**
+     *   Setup a drive motor with passesd parameters.  Ensure encoder is reset.
+     * @param deviceName  Text name associated with motor in Robot Configuration
+     * @param direction   Desired direction to make the wheel runFORWARD with positive input
+     * @return
+     */
+    private DcMotor setupDriveMotor(String deviceName, DcMotor.Direction direction) {
+        DcMotor aMotor = myOpMode.hardwareMap.get(DcMotor.class, deviceName);
+        aMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        aMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        aMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        return aMotor;
+    }
+
+    /**
      *  Read all input devices to determine the robot's motion
      */
     public void readSensors() {
@@ -136,6 +152,12 @@ public class Drive {
 
         heading =  orientation.getYaw(AngleUnit.DEGREES);
         turnRate = angularVelocity.zRotationRate;
+
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Odom A:L", "%6d %6d", rawAxialOdometer, rawLateralOdometer);
+            myOpMode.telemetry.addData("Distance A:L", "%5.1f %5.1f", axialDistance, lateralDistance);
+            myOpMode.telemetry.addData("Heading D:R", "%5.0f %5.1f", heading, turnRate);
+        }
     }
 
     /**
@@ -227,6 +249,7 @@ public class Drive {
      * @param yaw
      */
     public void moveRobot(double axial, double lateral, double yaw){
+
         double lF = axial - lateral - yaw;
         double rF = axial + lateral + yaw;
         double lB = axial + lateral - yaw;
@@ -249,6 +272,12 @@ public class Drive {
         rightFrontDrive.setPower(rF);
         leftBackDrive.setPower(lB);
         rightBackDrive.setPower(rB);
+
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Axes A:L:Y", "%5.2f %5.2f %5.2f", axial, lateral, yaw);
+            myOpMode.telemetry.addData("Wheels lf:rf:lb:rb", "%5.2f %5.2f %5.2f %5.2f", lF, rF, lB, rB);
+        }
+
     }
 
     /**
@@ -268,7 +297,17 @@ public class Drive {
         axialDistance = 0.0;
         lateralDistance = 0.0;
     }
+
+    /**
+     * Set drive, and controller telemetry on or off
+     */
+    public void showTelemetry(boolean show){
+        showTelemetry = show;
+    }
 }
+
+//****************************************************************************************************
+//****************************************************************************************************
 
 /***
  * This class is used to implement a proportional controller which can calculate the desired output power
