@@ -25,14 +25,14 @@ public class RobotTeleopOdometry extends LinearOpMode
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play drive");
         telemetry.update();
+
         waitForStart();
         drive.resetOdometry();
 
         while (opModeIsActive())
         {
             drive.readSensors();
-            drive.moveRobot(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
-            telemetry.update();
+            drive.moveRobot(-gamepad1.left_stick_y * 0.75, -gamepad1.left_stick_x * 0.75, -gamepad1.right_stick_x * 0.50);
         }
     }
 }
