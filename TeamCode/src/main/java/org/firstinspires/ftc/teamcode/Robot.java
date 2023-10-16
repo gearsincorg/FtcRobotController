@@ -14,30 +14,39 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 import java.util.List;
 
-public class Drive {
+public class Robot {
+    // Establish maximum drive powers by axis.
+    public static final double MAX_DRIVE   = 0.6;     // Maximum Axial power limit
+    public static final double MAX_STRAFE  = 0.6;     // Maximum Lateral power limit
+    public static final double MAX_YAW     = 0.6;     // Maximum Yaw power limit
+
+    // Establish a proportional controller for each axis to calculate the required power to achieve a setpoint.
+    public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, MAX_DRIVE, DRIVE_TOLERANCE, false);
+    public ProportionalControl strafeController    = new ProportionalControl(STRAFE_GAIN, STRAFE_ACCEL, MAX_STRAFE, STRAFE_TOLERANCE, false);
+    public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, MAX_YAW, YAW_TOLERANCE,false);
 
     // Adjust these numbers to suit your robot.
-    private final double ODOM_COUNTS_PER_REV   = 8000.0 ;
-    private final double ODOM_WHEEL_DIAM_INCH  = 2.35 ;
-    private final double ODOM_INCHES_PER_COUNT =  (Math.PI * ODOM_WHEEL_DIAM_INCH) / ODOM_COUNTS_PER_REV;
+    private final double ODOM_COUNTS_PER_REV     = 8000.0 ;
+    private final double ODOM_WHEEL_DIAM_INCH    = 2.35 ;
+    private final double ODOM_INCHES_PER_COUNT   =  (Math.PI * ODOM_WHEEL_DIAM_INCH) / ODOM_COUNTS_PER_REV;
+    private final boolean INVERT_DRIVE_ODOMETRY  = true;  //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
+    private final boolean INVERT_STRAFE_ODOMETRY = true;  //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
 
-    private final double ODOM_AXIAL_SCALE   =  ODOM_INCHES_PER_COUNT;  // change to negative value if odom reads -ve moving forward
-    private final double ODOM_LATERAL_SCALE = -ODOM_INCHES_PER_COUNT;  // change to negative value if odom reads -ve moving left
 
     private final double POSITION_ACCURACY  = 0.25; // Required position accuracy (+/- inches)
     private final double HEADING_ACCURACY   = 2.0; // Required heading accuracy
 
-    private static final double AXIAL_GAIN   = 0.025;
-    private static final double AXIAL_ACCEL  = 1.5;
-    private static final double MAX_AXIAL    = 0.6;
+    private static final double DRIVE_GAIN  = 0.05;    // Strength of axial position control
+    private static final double DRIVE_ACCEL = 1.5;     // Acceleration limit.  1.0 = 0-100% power in 1 sec.  Larger number = greater allowed acceleration.
+    private static final double DRIVE_TOLERANCE = 1.0; // Controller is is "inPosition" if position error is < +/- this amount
 
-    private static final double LATERAL_GAIN = 0.025;
-    private static final double LATERAL_ACCEL= 1.5;
-    private static final double MAX_LATERAL  = 0.6;
+    private static final double STRAFE_GAIN = 0.05;    // Strength of lateral position control
+    private static final double STRAFE_ACCEL= 1.5;     // Acceleration limit.  1.0 = 0-100% power in 1 sec.  Larger number = greater allowed acceleration.
+    private static final double STRAFE_TOLERANCE = 1.0; // Controller is is "inPosition" if position error is < +/- this amount
 
-    private static final double YAW_GAIN     = 0.03;
-    private static final double YAW_ACCEL    = 1.5;
-    private static final double MAX_YAW      = 0.6;
+    private static final double YAW_GAIN    = 0.03;    // Strength of axial position control
+    private static final double YAW_ACCEL   = 1.5;     // Acceleration limit.  1.0 = 0-100% power in 1 sec.  Larger number = greater allowed acceleration.
+    private static final double YAW_TOLERANCE = 1.0;   // Controller is is "inPosition" if position error is < +/- this amount
 
     // Hardware interface Objects
     private DcMotor leftFrontDrive;     //  control the left front drive wheel
@@ -45,36 +54,32 @@ public class Drive {
     private DcMotor leftBackDrive;      //  control the left back drive wheel
     private DcMotor rightBackDrive;     //  control the right back drive wheel
 
-    private DcMotor axialEncoder;       //  the Axial (front/back) Odometry Module (may overlap with motor, or may not)
-    private DcMotor lateralEncoder;     //  the Lateral (left/right) Odometry Module (may overlap with motor, or may not)
+    private DcMotor driveEncoder;       //  the Axial (front/back) Odometry Module (may overlap with motor, or may not)
+    private DcMotor strafeEncoder;      //  the Lateral (left/right) Odometry Module (may overlap with motor, or may not)
 
     private LinearOpMode myOpMode;
     private IMU imu;
     private ElapsedTime holdTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
-    // Establish a proportional controller for each axis to determine the required power to achieve a setpoint.
-    private ProportionalControl axialController     = new ProportionalControl(AXIAL_GAIN, AXIAL_ACCEL, MAX_AXIAL, false);
-    private ProportionalControl lateralController   = new ProportionalControl(LATERAL_GAIN, LATERAL_ACCEL, MAX_LATERAL, false);
-    private ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, MAX_YAW, false);
 
     // Public Variables
-    public double axialDistance      = 0; // scaled axial distance (+ = forward)
-    public double lateralDistance    = 0; // scaled lateral distance (+ = left)
-    public double heading            = 0; // Latest Robot heading from IMU
+    public double driveDistance     = 0; // scaled axial distance (+ = forward)
+    public double strafeDistance    = 0; // scaled lateral distance (+ = left)
+    public double heading           = 0; // Latest Robot heading from IMU
 
     // Private Variables
-    private int rawAxialOdometer      = 0; // Unmodified axial odometer count
-    private int axialOdometerOffset   = 0; // Used to offset axial odometer
-    private int rawLateralOdometer    = 0; // Unmodified lateral odometer count
-    private int lateralOdometerOffset = 0; // Used to offset lateral odometer
-    private double rawHeading         = 0; // Unmodified heading (degrees)
-    private double headingOffset      = 0; // Used to offset heading
+    private int rawDriveOdometer    = 0; // Unmodified axial odometer count
+    private int driveOdometerOffset = 0; // Used to offset axial odometer
+    private int rawStrafeOdometer   = 0; // Unmodified lateral odometer count
+    private int strafeOdometerOffset= 0; // Used to offset lateral odometer
+    private double rawHeading       = 0; // Unmodified heading (degrees)
+    private double headingOffset    = 0; // Used to offset heading
 
     private double turnRate           = 0; // Latest Robot Turn Rate from IMU
     private boolean showTelemetry     = false;
 
     // Drive Constructor
-    public Drive (LinearOpMode opmode) {
+    public Robot(LinearOpMode opmode) {
         myOpMode = opmode;
     }
 
@@ -95,8 +100,8 @@ public class Drive {
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
 
         //  Connect to the encoder channels using the name of that channel.
-        axialEncoder   = myOpMode.hardwareMap.get(DcMotor.class, "leftfront_drive");
-        lateralEncoder = myOpMode.hardwareMap.get(DcMotor.class, "rightfront_drive");
+        driveEncoder = myOpMode.hardwareMap.get(DcMotor.class, "axial");
+        strafeEncoder = myOpMode.hardwareMap.get(DcMotor.class, "lateral");
 
         // Set all hubs to use the AUTO Bulk Caching mode for encoder reads
         List<LynxModule> allHubs = myOpMode.hardwareMap.getAll(LynxModule.class);
@@ -114,7 +119,7 @@ public class Drive {
     /**
      *   Setup a drive motor with passed parameters.  Ensure encoder is reset.
      * @param deviceName  Text name associated with motor in Robot Configuration
-     * @param direction   Desired direction to make the wheel runFORWARD with positive input
+     * @param direction   Desired direction to make the wheel run FORWARD with positive power input
      * @return
      */
     private DcMotor setupDriveMotor(String deviceName, DcMotor.Direction direction) {
@@ -122,7 +127,7 @@ public class Drive {
         aMotor.setDirection(direction);
         aMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         aMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        aMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        aMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         return aMotor;
     }
 
@@ -131,10 +136,10 @@ public class Drive {
      *  always return true so this can be used in while loop conditions
      */
     public boolean readSensors() {
-        rawAxialOdometer   = axialEncoder.getCurrentPosition();
-        rawLateralOdometer = lateralEncoder.getCurrentPosition();
-        axialDistance      = (rawAxialOdometer   - axialOdometerOffset) * ODOM_AXIAL_SCALE;
-        lateralDistance    = (rawLateralOdometer - lateralOdometerOffset) * ODOM_LATERAL_SCALE;
+        rawDriveOdometer = driveEncoder.getCurrentPosition() * (INVERT_DRIVE_ODOMETRY ? -1 : 1);
+        rawStrafeOdometer = strafeEncoder.getCurrentPosition() * (INVERT_STRAFE_ODOMETRY ? -1 : 1);;
+        driveDistance = (rawDriveOdometer - driveOdometerOffset) * ODOM_INCHES_PER_COUNT;
+        strafeDistance = (rawStrafeOdometer - strafeOdometerOffset) * ODOM_INCHES_PER_COUNT;
 
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
@@ -145,8 +150,8 @@ public class Drive {
         turnRate = angularVelocity.zRotationRate;
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Odom A:L", "%6d %6d", rawAxialOdometer, rawLateralOdometer);
-            myOpMode.telemetry.addData("Distance A:L", "%5.1f %5.1f", axialDistance, lateralDistance);
+            myOpMode.telemetry.addData("Odom A:L", "%6d %6d", rawDriveOdometer, rawStrafeOdometer);
+            myOpMode.telemetry.addData("Distance A:L", "%5.1f %5.1f", driveDistance, strafeDistance);
             myOpMode.telemetry.addData("Heading D:R", "%5.0f %5.1f", heading, turnRate);
         }
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
@@ -155,41 +160,55 @@ public class Drive {
     //  ########################  Mid level control functions.  #############################3#
 
     /**
-     * Drive in the axial (forward/reverse) direction and maintain the current heading and lateral position
+     * Drive in the axial (forward/reverse) direction, maintain the current heading don't drift sidewars
      * @param distanceInches  Distance to travel.  +ve = forward, -ve = reverse.
      * @param power Maximum power to apply.  This number should always be positive.
+     * @param holdTime Minimum time (sec) required to hold the final position.  0 = no hold.
      */
-    public void driveAxial(double distanceInches, double power) {
+    public void drive(double distanceInches, double power, double holdTime) {
         //  Ensure that power is positive
         power = Math.abs(power);
         resetOdometry();
-        axialController.reset(distanceInches);
-        lateralController.reset(0);
+        driveController.reset(distanceInches);
+        strafeController.reset(0);
         yawController.reset();
+        holdTimer.reset();
 
-        while (myOpMode.opModeIsActive() && readSensors() && (Math.abs(axialDistance - distanceInches) > POSITION_ACCURACY)){
-            runPositionControl();
+        while (myOpMode.opModeIsActive() && readSensors()){
+            if (runToPosition()) {
+                if (holdTimer.time() > holdTime) {
+                    break;   // We are in position, and have been there long enough.
+                }
+            } else {
+                holdTimer.reset();
+            }
             myOpMode.sleep(10);
         }
         stopRobot();
     }
 
     /**
-     * Drive in the lateral (left/right strafe) direction and maintain the current heading and axial position
+     * Strafe in the lateral (left/right) direction, maintain the current heading and don't drift fwd/bwd
      * @param distanceInches  Distance to travel.  +ve = left, -ve = right.
      * @param power Maximum power to apply.  This number should always be positive.
      */
-    public void driveLateral(double distanceInches, double power) {
+    public void strafe(double distanceInches, double power, double holdTime) {
         //  Ensure that power is positive
         power = Math.abs(power);
         resetOdometry();
-        axialController.reset(0);
-        lateralController.reset(distanceInches);
+        driveController.reset(0);
+        strafeController.reset(distanceInches);
         yawController.reset();
+        holdTimer.reset();
 
-        while (myOpMode.opModeIsActive() && readSensors() && (Math.abs(lateralDistance - distanceInches) > POSITION_ACCURACY)){
-
-            runPositionControl();
+        while (myOpMode.opModeIsActive() && readSensors()){
+            if (runToPosition()) {
+                if (holdTimer.time() > holdTime) {
+                    break;   // We are in position, and have been there long enough.
+                }
+            } else {
+                holdTimer.reset();
+            }
             myOpMode.sleep(10);
         }
         stopRobot();
@@ -200,72 +219,52 @@ public class Drive {
      * @param headingDeg  Heading to obtain.  +ve = CCW, -ve = CW.
      * @param power Maximum power to apply.  This number should always be positive.
      */
-    public void turnToHeading(double headingDeg, double power) {
+    public void turnToHeading(double headingDeg, double power, double holdTime) {
 
         yawController.reset(headingDeg);
-        while (myOpMode.opModeIsActive() && readSensors() && (Math.abs(normalizeHeading(headingDeg - heading)) > HEADING_ACCURACY)) {
-            runHeadingControl();
+        while (myOpMode.opModeIsActive() && readSensors()) {
+            if (runToHeading()) {
+                if (holdTimer.time() > holdTime) {
+                    break;   // We are in position, and have been there long enough.
+                }
+            } else {
+                holdTimer.reset();
+            }
             myOpMode.sleep(10);
         }
         stopRobot();
     }
 
-    /**
-     * Hold the last position setpoint.  Used to allow robot time to stabilize;
-     * @param holdSeconds time to hold current heading/position.
-     */
-    public void holdLastPosition(double holdSeconds) {
-
-        holdTimer.reset();
-        axialController.reset();
-        lateralController.reset();
-        while (myOpMode.opModeIsActive() && readSensors() && (holdTimer.time() < holdSeconds)) {
-            runPositionControl();
-            myOpMode.sleep(10);
-        }
-        stopRobot();
-    }
-
-    /**
-     * Hold the last heading setpoint.   Used to allow robot time to stabilize;
-     * @param holdSeconds time to hold current heading/position.
-     */
-    public void holdLastHeading(double holdSeconds) {
-
-        holdTimer.reset();
-        yawController.reset();
-        while (myOpMode.opModeIsActive() && readSensors() && (holdTimer.time() < holdSeconds)) {
-            runHeadingControl();
-            myOpMode.sleep(10);
-        }
-        stopRobot();
-    }
 
     //  ########################  Low level control functions.  ###############################
 
     /**
      * Low level call to implement position/heading control
+     * Return inPosition status.  true = inPosition
      */
-    public void runPositionControl(){
+    public boolean runToPosition(){
         // calculate yaw power to obtain desire heading
-        double axialPower   = axialController.getOutput(axialDistance);
-        double lateralPower = lateralController.getOutput(lateralDistance);
+        double drivePower   = driveController.getOutput(driveDistance);
+        double strafePower = strafeController.getOutput(strafeDistance);
         double yawPower     = yawController.getOutput(heading);
 
         // implement desired axis powers
         // implement desired axis powers
-        moveRobot(axialPower, lateralPower, yawPower);
+        moveRobot(drivePower, strafePower, yawPower);
+        return (driveController.inPosition() && strafeController.inPosition() && yawController.inPosition());
     }
 
     /**
      * Low level call to implement just heading control
+     * Return inPosition status.  true = inPosition
      */
-    public void runHeadingControl() {
+    public boolean runToHeading() {
         // calculate yaw power to obtain desire heading
         double yawPower     = yawController.getOutput(heading);
 
         // implement desired axis powers
         moveRobot(0, 0, yawPower);
+        return yawController.inPosition();
     }
 
     /**
@@ -281,16 +280,16 @@ public class Drive {
 
     /**
      * Drive the wheel motors to obtain the requested axes motions
-     * @param axial
-     * @param lateral
+     * @param drive
+     * @param strafe
      * @param yaw
      */
-    public void moveRobot(double axial, double lateral, double yaw){
+    public void moveRobot(double drive, double strafe, double yaw){
 
-        double lF = axial - lateral - yaw;
-        double rF = axial + lateral + yaw;
-        double lB = axial + lateral - yaw;
-        double rB = axial - lateral + yaw;
+        double lF = drive - strafe - yaw;
+        double rF = drive + strafe + yaw;
+        double lB = drive + strafe - yaw;
+        double rB = drive - strafe + yaw;
 
         double max = Math.max(Math.abs(lF), Math.abs(rF));
         max = Math.max(max, Math.abs(lB));
@@ -311,7 +310,7 @@ public class Drive {
         rightBackDrive.setPower(rB);
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Axes A:L:Y", "%5.2f %5.2f %5.2f", axial, lateral, yaw);
+            myOpMode.telemetry.addData("Axes D:S:Y", "%5.2f %5.2f %5.2f", drive, strafe, yaw);
             myOpMode.telemetry.addData("Wheels lf:rf:lb:rb", "%5.2f %5.2f %5.2f %5.2f", lF, rF, lB, rB);
             myOpMode.telemetry.update(); //  Assume this is the last thing done in the loop.
         }
@@ -329,17 +328,24 @@ public class Drive {
      */
     public void resetOdometry() {
         readSensors();
-        axialOdometerOffset = rawAxialOdometer;
-        lateralOdometerOffset = rawLateralOdometer;
-        axialDistance = 0.0;
-        lateralDistance = 0.0;
+        driveOdometerOffset = rawDriveOdometer;
+        driveDistance = 0.0;
+        driveController.reset(0);
+
+        strafeOdometerOffset = rawStrafeOdometer;
+        strafeDistance = 0.0;
+        strafeController.reset(0);
     }
 
     public void resetHeading() {
         readSensors();
         headingOffset = rawHeading;
+        yawController.reset();
         heading = 0;
     }
+
+    public double getHeading() {return heading;}
+    public double getTurnRate() {return turnRate;}
 
     /**
      * Set drive, and controller telemetry on or off
@@ -355,7 +361,7 @@ public class Drive {
 /***
  * This class is used to implement a proportional controller which can calculate the desired output power
  * to get an axis to the desired setpoint value.
- * It also implements an acceleration limit
+ * It also implements an acceleration limit, and a max power output.
  */
 class ProportionalControl {
     double  lastOutput;
@@ -363,13 +369,16 @@ class ProportionalControl {
     double  accelLimit;
     double  outputLimit;
     double  setPoint;
+    double  tolerance;
     boolean circular;
+    boolean inPosition;
     ElapsedTime cycleTime = new ElapsedTime();
 
-    public ProportionalControl(double gain, double accelLimit, double outputLimit, boolean circular) {
+    public ProportionalControl(double gain, double accelLimit, double outputLimit, double tolerance, boolean circular) {
         this.gain = gain;
         this.accelLimit = accelLimit;
         this.outputLimit = outputLimit;
+        this.tolerance = tolerance;
         this.circular = circular;
         reset(0.0);
     }
@@ -390,6 +399,8 @@ class ProportionalControl {
             while (error <= -180) error += 360;
         }
 
+        inPosition = (Math.abs(error) < tolerance);
+
         // calculate output power using gain and other limits.
         double output = (error * gain);
 
@@ -405,15 +416,22 @@ class ProportionalControl {
         return output;
     }
 
+    public boolean inPosition(){
+        return inPosition;
+    }
+    public double getSetpoint() {return setPoint;}
+
     // Saves a new setpoint and resets the output power history.
     public void reset(double setPoint) {
         this.setPoint = setPoint;
+        inPosition = false;
         reset();
     }
 
     // Just restart the accel timer and output to 0
     public void reset() {
         cycleTime.reset();
+        inPosition = false;
         lastOutput = 0.0;
     }
 }

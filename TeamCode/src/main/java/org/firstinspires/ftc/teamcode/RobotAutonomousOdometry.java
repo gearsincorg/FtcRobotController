@@ -14,13 +14,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 public class RobotAutonomousOdometry extends LinearOpMode
 {
     // get an instance of the "Drive" class.
-    private Drive drive = new Drive(this);
+    private Robot robot = new Robot(this);
 
     @Override public void runOpMode()
     {
         // Initialize the drive hardware
-        drive.init();
-        drive.showTelemetry(true);
+        robot.init();
+        robot.showTelemetry(true);
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to run Auto");
@@ -29,17 +29,16 @@ public class RobotAutonomousOdometry extends LinearOpMode
 
         if (opModeIsActive())
         {
-            drive.resetHeading();
+            robot.resetHeading();
 
             // Drive a triangle
-            drive.driveAxial(65, 0.10);
-            //drive.driveLateral(48, 0.5);
+            robot.drive(48, 0.10, 0.25);
+            robot.strafe(24, 0.10, 0.25);
+            robot.strafe(-24, 0.10, 0.25);
+            robot.drive(-48, 0.10, 0.25);
             //drive.turnToHeading(45, 0.25);
             //drive.driveAxial(48 * 1.41, 0.5);
             //drive.turnToHeading(0, 0.25);
-
-            // hold robot and show telemetry.
-            drive.holdLastHeading(4000);
         }
     }
 }
