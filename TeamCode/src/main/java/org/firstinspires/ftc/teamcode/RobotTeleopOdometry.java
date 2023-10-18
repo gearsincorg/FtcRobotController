@@ -11,9 +11,14 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * An external "Robot" class is used to manage all motor/sensor interfaces, and to assist driving functions.
  */
 
+
 @TeleOp(name="Teleop Odometry", group = "Concept")
 public class RobotTeleopOdometry extends LinearOpMode
 {
+    final double SAFE_DRIVE_SPEED   = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_STRAFE_SPEED  = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_YAW_SPEED     = 0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+
     // Driving parameters
     boolean autoHeading = false;
 
@@ -22,16 +27,15 @@ public class RobotTeleopOdometry extends LinearOpMode
 
     @Override public void runOpMode()
     {
-        // Initialize the drive hardware
-        robot.init();
-        robot.showTelemetry(true);
+        // Initialize the drive hardware & Turn on telemetry
+        robot.initialize(true);
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play drive");
         telemetry.update();
         waitForStart();
 
-        // Reset heading control loop
+        // Reset heading control loop to lock in current heading
         robot.yawController.reset();
 
         while (opModeIsActive())
@@ -39,18 +43,17 @@ public class RobotTeleopOdometry extends LinearOpMode
             robot.readSensors();
 
             // read joystick values and scale according to limits in Robot class
-            double drive  = -gamepad1.left_stick_y * robot.MAX_DRIVE;
-            double strafe = -gamepad1.left_stick_x * robot.MAX_STRAFE;
-            double yaw    = -gamepad1.right_stick_x * robot.MAX_YAW;
+            double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;
+            double strafe = -gamepad1.left_stick_x * SAFE_STRAFE_SPEED;
+            double yaw    = -gamepad1.right_stick_x * SAFE_YAW_SPEED;
 
-            // Determine if the robot should be rotating or holding heading.
+            // Is the driver turning the robot, or should it hold heading
             if (Math.abs(yaw) > 0.05) {
                 // driver is commanding robot to turn, so turn off auto heading.
                 autoHeading = false;
             } else {
-                // Wait for robot to stop rotating (<2 deg per second) before locking in the new heading
+                // If we are not already locked, wait for robot to stop rotating (<2 deg per second) and then lock in the current heading.
                 if (!autoHeading && Math.abs(robot.getTurnRate()) < 2.0) {
-                    // Lock in the current heading as the setpoint & turn on auto heading.
                     robot.yawController.reset(robot.getHeading());
                     autoHeading = true;
                 }

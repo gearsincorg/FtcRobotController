@@ -2,8 +2,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 /*
  * This OpMode illustrates an autonomous opmode using simple Odometry
@@ -18,8 +18,8 @@ public class RobotAutonomousOdometry extends LinearOpMode
 
     @Override public void runOpMode()
     {
-        // Initialize the drive hardware
-        robot.init();
+        // Initialize the drive hardware & Turn on telemetry
+        robot.initialize(true);
         robot.showTelemetry(true);
 
         // Wait for driver to press start
@@ -32,13 +32,12 @@ public class RobotAutonomousOdometry extends LinearOpMode
             robot.resetHeading();
 
             // Drive a triangle
-            robot.drive(48, 0.10, 0.25);
-            robot.strafe(24, 0.10, 0.25);
-            robot.strafe(-24, 0.10, 0.25);
-            robot.drive(-48, 0.10, 0.25);
-            //drive.turnToHeading(45, 0.25);
-            //drive.driveAxial(48 * 1.41, 0.5);
-            //drive.turnToHeading(0, 0.25);
+            robot.drive(48, 0.10, 0.20);
+            robot.strafe(24, 0.10, 0.20);
+            robot.turnToHeading(-90, 0.25, 0.20);
+            robot.drive(24, 0.10, 0.20);
+            robot.strafe(-48, 0.1, 0.20);
+            robot.turnToHeading(0, 0.25, 0.20);
         }
     }
 }
