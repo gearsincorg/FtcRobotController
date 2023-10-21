@@ -25,27 +25,26 @@ public class Robot {
     public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, MAX_AUTO_YAW, YAW_TOLERANCE,false);
 
     // Adjust these numbers to suit your robot.
-    private final double ODOM_COUNTS_PER_REV     = 8000.0 ;
-    private final double ODOM_WHEEL_DIAM_INCH    = 2.35 ;
-    private final double ODOM_INCHES_PER_COUNT   =  (Math.PI * ODOM_WHEEL_DIAM_INCH) / ODOM_COUNTS_PER_REV;
+
+    private final double ODOM_INCHES_PER_COUNT   = 0.002969;  //  GoBilda Odometry Pod (1/226.8)
     private final boolean INVERT_DRIVE_ODOMETRY  = true;  //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
     private final boolean INVERT_STRAFE_ODOMETRY = true;  //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
 
-    private static final double MAX_AUTO_DRIVE   = 0.6;     // Maximum Axial power limit during autonomous
-    private static final double MAX_AUTO_STRAFE  = 0.6;     // Maximum Lateral power limit during autonomous
-    private static final double MAX_AUTO_YAW     = 0.4;     // Maximum Yaw power limit during autonomous
 
-    private static final double DRIVE_GAIN  = 0.05;    // Strength of axial position control
+    private static final double DRIVE_GAIN  = 0.03;    // Strength of axial position control
     private static final double DRIVE_ACCEL = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double DRIVE_TOLERANCE = 0.5; // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double MAX_AUTO_DRIVE   = 0.6;     // Maximum Axial power limit during autonomous
 
-    private static final double STRAFE_GAIN = 0.05;    // Strength of lateral position control
+    private static final double STRAFE_GAIN = 0.03;    // Strength of lateral position control
     private static final double STRAFE_ACCEL= 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double STRAFE_TOLERANCE = 0.5; // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double MAX_AUTO_STRAFE  = 0.6;     // Maximum Lateral power limit during autonomous
 
-    private static final double YAW_GAIN    = 0.03;    // Strength of axial position control
+    private static final double YAW_GAIN    = 0.018;    // Strength of axial position control
     private static final double YAW_ACCEL   = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE = 1.0;   // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double MAX_AUTO_YAW     = 0.3;     // Maximum Yaw power limit during autonomous
 
     // Hardware interface Objects
     private DcMotor leftFrontDrive;     //  control the left front drive wheel

@@ -42,6 +42,11 @@ public class RobotTeleopOdometry extends LinearOpMode
         {
             robot.readSensors();
 
+            // resetting the gyro
+            if(gamepad1.options && gamepad1.share){
+                robot.resetHeading();
+                robot.resetOdometry();
+            }
             // read joystick values and scale according to limits in Robot class
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;
             double strafe = -gamepad1.left_stick_x * SAFE_STRAFE_SPEED;
