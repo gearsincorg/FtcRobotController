@@ -7,10 +7,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 /*
  * This OpMode illustrates an autonomous opmode using simple Odometry
- * All robot functions are performed by an external Drive class that manages all hardware interactions.
+ * All robot functions are performed by an external Robot class that manages all hardware interactions.
  */
 
-@Autonomous(name="Autonomous Odometry", group = "Concept")
+@Autonomous(name="Sample Autonomous", group = "Concept")
 public class SampleAutonomous extends LinearOpMode
 {
     // get an instance of the "Robot" class.
