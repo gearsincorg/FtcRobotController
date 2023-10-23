@@ -11,27 +11,29 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
  */
 
 @Autonomous(name="Autonomous Odometry", group = "Concept")
-public class RobotAutonomousOdometry extends LinearOpMode
+public class SampleAutonomous extends LinearOpMode
 {
-    // get an instance of the "Drive" class.
+    // get an instance of the "Robot" class.
     private Robot robot = new Robot(this);
 
     @Override public void runOpMode()
     {
-        // Initialize the drive hardware & Turn on telemetry
+        // Initialize the robot hardware & Turn on telemetry
         robot.initialize(true);
-        robot.showTelemetry(true);
+        robot.resetOdometry();
+        robot.resetHeading();
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to run Auto");
         telemetry.update();
         waitForStart();
 
+        // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
             robot.resetHeading();
 
-            // Drive a triangle
+            // Drive a path and return to start.
             robot.drive(48, 0.10, 0.20);
             robot.strafe(24, 0.10, 0.20);
             robot.turnToHeading(-90, 0.25, 0.20);

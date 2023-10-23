@@ -343,7 +343,7 @@ public class Robot {
     public void resetHeading() {
         readSensors();
         headingOffset = rawHeading;
-        yawController.reset();
+        yawController.reset(0);
         heading = 0;
     }
 
@@ -431,7 +431,7 @@ class ProportionalControl {
         reset();
     }
 
-    // Just restart the accel timer and output to 0
+    // Just restart the accel timer and set output to 0
     public void reset() {
         cycleTime.reset();
         inPosition = false;

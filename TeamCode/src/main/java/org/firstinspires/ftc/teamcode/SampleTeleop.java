@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 
 @TeleOp(name="Teleop Odometry", group = "Concept")
-public class RobotTeleopOdometry extends LinearOpMode
+public class SampleTeleop extends LinearOpMode
 {
     final double SAFE_DRIVE_SPEED   = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_STRAFE_SPEED  = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
@@ -29,9 +29,10 @@ public class RobotTeleopOdometry extends LinearOpMode
     {
         // Initialize the drive hardware & Turn on telemetry
         robot.initialize(true);
+        robot.resetOdometry();
 
         // Wait for driver to press start
-        telemetry.addData(">", "Touch Play drive");
+        telemetry.addData(">", "Touch Play to drive");
         telemetry.update();
         waitForStart();
 
@@ -42,7 +43,7 @@ public class RobotTeleopOdometry extends LinearOpMode
         {
             robot.readSensors();
 
-            // resetting the gyro
+            // Allow driver to reset the gyro
             if(gamepad1.options && gamepad1.share){
                 robot.resetHeading();
                 robot.resetOdometry();
@@ -52,12 +53,12 @@ public class RobotTeleopOdometry extends LinearOpMode
             double strafe = -gamepad1.left_stick_x * SAFE_STRAFE_SPEED;
             double yaw    = -gamepad1.right_stick_x * SAFE_YAW_SPEED;
 
-            // Is the driver turning the robot, or should it hold heading
+            // Is the driver turning the robot, or should it hold its heading?
             if (Math.abs(yaw) > 0.05) {
                 // driver is commanding robot to turn, so turn off auto heading.
                 autoHeading = false;
             } else {
-                // If we are not already locked, wait for robot to stop rotating (<2 deg per second) and then lock in the current heading.
+                // If we are not already locked, wait for robot to stop rotating (<2 deg per second) and then lock-in the current heading.
                 if (!autoHeading && Math.abs(robot.getTurnRate()) < 2.0) {
                     robot.yawController.reset(robot.getHeading());
                     autoHeading = true;
