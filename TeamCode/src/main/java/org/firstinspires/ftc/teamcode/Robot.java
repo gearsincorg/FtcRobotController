@@ -153,7 +153,7 @@ public class Robot {
         if (showTelemetry) {
             myOpMode.telemetry.addData("Odom A:L", "%6d %6d", rawDriveOdometer, rawStrafeOdometer);
             myOpMode.telemetry.addData("Distance A:L", "%5.1f %5.1f", driveDistance, strafeDistance);
-            myOpMode.telemetry.addData("Heading D:R", "%5.0f %5.1f", heading, turnRate);
+            myOpMode.telemetry.addData("Heading D:R", "%6.1f %5.2f", heading, turnRate);
         }
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
     }

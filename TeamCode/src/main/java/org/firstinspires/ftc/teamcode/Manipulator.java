@@ -19,6 +19,7 @@ public class Manipulator {
 
     private static final double LIFT_COUNTS_PER_DEGREE = 11.05556 ; // 995 counts for 90 Deg
     private static final double EXTEND_COUNTS_PER_INCH = 158.944 ;  // 2861 counts for 18"
+    private static final int    LIFT_HOME_OFFSET = (int)(5 * LIFT_COUNTS_PER_DEGREE);  // Home location is - 5 deg
 
 
     // Hardware interface Objects
@@ -135,7 +136,7 @@ public class Manipulator {
         extend.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Reset the home positions.  Add any offsets here.
-        liftEncoderHome = rawLiftEncoder;
+        liftEncoderHome = rawLiftEncoder + LIFT_HOME_OFFSET;
         extendEncoderHome = rawExtendEncoder;
     }
 
