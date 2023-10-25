@@ -20,31 +20,31 @@ public class Robot {
     // Establish maximum drive powers by axis.
 
     // Establish a proportional controller for each axis to calculate the required power to achieve a setpoint.
-    public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, MAX_AUTO_DRIVE, DRIVE_TOLERANCE, false);
-    public ProportionalControl strafeController    = new ProportionalControl(STRAFE_GAIN, STRAFE_ACCEL, MAX_AUTO_STRAFE, STRAFE_TOLERANCE, false);
-    public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, MAX_AUTO_YAW, YAW_TOLERANCE,false);
+    public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, DRIVE_MAX_AUTO, DRIVE_TOLERANCE, false);
+    public ProportionalControl strafeController    = new ProportionalControl(STRAFE_GAIN, STRAFE_ACCEL, STRAFE_MAX_AUTO, STRAFE_TOLERANCE, false);
+    public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, YAW_MAX_AUTO, YAW_TOLERANCE,true);
 
     // Adjust these numbers to suit your robot.
 
-    private final double ODOM_INCHES_PER_COUNT   = 0.002969;  //  GoBilda Odometry Pod (1/226.8)
-    private final boolean INVERT_DRIVE_ODOMETRY  = true;  //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
-    private final boolean INVERT_STRAFE_ODOMETRY = true;  //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
+    private final double ODOM_INCHES_PER_COUNT   = 0.002969;   //  GoBilda Odometry Pod (1/226.8)
+    private final boolean INVERT_DRIVE_ODOMETRY  = true;       //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
+    private final boolean INVERT_STRAFE_ODOMETRY = true;       //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
 
 
-    private static final double DRIVE_GAIN  = 0.03;    // Strength of axial position control
-    private static final double DRIVE_ACCEL = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    private static final double DRIVE_TOLERANCE = 0.5; // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double MAX_AUTO_DRIVE   = 0.6;     // Maximum Axial power limit during autonomous
+    private static final double DRIVE_GAIN          = 0.03;    // Strength of axial position control
+    private static final double DRIVE_ACCEL         = 2.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
+    private static final double DRIVE_TOLERANCE     = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double DRIVE_MAX_AUTO      = 0.6;     // Maximum Axial power limit during autonomous
 
-    private static final double STRAFE_GAIN = 0.03;    // Strength of lateral position control
-    private static final double STRAFE_ACCEL= 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    private static final double STRAFE_TOLERANCE = 0.5; // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double MAX_AUTO_STRAFE  = 0.6;     // Maximum Lateral power limit during autonomous
+    private static final double STRAFE_GAIN         = 0.03;    // Strength of lateral position control
+    private static final double STRAFE_ACCEL        = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
+    private static final double STRAFE_TOLERANCE    = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double STRAFE_MAX_AUTO     = 0.6;     // Maximum Lateral power limit during autonomous
 
-    private static final double YAW_GAIN    = 0.018;    // Strength of axial position control
-    private static final double YAW_ACCEL   = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    private static final double YAW_TOLERANCE = 1.0;   // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double MAX_AUTO_YAW     = 0.3;     // Maximum Yaw power limit during autonomous
+    private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
+    private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
+    private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double YAW_MAX_AUTO        = 0.6;     // Maximum Yaw power limit during autonomous
 
     // Hardware interface Objects
     private DcMotor leftFrontDrive;     //  control the left front drive wheel
@@ -139,7 +139,7 @@ public class Robot {
      */
     public boolean readSensors() {
         rawDriveOdometer = driveEncoder.getCurrentPosition() * (INVERT_DRIVE_ODOMETRY ? -1 : 1);
-        rawStrafeOdometer = strafeEncoder.getCurrentPosition() * (INVERT_STRAFE_ODOMETRY ? -1 : 1);;
+        rawStrafeOdometer = strafeEncoder.getCurrentPosition() * (INVERT_STRAFE_ODOMETRY ? -1 : 1);
         driveDistance = (rawDriveOdometer - driveOdometerOffset) * ODOM_INCHES_PER_COUNT;
         strafeDistance = (rawStrafeOdometer - strafeOdometerOffset) * ODOM_INCHES_PER_COUNT;
 
@@ -151,7 +151,7 @@ public class Robot {
         turnRate    = angularVelocity.zRotationRate;
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Odom A:L", "%6d %6d", rawDriveOdometer, rawStrafeOdometer);
+            myOpMode.telemetry.addData("Odom A:L", "%6d %6d", rawDriveOdometer - driveOdometerOffset, rawStrafeOdometer - strafeOdometerOffset);
             myOpMode.telemetry.addData("Distance A:L", "%5.1f %5.1f", driveDistance, strafeDistance);
             myOpMode.telemetry.addData("Heading D:R", "%6.1f %5.2f", heading, turnRate);
         }
@@ -170,13 +170,17 @@ public class Robot {
         //  Ensure that power is positive
         power = Math.abs(power);
         resetOdometry();
-        driveController.reset(distanceInches);
-        strafeController.reset(0);
+        driveController.reset(distanceInches, power);
         yawController.reset();
         holdTimer.reset();
 
         while (myOpMode.opModeIsActive() && readSensors()){
-            if (runToPosition()) {
+
+            // implement desired axis powers
+            moveRobot(driveController.getOutput(driveDistance), 0, yawController.getOutput(heading));
+
+            // Time to exit?
+            if (driveController.inPosition() && yawController.inPosition()) {
                 if (holdTimer.time() > holdTime) {
                     break;   // Exit loop if we are in position, and have been there long enough.
                 }
@@ -198,13 +202,17 @@ public class Robot {
         //  Ensure that power is positive
         power = Math.abs(power);
         resetOdometry();
-        driveController.reset(0);
-        strafeController.reset(distanceInches);
+        strafeController.reset(distanceInches, power);
         yawController.reset();
         holdTimer.reset();
 
         while (myOpMode.opModeIsActive() && readSensors()){
-            if (runToPosition()) {
+
+            // implement desired axis powers
+            moveRobot(0, strafeController.getOutput(strafeDistance), yawController.getOutput(heading));
+
+            // Time to exit?
+            if (strafeController.inPosition() && yawController.inPosition()) {
                 if (holdTimer.time() > holdTime) {
                     break;   // Exit loop if we are in position, and have been there long enough.
                 }
@@ -224,9 +232,14 @@ public class Robot {
      */
     public void turnToHeading(double headingDeg, double power, double holdTime) {
 
-        yawController.reset(headingDeg);
+        yawController.reset(headingDeg, power);
         while (myOpMode.opModeIsActive() && readSensors()) {
-            if (runToHeading()) {
+
+            // implement desired axis powers
+            moveRobot(0, 0, yawController.getOutput(heading));
+
+            // Time to exit?
+            if (yawController.inPosition()) {
                 if (holdTimer.time() > holdTime) {
                     break;   // Exit loop if we are in position, and have been there long enough.
                 }
@@ -240,35 +253,6 @@ public class Robot {
 
 
     //  ########################  Low level control functions.  ###############################
-
-    /**
-     * Low level call to implement position/heading control
-     * Return inPosition status.  true = inPosition
-     */
-    public boolean runToPosition(){
-        // calculate yaw power to obtain desire heading
-        double drivePower   = driveController.getOutput(driveDistance);
-        double strafePower  = strafeController.getOutput(strafeDistance);
-        double yawPower     = yawController.getOutput(heading);
-
-        // implement desired axis powers
-        // implement desired axis powers
-        moveRobot(drivePower, strafePower, yawPower);
-        return (driveController.inPosition() && strafeController.inPosition() && yawController.inPosition());
-    }
-
-    /**
-     * Low level call to implement just heading control
-     * Return inPosition status.  true = inPosition
-     */
-    public boolean runToHeading() {
-        // calculate yaw power to obtain desire heading
-        double yawPower     = yawController.getOutput(heading);
-
-        // implement desired axis powers
-        moveRobot(0, 0, yawPower);
-        return yawController.inPosition();
-    }
 
     /**
      * Normalize the heading to be within +/- 180 degrees
@@ -370,7 +354,8 @@ class ProportionalControl {
     double  lastOutput;
     double  gain;
     double  accelLimit;
-    double  outputLimit;
+    double  defaultOutputLimit;
+    double  liveOutputLimit;
     double  setPoint;
     double  tolerance;
     boolean circular;
@@ -380,7 +365,8 @@ class ProportionalControl {
     public ProportionalControl(double gain, double accelLimit, double outputLimit, double tolerance, boolean circular) {
         this.gain = gain;
         this.accelLimit = accelLimit;
-        this.outputLimit = outputLimit;
+        this.defaultOutputLimit = outputLimit;
+        this.liveOutputLimit = outputLimit;
         this.tolerance = tolerance;
         this.circular = circular;
         reset(0.0);
@@ -404,16 +390,17 @@ class ProportionalControl {
 
         inPosition = (Math.abs(error) < tolerance);
 
-        // calculate output power using gain and other limits.
+        // calculate output power using gain and clip it to the limits
         double output = (error * gain);
+        output = Range.clip(output, -liveOutputLimit, liveOutputLimit);
 
+        // Now limit rate of change of output (acceleration)
         if ((output - lastOutput) > dV) {
             output = lastOutput + dV;
         } else if ((output - lastOutput) < -dV) {
             output = lastOutput - dV;
         }
 
-        output = Range.clip(output, -outputLimit, outputLimit);
         lastOutput = output;
         cycleTime.reset();
         return output;
@@ -425,13 +412,21 @@ class ProportionalControl {
     public double getSetpoint() {return setPoint;}
 
     // Saves a new setpoint and resets the output power history.
-    public void reset(double setPoint) {
+    // This call allows a temporary power limit to be set to override the default.
+    public void reset(double setPoint, double powerLimit) {
+        liveOutputLimit = powerLimit;
         this.setPoint = setPoint;
-        inPosition = false;
         reset();
     }
 
-    // Just restart the accel timer and set output to 0
+    // Saves a new setpoint and resets the output power history.
+    public void reset(double setPoint) {
+        liveOutputLimit = defaultOutputLimit;
+        this.setPoint = setPoint;
+        reset();
+    }
+
+    // Leave everything else the same, Just restart the accel timer and set output to 0
     public void reset() {
         cycleTime.reset();
         inPosition = false;
