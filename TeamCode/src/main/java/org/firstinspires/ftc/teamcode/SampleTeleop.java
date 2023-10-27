@@ -72,13 +72,13 @@ public class SampleTeleop extends LinearOpMode
             double yaw    = -gamepad1.right_stick_x * SAFE_YAW_SPEED;
 
             if (gamepad1.dpad_left) {
-                strafe = SAFE_DRIVE_SPEED;
+                strafe = SAFE_DRIVE_SPEED / 2.0;
             } else if (gamepad1.dpad_right) {
-                strafe = -SAFE_DRIVE_SPEED;
+                strafe = -SAFE_DRIVE_SPEED / 2.0;
             } else if (gamepad1.dpad_up) {
-                drive = SAFE_DRIVE_SPEED;
+                drive = SAFE_DRIVE_SPEED / 2.0;
             } else if (gamepad1.dpad_down) {
-                drive = -SAFE_STRAFE_SPEED;
+                drive = -SAFE_STRAFE_SPEED / 2.0;
             }
 
             // Is the driver turning the robot, or should it hold its heading?
