@@ -34,6 +34,21 @@ public class SampleTeleop extends LinearOpMode
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to drive");
         telemetry.update();
+
+        robot.floatMotors();
+
+        while (opModeInInit()) {
+            robot.readSensors();
+            telemetry.update();
+
+
+            // Allow driver to reset the gyro & Odometry
+            if(gamepad1.options && gamepad1.share){
+                robot.resetHeading();
+                robot.resetOdometry();
+            }
+        }
+
         waitForStart();
 
         // Reset heading control loop to lock in current heading
