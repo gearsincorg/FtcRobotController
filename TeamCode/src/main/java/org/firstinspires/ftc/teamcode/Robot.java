@@ -17,34 +17,40 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import java.util.List;
 
 public class Robot {
-    // Establish maximum drive powers by axis.
-
-    // Establish a proportional controller for each axis to calculate the required power to achieve a setpoint.
-    public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, DRIVE_MAX_AUTO, DRIVE_TOLERANCE, false);
-    public ProportionalControl strafeController    = new ProportionalControl(STRAFE_GAIN, STRAFE_ACCEL, STRAFE_MAX_AUTO, STRAFE_TOLERANCE, false);
-    public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, YAW_MAX_AUTO, YAW_TOLERANCE,true);
-
     // Adjust these numbers to suit your robot.
-
     private final double ODOM_INCHES_PER_COUNT   = 0.002969;   //  GoBilda Odometry Pod (1/226.8)
     private final boolean INVERT_DRIVE_ODOMETRY  = true;       //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
     private final boolean INVERT_STRAFE_ODOMETRY = true;       //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
 
-
     private static final double DRIVE_GAIN          = 0.03;    // Strength of axial position control
     private static final double DRIVE_ACCEL         = 2.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double DRIVE_TOLERANCE     = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double DRIVE_DEADBAND      = 0.25;    // Error less than this causes zero output
     private static final double DRIVE_MAX_AUTO      = 0.6;     // Maximum Axial power limit during autonomous
 
     private static final double STRAFE_GAIN         = 0.03;    // Strength of lateral position control
     private static final double STRAFE_ACCEL        = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double STRAFE_TOLERANCE    = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double STRAFE_DEADBAND     = 0.25;    // Error less than this causes zero output
     private static final double STRAFE_MAX_AUTO     = 0.6;     // Maximum Lateral power limit during autonomous
 
     private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double YAW_DEADBAND        = 0.20;    // Error less than this causes zero output
     private static final double YAW_MAX_AUTO        = 0.6;     // Maximum Yaw power limit during autonomous
+
+    // Public Members
+    public double driveDistance     = 0; // scaled axial distance (+ = forward)
+    public double strafeDistance    = 0; // scaled lateral distance (+ = left)
+    public double heading           = 0; // Latest Robot heading from IMU
+
+    // Establish a proportional controller for each axis to calculate the required power to achieve a setpoint.
+    public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, DRIVE_MAX_AUTO, DRIVE_TOLERANCE, DRIVE_DEADBAND, false);
+    public ProportionalControl strafeController    = new ProportionalControl(STRAFE_GAIN, STRAFE_ACCEL, STRAFE_MAX_AUTO, STRAFE_TOLERANCE, STRAFE_DEADBAND, false);
+    public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, YAW_MAX_AUTO, YAW_TOLERANCE,YAW_DEADBAND, true);
+
+    // ---  Private Members
 
     // Hardware interface Objects
     private DcMotor leftFrontDrive;     //  control the left front drive wheel
@@ -59,13 +65,6 @@ public class Robot {
     private IMU imu;
     private ElapsedTime holdTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
-
-    // Public Variables
-    public double driveDistance     = 0; // scaled axial distance (+ = forward)
-    public double strafeDistance    = 0; // scaled lateral distance (+ = left)
-    public double heading           = 0; // Latest Robot heading from IMU
-
-    // Private Variables
     private int rawDriveOdometer    = 0; // Unmodified axial odometer count
     private int driveOdometerOffset = 0; // Used to offset axial odometer
     private int rawStrafeOdometer   = 0; // Unmodified lateral odometer count
@@ -365,16 +364,18 @@ class ProportionalControl {
     double  liveOutputLimit;
     double  setPoint;
     double  tolerance;
+    double deadband;
     boolean circular;
     boolean inPosition;
     ElapsedTime cycleTime = new ElapsedTime();
 
-    public ProportionalControl(double gain, double accelLimit, double outputLimit, double tolerance, boolean circular) {
+    public ProportionalControl(double gain, double accelLimit, double outputLimit, double tolerance, double deadband, boolean circular) {
         this.gain = gain;
         this.accelLimit = accelLimit;
         this.defaultOutputLimit = outputLimit;
         this.liveOutputLimit = outputLimit;
         this.tolerance = tolerance;
+        this.deadband = deadband;
         this.circular = circular;
         reset(0.0);
     }
@@ -406,6 +407,11 @@ class ProportionalControl {
             output = lastOutput + dV;
         } else if ((output - lastOutput) < -dV) {
             output = lastOutput - dV;
+        }
+
+        // Prevent any very slow motor output accumulation
+        if (Math.abs(error) <= deadband) {
+            error = 0;
         }
 
         lastOutput = output;
