@@ -37,7 +37,7 @@ public class Robot {
     private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double YAW_DEADBAND        = 0.20;    // Error less than this causes zero output
+    private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output
     private static final double YAW_MAX_AUTO        = 0.6;     // Maximum Yaw power limit during autonomous
 
     // Public Members
@@ -158,8 +158,8 @@ public class Robot {
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Odom A:L", "%6d %6d", rawDriveOdometer - driveOdometerOffset, rawStrafeOdometer - strafeOdometerOffset);
-            myOpMode.telemetry.addData("Distance A:L", "%5.1f %5.1f", driveDistance, strafeDistance);
-            myOpMode.telemetry.addData("Heading D:R", "%5.0f %5.1f", heading, turnRate);
+            myOpMode.telemetry.addData("Distance A:L", "%5.2f %5.2f", driveDistance, strafeDistance);
+            myOpMode.telemetry.addData("Heading D:R", "%5.2f %5.2f", heading, turnRate);
         }
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
     }
