@@ -133,6 +133,13 @@ public class Robot {
         return aMotor;
     }
 
+    public void floatMotors() {
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+    }
+
     /**
      *  Read all input devices to determine the robot's motion
      *  always return true so this can be used in while loop conditions
