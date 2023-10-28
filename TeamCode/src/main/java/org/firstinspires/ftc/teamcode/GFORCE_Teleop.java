@@ -35,12 +35,15 @@ public class GFORCE_Teleop extends LinearOpMode
         // Initialize the drive hardware & Turn on telemetry
         robot.initialize(true);
         arm.initialize(true);
+        arm.homeArm();
         robot.resetOdometry();
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to drive");
         telemetry.update();
         waitForStart();
+
+        arm.setLiftSetpoint(0);
 
         // Reset heading control loop to lock in current heading
         robot.yawController.reset();
@@ -49,15 +52,12 @@ public class GFORCE_Teleop extends LinearOpMode
         {
             robot.readSensors();
             arm.readSensors();
+            arm.runArmControl();
 
             // Allow driver to reset the gyro
             if (gamepad1.options && gamepad1.share){
                 robot.resetHeading();
                 robot.resetOdometry();
-            }
-
-            if (gamepad1.y) {
-                arm.homeArm();
             }
 
             // read joystick values and scale according to limits in Robot class

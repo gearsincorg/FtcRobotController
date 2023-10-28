@@ -5,22 +5,28 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 public class Manipulator {
     private static final double LIFT_GAIN       = 0.018;    // Strength of lift position control
     private static final double LIFT_ACCEL      = 1.5;      // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double LIFT_TOLERANCE  = 1.0;      // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double LIFT_AUTO_YAW   = 0.3;      // Maximum lift power
+    private static final double LIFT_MAX_AUTO   = 0.3;      // Maximum lift power
 
     private static final double EXTEND_GAIN     = 0.018;    // Strength of extend position control
     private static final double EXTEND_ACCEL    = 1.5;      // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double EXTEND_TOLERANCE = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double EXTEND_AUTO_YAW = 0.3;      // Maximum extend power
+    private static final double EXTEND_MAX_AUTO  = 0.3;      // Maximum extend power
 
     private static final double LIFT_COUNTS_PER_DEGREE = 11.05556 ; // 995 counts for 90 Deg
     private static final double EXTEND_COUNTS_PER_INCH = 158.944 ;  // 2861 counts for 18"
     private static final int    LIFT_HOME_OFFSET = (int)(5 * LIFT_COUNTS_PER_DEGREE);  // Home location is - 5 deg
 
+    private static final double SHORT_HOLD_POWER = 0.17  ;
+    private static final double LONG_HOLD_POWER  = 0.30  ;
+
+    public  double liftAngle      = 0;   // Arm angle in degrees.  Horizontal = 0 degrees.  Increases to approximately 120 degrees.
+    public  double extendLength   = 0;
 
     // Hardware interface Objects
     private DcMotor lift;       //  control the arm Lift Motor
@@ -31,14 +37,12 @@ public class Manipulator {
 
     private int rawLiftEncoder    = 0;
     private int rawExtendEncoder  = 0;
-    private double liftAngle      = 0;   // Arm angle in degrees.  Horizontal = 0 degrees.  Increases to approximately 120 degrees.
-    private double extendLength   = 0;
 
     private int liftEncoderHome   = 0;
     private int extendEncoderHome = 0;
 
-    private double  listSetpoint  = 0;
-    private double  armSetpoint   = 0;
+    private double  liftSetpoint  = 0;
+    private double  extendSetpoint   = 0;
     private boolean clawLClosed   = false;
     private boolean clawRClosed   = false;
     private double  wristAngle    = 0;
@@ -98,6 +102,26 @@ public class Manipulator {
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
     }
 
+    public boolean runArmControl() {
+        double error = liftSetpoint - liftAngle;
+        double errorPower = error * LIFT_GAIN;
+        double anglePower = SHORT_HOLD_POWER * Math.sin(Math.toRadians(liftAngle));
+        double power = errorPower + anglePower;
+
+        power = Range.clip(power, -LIFT_MAX_AUTO, LIFT_MAX_AUTO);
+
+        lift.setPower(power);
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Arm E:P", "%6.1f %6.2f", error, power);
+        }
+
+        return (Math.abs(error) < 2.0);
+    }
+
+    public void setLiftSetpoint(double setpoint) {
+        liftSetpoint = setpoint;
+    }
+
     public void homeArm() {
         int lastLiftPos   = rawLiftEncoder;
         int lastExtendPos = rawExtendEncoder;
@@ -131,9 +155,6 @@ public class Manipulator {
         extend.setPower(0);
         myOpMode.telemetry.addData("Arm", "Is Home");
         myOpMode.telemetry.update();
-
-        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        extend.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Reset the home positions.  Add any offsets here.
         liftEncoderHome = rawLiftEncoder + LIFT_HOME_OFFSET;
