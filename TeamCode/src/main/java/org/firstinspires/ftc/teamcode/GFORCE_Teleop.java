@@ -29,12 +29,14 @@ public class GFORCE_Teleop extends LinearOpMode
     // get an instance of the "Drive" class.
     Robot robot = new Robot(this);
     Manipulator arm = new Manipulator(this);
+    Drone drone = new Drone(this);
 
     @Override public void runOpMode()
     {
         // Initialize the drive hardware & Turn on telemetry
         robot.initialize(true);
         arm.initialize(true);
+        drone.initialize(true);
         arm.homeArm();
         robot.resetOdometry();
 
@@ -58,6 +60,26 @@ public class GFORCE_Teleop extends LinearOpMode
             if (gamepad1.options && gamepad1.share){
                 robot.resetHeading();
                 robot.resetOdometry();
+            }
+
+            //controls for our drone laucher
+            if (gamepad1.dpad_up){
+                drone.setTiltAngle(1);
+                drone.runLauncher();
+            } else if (gamepad1.dpad_right) {
+                drone.fireDrone();
+            } else if (gamepad1.dpad_down) {
+                drone.setTiltAngle(0);
+                drone.stopLauncher();
+            }
+
+            // set lift set point
+            if (gamepad1.y) {
+                arm.setLiftSetpoint(20);
+            } else if (gamepad1.a) {
+                arm.setLiftSetpoint(0);
+            } else if (gamepad1.b) {
+                arm.setLiftSetpoint(90);
             }
 
             // read joystick values and scale according to limits in Robot class

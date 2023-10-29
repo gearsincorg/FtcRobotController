@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 public class Manipulator {
-    private static final double LIFT_GAIN       = 0.018;    // Strength of lift position control
+    private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
     private static final double LIFT_ACCEL      = 1.5;      // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double LIFT_TOLERANCE  = 1.0;      // Controller is is "inPosition" if position error is < +/- this amount
     private static final double LIFT_MAX_AUTO   = 0.3;      // Maximum lift power
@@ -105,10 +105,15 @@ public class Manipulator {
     public boolean runArmControl() {
         double error = liftSetpoint - liftAngle;
         double errorPower = error * LIFT_GAIN;
-        double anglePower = SHORT_HOLD_POWER * Math.sin(Math.toRadians(liftAngle));
+        double anglePower = SHORT_HOLD_POWER  * Math.cos(Math.toRadians(liftAngle));
         double power = errorPower + anglePower;
 
-        power = Range.clip(power, -LIFT_MAX_AUTO, LIFT_MAX_AUTO);
+        power = Range.clip(power, -0.2, 0.7);
+
+        if ((power < 0) && (liftAngle < 45)){
+            power = 0;
+        }
+
 
         lift.setPower(power);
         if (showTelemetry) {
@@ -131,8 +136,8 @@ public class Manipulator {
         // Start retracting arm
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        lift.setPower(-0.1);
-        extend.setPower(-0.1);
+        lift.setPower(-0.2);
+        extend.setPower(-0.2);
         myOpMode.sleep(200);
         while(myOpMode.opModeIsActive() && readSensors() && (!liftIsHome || !extendIsHome)) {
             if (Math.abs(lastLiftPos - rawLiftEncoder) < 5) {
@@ -147,7 +152,7 @@ public class Manipulator {
 
             lastLiftPos = rawLiftEncoder;
             lastExtendPos = rawExtendEncoder;
-            myOpMode.sleep(100);
+            myOpMode.sleep(200);
             myOpMode.telemetry.addData("Arm", "Homing");
             myOpMode.telemetry.update();
         }
