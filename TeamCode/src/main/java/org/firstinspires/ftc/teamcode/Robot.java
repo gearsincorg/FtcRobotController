@@ -132,16 +132,10 @@ public class Robot {
         return aMotor;
     }
 
-    public void floatMotors() {
-        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-    }
-
     /**
-     *  Read all input devices to determine the robot's motion
-     *  always return true so this can be used in while loop conditions
+     * Read all input devices to determine the robot's motion
+     * always return true so this can be used in while loop conditions
+     * @return true
      */
     public boolean readSensors() {
         rawDriveOdometer = driveEncoder.getCurrentPosition() * (INVERT_DRIVE_ODOMETRY ? -1 : 1);
@@ -176,14 +170,15 @@ public class Robot {
         //  Ensure that power is positive
         power = Math.abs(power);
         resetOdometry();
-        driveController.reset(distanceInches, power);
-        yawController.reset();
+        driveController.reset(distanceInches, power);   // achieve desired drive distance
+        strafeController.reset(0);              // Maintain zero strafe drift
+        yawController.reset();                          // Maintain last turn heading
         holdTimer.reset();
 
         while (myOpMode.opModeIsActive() && readSensors()){
 
             // implement desired axis powers
-            moveRobot(driveController.getOutput(driveDistance), 0, yawController.getOutput(heading));
+            moveRobot(driveController.getOutput(driveDistance), strafeController.getOutput(strafeDistance), yawController.getOutput(heading));
 
             // Time to exit?
             if (driveController.inPosition() && yawController.inPosition()) {
@@ -208,14 +203,15 @@ public class Robot {
         //  Ensure that power is positive
         power = Math.abs(power);
         resetOdometry();
-        strafeController.reset(distanceInches, power);
-        yawController.reset();
+        strafeController.reset(distanceInches, power);  // Achieve desired Strafe distance
+        yawController.reset();                          // Maintain last turn angle
+        driveController.reset(0.0);             //  Maintain zero drive drift
         holdTimer.reset();
 
         while (myOpMode.opModeIsActive() && readSensors()){
 
             // implement desired axis powers
-            moveRobot(0, strafeController.getOutput(strafeDistance), yawController.getOutput(heading));
+            moveRobot(driveController.getOutput(driveDistance), strafeController.getOutput(strafeDistance), yawController.getOutput(heading));
 
             // Time to exit?
             if (strafeController.inPosition() && yawController.inPosition()) {
@@ -262,8 +258,8 @@ public class Robot {
 
     /**
      * Normalize the heading to be within +/- 180 degrees
-     * @param heading  desired heading in degrees.
-     * @return
+     * @param heading  This could be a number of degrees of any value
+     * @return heading This will be the original heading converted to the +/- 180 degree range..
      */
     public double normalizeHeading(double heading) {
         while (heading > 180)  heading -= 360;
@@ -273,9 +269,9 @@ public class Robot {
 
     /**
      * Drive the wheel motors to obtain the requested axes motions
-     * @param drive
-     * @param strafe
-     * @param yaw
+     * @param drive     Fwd/Rev axis power
+     * @param strafe    Left/Right axis power
+     * @param yaw       Yaw axis power
      */
     public void moveRobot(double drive, double strafe, double yaw){
 
@@ -317,7 +313,7 @@ public class Robot {
     }
 
     /**
-     * Set odometry positions to zero.
+     * Set odometry counts and distances to zero.
      */
     public void resetOdometry() {
         readSensors();
@@ -330,6 +326,9 @@ public class Robot {
         strafeController.reset(0);
     }
 
+    /**
+     * Reset the robot heading to zero degrees, and also lock that heading into heading controller.
+     */
     public void resetHeading() {
         readSensors();
         headingOffset = rawHeading;
@@ -341,7 +340,7 @@ public class Robot {
     public double getTurnRate() {return turnRate;}
 
     /**
-     * Set drive, and controller telemetry on or off
+     * Set the drive telemetry on or off
      */
     public void showTelemetry(boolean show){
         showTelemetry = show;
@@ -424,22 +423,31 @@ class ProportionalControl {
     }
     public double getSetpoint() {return setPoint;}
 
-    // Saves a new setpoint and resets the output power history.
-    // This call allows a temporary power limit to be set to override the default.
+    /**
+     * Saves a new setpoint and resets the output power history.
+     * This call allows a temporary power limit to be set to override the default.
+     * @param setPoint
+     * @param powerLimit
+     */
     public void reset(double setPoint, double powerLimit) {
         liveOutputLimit = powerLimit;
         this.setPoint = setPoint;
         reset();
     }
 
-    // Saves a new setpoint and resets the output power history.
+    /**
+     * Saves a new setpoint and resets the output power history.
+     * @param setPoint
+     */
     public void reset(double setPoint) {
         liveOutputLimit = defaultOutputLimit;
         this.setPoint = setPoint;
         reset();
     }
 
-    // Leave everything else the same, Just restart the accel timer and set output to 0
+    /**
+     * Leave everything else the same, Just restart the acceleration timer and set output to 0
+     */
     public void reset() {
         cycleTime.reset();
         inPosition = false;
