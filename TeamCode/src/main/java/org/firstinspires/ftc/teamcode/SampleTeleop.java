@@ -8,12 +8,11 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
  * This OpMode illustrates a teleop OpMode for an Omni bot.
- * This OpMode used the IMU gyro to stabilize the heading when the operator is nor requesting a turn.
  * An external "Robot" class is used to manage all motor/sensor interfaces, and to assist driving functions.
+ * The IMU gyro is used to stabilize the heading when the operator is not requesting a turn.
  */
 
-
-@TeleOp(name="Sample Teleop", group = "Concept")
+@TeleOp(name="Sample Teleop", group = "Mr. Phil")
 public class SampleTeleop extends LinearOpMode
 {
     final double SAFE_DRIVE_SPEED   = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
@@ -39,8 +38,7 @@ public class SampleTeleop extends LinearOpMode
         telemetry.addData(">", "Touch Play to drive");
         telemetry.update();
 
-        robot.floatMotors();
-
+        // While we are waiting, read and display the sensors and encoders and allow the operator to reset them.
         while (opModeInInit()) {
             robot.readSensors();
             telemetry.update();
@@ -51,8 +49,6 @@ public class SampleTeleop extends LinearOpMode
                 robot.resetOdometry();
             }
         }
-
-        waitForStart();
 
         // Reset heading control loop to lock in current heading
         robot.yawController.reset();
@@ -66,11 +62,13 @@ public class SampleTeleop extends LinearOpMode
                 robot.resetHeading();
                 robot.resetOdometry();
             }
-            // read joystick values and scale according to limits in Robot class
+
+            // read joystick values and scale according to limits set at top of this file
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;
             double strafe = -gamepad1.left_stick_x * SAFE_STRAFE_SPEED;
             double yaw    = -gamepad1.right_stick_x * SAFE_YAW_SPEED;
 
+            // Allow orthoginal jogging to provide pure motions
             if (gamepad1.dpad_left) {
                 strafe = SAFE_DRIVE_SPEED / 2.0;
             } else if (gamepad1.dpad_right) {

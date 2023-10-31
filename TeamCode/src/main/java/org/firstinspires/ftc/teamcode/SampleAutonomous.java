@@ -7,10 +7,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 /*
  * This OpMode illustrates an autonomous opmode using simple Odometry
- * All robot functions are performed by an external Robot class that manages all hardware interactions.
+ * All robot functions are performed by an external "Robot" class that manages all hardware interactions.
+ * Pure Drive or Strafe motions are maintained using two Odometry Wheels.
+ * The IMU gyro is used to stabilize the heading during all motions
  */
 
-@Autonomous(name="Sample Autonomous", group = "Concept")
+@Autonomous(name="Sample Autonomous", group = "Mr. Phil")
 public class SampleAutonomous extends LinearOpMode
 {
     // get an instance of the "Robot" class.
@@ -31,10 +33,9 @@ public class SampleAutonomous extends LinearOpMode
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
-            sleep(5000);
-
             robot.resetHeading();
 
+            // Drive a rectangle, turning at each corner
             robot.drive(  84, 0.60, 0.25);
             robot.turnToHeading(90, 0.45, 0.5);
             robot.drive(  72, 0.60, 0.25);
@@ -46,7 +47,7 @@ public class SampleAutonomous extends LinearOpMode
 
             sleep(500);
 
-            // Drive a path and return to start.
+            // Drive the path again without turning.
             robot.drive(  84, 0.60, 0.15);
             robot.strafe( 72, 0.60, 0.15);
             robot.drive( -84, 0.60, 0.15);
