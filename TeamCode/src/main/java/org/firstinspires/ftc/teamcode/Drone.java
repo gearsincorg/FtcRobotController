@@ -26,7 +26,7 @@ public class Drone {
 
     public void initialize(boolean showTelemetry)
     {
-        launcher = myOpMode.hardwareMap.get(DcMotor.class, "launcher");
+        launcher = myOpMode.hardwareMap.get(DcMotor.class, "lateral");  // Launcher
         launcher.setDirection(DcMotorSimple.Direction.FORWARD);
         launcher.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launcher.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);

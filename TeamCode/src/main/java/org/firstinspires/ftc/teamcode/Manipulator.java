@@ -35,8 +35,8 @@ public class Manipulator {
     private Servo clawL;        //  control the left claw open/close
     private Servo clawR;        //  control the right claw open/close
 
-    private int rawLiftEncoder    = 0;
-    private int rawExtendEncoder  = 0;
+    private int liftEncoder    = 0;
+    private int extendEncoder  = 0;
 
     private int liftEncoderHome   = 0;
     private int extendEncoderHome = 0;
@@ -67,12 +67,14 @@ public class Manipulator {
         lift = myOpMode.hardwareMap.get(DcMotor.class, "lift");
         lift.setDirection(DcMotorSimple.Direction.FORWARD);
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Requires motor encoder cables to be hooked up.
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         extend = myOpMode.hardwareMap.get(DcMotor.class, "extend");
         extend.setDirection(DcMotorSimple.Direction.REVERSE);
         extend.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Requires motor encoder cables to be hooked up.
+        extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         wrist = myOpMode.hardwareMap.get(Servo.class, "wrist");
         clawL = myOpMode.hardwareMap.get(Servo.class, "left_claw");
@@ -87,10 +89,8 @@ public class Manipulator {
      *  always return true so this can be used in while loop conditions
      */
     public boolean readSensors() {
-        rawLiftEncoder    = lift.getCurrentPosition() ;
-        rawExtendEncoder  = extend.getCurrentPosition() ;
-        int liftEncoder    = rawLiftEncoder   - liftEncoderHome;
-        int extendEncoder  = rawExtendEncoder - extendEncoderHome;
+        liftEncoder    = lift.getCurrentPosition() ;
+        extendEncoder  = extend.getCurrentPosition() ;
 
         liftAngle = liftEncoder / LIFT_COUNTS_PER_DEGREE;
         extendLength = extendEncoder / EXTEND_COUNTS_PER_INCH;
@@ -102,25 +102,25 @@ public class Manipulator {
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
     }
 
-    public boolean runArmControl() {
+    public boolean runLiftControl() {
         double error = liftSetpoint - liftAngle;
         double errorPower = error * LIFT_GAIN;
         double anglePower = SHORT_HOLD_POWER  * Math.cos(Math.toRadians(liftAngle));
         double power = errorPower + anglePower;
 
-        power = Range.clip(power, -0.2, 0.7);
+        power = Range.clip(power, -0.4, 0.5);
 
-        if ((power < 0) && (liftAngle < 45)){
+        if (((power < 0) && (liftAngle < 25)) ||
+            ((power > 0) && (liftAngle > 110))){
             power = 0;
         }
-
 
         lift.setPower(power);
         if (showTelemetry) {
             myOpMode.telemetry.addData("Arm E:P", "%6.1f %6.2f", error, power);
         }
 
-        return (Math.abs(error) < 2.0);
+        return (Math.abs(error) < LIFT_TOLERANCE);
     }
 
     public void setLiftSetpoint(double setpoint) {
@@ -128,8 +128,8 @@ public class Manipulator {
     }
 
     public void homeArm() {
-        int lastLiftPos   = rawLiftEncoder;
-        int lastExtendPos = rawExtendEncoder;
+        int lastLiftPos   = liftEncoder;
+        int lastExtendPos = extendEncoder;
         boolean liftIsHome = false;
         boolean extendIsHome = false;
 
@@ -139,20 +139,20 @@ public class Manipulator {
         lift.setPower(-0.2);
         extend.setPower(-0.2);
         myOpMode.sleep(200);
-        while(myOpMode.opModeIsActive() && readSensors() && (!liftIsHome || !extendIsHome)) {
-            if (Math.abs(lastLiftPos - rawLiftEncoder) < 5) {
+        while((myOpMode.opModeInInit() || myOpMode.opModeIsActive()) && readSensors() && (!liftIsHome || !extendIsHome)) {
+            if (Math.abs(lastLiftPos - liftEncoder) < 5) {
                 lift.setPower(0);
                 liftIsHome = true;
             }
 
-            if (Math.abs(lastExtendPos - rawExtendEncoder) < 5) {
+            if (Math.abs(lastExtendPos - extendEncoder) < 5) {
                 extend.setPower(0);
                 extendIsHome = true;
             }
 
-            lastLiftPos = rawLiftEncoder;
-            lastExtendPos = rawExtendEncoder;
-            myOpMode.sleep(200);
+            lastLiftPos = liftEncoder;
+            lastExtendPos = extendEncoder;
+            myOpMode.sleep(100);
             myOpMode.telemetry.addData("Arm", "Homing");
             myOpMode.telemetry.update();
         }
@@ -161,9 +161,13 @@ public class Manipulator {
         myOpMode.telemetry.addData("Arm", "Is Home");
         myOpMode.telemetry.update();
 
-        // Reset the home positions.  Add any offsets here.
-        liftEncoderHome = rawLiftEncoder + LIFT_HOME_OFFSET;
-        extendEncoderHome = rawExtendEncoder;
+        // Reset encoders and determine lift and extend home positions.
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        extend.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        myOpMode.sleep(100);
+
+        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void update(){

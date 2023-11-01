@@ -54,7 +54,7 @@ public class GFORCE_Teleop extends LinearOpMode
         {
             robot.readSensors();
             arm.readSensors();
-            arm.runArmControl();
+            arm.runLiftControl();
 
             // Allow driver to reset the gyro
             if (gamepad1.options && gamepad1.share){
@@ -75,12 +75,15 @@ public class GFORCE_Teleop extends LinearOpMode
 
             // set lift set point
             if (gamepad1.y) {
-                arm.setLiftSetpoint(20);
+                arm.setLiftSetpoint(120);
             } else if (gamepad1.a) {
                 arm.setLiftSetpoint(0);
             } else if (gamepad1.b) {
-                arm.setLiftSetpoint(90);
+                arm.setLiftSetpoint(20);
+            }  else if (gamepad1.x) {
+                arm.setLiftSetpoint(10);
             }
+
 
             // read joystick values and scale according to limits in Robot class
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;
