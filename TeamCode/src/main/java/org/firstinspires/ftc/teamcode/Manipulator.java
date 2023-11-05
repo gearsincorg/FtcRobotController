@@ -25,6 +25,18 @@ public class Manipulator {
     private static final double SHORT_HOLD_POWER = 0.17  ;
     private static final double LONG_HOLD_POWER  = 0.30  ;
 
+    private static final double WRIST_PICKUP = 0.0;
+    private static final double WRIST_SCORE_FRONT = 0.2;
+    private static final double WRIST_SCORE_BACK = 0.675;
+
+    private static final double GRAB_LEFT_AUTO = 1.0;
+    private static final double GRAB_LEFT_OPEN = 0.45;
+    private  static final double GRAB_LEFT_CLOSE = 0.23;
+
+    private static final double GRAB_RIGHT_AUTO = 0.0;
+    private static final double GRAB_RIGHT_OPEN = 0.6;
+    private static final double GRAB_RIGHT_CLOSE =0.8;
+
     public  double liftAngle      = 0;   // Arm angle in degrees.  Horizontal = 0 degrees.  Increases to approximately 120 degrees.
     public  double extendLength   = 0;
 
@@ -174,5 +186,30 @@ public class Manipulator {
         if (showTelemetry) {
         }
     }
+
+    //------------ Servo Functions ------
+    public void goToPickupPosition () {
+        wrist.setPosition(WRIST_PICKUP);
+        clawL.setPosition(GRAB_LEFT_OPEN);
+        clawR.setPosition(GRAB_RIGHT_OPEN);
+    }
+    public void closeLeftGrabber (){
+        clawL.setPosition(GRAB_LEFT_CLOSE);
+    }
+    public void closeRightGrabber (){
+        clawR.setPosition(GRAB_RIGHT_CLOSE);
+    }
+    public void liftFrontScore (){
+        wrist.setPosition(WRIST_SCORE_FRONT);
+    }
+    public void liftBackScore (){
+        wrist.setPosition(WRIST_SCORE_BACK);
+    }
+    public void openGrabbers (){
+        clawL.setPosition(GRAB_LEFT_OPEN);
+        clawR.setPosition(GRAB_RIGHT_OPEN);
+    }
+
+
 
 }

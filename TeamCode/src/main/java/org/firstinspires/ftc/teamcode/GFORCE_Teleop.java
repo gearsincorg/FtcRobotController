@@ -73,13 +73,35 @@ public class GFORCE_Teleop extends LinearOpMode
                 drone.stopLauncher();
             }
 
+            //controls for our wrist and grabbers
+            if (gamepad2.x){
+                arm.liftFrontScore();
+            }else if (gamepad2.y){
+                arm.liftBackScore();
+            } else if (gamepad2.a) {
+                arm.goToPickupPosition();
+            }
+
+            if (gamepad2.right_bumper) {
+                arm.closeRightGrabber();
+            }
+
+            if (gamepad2.left_bumper){
+                arm.closeLeftGrabber();
+            }
+
+            if (gamepad2.back){
+                arm.openGrabbers();
+            }
+
+
             // set lift set point
             if (gamepad1.y) {
                 arm.setLiftSetpoint(120);
             } else if (gamepad1.a) {
                 arm.setLiftSetpoint(0);
             } else if (gamepad1.b) {
-                arm.setLiftSetpoint(20);
+                arm.setLiftSetpoint(30);
             }  else if (gamepad1.x) {
                 arm.setLiftSetpoint(10);
             }
