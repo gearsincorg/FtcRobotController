@@ -26,19 +26,19 @@ public class Robot {
     private static final double DRIVE_ACCEL         = 2.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double DRIVE_TOLERANCE     = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double DRIVE_DEADBAND      = 0.25;    // Error less than this causes zero output
-    private static final double DRIVE_MAX_AUTO      = 0.6;     // Maximum Axial power limit during autonomous
+    private static final double DRIVE_MAX_AUTO      = 0.6;     // "default" Maximum Axial power limit during autonomous
 
     private static final double STRAFE_GAIN         = 0.03;    // Strength of lateral position control
     private static final double STRAFE_ACCEL        = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double STRAFE_TOLERANCE    = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double STRAFE_DEADBAND     = 0.25;    // Error less than this causes zero output
-    private static final double STRAFE_MAX_AUTO     = 0.6;     // Maximum Lateral power limit during autonomous
+    private static final double STRAFE_MAX_AUTO     = 0.6;     // "default" Maximum Lateral power limit during autonomous
 
     private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output
-    private static final double YAW_MAX_AUTO        = 0.6;     // Maximum Yaw power limit during autonomous
+    private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
 
     // Public Members
     public double driveDistance     = 0; // scaled axial distance (+ = forward)
@@ -234,6 +234,7 @@ public class Robot {
      */
     public void turnToHeading(double headingDeg, double power, double holdTime) {
 
+        power = Math.abs(power);
         yawController.reset(headingDeg, power);
         while (myOpMode.opModeIsActive() && readSensors()) {
 
@@ -269,9 +270,10 @@ public class Robot {
 
     /**
      * Drive the wheel motors to obtain the requested axes motions
-     * @param drive     Fwd/Rev axis power
-     * @param strafe    Left/Right axis power
-     * @param yaw       Yaw axis power
+     * Assumes all drive motors are configured forward motion when given positive power.
+     * @param drive     Fwd/Rev axis power (+ve is forward)
+     * @param strafe    Left/Right axis power (+ve is left)
+     * @param yaw       Yaw axis power (+ve is CCW)
      */
     public void moveRobot(double drive, double strafe, double yaw){
 
@@ -280,11 +282,11 @@ public class Robot {
         double lB = drive + strafe - yaw;
         double rB = drive - strafe + yaw;
 
+        //normalize the motor values
         double max = Math.max(Math.abs(lF), Math.abs(rF));
         max = Math.max(max, Math.abs(lB));
         max = Math.max(max, Math.abs(rB));
 
-        //normalize the motor values
         if (max > 1.0)  {
             lF /= max;
             rF /= max;
@@ -314,20 +316,23 @@ public class Robot {
 
     /**
      * Set odometry counts and distances to zero.
+     * Use this call to prepare for new motions
      */
     public void resetOdometry() {
         readSensors();
         driveOdometerOffset = rawDriveOdometer;
-        driveDistance = 0.0;
         driveController.reset(0);
+        driveDistance = 0.0;
 
         strafeOdometerOffset = rawStrafeOdometer;
-        strafeDistance = 0.0;
         strafeController.reset(0);
+        strafeDistance = 0.0;
     }
 
     /**
      * Reset the robot heading to zero degrees, and also lock that heading into heading controller.
+     * Use this call to set a new Absolute Zero Position.  Do this at the start of Auto, or during
+     * Teleop to correct any gyro drift that may occur.
      */
     public void resetHeading() {
         readSensors();
@@ -363,7 +368,7 @@ class ProportionalControl {
     double  liveOutputLimit;
     double  setPoint;
     double  tolerance;
-    double deadband;
+    double  deadband;
     boolean circular;
     boolean inPosition;
     ElapsedTime cycleTime = new ElapsedTime();
