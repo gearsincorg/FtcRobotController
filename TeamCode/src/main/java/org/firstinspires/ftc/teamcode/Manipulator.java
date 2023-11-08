@@ -10,13 +10,23 @@ import com.qualcomm.robotcore.util.Range;
 public class Manipulator {
     private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
     private static final double LIFT_ACCEL      = 1.5;      // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    private static final double LIFT_TOLERANCE  = 1.0;      // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double LIFT_TOLERANCE  = 1.0;      // Controller is "inPosition" if position error is < +/- this amount
     private static final double LIFT_MAX_AUTO   = 0.3;      // Maximum lift power
+    public static final double LIFT_HOME_ANGLE = 0.0;
+    public static final double LIFT_HOVER_ANGLE = 10.0;
+    public static final double LIFT_AUTO_ANGLE = 15.0;
+    public static final double LIFT_FRONT_ANGLE = 30.0;
+    public static final double LIFT_BACK_ANGLE = 120.0;
 
-    private static final double EXTEND_GAIN     = 0.018;    // Strength of extend position control
+    private static final double EXTEND_GAIN     = 0.15;    // Strength of extend position control
     private static final double EXTEND_ACCEL    = 1.5;      // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
-    private static final double EXTEND_TOLERANCE = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double EXTEND_TOLERANCE = 0.25;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double EXTEND_MAX_AUTO  = 0.3;      // Maximum extend power
+    public static final double EXTEND_HOME_DISTANCE = 0.0;
+    public static final double EXTEND_AUTO_DISTANCE = 5.0;
+    public static final double EXTEND_FRONT_DISTANCE = 6.0;
+
+
 
     private static final double LIFT_COUNTS_PER_DEGREE = 11.05556 ; // 995 counts for 90 Deg
     private static final double EXTEND_COUNTS_PER_INCH = 158.944 ;  // 2861 counts for 18"
@@ -26,7 +36,7 @@ public class Manipulator {
     private static final double LONG_HOLD_POWER  = 0.30  ;
 
     private static final double WRIST_PICKUP = 0.0;
-    private static final double WRIST_SCORE_FRONT = 0.2;
+    private static final double WRIST_SCORE_FRONT = 0.1;
     private static final double WRIST_SCORE_BACK = 0.675;
 
     private static final double GRAB_LEFT_AUTO = 1.0;
@@ -114,6 +124,10 @@ public class Manipulator {
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
     }
 
+    /**
+     * controlling lift power to get to the lift set point
+     * @return true if arm is in position
+     */
     public boolean runLiftControl() {
         double error = liftSetpoint - liftAngle;
         double errorPower = error * LIFT_GAIN;
@@ -122,6 +136,7 @@ public class Manipulator {
 
         power = Range.clip(power, -0.4, 0.5);
 
+        //causes the lift power to be zero if the arms angle is past a certain point
         if (((power < 0) && (liftAngle < 25)) ||
             ((power > 0) && (liftAngle > 110))){
             power = 0;
@@ -129,14 +144,43 @@ public class Manipulator {
 
         lift.setPower(power);
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Arm E:P", "%6.1f %6.2f", error, power);
+            myOpMode.telemetry.addData("Lift E:P", "%6.1f %6.2f", error, power);
         }
 
         return (Math.abs(error) < LIFT_TOLERANCE);
     }
 
+    public boolean runExtendControl() {
+        double error = extendSetpoint - extendLength;
+        double power = error * EXTEND_GAIN;
+
+
+        power = Range.clip(power, -0.75, 0.75);
+
+        //causes the lift power to be zero if the arms angle is past a certain point
+      /*  if (((power < 0) && (liftAngle < 25)) ||
+                ((power > 0) && (liftAngle > 110))){
+            power = 0;
+        }*/
+
+        extend.setPower(power);
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Extend E:P", "%6.1f %6.2f", error, power);
+        }
+
+        return (Math.abs(error) < EXTEND_TOLERANCE);
+    }
+
+    /**
+     *
+     * @param setpoint the target angle for the lift
+     */
     public void setLiftSetpoint(double setpoint) {
         liftSetpoint = setpoint;
+    }
+
+    public void setExtendSetpoint(double setpoint) {
+        extendSetpoint = setpoint;
     }
 
     public void homeArm() {
@@ -188,7 +232,7 @@ public class Manipulator {
     }
 
     //------------ Servo Functions ------
-    public void goToPickupPosition () {
+    public void wristToPickupPosition() {
         wrist.setPosition(WRIST_PICKUP);
         clawL.setPosition(GRAB_LEFT_OPEN);
         clawR.setPosition(GRAB_RIGHT_OPEN);
@@ -199,10 +243,10 @@ public class Manipulator {
     public void closeRightGrabber (){
         clawR.setPosition(GRAB_RIGHT_CLOSE);
     }
-    public void liftFrontScore (){
+    public void wristToFrontScore(){
         wrist.setPosition(WRIST_SCORE_FRONT);
     }
-    public void liftBackScore (){
+    public void wristToBackScore(){
         wrist.setPosition(WRIST_SCORE_BACK);
     }
     public void openGrabbers (){
@@ -210,6 +254,7 @@ public class Manipulator {
         clawR.setPosition(GRAB_RIGHT_OPEN);
     }
 
+    
 
 
 }

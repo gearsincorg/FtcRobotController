@@ -55,6 +55,7 @@ public class GFORCE_Teleop extends LinearOpMode
             robot.readSensors();
             arm.readSensors();
             arm.runLiftControl();
+            arm.runExtendControl();
 
             // Allow driver to reset the gyro
             if (gamepad1.options && gamepad1.share){
@@ -74,37 +75,48 @@ public class GFORCE_Teleop extends LinearOpMode
             }
 
             //controls for our wrist and grabbers
-            if (gamepad2.x){
-                arm.liftFrontScore();
-            }else if (gamepad2.y){
-                arm.liftBackScore();
-            } else if (gamepad2.a) {
-                arm.goToPickupPosition();
+            if (gamepad1.x){
+                arm.wristToFrontScore();
+            }else if (gamepad1.y){
+                arm.wristToBackScore();
+            } else if (gamepad1.a) {
+                arm.wristToPickupPosition();
             }
 
-            if (gamepad2.right_bumper) {
+            if (gamepad1.right_bumper) {
                 arm.closeRightGrabber();
             }
 
-            if (gamepad2.left_bumper){
+            if (gamepad1.left_bumper){
                 arm.closeLeftGrabber();
             }
 
-            if (gamepad2.back){
+            if (gamepad1.options){
                 arm.openGrabbers();
             }
 
 
             // set lift set point
-            if (gamepad1.y) {
-                arm.setLiftSetpoint(120);
-            } else if (gamepad1.a) {
-                arm.setLiftSetpoint(0);
-            } else if (gamepad1.b) {
-                arm.setLiftSetpoint(30);
-            }  else if (gamepad1.x) {
-                arm.setLiftSetpoint(10);
+            if (gamepad2.y) {
+                arm.setLiftSetpoint(Manipulator.LIFT_BACK_ANGLE);
+            } else if (gamepad2.a) {
+                arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
+            } else if (gamepad2.b) {
+                arm.setLiftSetpoint(Manipulator.EXTEND_FRONT_DISTANCE);
+            }  else if (gamepad2.x) {
+                arm.setLiftSetpoint(Manipulator.LIFT_HOVER_ANGLE);
             }
+
+            if (gamepad2.dpad_down) {
+                arm.setExtendSetpoint(Manipulator.EXTEND_HOME_DISTANCE);
+            } else if (gamepad2.dpad_left) {
+                arm.setExtendSetpoint(Manipulator.EXTEND_FRONT_DISTANCE);
+            } else if (gamepad2.dpad_right) {
+                arm.setExtendSetpoint(12);
+            }  else if (gamepad2.dpad_up) {
+                arm.setExtendSetpoint(18);
+            }
+
 
 
             // read joystick values and scale according to limits in Robot class
