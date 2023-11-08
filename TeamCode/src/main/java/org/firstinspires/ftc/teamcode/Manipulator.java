@@ -50,6 +50,8 @@ public class Manipulator {
     public  double liftAngle      = 0;   // Arm angle in degrees.  Horizontal = 0 degrees.  Increases to approximately 120 degrees.
     public  double extendLength   = 0;
 
+
+
     // Hardware interface Objects
     private DcMotor lift;       //  control the arm Lift Motor
     private DcMotor extend;     //  control the Linear Slide Extension Motor
@@ -64,14 +66,19 @@ public class Manipulator {
     private int extendEncoderHome = 0;
 
     private double  liftSetpoint  = 0;
+    private boolean liftInPosition =false;
     private double  extendSetpoint   = 0;
+    private boolean extendInPosition = false;
     private boolean clawLClosed   = false;
     private boolean clawRClosed   = false;
     private double  wristAngle    = 0;
 
+    private ManipulatorState currentState = ManipulatorState.HOME;
+
     private LinearOpMode myOpMode;
     private boolean showTelemetry = false;
-    private ElapsedTime SMTimer   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
+    private ElapsedTime driveTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
+    private ElapsedTime stateTimer = new ElapsedTime();
 
     // Manipulator Constructor
     public Manipulator(LinearOpMode opmode) {
@@ -147,7 +154,8 @@ public class Manipulator {
             myOpMode.telemetry.addData("Lift E:P", "%6.1f %6.2f", error, power);
         }
 
-        return (Math.abs(error) < LIFT_TOLERANCE);
+        liftInPosition = (Math.abs(error) < LIFT_TOLERANCE);
+        return liftInPosition;
     }
 
     public boolean runExtendControl() {
@@ -168,7 +176,8 @@ public class Manipulator {
             myOpMode.telemetry.addData("Extend E:P", "%6.1f %6.2f", error, power);
         }
 
-        return (Math.abs(error) < EXTEND_TOLERANCE);
+        extendInPosition =  (Math.abs(error) < EXTEND_TOLERANCE);
+        return extendInPosition;
     }
 
     /**
@@ -177,10 +186,12 @@ public class Manipulator {
      */
     public void setLiftSetpoint(double setpoint) {
         liftSetpoint = setpoint;
+        liftInPosition = false;
     }
 
     public void setExtendSetpoint(double setpoint) {
         extendSetpoint = setpoint;
+        extendInPosition = false;
     }
 
     public void homeArm() {
@@ -254,7 +265,42 @@ public class Manipulator {
         clawR.setPosition(GRAB_RIGHT_OPEN);
     }
 
-    
+    //------------- state machine functions -------------
+    public void runStateMachine(){
+        switch (currentState){
+            case HOME:
+                break;
 
+            case SD_START:
+                setLiftSetpoint(LIFT_HOVER_ANGLE);
+                setState(ManipulatorState.SD_WAIT_IP);
+                break;
+
+            case SD_WAIT_IP:
+                if (liftInPosition){
+                    wristToBackScore();
+                    setState(ManipulatorState.SD_WAIT_WRIST);
+                }
+                break;
+
+            case SD_WAIT_WRIST:
+                if(stateTimer.time() > 0.5){
+                    setLiftSetpoint(LIFT_HOME_ANGLE);
+                    setState(ManipulatorState.SAFE_DRIVING);
+                }
+                break;
+
+            case SAFE_DRIVING:
+                break;
+
+            case FRONT_SCORE:
+                break;
+        }
+    }
+
+    public void setState(ManipulatorState newState){
+        currentState = newState;
+        stateTimer.reset();
+    }
 
 }

@@ -56,11 +56,16 @@ public class GFORCE_Teleop extends LinearOpMode
             arm.readSensors();
             arm.runLiftControl();
             arm.runExtendControl();
+            arm.runStateMachine();
 
             // Allow driver to reset the gyro
             if (gamepad1.options && gamepad1.share){
                 robot.resetHeading();
                 robot.resetOdometry();
+            }
+
+            if(gamepad1.b){
+                arm.setState(ManipulatorState.SD_START);
             }
 
             //controls for our drone laucher
