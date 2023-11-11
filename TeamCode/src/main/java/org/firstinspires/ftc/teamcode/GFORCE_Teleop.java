@@ -64,10 +64,6 @@ public class GFORCE_Teleop extends LinearOpMode
                 robot.resetOdometry();
             }
 
-            if(gamepad1.b){
-                arm.setState(ManipulatorState.SD_START);
-            }
-
             //controls for our drone laucher
             if (gamepad1.dpad_up){
                 drone.setTiltAngle(1);
@@ -79,29 +75,33 @@ public class GFORCE_Teleop extends LinearOpMode
                 drone.stopLauncher();
             }
 
-            //controls for our wrist and grabbers
-            if (gamepad1.x){
-                arm.wristToFrontScore();
-            }else if (gamepad1.y){
-                arm.wristToBackScore();
-            } else if (gamepad1.a) {
-                arm.wristToPickupPosition();
+            //controls for Automatic movements
+            if (gamepad1.a){
+                arm.gotoHome();
+            } else if (gamepad1.x){
+                arm.gotoSafeDriving();
+            } else if (gamepad1.b) {
+                arm.gotoFrontScore();
             }
 
-            if (gamepad1.right_bumper) {
-                arm.closeRightGrabber();
-            }
-
-            if (gamepad1.left_bumper){
+            if (gamepad1.left_trigger > 0.25) {
+                arm.openLeftGrabber();
+            } else if (gamepad1.left_bumper || arm.pixelLeftInRange) {
                 arm.closeLeftGrabber();
+                // arm.autoPickup();
+            }
+
+            if (gamepad1.right_trigger > 0.25) {
+                arm.openRightGrabber();
+            } else if (gamepad1.right_bumper){
+                arm.closeRightGrabber();
             }
 
             if (gamepad1.options){
                 arm.openGrabbers();
             }
 
-
-            // set lift set point
+            // Manually lidt and lower the arm
             if (gamepad2.y) {
                 arm.setLiftSetpoint(Manipulator.LIFT_BACK_ANGLE);
             } else if (gamepad2.a) {
@@ -112,6 +112,7 @@ public class GFORCE_Teleop extends LinearOpMode
                 arm.setLiftSetpoint(Manipulator.LIFT_HOVER_ANGLE);
             }
 
+            // Manually extend and retract the arm
             if (gamepad2.dpad_down) {
                 arm.setExtendSetpoint(Manipulator.EXTEND_HOME_DISTANCE);
             } else if (gamepad2.dpad_left) {
@@ -121,8 +122,6 @@ public class GFORCE_Teleop extends LinearOpMode
             }  else if (gamepad2.dpad_up) {
                 arm.setExtendSetpoint(18);
             }
-
-
 
             // read joystick values and scale according to limits in Robot class
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;

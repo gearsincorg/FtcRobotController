@@ -1,12 +1,16 @@
 package org.firstinspires.ftc.teamcode;
 
 public enum ManipulatorState {
-
+    H_RETRACTING,
+    H_ROTATE,
+    H_LIFTING,
     HOME,
-    SD_START,
-    SD_WAIT_IP,
-    SD_WAIT_WRIST,
+    SD_LIFTING,
+    SD_LOWER,
     SAFE_DRIVING,
-    FRONT_SCORE
+    FS_LIFTING,
+    FS_EXTEND,
+    FRONT_SCORE,
+    WAITING
 
 }
