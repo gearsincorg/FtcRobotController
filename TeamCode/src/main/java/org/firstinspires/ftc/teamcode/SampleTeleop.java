@@ -1,4 +1,8 @@
-/* Copyright (c) 2023 Phil Malone. All rights reserved. */
+/* Created by Phil Malone. 2023.
+    This class illustrates my simplified Odometry Strategy.
+    It implements basic straight line motions but with heading and drift controls to limit drift.
+    See the readme for a link to a video tutorial explaining the operation and limitations of the code.
+ */
 
 package org.firstinspires.ftc.teamcode;
 
