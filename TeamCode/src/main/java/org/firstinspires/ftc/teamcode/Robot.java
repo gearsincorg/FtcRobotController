@@ -1,4 +1,8 @@
-/* Copyright (c) 2023 Phil Malone. All rights reserved. */
+/* Created by Phil Malone. 2023.
+    This class illustrates my simplified Odometry Strategy.
+    It implements basic straight line motions but with heading and drift controls to limit drift.
+    See the readme for a link to a video tutorial explaining the operation and limitations of the code.
+ */
 
 package org.firstinspires.ftc.teamcode;
 
@@ -90,7 +94,8 @@ public class Robot {
     {
         // Initialize the hardware variables. Note that the strings used to 'get' each
         // motor/device must match the names assigned during the robot configuration.
-        // Set the drive direction to ensure positive power drives each wheel forward.
+
+        // !!!  Set the drive direction to ensure positive power drives each wheel forward.
         leftFrontDrive  = setupDriveMotor("leftfront_drive", DcMotor.Direction.REVERSE);
         rightFrontDrive = setupDriveMotor("rightfront_drive", DcMotor.Direction.FORWARD);
         leftBackDrive  = setupDriveMotor( "leftback_drive", DcMotor.Direction.REVERSE);
@@ -113,6 +118,9 @@ public class Robot {
                                              RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
         imu.initialize(new IMU.Parameters(orientationOnRobot));
 
+        // zero out all the odometry readings.
+        resetOdometry();
+
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
     }
@@ -126,7 +134,7 @@ public class Robot {
     private DcMotor setupDriveMotor(String deviceName, DcMotor.Direction direction) {
         DcMotor aMotor = myOpMode.hardwareMap.get(DcMotor.class, deviceName);
         aMotor.setDirection(direction);
-        aMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        aMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset Encoders to zero
         aMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         aMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);  // Requires motor encoder cables to be hooked up.
         return aMotor;
@@ -134,7 +142,7 @@ public class Robot {
 
     /**
      * Read all input devices to determine the robot's motion
-     * always return true so this can be used in while loop conditions
+     * always return true so this can be used in "while" loop conditions
      * @return true
      */
     public boolean readSensors() {
@@ -151,9 +159,9 @@ public class Robot {
         turnRate    = angularVelocity.zRotationRate;
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Odom A:L", "%6d %6d", rawDriveOdometer - driveOdometerOffset, rawStrafeOdometer - strafeOdometerOffset);
-            myOpMode.telemetry.addData("Distance A:L", "%5.2f %5.2f", driveDistance, strafeDistance);
-            myOpMode.telemetry.addData("Heading D:R", "%5.2f %5.2f", heading, turnRate);
+            myOpMode.telemetry.addData("Odom Ax:Lat", "%6d %6d", rawDriveOdometer - driveOdometerOffset, rawStrafeOdometer - strafeOdometerOffset);
+            myOpMode.telemetry.addData("Dist Ax:Lat", "%5.2f %5.2f", driveDistance, strafeDistance);
+            myOpMode.telemetry.addData("Head Deg:Rate", "%5.2f %5.2f", heading, turnRate);
         }
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
     }
@@ -170,6 +178,7 @@ public class Robot {
         //  Ensure that power is positive
         power = Math.abs(power);
         resetOdometry();
+
         driveController.reset(distanceInches, power);   // achieve desired drive distance
         strafeController.reset(0);              // Maintain zero strafe drift
         yawController.reset();                          // Maintain last turn heading
@@ -203,6 +212,7 @@ public class Robot {
         //  Ensure that power is positive
         power = Math.abs(power);
         resetOdometry();
+
         strafeController.reset(distanceInches, power);  // Achieve desired Strafe distance
         yawController.reset();                          // Maintain last turn angle
         driveController.reset(0.0);             //  Maintain zero drive drift
@@ -232,7 +242,7 @@ public class Robot {
      * @param power Maximum power to apply.  This number should always be positive.
      * @param holdTime Minimum time (sec) required to hold the final position.  0 = no hold.
      */
-    public void turnToHeading(double headingDeg, double power, double holdTime) {
+    public void turnTo(double headingDeg, double power, double holdTime) {
 
         power = Math.abs(power);
         yawController.reset(headingDeg, power);
