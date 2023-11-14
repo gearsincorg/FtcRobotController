@@ -36,10 +36,10 @@ public class GFORCE_Autonomous extends LinearOpMode
             // Drive a path and return to start.
             robot.drive(48, 0.10, 0.20);
             robot.strafe(24, 0.10, 0.20);
-            robot.turnToHeading(-90, 0.25, 0.20);
+            robot.turnTo(-90, 0.25, 0.20);
             robot.drive(24, 0.10, 0.20);
             robot.strafe(-48, 0.1, 0.20);
-            robot.turnToHeading(0, 0.25, 0.20);
+            robot.turnTo(0, 0.25, 0.20);
         }
     }
 }

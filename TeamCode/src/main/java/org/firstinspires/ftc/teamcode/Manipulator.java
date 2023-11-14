@@ -62,6 +62,7 @@ public class Manipulator {
     private Servo clawL;        //  control the left claw open/close
     private Servo clawR;        //  control the right claw open/close
     private DistanceSensor pixelL;
+    private DistanceSensor pixelR;
     // private DistanceSensor pixelR;
 
     private int liftEncoder    = 0;
@@ -118,6 +119,7 @@ public class Manipulator {
         clawL = myOpMode.hardwareMap.get(Servo.class, "left_claw");
         clawR = myOpMode.hardwareMap.get(Servo.class, "right_claw");
         pixelL = myOpMode.hardwareMap.get(DistanceSensor.class, "left_pixel");
+        pixelR = myOpMode.hardwareMap.get(DistanceSensor.class, "right_pixel");
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -136,11 +138,14 @@ public class Manipulator {
 
         pixelLeftRange = pixelL.getDistance(DistanceUnit.MM);
         pixelLeftInRange = (pixelLeftRange > 20) && (pixelLeftRange < 65);
+        pixelRightRange = pixelR.getDistance(DistanceUnit.MM);
+        pixelRightInRange = (pixelRightRange > 20) && (pixelRightRange < 65);
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Arm Encoders L:X", "%6d %6d", liftEncoder, extendEncoder);
             myOpMode.telemetry.addData("Arm Pos L:X", "%5.1f %5.1f", liftAngle, extendLength);
             myOpMode.telemetry.addData("Pixel L R:T", "%4.0f %s", pixelLeftRange, pixelLeftInRange ? "YES": "No");
+            myOpMode.telemetry.addData("Pixel R R:T", "%4.0f %s", pixelRightRange, pixelRightInRange ? "YES": "No");
         }
 
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
@@ -208,6 +213,10 @@ public class Manipulator {
     public void setExtendSetpoint(double setpoint) {
         extendSetpoint = setpoint;
         extendInPosition = false;
+    }
+
+    public void setLiftPower(double power) {
+        lift.setPower(power);
     }
 
     public void homeArm() {

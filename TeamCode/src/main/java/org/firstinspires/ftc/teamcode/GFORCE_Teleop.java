@@ -64,6 +64,15 @@ public class GFORCE_Teleop extends LinearOpMode
                 robot.resetOdometry();
             }
 
+            // Allow driver to lift robot
+            if (gamepad2.share){
+                if (gamepad2.options)
+                    arm.setLiftPower(-1.0);
+                else
+                    arm.setLiftPower(0.0);
+            }
+
+
             //controls for our drone laucher
             if (gamepad1.dpad_up){
                 drone.setTiltAngle(1);
@@ -93,7 +102,7 @@ public class GFORCE_Teleop extends LinearOpMode
 
             if (gamepad1.right_trigger > 0.25) {
                 arm.openRightGrabber();
-            } else if (gamepad1.right_bumper){
+            } else if (gamepad1.right_bumper  || arm.pixelRightInRange){
                 arm.closeRightGrabber();
             }
 
