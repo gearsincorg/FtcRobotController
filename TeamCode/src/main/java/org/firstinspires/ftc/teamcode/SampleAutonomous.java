@@ -32,7 +32,7 @@ public class SampleAutonomous extends LinearOpMode
         telemetry.update();
 
         waitForStart();
-        robot.resetHeading();  // Reset heading so set a baseline for Auto
+        robot.resetHeading();  // Reset heading to set a baseline for Auto
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())

@@ -29,19 +29,19 @@ public class Robot {
     private static final double DRIVE_GAIN          = 0.03;    // Strength of axial position control
     private static final double DRIVE_ACCEL         = 2.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double DRIVE_TOLERANCE     = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double DRIVE_DEADBAND      = 0.25;    // Error less than this causes zero output
+    private static final double DRIVE_DEADBAND      = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double DRIVE_MAX_AUTO      = 0.6;     // "default" Maximum Axial power limit during autonomous
 
     private static final double STRAFE_GAIN         = 0.03;    // Strength of lateral position control
     private static final double STRAFE_ACCEL        = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double STRAFE_TOLERANCE    = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double STRAFE_DEADBAND     = 0.25;    // Error less than this causes zero output
+    private static final double STRAFE_DEADBAND     = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double STRAFE_MAX_AUTO     = 0.6;     // "default" Maximum Lateral power limit during autonomous
 
     private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output
+    private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
 
     // Public Members
@@ -175,8 +175,6 @@ public class Robot {
      * @param holdTime Minimum time (sec) required to hold the final position.  0 = no hold.
      */
     public void drive(double distanceInches, double power, double holdTime) {
-        //  Ensure that power is positive
-        power = Math.abs(power);
         resetOdometry();
 
         driveController.reset(distanceInches, power);   // achieve desired drive distance
@@ -209,13 +207,11 @@ public class Robot {
      * @param holdTime Minimum time (sec) required to hold the final position.  0 = no hold.
      */
     public void strafe(double distanceInches, double power, double holdTime) {
-        //  Ensure that power is positive
-        power = Math.abs(power);
         resetOdometry();
 
+        driveController.reset(0.0);             //  Maintain zero drive drift
         strafeController.reset(distanceInches, power);  // Achieve desired Strafe distance
         yawController.reset();                          // Maintain last turn angle
-        driveController.reset(0.0);             //  Maintain zero drive drift
         holdTimer.reset();
 
         while (myOpMode.opModeIsActive() && readSensors()){
@@ -265,17 +261,6 @@ public class Robot {
 
 
     //  ########################  Low level control functions.  ###############################
-
-    /**
-     * Normalize the heading to be within +/- 180 degrees
-     * @param heading  This could be a number of degrees of any value
-     * @return heading This will be the original heading converted to the +/- 180 degree range..
-     */
-    public double normalizeHeading(double heading) {
-        while (heading > 180)  heading -= 360;
-        while (heading <= -180) heading += 360;
-        return heading;
-    }
 
     /**
      * Drive the wheel motors to obtain the requested axes motions
@@ -398,6 +383,7 @@ class ProportionalControl {
     public double getOutput(double input) {
         double error = setPoint - input;
         double dV = cycleTime.seconds() * accelLimit;
+        double output;
 
         // normalize to +/- 180 if we are controlling heading
         if (circular) {
@@ -407,20 +393,20 @@ class ProportionalControl {
 
         inPosition = (Math.abs(error) < tolerance);
 
-        // calculate output power using gain and clip it to the limits
-        double output = (error * gain);
-        output = Range.clip(output, -liveOutputLimit, liveOutputLimit);
-
-        // Now limit rate of change of output (acceleration)
-        if ((output - lastOutput) > dV) {
-            output = lastOutput + dV;
-        } else if ((output - lastOutput) < -dV) {
-            output = lastOutput - dV;
-        }
-
         // Prevent any very slow motor output accumulation
         if (Math.abs(error) <= deadband) {
-            error = 0;
+            output = 0;
+        } else {
+            // calculate output power using gain and clip it to the limits
+            output = (error * gain);
+            output = Range.clip(output, -liveOutputLimit, liveOutputLimit);
+
+            // Now limit rate of change of output (acceleration)
+            if ((output - lastOutput) > dV) {
+                output = lastOutput + dV;
+            } else if ((output - lastOutput) < -dV) {
+                output = lastOutput - dV;
+            }
         }
 
         lastOutput = output;
@@ -440,7 +426,7 @@ class ProportionalControl {
      * @param powerLimit
      */
     public void reset(double setPoint, double powerLimit) {
-        liveOutputLimit = powerLimit;
+        liveOutputLimit = Math.abs(powerLimit);
         this.setPoint = setPoint;
         reset();
     }
