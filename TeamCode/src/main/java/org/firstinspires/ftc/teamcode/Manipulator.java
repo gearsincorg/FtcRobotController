@@ -12,9 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Manipulator {
     private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
-    private static final double LIFT_ACCEL      = 1.5;      // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double LIFT_TOLERANCE  = 1.0;      // Controller is "inPosition" if position error is < +/- this amount
-    private static final double LIFT_MAX_AUTO   = 0.3;      // Maximum lift power
     public static final double LIFT_HOME_ANGLE = 0.0;
     public static final double LIFT_HOVER_ANGLE = 10.0;
     public static final double LIFT_AUTO_ANGLE = 15.0;
@@ -22,17 +20,14 @@ public class Manipulator {
     public static final double LIFT_BACK_ANGLE = 120.0;
 
     private static final double EXTEND_GAIN     = 0.2;    // Strength of extend position control
-    private static final double EXTEND_ACCEL    = 1.5;      // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double EXTEND_TOLERANCE = 0.25;     // Controller is is "inPosition" if position error is < +/- this amount
-    private static final double EXTEND_MAX_AUTO  = 0.3;      // Maximum extend power
     public static final double EXTEND_HOME_DISTANCE = 0.0;
-    public static final double EXTEND_AUTO_DISTANCE = 5.0;
     public static final double EXTEND_FRONT_DISTANCE = 6.0;
+    public static final double EXTEND_BACK_DISTANCE = 6.0;
     public static final double MAX_EXTEND_LENGTH = 19.0;
 
     private static final double LIFT_COUNTS_PER_DEGREE = 11.05556 ; // 995 counts for 90 Deg
     private static final double EXTEND_COUNTS_PER_INCH = 158.944 ;  // 2861 counts for 18"
-    private static final int    LIFT_HOME_OFFSET = (int)(5 * LIFT_COUNTS_PER_DEGREE);  // Home location is - 5 deg
 
     private static final double SHORT_HOLD_POWER = 0.21  ;
     private static final double LONG_HOLD_POWER  = 0.10  ;
@@ -41,19 +36,20 @@ public class Manipulator {
     private static final double WRIST_SCORE_FRONT = 0.1;
     private static final double WRIST_SCORE_BACK = 0.675;
 
-    private static final double GRAB_LEFT_AUTO = 1.0;
-    private static final double GRAB_LEFT_OPEN = 0.45;
-    private  static final double GRAB_LEFT_CLOSE = 0.23;
+    private static final double GRAB_LEFT_AUTO   = 0.55;
+    private static final double GRAB_LEFT_OPEN   = 0.50;
+    private  static final double GRAB_LEFT_CLOSE = 0.25;
 
-    private static final double GRAB_RIGHT_AUTO = 0.0;
-    private static final double GRAB_RIGHT_OPEN = 0.6;
-    private static final double GRAB_RIGHT_CLOSE =0.8;
+    private static final double GRAB_RIGHT_AUTO  = 0.45;
+    private static final double GRAB_RIGHT_OPEN  = 0.50;
+    private static final double GRAB_RIGHT_CLOSE = 0.65;
 
     public  double liftAngle      = 0;   // Arm angle in degrees.  Horizontal = 0 degrees.  Increases to approximately 120 degrees.
     public  double extendLength   = 0;
 
     public boolean pixelLeftInRange = false;
     public boolean pixelRightInRange = false;
+    public boolean liftingIsActive = false;
 
     // Hardware interface Objects
     private DcMotor lift;       //  control the arm Lift Motor
@@ -63,7 +59,6 @@ public class Manipulator {
     private Servo clawR;        //  control the right claw open/close
     private DistanceSensor pixelL;
     private DistanceSensor pixelR;
-    // private DistanceSensor pixelR;
 
     private int liftEncoder    = 0;
     private int extendEncoder  = 0;
@@ -78,14 +73,16 @@ public class Manipulator {
     private boolean clawRClosed   = false;
     private double  wristAngle    = 0;
 
+
     private ManipulatorState currentState = ManipulatorState.HOME;
     private ManipulatorState nextState    = ManipulatorState.HOME;
     private double stateDelay = 0.0;
 
     private LinearOpMode myOpMode;
     private boolean showTelemetry = false;
-    private ElapsedTime driveTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
+    private ElapsedTime armTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
     private ElapsedTime stateTimer = new ElapsedTime();
+    private double elapsedTime = 0;
 
     // Manipulator Constructor
     public Manipulator(LinearOpMode opmode) {
@@ -146,6 +143,23 @@ public class Manipulator {
         }
 
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
+    }
+
+    public void manualArmControl() {
+        if (elapsedTime > 0) {
+            double cycleTime = (armTimer.time() - elapsedTime);
+
+            // Check for manual adjustments to arm positions.
+
+            if (Math.abs(myOpMode.gamepad2.left_stick_y) > 0.25) {
+                liftSetpoint += (-myOpMode.gamepad2.left_stick_y * cycleTime * 10);   //  max 10 degrees per second
+            }
+
+            if (Math.abs(myOpMode.gamepad2.right_stick_y) > 0.25) {
+                extendSetpoint += (-myOpMode.gamepad2.right_stick_y * cycleTime * 2.0) ;  // max 2 inches per second
+            }
+        }
+        elapsedTime = armTimer.time();
     }
 
     /**
@@ -294,6 +308,13 @@ public class Manipulator {
         clawLClosed = false;
         clawRClosed = false;
     }
+    public void autoOpenGrabbers (){
+        clawL.setPosition(GRAB_LEFT_AUTO);
+        clawR.setPosition(GRAB_RIGHT_AUTO);
+        clawLClosed = false;
+        clawRClosed = false;
+    }
+
     public void wristToHome(){
         wrist.setPosition(WRIST_HOME);
     }
@@ -308,7 +329,7 @@ public class Manipulator {
     private boolean smGotoHome       = false;
     private boolean smGotoSafeDriving = false;
     private boolean smGotoFrontScore  = false;
-    private boolean smAutoPickup     = false;
+    private boolean smGotoBackScore  = false;
 
     public void gotoHome() {
         smGotoHome = true;
@@ -322,8 +343,8 @@ public class Manipulator {
         smGotoFrontScore = true;
     }
 
-    public void autoPickup() {
-        smAutoPickup = true;
+    public void gotoBackScore() {
+        smGotoBackScore = true;
     }
 
     // State machine.
@@ -350,6 +371,9 @@ public class Manipulator {
 
             case H_RETRACTING:
                 if (extendInPosition) {
+                    smGotoSafeDriving = false;
+                    smGotoFrontScore  = false;
+                    smGotoBackScore  = false;
                     setLiftSetpoint(LIFT_HOME_ANGLE);
                     setState(ManipulatorState.HOME);
                 }
@@ -363,9 +387,9 @@ public class Manipulator {
                 } else if (smGotoFrontScore) {
                     setLiftSetpoint(LIFT_FRONT_ANGLE);
                     setState(ManipulatorState.FS_LIFTING);
-                } else if (smAutoPickup) {
-                    smGotoSafeDriving = true;
-                    setStateWithDelay(ManipulatorState.HOME, 0.25);
+                } else if (smGotoBackScore) {
+                    setLiftSetpoint(LIFT_BACK_ANGLE);
+                    setStateWithDelay(ManipulatorState.BS_LIFTING, 0.25);
                 }
                 break;
 
@@ -383,14 +407,16 @@ public class Manipulator {
                 break;
 
             case SAFE_DRIVING:
-                smAutoPickup = false;
                 smGotoSafeDriving = false;
-                if (smGotoFrontScore) {
-                    setLiftSetpoint(LIFT_FRONT_ANGLE);
-                    setState(ManipulatorState.FS_LIFTING);
-                } else if (smGotoHome) {
+                if (smGotoHome) {
                     setLiftSetpoint(LIFT_HOVER_ANGLE);
                     setState(ManipulatorState.H_LIFTING);
+                } else if (smGotoFrontScore) {
+                    setLiftSetpoint(LIFT_FRONT_ANGLE);
+                    setState(ManipulatorState.FS_LIFTING);
+                } else if (smGotoBackScore) {
+                    setLiftSetpoint(LIFT_BACK_ANGLE);
+                    setState(ManipulatorState.BS_LIFTING);
                 }
                 break;
 
@@ -409,6 +435,34 @@ public class Manipulator {
 
             case FRONT_SCORE:
                 smGotoFrontScore = false;
+                if (smGotoHome) {
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
+                    setStateWithDelay(ManipulatorState.H_ROTATE, 0.5);
+                } else if (smGotoSafeDriving) {
+                    wristToBackScore();
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
+                    setStateWithDelay(ManipulatorState.SD_LOWER, 0.5);
+                } else if (smGotoBackScore) {
+                    setLiftSetpoint(LIFT_BACK_ANGLE);
+                    setState(ManipulatorState.BS_LIFTING);
+                }
+                break;
+
+            // -- Back Score  ----------
+            case BS_LIFTING:
+                wristToBackScore();
+                if (liftInPosition){
+                    setStateWithDelay(ManipulatorState.BS_EXTEND, 0.25);
+                }
+                break;
+
+            case BS_EXTEND:
+                setExtendSetpoint(EXTEND_BACK_DISTANCE);
+                setState(ManipulatorState.BACK_SCORE);
+                break;
+
+            case BACK_SCORE:
+                smGotoBackScore = false;
                 if (smGotoHome) {
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
                     setStateWithDelay(ManipulatorState.H_ROTATE, 0.5);

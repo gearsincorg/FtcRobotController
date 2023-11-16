@@ -54,62 +54,24 @@ public class GFORCE_Teleop extends LinearOpMode
         {
             robot.readSensors();
             arm.readSensors();
+            arm.manualArmControl();
             arm.runLiftControl();
             arm.runExtendControl();
             arm.runStateMachine();
 
-            // Allow driver to reset the gyro
-            if (gamepad1.options && gamepad1.share){
-                robot.resetHeading();
-                robot.resetOdometry();
+            //  ==  CoPilot Controls  ===================================
+
+            if (gamepad2.left_stick_button && gamepad2.right_stick_button) {
+                arm.liftingIsActive = true;
             }
 
-            // Allow driver to lift robot
-            if (gamepad2.share){
-                if (gamepad2.options)
-                    arm.setLiftPower(-1.0);
-                else
-                    arm.setLiftPower(0.0);
+            if (arm.liftingIsActive) {
+                if ((gamepad2.left_trigger > 0.5) && (gamepad2.right_trigger > 0.5)) {
+
+                }
             }
 
-
-            //controls for our drone laucher
-            if (gamepad1.dpad_up){
-                drone.setTiltAngle(1);
-                drone.runLauncher();
-            } else if (gamepad1.dpad_right) {
-                drone.fireDrone();
-            } else if (gamepad1.dpad_down) {
-                drone.setTiltAngle(0);
-                drone.stopLauncher();
-            }
-
-            //controls for Automatic movements
-            if (gamepad1.a){
-                arm.gotoHome();
-            } else if (gamepad1.x){
-                arm.gotoSafeDriving();
-            } else if (gamepad1.b) {
-                arm.gotoFrontScore();
-            }
-
-            if (gamepad1.left_trigger > 0.25) {
-                arm.openLeftGrabber();
-            } else if (gamepad1.left_bumper || arm.pixelLeftInRange) {
-                arm.closeLeftGrabber();
-                // arm.autoPickup();
-            }
-
-            if (gamepad1.right_trigger > 0.25) {
-                arm.openRightGrabber();
-            } else if (gamepad1.right_bumper  || arm.pixelRightInRange){
-                arm.closeRightGrabber();
-            }
-
-            if (gamepad1.options){
-                arm.openGrabbers();
-            }
-
+            /*
             // Manually lidt and lower the arm
             if (gamepad2.y) {
                 arm.setLiftSetpoint(Manipulator.LIFT_BACK_ANGLE);
@@ -130,6 +92,50 @@ public class GFORCE_Teleop extends LinearOpMode
                 arm.setExtendSetpoint(12);
             }  else if (gamepad2.dpad_up) {
                 arm.setExtendSetpoint(18);
+            }
+            */
+
+            //  ==  Pilot Controls  =======================================
+
+            // Allow driver to reset the gyro
+            if (gamepad1.options && gamepad1.share){
+                robot.resetHeading();
+                robot.resetOdometry();
+            }
+
+            //controls for our drone laucher
+            if (gamepad1.dpad_up){
+                drone.setTiltAngle(1);
+                drone.runLauncher();
+            } else if (gamepad1.dpad_right) {
+                drone.fireDrone();
+            } else if (gamepad1.dpad_down) {
+                drone.setTiltAngle(0);
+                drone.stopLauncher();
+            }
+
+            //controls for Automatic pilot movements
+            if (gamepad1.a){
+                arm.gotoHome();
+            } else if (gamepad1.x){
+                arm.gotoSafeDriving();
+            } else if (gamepad1.b) {
+                arm.gotoFrontScore();
+            } else if (gamepad1.y) {
+                arm.gotoBackScore();
+            }
+
+            if (gamepad1.left_trigger > 0.25) {
+                arm.openLeftGrabber();
+            } else if (gamepad1.left_bumper || arm.pixelLeftInRange) {
+                arm.closeLeftGrabber();
+                // arm.autoPickup();
+            }
+
+            if (gamepad1.right_trigger > 0.25) {
+                arm.openRightGrabber();
+            } else if (gamepad1.right_bumper  || arm.pixelRightInRange){
+                arm.closeRightGrabber();
             }
 
             // read joystick values and scale according to limits in Robot class
