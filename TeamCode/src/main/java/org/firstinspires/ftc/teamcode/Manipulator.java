@@ -70,9 +70,6 @@ public class Manipulator {
     private double pixelLeftRange = 0;
     private double pixelRightRange = 0;
 
-    private int liftEncoderHome   = 0;
-    private int extendEncoderHome = 0;
-
     private double  liftSetpoint  = 0;
     private boolean liftInPosition =false;
     private double  extendSetpoint   = 0;
@@ -272,18 +269,30 @@ public class Manipulator {
         wrist.setPosition(WRIST_HOME);
         clawL.setPosition(GRAB_LEFT_OPEN);
         clawR.setPosition(GRAB_RIGHT_OPEN);
+        clawLClosed = false;
+        clawRClosed = false;
     }
     public void closeLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_CLOSE);
+        clawLClosed = true;
     }
     public void openLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_OPEN);
+        clawLClosed = false;
     }
     public void closeRightGrabber (){
         clawR.setPosition(GRAB_RIGHT_CLOSE);
+        clawRClosed = true;
     }
     public void openRightGrabber (){
         clawR.setPosition(GRAB_RIGHT_OPEN);
+        clawRClosed = false;
+    }
+    public void openGrabbers (){
+        clawL.setPosition(GRAB_LEFT_OPEN);
+        clawR.setPosition(GRAB_RIGHT_OPEN);
+        clawLClosed = false;
+        clawRClosed = false;
     }
     public void wristToHome(){
         wrist.setPosition(WRIST_HOME);
@@ -293,10 +302,6 @@ public class Manipulator {
     }
     public void wristToBackScore(){
         wrist.setPosition(WRIST_SCORE_BACK);
-    }
-    public void openGrabbers (){
-        clawL.setPosition(GRAB_LEFT_OPEN);
-        clawR.setPosition(GRAB_RIGHT_OPEN);
     }
 
     //------------- state machine functions -------------
