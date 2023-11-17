@@ -144,6 +144,7 @@ public class Manipulator {
             pixelLeftInRange = (pixelLeftRange > 20) && (pixelLeftRange < 65);
             pixelRightRange = pixelR.getDistance(DistanceUnit.MM);
             pixelRightInRange = (pixelRightRange > 20) && (pixelRightRange < 65);
+            frontDistance = frontRange.getDistance(DistanceUnit.MM);
         }
 
         if (showTelemetry) {
@@ -152,6 +153,7 @@ public class Manipulator {
             if (rangeEnabled) {
                 myOpMode.telemetry.addData("Pixel L R:T", "%4.0f %s", pixelLeftRange, pixelLeftInRange ? "YES" : "No");
                 myOpMode.telemetry.addData("Pixel R R:T", "%4.0f %s", pixelRightRange, pixelRightInRange ? "YES" : "No");
+                myOpMode.telemetry.addData("Front Range", "%4.0f ", frontDistance);
             }
         }
 

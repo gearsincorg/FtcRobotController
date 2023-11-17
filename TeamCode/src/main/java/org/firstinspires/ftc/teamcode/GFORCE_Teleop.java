@@ -56,7 +56,7 @@ public class GFORCE_Teleop extends LinearOpMode
         {
             robot.readSensors();
             arm.readSensors();
-            arm.manualArmControl();
+ //           arm.manualArmControl();
             arm.runLiftControl();
             arm.runExtendControl();
             arm.runStateMachine();
