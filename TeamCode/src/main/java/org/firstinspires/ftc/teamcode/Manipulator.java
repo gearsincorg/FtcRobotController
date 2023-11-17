@@ -19,12 +19,16 @@ public class Manipulator {
     public static final double LIFT_FRONT_ANGLE = 30.0;
     public static final double LIFT_BACK_ANGLE = 120.0;
 
+    public static final double LIFT_MIN_ANGLE = 120.0;
+    public static final double LIFT_MAX_ANGLE = 0.0;
+
     private static final double EXTEND_GAIN     = 0.2;    // Strength of extend position control
     private static final double EXTEND_TOLERANCE = 0.25;     // Controller is is "inPosition" if position error is < +/- this amount
     public static final double EXTEND_HOME_DISTANCE = 0.0;
     public static final double EXTEND_FRONT_DISTANCE = 6.0;
     public static final double EXTEND_BACK_DISTANCE = 6.0;
-    public static final double MAX_EXTEND_LENGTH = 19.0;
+    public static final double EXTEND_MIN_LENGTH = 0.0;
+    public static final double EXTEND_MAX_LENGTH = 19.0;
 
     private static final double LIFT_COUNTS_PER_DEGREE = 11.05556 ; // 995 counts for 90 Deg
     private static final double EXTEND_COUNTS_PER_INCH = 158.944 ;  // 2861 counts for 18"
@@ -162,14 +166,15 @@ public class Manipulator {
             double cycleTime = (armTimer.time() - elapsedTime);
 
             // Check for manual adjustments to arm positions.
-
             if (Math.abs(myOpMode.gamepad2.left_stick_y) > 0.25) {
                 liftSetpoint += (-myOpMode.gamepad2.left_stick_y * cycleTime * 10);   //  max 10 degrees per second
             }
+            liftSetpoint = Range.clip(liftSetpoint, LIFT_MIN_ANGLE, LIFT_MAX_ANGLE);
 
             if (Math.abs(myOpMode.gamepad2.right_stick_x) > 0.25) {
                 extendSetpoint += (myOpMode.gamepad2.right_stick_y * cycleTime * 2.0) ;  // max 2 inches per second
             }
+            extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
         }
         elapsedTime = armTimer.time();
     }
@@ -209,7 +214,7 @@ public class Manipulator {
 
         double error = liftSetpoint - liftAngle;
         double errorPower = error * LIFT_GAIN;
-        double weightPower = SHORT_HOLD_POWER  + (LONG_HOLD_POWER * extendLength / MAX_EXTEND_LENGTH);
+        double weightPower = SHORT_HOLD_POWER  + (LONG_HOLD_POWER * extendLength / EXTEND_MAX_LENGTH);
         double power = errorPower + (weightPower * Math.cos(Math.toRadians(liftAngle)));
 
         power = Range.clip(power, -0.4, 0.5);
