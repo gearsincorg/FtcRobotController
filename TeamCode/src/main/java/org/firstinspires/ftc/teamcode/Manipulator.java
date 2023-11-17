@@ -49,7 +49,7 @@ public class Manipulator {
 
     public boolean pixelLeftInRange = false;
     public boolean pixelRightInRange = false;
-    public boolean liftingIsActive = false;
+    public boolean powerLiftingIsActive = false;
 
     // Hardware interface Objects
     private DcMotor lift;       //  control the arm Lift Motor
@@ -59,11 +59,15 @@ public class Manipulator {
     private Servo clawR;        //  control the right claw open/close
     private DistanceSensor pixelL;
     private DistanceSensor pixelR;
+    private DistanceSensor frontRange;
 
     private int liftEncoder    = 0;
     private int extendEncoder  = 0;
+
+    private boolean rangeEnabled = false;
     private double pixelLeftRange = 0;
     private double pixelRightRange = 0;
+    private double frontDistance = 0;
 
     private double  liftSetpoint  = 0;
     private boolean liftInPosition =false;
@@ -114,6 +118,7 @@ public class Manipulator {
         clawR = myOpMode.hardwareMap.get(Servo.class, "right_claw");
         pixelL = myOpMode.hardwareMap.get(DistanceSensor.class, "left_pixel");
         pixelR = myOpMode.hardwareMap.get(DistanceSensor.class, "right_pixel");
+        frontRange = myOpMode.hardwareMap.get(DistanceSensor.class, "front_range");
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -130,21 +135,28 @@ public class Manipulator {
         liftAngle = liftEncoder / LIFT_COUNTS_PER_DEGREE;
         extendLength = extendEncoder / EXTEND_COUNTS_PER_INCH;
 
-        pixelLeftRange = pixelL.getDistance(DistanceUnit.MM);
-        pixelLeftInRange = (pixelLeftRange > 20) && (pixelLeftRange < 65);
-        pixelRightRange = pixelR.getDistance(DistanceUnit.MM);
-        pixelRightInRange = (pixelRightRange > 20) && (pixelRightRange < 65);
+        if (rangeEnabled) {
+            pixelLeftRange = pixelL.getDistance(DistanceUnit.MM);
+            pixelLeftInRange = (pixelLeftRange > 20) && (pixelLeftRange < 65);
+            pixelRightRange = pixelR.getDistance(DistanceUnit.MM);
+            pixelRightInRange = (pixelRightRange > 20) && (pixelRightRange < 65);
+        }
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Arm Encoders L:X", "%6d %6d", liftEncoder, extendEncoder);
             myOpMode.telemetry.addData("Arm Pos L:X", "%5.1f %5.1f", liftAngle, extendLength);
-            myOpMode.telemetry.addData("Pixel L R:T", "%4.0f %s", pixelLeftRange, pixelLeftInRange ? "YES": "No");
-            myOpMode.telemetry.addData("Pixel R R:T", "%4.0f %s", pixelRightRange, pixelRightInRange ? "YES": "No");
+            if (rangeEnabled) {
+                myOpMode.telemetry.addData("Pixel L R:T", "%4.0f %s", pixelLeftRange, pixelLeftInRange ? "YES" : "No");
+                myOpMode.telemetry.addData("Pixel R R:T", "%4.0f %s", pixelRightRange, pixelRightInRange ? "YES" : "No");
+            }
         }
 
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
     }
 
+    /**
+     * Allow the copilot to adjust the arm lift and extend positions with the joystick
+     */
     public void manualArmControl() {
         if (elapsedTime > 0) {
             double cycleTime = (armTimer.time() - elapsedTime);
@@ -155,11 +167,30 @@ public class Manipulator {
                 liftSetpoint += (-myOpMode.gamepad2.left_stick_y * cycleTime * 10);   //  max 10 degrees per second
             }
 
-            if (Math.abs(myOpMode.gamepad2.right_stick_y) > 0.25) {
-                extendSetpoint += (-myOpMode.gamepad2.right_stick_y * cycleTime * 2.0) ;  // max 2 inches per second
+            if (Math.abs(myOpMode.gamepad2.right_stick_x) > 0.25) {
+                extendSetpoint += (myOpMode.gamepad2.right_stick_y * cycleTime * 2.0) ;  // max 2 inches per second
             }
         }
         elapsedTime = armTimer.time();
+    }
+
+    public void enablePowerLifting() {
+        lift.setPower(0);
+        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        powerLiftingIsActive = true;
+    }
+
+    public void disablePowerLifting() {
+        powerLiftingIsActive = false;
+        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    public boolean weArePowerLifting() {
+        return powerLiftingIsActive;
+    }
+
+    public void setRangeEnable(boolean enableRange) {
+        rangeEnabled = enableRange;
     }
 
     /**
@@ -167,6 +198,15 @@ public class Manipulator {
      * @return true if arm is in position
      */
     public boolean runLiftControl() {
+
+        // abort any action if wer are in final lifting.
+        if (powerLiftingIsActive) {
+            if (showTelemetry) {
+                myOpMode.telemetry.addData("Power Lifting", "Is Enabled");
+            }
+            return true;
+        }
+
         double error = liftSetpoint - liftAngle;
         double errorPower = error * LIFT_GAIN;
         double weightPower = SHORT_HOLD_POWER  + (LONG_HOLD_POWER * extendLength / MAX_EXTEND_LENGTH);
@@ -381,13 +421,17 @@ public class Manipulator {
 
             case HOME:
                 smGotoHome = false;
+                rangeEnabled = true;
                 if (smGotoSafeDriving) {
+                    rangeEnabled = false;
                     setLiftSetpoint(LIFT_HOVER_ANGLE);
                     setState(ManipulatorState.SD_LIFTING);
                 } else if (smGotoFrontScore) {
+                    rangeEnabled = false;
                     setLiftSetpoint(LIFT_FRONT_ANGLE);
                     setState(ManipulatorState.FS_LIFTING);
                 } else if (smGotoBackScore) {
+                    rangeEnabled = false;
                     setLiftSetpoint(LIFT_BACK_ANGLE);
                     setStateWithDelay(ManipulatorState.BS_LIFTING, 0.25);
                 }
