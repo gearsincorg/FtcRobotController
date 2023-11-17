@@ -15,6 +15,7 @@ public class GFORCE_Autonomous extends LinearOpMode
 {
     // get an instance of the "Robot" class.
     private Robot robot = new Robot(this);
+    Manipulator arm = new Manipulator(this);
 
     @Override public void runOpMode()
     {
@@ -23,11 +24,16 @@ public class GFORCE_Autonomous extends LinearOpMode
         robot.resetOdometry();
         robot.resetHeading();
 
+        arm.initialize(true);
+        arm.homeArm();
+        arm.autoOpenGrabbers();
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to run Auto");
         telemetry.update();
         waitForStart();
+        arm.closeRightGrabber();
+        arm.closeLeftGrabber();
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
@@ -35,12 +41,10 @@ public class GFORCE_Autonomous extends LinearOpMode
             robot.resetHeading();
 
             // Drive a path and return to start.
-            robot.drive(48, 0.10, 0.20);
-            robot.strafe(24, 0.10, 0.20);
-            robot.turnTo(-90, 0.25, 0.20);
-            robot.drive(24, 0.10, 0.20);
-            robot.strafe(-48, 0.1, 0.20);
-            robot.turnTo(0, 0.25, 0.20);
+            robot.drive(28, 0.45, 0.20);
+            robot.turnTo(90, 0.35, 0.20);
+            robot.drive(24, 0.45, 0.20);
+
         }
     }
 }

@@ -16,8 +16,8 @@ public class Manipulator {
     public static final double LIFT_HOME_ANGLE = 0.0;
     public static final double LIFT_HOVER_ANGLE = 10.0;
     public static final double LIFT_AUTO_ANGLE = 15.0;
-    public static final double LIFT_FRONT_ANGLE = 30.0;
-    public static final double LIFT_BACK_ANGLE = 120.0;
+    public static final double LIFT_FRONT_ANGLE = 40.0;
+    public static final double LIFT_BACK_ANGLE = 115.0;
 
     public static final double LIFT_MIN_ANGLE = 120.0;
     public static final double LIFT_MAX_ANGLE = 0.0;
@@ -46,7 +46,7 @@ public class Manipulator {
 
     private static final double GRAB_RIGHT_AUTO  = 0.45;
     private static final double GRAB_RIGHT_OPEN  = 0.50;
-    private static final double GRAB_RIGHT_CLOSE = 0.65;
+    private static final double GRAB_RIGHT_CLOSE = 0.73;
 
     public  double liftAngle      = 0;   // Arm angle in degrees.  Horizontal = 0 degrees.  Increases to approximately 120 degrees.
     public  double extendLength   = 0;

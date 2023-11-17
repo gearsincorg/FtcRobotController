@@ -45,7 +45,19 @@ public class GFORCE_Teleop extends LinearOpMode
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to drive");
         telemetry.update();
-        waitForStart();
+        while (opModeInInit()) {
+            if (gamepad1.left_trigger > 0.25) {
+                arm.openLeftGrabber();
+            } else if (gamepad1.left_bumper) {
+                arm.closeLeftGrabber();
+            }
+
+            if (gamepad1.right_trigger > 0.25) {
+                arm.openRightGrabber();
+            } else if (gamepad1.right_bumper){
+                arm.closeRightGrabber();
+            }
+        }
 
         arm.setLiftSetpoint(0);
 
