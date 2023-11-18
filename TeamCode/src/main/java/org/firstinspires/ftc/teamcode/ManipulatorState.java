@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 public enum ManipulatorState {
+    UNKNOWN,
     BS_LIFTING,
     BS_EXTEND,
     BACK_SCORE,

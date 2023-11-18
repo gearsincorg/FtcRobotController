@@ -78,13 +78,11 @@ public class Manipulator {
     private boolean liftInPosition =false;
     private double  extendSetpoint   = 0;
     private boolean extendInPosition = false;
-    private boolean clawLClosed   = false;
-    private boolean clawRClosed   = false;
     private double  wristAngle    = 0;
 
 
-    private ManipulatorState currentState = ManipulatorState.HOME;
-    private ManipulatorState nextState    = ManipulatorState.HOME;
+    private ManipulatorState currentState = ManipulatorState.UNKNOWN;
+    private ManipulatorState nextState    = ManipulatorState.UNKNOWN;
     private double stateDelay = 0.0;
 
     private LinearOpMode myOpMode;
@@ -124,6 +122,20 @@ public class Manipulator {
         pixelL = myOpMode.hardwareMap.get(DistanceSensor.class, "left_pixel");
         pixelR = myOpMode.hardwareMap.get(DistanceSensor.class, "right_pixel");
         frontRange = myOpMode.hardwareMap.get(DistanceSensor.class, "front_range");
+
+        // Do any cleanup in teleop
+        if (!Globals.IS_AUTO) {
+
+            // if we have not explicitly closed a grabber, make it safe by opening it (could be in auto state)
+            if (!Globals.LEFT_GRABBER_CLOSED) {
+                openLeftGrabber();
+            }
+            if (!Globals.RIGHT_GRABBER_CLOSED) {
+                openRightGrabber();
+            }
+
+            currentState = Globals.ARM_STATE;
+        }
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -324,6 +336,7 @@ public class Manipulator {
         lift.setPower(-0.2);
         extend.setPower(-0.2);
         myOpMode.sleep(200);
+
         while((myOpMode.opModeInInit() || myOpMode.opModeIsActive()) && readSensors() && (!liftIsHome || !extendIsHome)) {
             if (Math.abs(lastLiftPos - liftEncoder) < 5) {
                 lift.setPower(0);
@@ -353,6 +366,8 @@ public class Manipulator {
 
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        Globals.ARM_HAS_HOMED = true;
+        setState(ManipulatorState.HOME);
     }
 
     public void update(){
@@ -365,36 +380,36 @@ public class Manipulator {
         wrist.setPosition(WRIST_HOME);
         clawL.setPosition(GRAB_LEFT_OPEN);
         clawR.setPosition(GRAB_RIGHT_OPEN);
-        clawLClosed = false;
-        clawRClosed = false;
+        Globals.LEFT_GRABBER_CLOSED = false;
+        Globals.RIGHT_GRABBER_CLOSED = false;
     }
     public void closeLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_CLOSE);
-        clawLClosed = true;
+        Globals.LEFT_GRABBER_CLOSED = true;
     }
     public void openLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_OPEN);
-        clawLClosed = false;
+        Globals.LEFT_GRABBER_CLOSED = false;
     }
     public void closeRightGrabber (){
         clawR.setPosition(GRAB_RIGHT_CLOSE);
-        clawRClosed = true;
+        Globals.RIGHT_GRABBER_CLOSED = true;
     }
     public void openRightGrabber (){
         clawR.setPosition(GRAB_RIGHT_OPEN);
-        clawRClosed = false;
+        Globals.RIGHT_GRABBER_CLOSED = false;
     }
     public void openGrabbers (){
         clawL.setPosition(GRAB_LEFT_OPEN);
         clawR.setPosition(GRAB_RIGHT_OPEN);
-        clawLClosed = false;
-        clawRClosed = false;
+        Globals.LEFT_GRABBER_CLOSED = false;
+        Globals.RIGHT_GRABBER_CLOSED = false;
     }
     public void autoOpenGrabbers (){
         clawL.setPosition(GRAB_LEFT_AUTO);
         clawR.setPosition(GRAB_RIGHT_AUTO);
-        clawLClosed = false;
-        clawRClosed = false;
+        Globals.LEFT_GRABBER_CLOSED = false;
+        Globals.RIGHT_GRABBER_CLOSED = false;
     }
 
     public void wristToHome(){
@@ -444,6 +459,9 @@ public class Manipulator {
         }
 
         switch (currentState){
+
+            case UNKNOWN:
+                break;
 
             // -- Home  ----------
             case H_ROTATE:
@@ -604,6 +622,7 @@ public class Manipulator {
 
     public void setState(ManipulatorState newState){
         currentState = newState;
+        Globals.ARM_STATE = newState;
         stateTimer.reset();
     }
 }

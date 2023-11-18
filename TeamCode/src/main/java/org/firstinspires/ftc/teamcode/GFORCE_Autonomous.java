@@ -16,14 +16,16 @@ public class GFORCE_Autonomous extends LinearOpMode
 
     private final double FRONT_SCORE_RANGE = 480.0;
 
- // get an instance of the "Robot" class.
+    // get an instance of the "Robot" class.
+    Robot robot = Robot.getInstance();
     Manipulator arm = new Manipulator(this);
-    private Robot robot = new Robot(this, arm);
 
     @Override public void runOpMode()
     {
+        Globals.IS_AUTO = true;
+
         // Initialize the robot hardware & Turn on telemetry
-        robot.initialize(true);
+        robot.initialize(this, arm, true);
         robot.resetOdometry();
         robot.resetHeading();
 

@@ -4,7 +4,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -30,18 +29,23 @@ public class GFORCE_Teleop extends LinearOpMode
     boolean lastLiftingAction = false;
 
     // get an instance of the "Drive" class.
+    Robot robot = Robot.getInstance();
     Manipulator arm = new Manipulator(this);
-    Robot robot = new Robot(this, arm);
     Drone drone = new Drone(this);
 
     @Override public void runOpMode()
     {
+        Globals.IS_AUTO = false;
+
         // Initialize the drive hardware & Turn on telemetry
-        robot.initialize(true);
+        robot.initialize(this, arm, true);
         arm.initialize(true);
         drone.initialize(true);
-        arm.homeArm();
         robot.resetOdometry();
+
+        if (!Globals.ARM_HAS_HOMED) {
+            arm.homeArm();
+        }
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to drive");
@@ -85,6 +89,15 @@ public class GFORCE_Teleop extends LinearOpMode
                 arm.gotoBackScore();
             }
 
+            //controls for our drone laucher
+            if (gamepad2.dpad_up){
+                drone.runLauncher();
+            } else if (gamepad2.dpad_right || gamepad2.dpad_right) {
+                drone.fireDrone();
+            } else if (gamepad2.dpad_down) {
+                drone.stopLauncher();
+            }
+
             //  switch to lifing mode when
             liftingAction = gamepad2.left_stick_button && gamepad2.right_stick_button;
             if (!lastLiftingAction && liftingAction) {
@@ -107,16 +120,6 @@ public class GFORCE_Teleop extends LinearOpMode
                 robot.resetOdometry();
             }
 
-            //controls for our drone laucher
-            if (gamepad1.dpad_up){
-                drone.setTiltAngle(1);
-                drone.runLauncher();
-            } else if (gamepad1.dpad_right) {
-                drone.fireDrone();
-            } else if (gamepad1.dpad_down) {
-                drone.setTiltAngle(0);
-                drone.stopLauncher();
-            }
 
             if (gamepad1.left_trigger > 0.25) {
                 arm.openLeftGrabber();

@@ -81,9 +81,19 @@ public class Robot {
     private boolean showTelemetry     = false;
 
     // Robot Constructor
-    public Robot(LinearOpMode opmode, Manipulator manipulator) {
-        myOpMode = opmode;
-        myArm = manipulator;
+
+    private static Robot instance = null;
+    public boolean enabled;
+
+    /**
+     * Creating the singleton the first time, instantiating.
+     */
+    public static Robot getInstance() {
+        if (instance == null) {
+            instance = new Robot();
+        }
+        instance.enabled = true;
+        return instance;
     }
 
     /**
@@ -92,8 +102,11 @@ public class Robot {
      *  Perform any set-up all the hardware devices.
      * @param showTelemetry  Set to true if you want telemetry to be displayed by the robot sensor/drive functions.
      */
-    public void initialize(boolean showTelemetry)
+    public void initialize(LinearOpMode opMode, Manipulator arm, boolean showTelemetry)
     {
+        myOpMode = opMode;
+        myArm = arm;
+
         // Initialize the hardware variables. Note that the strings used to 'get' each
         // motor/device must match the names assigned during the robot configuration.
 
