@@ -14,6 +14,9 @@ public enum ManipulatorState {
     FS_LIFTING,
     FS_EXTEND,
     FRONT_SCORE,
+    TH_RETRACTING,
+    TH_LIFTING,
+    TRUSS_HANG,
     WAITING
 
 }

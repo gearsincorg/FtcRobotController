@@ -16,19 +16,20 @@ public class Manipulator {
     public static final double LIFT_HOME_ANGLE = 0.0;
     public static final double LIFT_HOVER_ANGLE = 10.0;
     public static final double LIFT_AUTO_ANGLE = 15.0;
-    public static final double LIFT_FRONT_ANGLE = 25.0;
+    public static final double LIFT_FRONT_ANGLE = 40.0;
+    public static final double LIFT_HANG_ANGLE  = 90.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
 
-    public static final double LIFT_MIN_ANGLE = 120.0;
-    public static final double LIFT_MAX_ANGLE = 0.0;
+    public static final double LIFT_MIN_ANGLE = 0.0;
+    public static final double LIFT_MAX_ANGLE = 120.0;
 
-    private static final double EXTEND_GAIN     = 0.2;    // Strength of extend position control
+    private static final double EXTEND_GAIN     = 0.3;    // Strength of extend position control
     private static final double EXTEND_TOLERANCE = 0.25;     // Controller is is "inPosition" if position error is < +/- this amount
     public static final double EXTEND_HOME_DISTANCE = 0.0;
     public static final double EXTEND_FRONT_DISTANCE = 10.0;
     public static final double EXTEND_BACK_DISTANCE = 6.0;
     public static final double EXTEND_MIN_LENGTH = 0.0;
-    public static final double EXTEND_MAX_LENGTH = 19.0;
+    public static final double EXTEND_MAX_LENGTH = 19.5;
 
     private static final double LIFT_COUNTS_PER_DEGREE = 11.05556 ; // 995 counts for 90 Deg
     private static final double EXTEND_COUNTS_PER_INCH = 158.944 ;  // 2861 counts for 18"
@@ -187,27 +188,43 @@ public class Manipulator {
 
             // Check for manual adjustments to arm positions.
             if (Math.abs(myOpMode.gamepad2.left_stick_y) > 0.25) {
-                liftSetpoint += (-myOpMode.gamepad2.left_stick_y * cycleTime * 10);   //  max 10 degrees per second
+                liftSetpoint += (-myOpMode.gamepad2.left_stick_y * cycleTime * 20);   //  max 20 degrees per second
+                liftSetpoint = Range.clip(liftSetpoint, LIFT_MIN_ANGLE, LIFT_MAX_ANGLE);
             }
-          //  liftSetpoint = Range.clip(liftSetpoint, LIFT_MIN_ANGLE, LIFT_MAX_ANGLE);
 
             if (Math.abs(myOpMode.gamepad2.right_stick_x) > 0.25) {
-                extendSetpoint += (myOpMode.gamepad2.right_stick_y * cycleTime * 2.0) ;  // max 2 inches per second
+                extendSetpoint += (myOpMode.gamepad2.right_stick_x * cycleTime * 10.0) ;  // max 10 inches per second
+                extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
             }
-           // extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
         }
         elapsedTime = armTimer.time();
     }
 
     public void enablePowerLifting() {
         lift.setPower(0);
-        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        powerLiftingIsActive = true;
+        gotoHang();
     }
 
     public void disablePowerLifting() {
         powerLiftingIsActive = false;
+    }
+
+    public void powerLift(){
+        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        setLiftPower(-0.25);
+    }
+
+    public void powerHold(){
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        if (liftAngle < 20) {   // holding vertical
+            setLiftPower(-0.20);
+        } else if (liftAngle < 87) {
+            setLiftPower(0.10);
+        } else if (liftAngle > 93) {
+            setLiftPower(-0.10);
+        } else {
+            setLiftPower(0);
+        }
     }
 
     public boolean weArePowerLifting() {
@@ -412,6 +429,13 @@ public class Manipulator {
         smGotoBackScore = true;
     }
 
+    public void gotoHang() {
+        closeLeftGrabber();
+        closeRightGrabber();
+        setExtendSetpoint(EXTEND_HOME_DISTANCE);
+        setState(ManipulatorState.TH_RETRACTING);
+    }
+
     // State machine.
     public void runStateMachine(){
 
@@ -538,7 +562,29 @@ public class Manipulator {
                     wristToBackScore();
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
                     setStateWithDelay(ManipulatorState.SD_LOWER, 0.5);
+                }  else if (smGotoFrontScore) {
+                    wristToBackScore();
+                    setExtendSetpoint(EXTEND_FRONT_DISTANCE);
+                    setState(ManipulatorState.FS_LIFTING);
                 }
+                break;
+
+            case TH_RETRACTING:
+                if(extendInPosition) {
+                    setLiftSetpoint(LIFT_HANG_ANGLE);
+                    wristToBackScore();
+                    setState(ManipulatorState.TH_LIFTING);
+                }
+                break;
+
+            case TH_LIFTING:
+                if(liftInPosition) {
+                    setStateWithDelay(ManipulatorState.TRUSS_HANG, 0.5);
+                }
+                break;
+
+            case TRUSS_HANG:
+                powerLiftingIsActive = true;
                 break;
 
             case WAITING:

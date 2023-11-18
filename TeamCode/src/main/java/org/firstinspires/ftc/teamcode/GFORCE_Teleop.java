@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -91,10 +92,10 @@ public class GFORCE_Teleop extends LinearOpMode
             }
 
             if (arm.weArePowerLifting()) {
-                if ((gamepad2.left_trigger > 0.5) && (gamepad2.right_trigger > 0.5)) {
-                    arm.setLiftPower(-0.25);
+                if ((gamepad2.left_trigger > 0.5) && (gamepad2.right_trigger > 0.5) && (arm.liftAngle > 0.0)) {
+                    arm.powerLift();
                 } else {
-                    arm.setLiftPower(0.0);
+                    arm.powerHold();
                 }
             }
 
