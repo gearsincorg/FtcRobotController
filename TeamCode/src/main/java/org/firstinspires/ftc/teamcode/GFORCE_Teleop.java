@@ -29,8 +29,8 @@ public class GFORCE_Teleop extends LinearOpMode
     boolean lastLiftingAction = false;
 
     // get an instance of the "Drive" class.
-    Robot robot = new Robot(this);
     Manipulator arm = new Manipulator(this);
+    Robot robot = new Robot(this, arm);
     Drone drone = new Drone(this);
 
     @Override public void runOpMode()
@@ -67,11 +67,9 @@ public class GFORCE_Teleop extends LinearOpMode
         while (opModeIsActive())
         {
             robot.readSensors();
-            arm.readSensors();
- //           arm.manualArmControl();
-            arm.runLiftControl();
-            arm.runExtendControl();
-            arm.runStateMachine();
+            arm.runArmControl();
+            arm.manualArmControl();
+
 
             //  ==  CoPilot Controls  ===================================
 

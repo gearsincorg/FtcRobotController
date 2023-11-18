@@ -16,7 +16,7 @@ public class Manipulator {
     public static final double LIFT_HOME_ANGLE = 0.0;
     public static final double LIFT_HOVER_ANGLE = 10.0;
     public static final double LIFT_AUTO_ANGLE = 15.0;
-    public static final double LIFT_FRONT_ANGLE = 40.0;
+    public static final double LIFT_FRONT_ANGLE = 25.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
 
     public static final double LIFT_MIN_ANGLE = 120.0;
@@ -25,7 +25,7 @@ public class Manipulator {
     private static final double EXTEND_GAIN     = 0.2;    // Strength of extend position control
     private static final double EXTEND_TOLERANCE = 0.25;     // Controller is is "inPosition" if position error is < +/- this amount
     public static final double EXTEND_HOME_DISTANCE = 0.0;
-    public static final double EXTEND_FRONT_DISTANCE = 6.0;
+    public static final double EXTEND_FRONT_DISTANCE = 10.0;
     public static final double EXTEND_BACK_DISTANCE = 6.0;
     public static final double EXTEND_MIN_LENGTH = 0.0;
     public static final double EXTEND_MAX_LENGTH = 19.0;
@@ -161,6 +161,24 @@ public class Manipulator {
     }
 
     /**
+     * run one cycle all automated arm features
+     */
+    public void runArmControl(){
+        readSensors();
+        runLiftControl();
+        runExtendControl();
+        runStateMachine();
+    }
+
+    public void runArmControl(double holdTime){
+        armTimer.reset();
+        while(myOpMode.opModeIsActive() && (armTimer.time() < holdTime)){
+            runArmControl();
+            myOpMode.sleep(5);
+        }
+    }
+
+    /**
      * Allow the copilot to adjust the arm lift and extend positions with the joystick
      */
     public void manualArmControl() {
@@ -171,12 +189,12 @@ public class Manipulator {
             if (Math.abs(myOpMode.gamepad2.left_stick_y) > 0.25) {
                 liftSetpoint += (-myOpMode.gamepad2.left_stick_y * cycleTime * 10);   //  max 10 degrees per second
             }
-            liftSetpoint = Range.clip(liftSetpoint, LIFT_MIN_ANGLE, LIFT_MAX_ANGLE);
+          //  liftSetpoint = Range.clip(liftSetpoint, LIFT_MIN_ANGLE, LIFT_MAX_ANGLE);
 
             if (Math.abs(myOpMode.gamepad2.right_stick_x) > 0.25) {
                 extendSetpoint += (myOpMode.gamepad2.right_stick_y * cycleTime * 2.0) ;  // max 2 inches per second
             }
-            extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
+           // extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
         }
         elapsedTime = armTimer.time();
     }
@@ -434,7 +452,6 @@ public class Manipulator {
                     setLiftSetpoint(LIFT_HOVER_ANGLE);
                     setState(ManipulatorState.SD_LIFTING);
                 } else if (smGotoFrontScore) {
-                    rangeEnabled = false;
                     setLiftSetpoint(LIFT_FRONT_ANGLE);
                     setState(ManipulatorState.FS_LIFTING);
                 } else if (smGotoBackScore) {

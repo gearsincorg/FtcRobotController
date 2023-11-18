@@ -66,6 +66,7 @@ public class Robot {
     private DcMotor strafeEncoder;      //  the Lateral (left/right) Odometry Module (may overlap with motor, or may not)
 
     private LinearOpMode myOpMode;
+    private Manipulator myArm;
     private IMU imu;
     private ElapsedTime holdTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
@@ -80,8 +81,9 @@ public class Robot {
     private boolean showTelemetry     = false;
 
     // Robot Constructor
-    public Robot(LinearOpMode opmode) {
+    public Robot(LinearOpMode opmode, Manipulator manipulator) {
         myOpMode = opmode;
+        myArm = manipulator;
     }
 
     /**
@@ -195,6 +197,7 @@ public class Robot {
             } else {
                 holdTimer.reset();
             }
+            myArm.runArmControl();
             myOpMode.sleep(10);
         }
         stopRobot();
@@ -227,6 +230,7 @@ public class Robot {
             } else {
                 holdTimer.reset();
             }
+            myArm.runArmControl();
             myOpMode.sleep(10);
         }
         stopRobot();
@@ -255,6 +259,7 @@ public class Robot {
             } else {
                 holdTimer.reset();
             }
+            myArm.runArmControl();
             myOpMode.sleep(10);
         }
         stopRobot();
