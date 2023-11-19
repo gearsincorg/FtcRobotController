@@ -153,6 +153,28 @@ public class GFORCE_Teleop extends LinearOpMode
                 drive = -SAFE_STRAFE_SPEED / 2.0;
             }
 
+            // set heading set-point
+            if (gamepad1.triangle){
+                robot.yawController.reset(0);
+            } else if (gamepad1.square){
+                robot.yawController.reset(90);
+            } else if(gamepad1.cross){
+                robot.yawController.reset(180);
+            } else if(gamepad1.circle){
+                robot.yawController.reset(270);
+            }
+
+            // Apply field centric driving
+            double fieldAxial  = (drive * Math.cos(Math.toRadians(-robot.getHeading()))) -
+                    (strafe * Math.sin(Math.toRadians(-robot.getHeading())));
+
+            double fieldLateral = (drive * Math.sin(Math.toRadians(-robot.getHeading()))) +
+                    (strafe * Math.cos(Math.toRadians(-robot.getHeading())));
+
+
+            drive = fieldAxial;
+            strafe = fieldLateral;
+
             // Is the driver turning the robot, or should it hold its heading?
             if (Math.abs(yaw) > 0.05) {
                 // driver is commanding robot to turn, so turn off auto heading.
@@ -167,7 +189,7 @@ public class GFORCE_Teleop extends LinearOpMode
 
             // Keep track of how long the controls have been idle...
             // If the robot has just been sitting here for a while, make heading setpoint track any gyro drift to prevent rotating.
-            if ((drive == 0) && (strafe == 0) && (yaw == 0)) {
+            if ((drive == 0) && (strafe == 0) && (yaw == 0) && gamepad1.a && gamepad1.b && gamepad1.x && gamepad1.y) {
                 if (stopTime.time() > HEADING_HOLD_TIME) {
                     robot.yawController.reset(robot.getHeading());  // just keep tracking the current heading
                 }
