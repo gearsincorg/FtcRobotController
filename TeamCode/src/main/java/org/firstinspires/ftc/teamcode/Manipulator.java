@@ -482,6 +482,7 @@ public class Manipulator {
                     smGotoFrontScore  = false;
                     smGotoBackScore  = false;
                     setLiftSetpoint(LIFT_HOME_ANGLE);
+                    openGrabbers();
                     setState(ManipulatorState.HOME);
                 }
                 break;
@@ -513,6 +514,8 @@ public class Manipulator {
 
             case SD_LOWER:
                 setLiftSetpoint(LIFT_HOME_ANGLE);
+                closeLeftGrabber();
+                closeRightGrabber();
                 setState(ManipulatorState.SAFE_DRIVING);
                 break;
 

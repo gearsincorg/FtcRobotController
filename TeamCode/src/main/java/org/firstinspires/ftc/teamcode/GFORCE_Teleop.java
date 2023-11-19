@@ -16,9 +16,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="G-FORCE Teleop", group = "AAA")
 public class GFORCE_Teleop extends LinearOpMode
 {
-    final double SAFE_DRIVE_SPEED   =  0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_STRAFE_SPEED  =  0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_YAW_SPEED     =  0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_DRIVE_SPEED   =  0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_STRAFE_SPEED  =  0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_YAW_SPEED     =  0.4     ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double HEADING_HOLD_TIME  = 10.0 ; // How long to hold heading once all driver input stops. (Avoids effects of Gyro Drift)
 
     private ElapsedTime stopTime   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
@@ -123,15 +123,19 @@ public class GFORCE_Teleop extends LinearOpMode
 
             if (gamepad1.left_trigger > 0.25) {
                 arm.openLeftGrabber();
-            } else if (gamepad1.left_bumper || arm.pixelLeftInRange) {
-                arm.closeLeftGrabber();
-                // arm.autoPickup();
-            }
+            } else if (gamepad1.left_bumper) {
+            arm.closeLeftGrabber();
+            // } else if (gamepad1.left_bumper || arm.pixelLeftInRange) {
+            // arm.closeLeftGrabber();
+            // arm.autoPickup();
+        }
 
             if (gamepad1.right_trigger > 0.25) {
                 arm.openRightGrabber();
-            } else if (gamepad1.right_bumper  || arm.pixelRightInRange){
+            } else if (gamepad1.right_bumper){
                 arm.closeRightGrabber();
+           // } else if (gamepad1.right_bumper  || arm.pixelRightInRange){
+               // arm.closeRightGrabber();
             }
 
             // read joystick values and scale according to limits in Robot class
