@@ -95,23 +95,22 @@ public class ColourMassDetectionProcessor implements VisionProcessor {
 	public Object processFrame(Mat frame, long captureTimeNanos) {
 		// this method processes the image (frame) taken by the camera, and tries to find a suitable prop
 		// you dont need to call it
-		Mat HSVframe = new Mat();
-		Mat rangeframe = new Mat();
 
 		// this converts the frame from RGB to HSV, which is supposed to be better for doing colour blob detection
 		Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2HSV);
 		// thats why you need to give your scalar upper and lower bounds as HSV values
-		
+
 		// this method makes the colour image black and white, with everything between your upper and lower bound values as white, and everything else black
 		Core.inRange(frame, lower, upper, frame);
 		
+		/*
 
 		// this empties out the list of found contours, otherwise we would keep all the old ones, read on to find out more about contours!
 		contours.clear();
 		
 		// this finds the contours, which are borders between black and white, and tries to simplify them to make nice outlines around potential objects
 		// this basically helps us to find all the shapes/outlines of objects that exist within our colour range
-		Imgproc.findContours(rangeframe, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+		Imgproc.findContours(frame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 		
 		// this sets up our largest contour area to be 0
 		largestContourArea = -1;
@@ -169,6 +168,8 @@ public class ColourMassDetectionProcessor implements VisionProcessor {
 		
 		// updates the previous prop position to help us check for changes
 		previousPropPosition = propPosition;
+		*/
+
 
 		return frame;
 	}

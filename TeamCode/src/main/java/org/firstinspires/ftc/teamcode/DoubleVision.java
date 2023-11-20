@@ -136,18 +136,18 @@ public class DoubleVision extends LinearOpMode {
         // the domains are: ([0, 180], [0, 255], [0, 255])
         // this is tuned to detect red, so you will need to experiment to fine tune it for your robot
         // and experiment to fine tune it for blue
-        Scalar lower = new Scalar(150, 100, 100); // the lower hsv threshold for your detection
-        Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
+        //Scalar lower = new Scalar(150, 100, 100); // the lower hsv threshold for your detection
+        //Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
         double minArea = 20; // the minimum area for the detection to consider for your prop
         double leftLine = 213 ;
         double rightLine = 426 ;
 
-        // Scalar lower = new Scalar(90, 160, 90); // the lower hsv threshold for your detection
-        // Scalar upper = new Scalar(105, 200, 255); // the upper hsv threshold for your detection
+        //Scalar lower = new Scalar(90, 160, 90); // the lower hsv threshold for your detection
+        //Scalar upper = new Scalar(105, 200, 255); // the upper hsv threshold for your detection
 
 
-        //Scalar lower = new Scalar(0,   000, 000); // the lower hsv threshold for your detection
-        //Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
+        Scalar lower = new Scalar(0,   000, 000); // the lower hsv threshold for your detection
+        Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
         //double minArea = 10; // the minimum area for the detection to consider for your prop
         EOCVColorDetection = new ColourMassDetectionProcessor(lower, upper, minArea, leftLine, rightLine);
 
