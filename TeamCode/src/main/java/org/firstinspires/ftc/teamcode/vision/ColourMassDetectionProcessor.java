@@ -95,7 +95,9 @@ public class ColourMassDetectionProcessor implements VisionProcessor {
 	public Object processFrame(Mat frame, long captureTimeNanos) {
 		// this method processes the image (frame) taken by the camera, and tries to find a suitable prop
 		// you dont need to call it
-		
+		Mat HSVframe = new Mat();
+		Mat rangeframe = new Mat();
+
 		// this converts the frame from RGB to HSV, which is supposed to be better for doing colour blob detection
 		Imgproc.cvtColor(frame, frame, Imgproc.COLOR_RGB2HSV);
 		// thats why you need to give your scalar upper and lower bounds as HSV values
@@ -103,12 +105,13 @@ public class ColourMassDetectionProcessor implements VisionProcessor {
 		// this method makes the colour image black and white, with everything between your upper and lower bound values as white, and everything else black
 		Core.inRange(frame, lower, upper, frame);
 		
+
 		// this empties out the list of found contours, otherwise we would keep all the old ones, read on to find out more about contours!
 		contours.clear();
 		
 		// this finds the contours, which are borders between black and white, and tries to simplify them to make nice outlines around potential objects
 		// this basically helps us to find all the shapes/outlines of objects that exist within our colour range
-		Imgproc.findContours(frame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+		Imgproc.findContours(rangeframe, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 		
 		// this sets up our largest contour area to be 0
 		largestContourArea = -1;
@@ -175,18 +178,29 @@ public class ColourMassDetectionProcessor implements VisionProcessor {
 		// this method draws the rectangle around the largest contour and puts the current prop position into that rectangle
 		// you don't need to call it
 
+		Rect rect =new Rect(50,100,100,150);
+
+		float[] points = {rect.x * scaleBmpPxToCanvasPx, rect.y * scaleBmpPxToCanvasPx, (rect.x + rect.width) * scaleBmpPxToCanvasPx, (rect.y + rect.height) * scaleBmpPxToCanvasPx};
+
+		canvas.drawLine(points[0], points[1], points[0], points[3], linePaint);
+		canvas.drawLine(points[0], points[1], points[2], points[1], linePaint);
+
+		canvas.drawLine(points[0], points[3], points[2], points[3], linePaint);
+		canvas.drawLine(points[2], points[1], points[2], points[3], linePaint);
+
 		// if the contour exists, draw a rectangle around it and put its position in the middle of the rectangle
 		if (largestContour != null) {
-			Rect rect = Imgproc.boundingRect(largestContour);
+			rect = Imgproc.boundingRect(largestContour);
 			
-			float[] points = {rect.x * scaleBmpPxToCanvasPx, rect.y * scaleBmpPxToCanvasPx, (rect.x + rect.width) * scaleBmpPxToCanvasPx, (rect.y + rect.height) * scaleBmpPxToCanvasPx};
+			float[] points4 = {rect.x * scaleBmpPxToCanvasPx, rect.y * scaleBmpPxToCanvasPx, (rect.x + rect.width) * scaleBmpPxToCanvasPx, (rect.y + rect.height) * scaleBmpPxToCanvasPx};
 			
-			canvas.drawLine(points[0], points[1], points[0], points[3], linePaint);
-			canvas.drawLine(points[0], points[1], points[2], points[1], linePaint);
+			canvas.drawLine(points4[0], points4[1], points4[0], points4[3], linePaint);
+			canvas.drawLine(points4[0], points4[1], points4[2], points4[1], linePaint);
 			
-			canvas.drawLine(points[0], points[3], points[2], points[3], linePaint);
-			canvas.drawLine(points[2], points[1], points[2], points[3], linePaint);
+			canvas.drawLine(points4[0], points4[3], points4[2], points4[3], linePaint);
+			canvas.drawLine(points4[2], points4[1], points4[2], points4[3], linePaint);
 		}
+
 	}
 	
 	/**

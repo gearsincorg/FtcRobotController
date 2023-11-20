@@ -50,7 +50,6 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
 @TeleOp(name = "Double Vision", group = "Concept")
-@Disabled
 public class DoubleVision extends LinearOpMode {
     /**
      * The variable to store our instance of the AprilTag processor.
@@ -66,6 +65,8 @@ public class DoubleVision extends LinearOpMode {
     @Override
     public void runOpMode() {
         initDoubleVision();
+        myVisionPortal.setProcessorEnabled(aprilTag, false);
+        myVisionPortal.setProcessorEnabled(EOCVColorDetection, true);
 
         // This OpMode loops continuously, allowing the user to switch between
         // AprilTag and TensorFlow Object Detection (TFOD) image processors.
@@ -137,12 +138,17 @@ public class DoubleVision extends LinearOpMode {
         // and experiment to fine tune it for blue
         Scalar lower = new Scalar(150, 100, 100); // the lower hsv threshold for your detection
         Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
-        double minArea = 100; // the minimum area for the detection to consider for your prop
+        double minArea = 20; // the minimum area for the detection to consider for your prop
         double leftLine = 213 ;
         double rightLine = 426 ;
 
         // Scalar lower = new Scalar(90, 160, 90); // the lower hsv threshold for your detection
         // Scalar upper = new Scalar(105, 200, 255); // the upper hsv threshold for your detection
+
+
+        //Scalar lower = new Scalar(0,   000, 000); // the lower hsv threshold for your detection
+        //Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
+        //double minArea = 10; // the minimum area for the detection to consider for your prop
         EOCVColorDetection = new ColourMassDetectionProcessor(lower, upper, minArea, leftLine, rightLine);
 
         // -----------------------------------------------------------------------------------------
