@@ -29,18 +29,20 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.vision.ColourMassDetectionProcessor;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
+import org.firstinspires.ftc.teamcode.eocv.CenterStagePipeline;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.opencv.core.Scalar;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /*
  * This OpMode illustrates the basics of using both AprilTag recognition and TensorFlow
@@ -55,7 +57,7 @@ public class DoubleVision extends LinearOpMode {
      * The variable to store our instance of the AprilTag processor.
      */
     private AprilTagProcessor aprilTag;
-    private ColourMassDetectionProcessor EOCVColorDetection;
+    private CenterStagePipeline centerStageDetection;
 
     /**
      * The variable to store our instance of the vision portal.
@@ -66,7 +68,9 @@ public class DoubleVision extends LinearOpMode {
     public void runOpMode() {
         initDoubleVision();
         myVisionPortal.setProcessorEnabled(aprilTag, false);
-        myVisionPortal.setProcessorEnabled(EOCVColorDetection, true);
+        myVisionPortal.setProcessorEnabled(centerStageDetection, true);
+
+        // setManualExposure(12, 220);
 
         // This OpMode loops continuously, allowing the user to switch between
         // AprilTag and TensorFlow Object Detection (TFOD) image processors.
@@ -88,7 +92,7 @@ public class DoubleVision extends LinearOpMode {
             }
             telemetry.addLine();
             telemetry.addLine("----------------------------------------");
-            if (myVisionPortal.getProcessorEnabled(EOCVColorDetection)) {
+            if (myVisionPortal.getProcessorEnabled(centerStageDetection)) {
                 telemetry.addLine("Dpad Down to disable EOCV");
                 telemetry.addLine();
                 telemetryEOCV();
@@ -105,9 +109,9 @@ public class DoubleVision extends LinearOpMode {
                 myVisionPortal.setProcessorEnabled(aprilTag, true);
             }
             if (gamepad1.dpad_down) {
-                myVisionPortal.setProcessorEnabled(EOCVColorDetection, false);
+                myVisionPortal.setProcessorEnabled(centerStageDetection, false);
             } else if (gamepad1.dpad_up) {
-                myVisionPortal.setProcessorEnabled(EOCVColorDetection, true);
+                myVisionPortal.setProcessorEnabled(centerStageDetection, true);
             }
             sleep(20);
 
@@ -149,7 +153,7 @@ public class DoubleVision extends LinearOpMode {
         Scalar lower = new Scalar(0,   000, 000); // the lower hsv threshold for your detection
         Scalar upper = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
         //double minArea = 10; // the minimum area for the detection to consider for your prop
-        EOCVColorDetection = new ColourMassDetectionProcessor(lower, upper, minArea, leftLine, rightLine);
+        centerStageDetection = new CenterStagePipeline();
 
         // -----------------------------------------------------------------------------------------
         // Camera Configuration
@@ -157,8 +161,9 @@ public class DoubleVision extends LinearOpMode {
 
         myVisionPortal = new VisionPortal.Builder()
             .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-            .addProcessors(EOCVColorDetection, aprilTag)
+            .addProcessors(centerStageDetection, aprilTag)
             .build();
+
     }   // end initDoubleVision()
 
     /**
@@ -187,10 +192,47 @@ public class DoubleVision extends LinearOpMode {
      * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
      */
     private void telemetryEOCV() {
-        telemetry.addData("Currently Recorded Position", EOCVColorDetection.getRecordedPropPosition());
+        //telemetry.addData("Currently Recorded Position", centerStageDetection.getRecordedPropPosition());
         telemetry.addData("Camera State", myVisionPortal.getCameraState());
-        telemetry.addData("Currently Detected Mass Center", "x: " + EOCVColorDetection.getLargestContourX() + ", y: " + EOCVColorDetection.getLargestContourY());
-        telemetry.addData("Currently Detected Mass Area", EOCVColorDetection.getLargestContourArea());
+        //telemetry.addData("Currently Detected Mass Center", "x: " + centerStageDetection.getLargestContourX() + ", y: " + centerStageDetection.getLargestContourY());
+        //telemetry.addData("Currently Detected Mass Area", centerStageDetection.getLargestContourArea());
     }   // end method telemetryTfod()
 
+    /*
+     Manually set the camera gain and exposure.
+     This can only be called AFTER calling initAprilTag(), and only works for Webcams;
+    */
+    private void    setManualExposure(int exposureMS, int gain) {
+        // Wait for the camera to be open, then use the controls
+
+        if (myVisionPortal == null) {
+            return;
+        }
+
+        // Make sure camera is streaming before we try to set the exposure controls
+        if (myVisionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
+            telemetry.addData("Camera", "Waiting");
+            telemetry.update();
+            while (!isStopRequested() && (myVisionPortal.getCameraState() != VisionPortal.CameraState.STREAMING)) {
+                sleep(20);
+            }
+            telemetry.addData("Camera", "Ready");
+            telemetry.update();
+        }
+
+        // Set camera controls unless we are stopping.
+        if (!isStopRequested())
+        {
+            ExposureControl exposureControl = myVisionPortal.getCameraControl(ExposureControl.class);
+            if (exposureControl.getMode() != ExposureControl.Mode.Manual) {
+                exposureControl.setMode(ExposureControl.Mode.Manual);
+                sleep(50);
+            }
+            exposureControl.setExposure((long)exposureMS, TimeUnit.MILLISECONDS);
+            sleep(20);
+            GainControl gainControl = myVisionPortal.getCameraControl(GainControl.class);
+            gainControl.setGain(gain);
+            sleep(20);
+        }
+    }
 }   // end class

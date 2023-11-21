@@ -29,10 +29,10 @@
 
 package org.firstinspires.ftc.robotcontroller.external.samples;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
+
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 @TeleOp(name="Optimize AprilTag Exposure", group = "Concept")
-@Disabled
+//@Disabled
 public class ConceptAprilTagOptimizeExposure extends LinearOpMode
 {
     private VisionPortal visionPortal = null;        // Used to manage the video source.
