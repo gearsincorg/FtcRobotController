@@ -39,6 +39,7 @@ public class GFORCE_Teleop extends LinearOpMode
     Robot robot = Robot.getInstance();
     Manipulator arm = new Manipulator(this);
     Drone drone = new Drone(this);
+    Vision vision = new Vision(this);
 
     @Override public void runOpMode()
     {
@@ -46,10 +47,12 @@ public class GFORCE_Teleop extends LinearOpMode
 
         // Initialize the drive hardware & Turn on telemetry
         robot.initialize(this, arm, true);
-        Vision vision = new Vision(this);
         arm.initialize(true);
         drone.initialize(true);
         robot.resetOdometry();
+
+        vision.initialize(true);
+        vision.enableAprilTag();
 
         if (!Globals.ARM_HAS_HOMED) {
             arm.homeArm();

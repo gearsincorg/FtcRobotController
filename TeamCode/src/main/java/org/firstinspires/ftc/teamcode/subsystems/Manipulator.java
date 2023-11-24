@@ -16,7 +16,7 @@ public class Manipulator {
     public static final double LIFT_HOME_ANGLE = 0.0;
     public static final double LIFT_HOVER_ANGLE = 10.0;
     public static final double LIFT_AUTO_ANGLE = 15.0;
-    public static final double LIFT_FRONT_ANGLE = 40.0;
+    public static final double LIFT_FRONT_ANGLE = 14.0;
     public static final double LIFT_HANG_ANGLE  = 90.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
 
@@ -26,7 +26,7 @@ public class Manipulator {
     private static final double EXTEND_GAIN     = 0.3;    // Strength of extend position control
     private static final double EXTEND_TOLERANCE = 0.25;     // Controller is is "inPosition" if position error is < +/- this amount
     public static final double EXTEND_HOME_DISTANCE = 0.0;
-    public static final double EXTEND_FRONT_DISTANCE = 10.0;
+    public static final double EXTEND_FRONT_DISTANCE = 7.0;
     public static final double EXTEND_BACK_DISTANCE = 6.0;
     public static final double EXTEND_MIN_LENGTH = 0.0;
     public static final double EXTEND_MAX_LENGTH = 19.5;
@@ -38,7 +38,7 @@ public class Manipulator {
     private static final double LONG_HOLD_POWER  = 0.10  ;
 
     private static final double WRIST_HOME = 0.0;
-    private static final double WRIST_SCORE_FRONT = 0.1;
+    private static final double WRIST_SCORE_FRONT = 0.2;  // was .1
     private static final double WRIST_SCORE_BACK = 0.675;
 
     private static final double GRAB_LEFT_AUTO   = 0.55;
@@ -181,7 +181,7 @@ public class Manipulator {
         //            frontDistance = frontRange.getDistance(DistanceUnit.MM);
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Arm Encoders L:X", "%6d %6d", liftEncoder, extendEncoder);
+//          myOpMode.telemetry.addData("Arm Encoders L:X", "%6d %6d", liftEncoder, extendEncoder);
             myOpMode.telemetry.addData("Arm Pos L:X", "%5.1f %5.1f", liftAngle, extendLength);
             if (rangeEnabled) {
                 myOpMode.telemetry.addData("Pixel L R:T", "%4.0f %s", pixelLeftRange, pixelLeftInRange ? "YES" : "No");
@@ -319,7 +319,7 @@ public class Manipulator {
 
         extend.setPower(power);
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Extend E:P", "%6.1f %6.2f", error, power);
+            // myOpMode.telemetry.addData("Extend E:P", "%6.1f %6.2f", error, power);
         }
 
         extendInPosition =  (Math.abs(error) < EXTEND_TOLERANCE);
