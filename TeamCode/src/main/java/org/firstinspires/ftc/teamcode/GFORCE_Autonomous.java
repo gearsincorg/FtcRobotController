@@ -5,6 +5,10 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
+import org.firstinspires.ftc.teamcode.subsystems.Robot;
+
 /*
  * This OpMode illustrates an autonomous opmode using simple Odometry
  * All robot functions are performed by an external Drive class that manages all hardware interactions.

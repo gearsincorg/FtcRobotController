@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -49,6 +49,8 @@ public class Manipulator {
     private static final double GRAB_RIGHT_OPEN  = 0.50;
     private static final double GRAB_RIGHT_CLOSE = 0.73;
 
+    private static final int MIN_PIXLE_HITS      = 5;
+
     public  double liftAngle      = 0;   // Arm angle in degrees.  Horizontal = 0 degrees.  Increases to approximately 120 degrees.
     public  double extendLength   = 0;
 
@@ -64,15 +66,17 @@ public class Manipulator {
     private Servo clawR;        //  control the right claw open/close
     private DistanceSensor pixelL;
     private DistanceSensor pixelR;
-    private DistanceSensor frontRange;
+//  private DistanceSensor frontRange;
 
     private int liftEncoder    = 0;
     private int extendEncoder  = 0;
 
     private boolean rangeEnabled = false;
     private double pixelLeftRange = 0;
+    private int leftPixelCounter = 0;
     private double pixelRightRange = 0;
-    private double frontDistance = 0;
+    private int rightPixelCounter = 0;
+//    private double frontDistance = 0;
 
     private double  liftSetpoint  = 0;
     private boolean liftInPosition =false;
@@ -121,7 +125,7 @@ public class Manipulator {
         clawR = myOpMode.hardwareMap.get(Servo.class, "right_claw");
         pixelL = myOpMode.hardwareMap.get(DistanceSensor.class, "left_pixel");
         pixelR = myOpMode.hardwareMap.get(DistanceSensor.class, "right_pixel");
-        frontRange = myOpMode.hardwareMap.get(DistanceSensor.class, "front_range");
+//        frontRange = myOpMode.hardwareMap.get(DistanceSensor.class, "front_range");
 
         // Do any cleanup in teleop
         if (!Globals.IS_AUTO) {
@@ -133,7 +137,6 @@ public class Manipulator {
             if (!Globals.RIGHT_GRABBER_CLOSED) {
                 openRightGrabber();
             }
-
             currentState = Globals.ARM_STATE;
         }
 
@@ -154,11 +157,28 @@ public class Manipulator {
 
         if (rangeEnabled) {
             pixelLeftRange = pixelL.getDistance(DistanceUnit.MM);
-            pixelLeftInRange = (pixelLeftRange > 20) && (pixelLeftRange < 65);
             pixelRightRange = pixelR.getDistance(DistanceUnit.MM);
-            pixelRightInRange = (pixelRightRange > 20) && (pixelRightRange < 65);
-            frontDistance = frontRange.getDistance(DistanceUnit.MM);
         }
+
+        if ((pixelLeftRange >= 20) && (pixelLeftRange <= 90)){
+            if (leftPixelCounter++ > MIN_PIXLE_HITS) {
+                pixelLeftInRange = true;
+            }
+        } else {
+            pixelLeftInRange = false;
+            leftPixelCounter = 0;
+        }
+
+        if ((pixelRightRange >= 20) && (pixelRightRange <= 90)){
+            if (rightPixelCounter++ > MIN_PIXLE_HITS) {
+                pixelRightInRange = true;
+            }
+        } else {
+            pixelRightInRange = false;
+            rightPixelCounter = 0;
+        }
+
+        //            frontDistance = frontRange.getDistance(DistanceUnit.MM);
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Arm Encoders L:X", "%6d %6d", liftEncoder, extendEncoder);
@@ -166,7 +186,7 @@ public class Manipulator {
             if (rangeEnabled) {
                 myOpMode.telemetry.addData("Pixel L R:T", "%4.0f %s", pixelLeftRange, pixelLeftInRange ? "YES" : "No");
                 myOpMode.telemetry.addData("Pixel R R:T", "%4.0f %s", pixelRightRange, pixelRightInRange ? "YES" : "No");
-                myOpMode.telemetry.addData("Front Range", "%4.0f ", frontDistance);
+                // myOpMode.telemetry.addData("Front Range", "%4.0f ", frontDistance);
             }
         }
 
@@ -325,6 +345,7 @@ public class Manipulator {
     }
 
     public void homeArm() {
+        readSensors();
         int lastLiftPos   = liftEncoder;
         int lastExtendPos = extendEncoder;
         boolean liftIsHome = false;
@@ -334,7 +355,7 @@ public class Manipulator {
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         lift.setPower(-0.2);
-        extend.setPower(-0.2);
+        extend.setPower(-0.3);
         myOpMode.sleep(200);
 
         while((myOpMode.opModeInInit() || myOpMode.opModeIsActive()) && readSensors() && (!liftIsHome || !extendIsHome)) {
@@ -350,10 +371,12 @@ public class Manipulator {
 
             lastLiftPos = liftEncoder;
             lastExtendPos = extendEncoder;
+
             myOpMode.sleep(100);
             myOpMode.telemetry.addData("Arm", "Homing");
             myOpMode.telemetry.update();
         }
+
         lift.setPower(0);
         extend.setPower(0);
         myOpMode.telemetry.addData("Arm", "Is Home");
@@ -382,7 +405,9 @@ public class Manipulator {
         clawR.setPosition(GRAB_RIGHT_OPEN);
         Globals.LEFT_GRABBER_CLOSED = false;
         Globals.RIGHT_GRABBER_CLOSED = false;
+        Globals.WRIST_STATE = WristState.HOME;
     }
+
     public void closeLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_CLOSE);
         Globals.LEFT_GRABBER_CLOSED = true;
@@ -414,12 +439,16 @@ public class Manipulator {
 
     public void wristToHome(){
         wrist.setPosition(WRIST_HOME);
+        Globals.WRIST_STATE = WristState.HOME;
     }
+
     public void wristToFrontScore(){
         wrist.setPosition(WRIST_SCORE_FRONT);
+        Globals.WRIST_STATE = WristState.FRONT_SCORE;
     }
     public void wristToBackScore(){
         wrist.setPosition(WRIST_SCORE_BACK);
+        Globals.WRIST_STATE = WristState.BACK_SCORE;
     }
 
     //------------- state machine functions -------------

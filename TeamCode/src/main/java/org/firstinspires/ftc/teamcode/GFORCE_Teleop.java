@@ -6,6 +6,12 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.subsystems.Drone;
+import org.firstinspires.ftc.teamcode.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
+import org.firstinspires.ftc.teamcode.subsystems.Robot;
+import org.firstinspires.ftc.teamcode.subsystems.WristState;
+
 /*
  * This OpMode illustrates a teleop OpMode for an Omni bot.
  * This OpMode used the IMU gyro to stabilize the heading when the operator is nor requesting a turn.
@@ -45,6 +51,11 @@ public class GFORCE_Teleop extends LinearOpMode
 
         if (!Globals.ARM_HAS_HOMED) {
             arm.homeArm();
+        }
+
+        // reset wrist if in unknown state
+        if (Globals.WRIST_STATE == WristState.UNKNOWN) {
+            arm.wristToHome();
         }
 
         // Wait for driver to press start
@@ -120,23 +131,19 @@ public class GFORCE_Teleop extends LinearOpMode
                 robot.resetOdometry();
             }
 
-
             if (gamepad1.left_trigger > 0.25) {
                 arm.openLeftGrabber();
-            } else if (gamepad1.left_bumper) {
-            arm.closeLeftGrabber();
-            // } else if (gamepad1.left_bumper || arm.pixelLeftInRange) {
-            // arm.closeLeftGrabber();
-            // arm.autoPickup();
-        }
+            } else if (gamepad1.left_bumper || arm.pixelLeftInRange) {
+                arm.closeLeftGrabber();
+            }
 
             if (gamepad1.right_trigger > 0.25) {
                 arm.openRightGrabber();
-            } else if (gamepad1.right_bumper){
+            } else if (gamepad1.right_bumper  || arm.pixelRightInRange){
                 arm.closeRightGrabber();
-           // } else if (gamepad1.right_bumper  || arm.pixelRightInRange){
-               // arm.closeRightGrabber();
             }
+
+            // arm.autoPickup();
 
             // read joystick values and scale according to limits in Robot class
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;
@@ -206,5 +213,9 @@ public class GFORCE_Teleop extends LinearOpMode
             //  Drive the wheels based on the desired axis motions
             robot.moveRobot(drive, strafe, yaw);
         }
+
+        Globals.ARM_HAS_HOMED = false;
+        Globals.WRIST_STATE = WristState.UNKNOWN;
+        arm.openGrabbers();
     }
 }

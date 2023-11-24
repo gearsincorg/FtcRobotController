@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.subsystems;
 
 public class Globals {
 
@@ -16,5 +16,7 @@ public class Globals {
     public static boolean ARM_HAS_HOMED = false;
     public static boolean LEFT_GRABBER_CLOSED = false;
     public static boolean RIGHT_GRABBER_CLOSED = false;
+
     public static ManipulatorState ARM_STATE = ManipulatorState.UNKNOWN;
+    public static WristState WRIST_STATE = WristState.UNKNOWN;
 }
