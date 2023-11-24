@@ -8,6 +8,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
+import org.firstinspires.ftc.teamcode.subsystems.TeamPropLocation;
+import org.firstinspires.ftc.teamcode.subsystems.Vision;
 
 /*
  * This OpMode illustrates an autonomous opmode using simple Odometry
@@ -17,12 +19,11 @@ import org.firstinspires.ftc.teamcode.subsystems.Robot;
 @Autonomous(name="G-FORCE Autonomous", group = "AAA")
 public class GFORCE_Autonomous extends LinearOpMode
 {
-
-    private final double FRONT_SCORE_RANGE = 480.0;
-
     // get an instance of the "Robot" class.
-    Robot robot = Robot.getInstance();
-    Manipulator arm = new Manipulator(this);
+    Robot            robot =  Robot.getInstance();
+    Manipulator      arm =    new Manipulator(this);
+    Vision           vision = new Vision(this);
+    TeamPropLocation teamPropLocation = TeamPropLocation.UNKNOWN;
 
     @Override public void runOpMode()
     {
@@ -33,16 +34,30 @@ public class GFORCE_Autonomous extends LinearOpMode
         robot.resetOdometry();
         robot.resetHeading();
 
+        vision.initialize(true);
+
         arm.initialize(true);
         arm.homeArm();
-        arm.autoOpenGrabbers();
 
-        // Wait for driver to press start
-        telemetry.addData(">", "Touch Play to run Auto");
-        telemetry.update();
-        waitForStart();
+        vision.enableTeamProp();
+
+        // Loop while waiting for match to start;
+        while(opModeInInit()) {
+            arm.runManualGrippers();
+
+            TeamPropLocation locationTest = vision.getTeamPropLocation();
+            if (locationTest != TeamPropLocation.UNKNOWN) {
+                teamPropLocation = locationTest;
+            }
+
+            telemetry.addData("Team Prop", teamPropLocation.toString());
+            telemetry.update();
+        }
+        vision.enableAprilTag();
+
         arm.closeRightGrabber();
         arm.closeLeftGrabber();
+
         sleep(500);
 
         // Run Auto if stop was not pressed.
@@ -60,8 +75,6 @@ public class GFORCE_Autonomous extends LinearOpMode
             arm.runArmControl(1);
             robot.drive(-4, 0.25, 0.20);
             arm.gotoHome();
-
-
         }
     }
 }

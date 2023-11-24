@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class Vision {
+    public  PortalState portalState = PortalState.NONE;
 
     private LinearOpMode myOpMode;
     private boolean showTelemetry = false;
@@ -25,7 +26,6 @@ public class Vision {
     private TeamPropPipeline teamProp;
 
     private VisionPortal myVisionPortal;
-    public  PortalState portalState = PortalState.NONE;
 
     public Vision (LinearOpMode opmode) {
         myOpMode = opmode;
@@ -60,6 +60,10 @@ public class Vision {
         myVisionPortal.setProcessorEnabled(teamProp, false);
         myVisionPortal.setProcessorEnabled(aprilTag, false);
         portalState = PortalState.NONE;
+    }
+
+    public TeamPropLocation getTeamPropLocation() {
+        return teamProp.getTeamPropLocation();
     }
 
     /**

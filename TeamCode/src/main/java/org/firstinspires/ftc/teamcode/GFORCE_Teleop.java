@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Drone;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
+import org.firstinspires.ftc.teamcode.subsystems.Vision;
 import org.firstinspires.ftc.teamcode.subsystems.WristState;
 
 /*
@@ -45,6 +46,7 @@ public class GFORCE_Teleop extends LinearOpMode
 
         // Initialize the drive hardware & Turn on telemetry
         robot.initialize(this, arm, true);
+        Vision vision = new Vision(this);
         arm.initialize(true);
         drone.initialize(true);
         robot.resetOdometry();
@@ -62,17 +64,7 @@ public class GFORCE_Teleop extends LinearOpMode
         telemetry.addData(">", "Touch Play to drive");
         telemetry.update();
         while (opModeInInit()) {
-            if (gamepad1.left_trigger > 0.25) {
-                arm.openLeftGrabber();
-            } else if (gamepad1.left_bumper) {
-                arm.closeLeftGrabber();
-            }
-
-            if (gamepad1.right_trigger > 0.25) {
-                arm.openRightGrabber();
-            } else if (gamepad1.right_bumper){
-                arm.closeRightGrabber();
-            }
+            arm.runManualGrippers();
         }
 
         arm.setLiftSetpoint(0);

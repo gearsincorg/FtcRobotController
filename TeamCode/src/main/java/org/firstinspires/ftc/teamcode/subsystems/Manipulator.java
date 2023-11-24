@@ -408,6 +408,20 @@ public class Manipulator {
         Globals.WRIST_STATE = WristState.HOME;
     }
 
+    public void runManualGrippers() {
+        if (myOpMode.gamepad1.left_trigger > 0.25) {
+            openLeftGrabber();
+        } else if (myOpMode.gamepad1.left_bumper) {
+            closeLeftGrabber();
+        }
+
+        if (myOpMode.gamepad1.right_trigger > 0.25) {
+            openRightGrabber();
+        } else if (myOpMode.gamepad1.right_bumper){
+            closeRightGrabber();
+        }
+    }
+
     public void closeLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_CLOSE);
         Globals.LEFT_GRABBER_CLOSED = true;
