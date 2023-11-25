@@ -46,7 +46,7 @@ public class GFORCE_Teleop extends LinearOpMode
         Globals.IS_AUTO = false;
 
         // Initialize the drive hardware & Turn on telemetry
-        robot.initialize(this, arm, true);
+        robot.initialize(this, arm, vision,true);
         arm.initialize(true);
         drone.initialize(true);
         robot.resetOdometry();
@@ -80,6 +80,7 @@ public class GFORCE_Teleop extends LinearOpMode
             robot.readSensors();
             arm.runArmControl();
             arm.manualArmControl();
+            vision.telemetryAprilTag();
 
 
             //  ==  CoPilot Controls  ===================================

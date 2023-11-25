@@ -30,13 +30,14 @@ public class GFORCE_Autonomous extends LinearOpMode
         Globals.IS_AUTO = true;
 
         // Initialize the robot hardware & Turn on telemetry
-        robot.initialize(this, arm, true);
+        robot.initialize(this, arm, vision, true);
         robot.resetOdometry();
         robot.resetHeading();
 
         vision.initialize(true);
 
         arm.initialize(true);
+        arm.setRangeEnable(false);
         arm.homeArm();
 
         vision.enableTeamProp();
@@ -50,31 +51,32 @@ public class GFORCE_Autonomous extends LinearOpMode
                 teamPropLocation = locationTest;
             }
 
-            telemetry.addData("Team Prop", teamPropLocation.toString());
+            telemetry.addData("Team Prop", teamPropLocation);
             telemetry.update();
         }
-        vision.enableAprilTag();
+
 
         arm.closeRightGrabber();
         arm.closeLeftGrabber();
 
-        sleep(500);
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
+            vision.enableAprilTag();
             robot.resetHeading();
-            arm.setLiftSetpoint(Manipulator.LIFT_AUTO_ANGLE);
             // Drive a path and return to start.
             robot.drive(28, 0.45, 0.20);
+            //arm.setLiftSetpoint(Manipulator.LIFT_AUTO_ANGLE);
             robot.turnTo(90, 0.35, 0.20);
             arm.gotoFrontScore();
-            robot.drive(35, 0.45, 0.0);
-            robot.drive(2, 0.2, 0.20);
-            arm.openRightGrabber();
+            robot.driveToTag(2);
+            arm.openGrabbers();
             arm.runArmControl(1);
             robot.drive(-4, 0.25, 0.20);
             arm.gotoHome();
         }
+        vision.disableAll();
+        arm.runArmControl(5);
     }
 }

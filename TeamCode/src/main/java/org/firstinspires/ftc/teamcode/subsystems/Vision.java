@@ -17,12 +17,12 @@ import java.util.concurrent.TimeUnit;
 
 public class Vision {
     public  PortalState portalState = PortalState.NONE;
+    public AprilTagProcessor aprilTag;
 
     private LinearOpMode myOpMode;
     private boolean showTelemetry = false;
     private ElapsedTime visionTimer = new ElapsedTime();
 
-    private AprilTagProcessor aprilTag;
     private TeamPropPipeline teamProp;
 
     private VisionPortal myVisionPortal;

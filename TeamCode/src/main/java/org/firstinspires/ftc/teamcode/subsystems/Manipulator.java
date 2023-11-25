@@ -15,10 +15,11 @@ public class Manipulator {
     private static final double LIFT_TOLERANCE  = 1.0;      // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE = 0.0;
     public static final double LIFT_HOVER_ANGLE = 10.0;
-    public static final double LIFT_AUTO_ANGLE = 15.0;
-    public static final double LIFT_FRONT_ANGLE = 14.0;
+    public static final double LIFT_AUTO_ANGLE = 16.0;
+    public static final double LIFT_FRONT_ANGLE = 18.0;
     public static final double LIFT_HANG_ANGLE  = 90.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
+    public static final double LIFT_BACK_SAFE_ANGLE = 100.0;
 
     public static final double LIFT_MIN_ANGLE = 0.0;
     public static final double LIFT_MAX_ANGLE = 120.0;
@@ -26,10 +27,12 @@ public class Manipulator {
     private static final double EXTEND_GAIN     = 0.3;    // Strength of extend position control
     private static final double EXTEND_TOLERANCE = 0.25;     // Controller is is "inPosition" if position error is < +/- this amount
     public static final double EXTEND_HOME_DISTANCE = 0.0;
+    public static final double EXTEND_AUTO_DISTANCE = 7.0;
     public static final double EXTEND_FRONT_DISTANCE = 7.0;
     public static final double EXTEND_BACK_DISTANCE = 6.0;
     public static final double EXTEND_MIN_LENGTH = 0.0;
     public static final double EXTEND_MAX_LENGTH = 19.5;
+    public static final double SAFE_EXTEND_DISTANCE = 5.0;
 
     private static final double LIFT_COUNTS_PER_DEGREE = 11.05556 ; // 995 counts for 90 Deg
     private static final double EXTEND_COUNTS_PER_INCH = 158.944 ;  // 2861 counts for 18"
@@ -38,8 +41,13 @@ public class Manipulator {
     private static final double LONG_HOLD_POWER  = 0.10  ;
 
     private static final double WRIST_HOME = 0.0;
-    private static final double WRIST_SCORE_FRONT = 0.2;  // was .1
-    private static final double WRIST_SCORE_BACK = 0.675;
+    private static final double WRIST_SCORE_FRONT = 0.18;
+    private static final double WRIST_SCORE_BACK = 0.665;  //was .675
+    private static final double WRIST_DEGREE_SCALE = WRIST_SCORE_BACK / 180;
+
+    private static final double WRIST_HOME_ABS        =   0;
+    private static final double WRIST_SCORE_FRONT_REL =  60;
+    private static final double WRIST_SCORE_BACK_ABS  = 180;
 
     private static final double GRAB_LEFT_AUTO   = 0.55;
     private static final double GRAB_LEFT_OPEN   = 0.50;
@@ -228,6 +236,12 @@ public class Manipulator {
                 extendSetpoint += (myOpMode.gamepad2.right_stick_x * cycleTime * 10.0) ;  // max 10 inches per second
                 extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
             }
+
+            if (Math.abs(myOpMode.gamepad2.right_stick_y) > 0.25) {
+                extendSetpoint += (myOpMode.gamepad2.right_stick_x * cycleTime * 10.0) ;  // max 10 inches per second
+                extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
+            }
+
         }
         elapsedTime = armTimer.time();
     }
@@ -399,8 +413,16 @@ public class Manipulator {
     }
 
     //------------ Servo Functions ------
+    public void setAbsoluteWristAngle( double angDeg) {
+        wrist.setPosition(angDeg * WRIST_DEGREE_SCALE);
+    }
+
+    public void setRelativeWristAngle( double angDeg) {
+        setAbsoluteWristAngle(angDeg - liftAngle );
+    }
+
     public void wristToPickupPosition() {
-        wrist.setPosition(WRIST_HOME);
+        wristToHome();
         clawL.setPosition(GRAB_LEFT_OPEN);
         clawR.setPosition(GRAB_RIGHT_OPEN);
         Globals.LEFT_GRABBER_CLOSED = false;
@@ -452,16 +474,16 @@ public class Manipulator {
     }
 
     public void wristToHome(){
-        wrist.setPosition(WRIST_HOME);
+        setAbsoluteWristAngle(WRIST_HOME_ABS);
         Globals.WRIST_STATE = WristState.HOME;
     }
 
     public void wristToFrontScore(){
-        wrist.setPosition(WRIST_SCORE_FRONT);
+        setRelativeWristAngle(WRIST_SCORE_FRONT_REL);
         Globals.WRIST_STATE = WristState.FRONT_SCORE;
     }
     public void wristToBackScore(){
-        wrist.setPosition(WRIST_SCORE_BACK);
+        setAbsoluteWristAngle(WRIST_SCORE_BACK_ABS);
         Globals.WRIST_STATE = WristState.BACK_SCORE;
     }
 
@@ -520,7 +542,8 @@ public class Manipulator {
                 break;
 
             case H_RETRACTING:
-                if (extendInPosition) {
+                if (extendLength < SAFE_EXTEND_DISTANCE) {  // was extendInPosition
+
                     smGotoSafeDriving = false;
                     smGotoFrontScore  = false;
                     smGotoBackScore  = false;
@@ -601,6 +624,8 @@ public class Manipulator {
                 } else if (smGotoBackScore) {
                     setLiftSetpoint(LIFT_BACK_ANGLE);
                     setState(ManipulatorState.BS_LIFTING);
+                } else {
+                    setRelativeWristAngle(WRIST_SCORE_FRONT_REL);
                 }
                 break;
 
@@ -620,16 +645,30 @@ public class Manipulator {
             case BACK_SCORE:
                 smGotoBackScore = false;
                 if (smGotoHome) {
-                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                    setStateWithDelay(ManipulatorState.H_ROTATE, 0.5);
+                    setLiftSetpoint(LIFT_BACK_SAFE_ANGLE);
+                    setState(ManipulatorState.BACK_TO_HOME);
                 } else if (smGotoSafeDriving) {
-                    wristToBackScore();
-                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                    setStateWithDelay(ManipulatorState.SD_LOWER, 0.5);
+                    setLiftSetpoint(LIFT_BACK_SAFE_ANGLE);
+                    setState(ManipulatorState.BACK_TO_SAFE);
                 }  else if (smGotoFrontScore) {
                     wristToBackScore();
                     setExtendSetpoint(EXTEND_FRONT_DISTANCE);
                     setState(ManipulatorState.FS_LIFTING);
+                }
+                break;
+
+            case BACK_TO_HOME:
+                if (liftInPosition) {
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
+                    setStateWithDelay(ManipulatorState.H_ROTATE, 0.5);
+                }
+                break;
+
+            case BACK_TO_SAFE:
+                if (liftInPosition) {
+                    wristToBackScore();
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
+                    setStateWithDelay(ManipulatorState.SD_LOWER, 0.5);
                 }
                 break;
 

@@ -5,6 +5,8 @@ public enum ManipulatorState {
     BS_LIFTING,
     BS_EXTEND,
     BACK_SCORE,
+    BACK_TO_HOME,
+    BACK_TO_SAFE,
     H_RETRACTING,
     H_ROTATE,
     H_LIFTING,
