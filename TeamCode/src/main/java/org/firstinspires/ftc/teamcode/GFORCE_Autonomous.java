@@ -37,13 +37,14 @@ public class GFORCE_Autonomous extends LinearOpMode
         vision.initialize(true);
 
         arm.initialize(true);
-        arm.setRangeEnable(false);
         arm.homeArm();
+        arm.wristToPickupPosition();  //  FIX THIS... should be Auto Pickup position for grabbers.
 
         vision.enableTeamProp();
 
         // Loop while waiting for match to start;
         while(opModeInInit()) {
+            arm.readSensors();
             arm.runManualGrippers();
 
             TeamPropLocation locationTest = vision.getTeamPropLocation();
@@ -55,10 +56,9 @@ public class GFORCE_Autonomous extends LinearOpMode
             telemetry.update();
         }
 
-
+        // Grab preload pixels and start auto
         arm.closeRightGrabber();
         arm.closeLeftGrabber();
-
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
@@ -66,14 +66,15 @@ public class GFORCE_Autonomous extends LinearOpMode
             vision.enableAprilTag();
             robot.resetHeading();
             // Drive a path and return to start.
-            robot.drive(28, 0.45, 0.20);
-            //arm.setLiftSetpoint(Manipulator.LIFT_AUTO_ANGLE);
-            robot.turnTo(90, 0.35, 0.20);
+             robot.drive(28, 0.45, 0.20);
+            robot.turnTo(90, 0.35, 0);
             arm.gotoFrontScore();
-            robot.driveToTag(2);
+            arm.runArmControl(2);
+            robot.driveToTag(9);
+            arm.waitTillArmInPosition();
             arm.openGrabbers();
             arm.runArmControl(1);
-            robot.drive(-4, 0.25, 0.20);
+            robot.drive(-4, 0.5, 0);
             arm.gotoHome();
         }
         vision.disableAll();

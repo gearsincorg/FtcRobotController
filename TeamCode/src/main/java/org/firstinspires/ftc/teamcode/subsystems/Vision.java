@@ -44,7 +44,7 @@ public class Vision {
 
     public void enableAprilTag() {
         myVisionPortal.setProcessorEnabled(teamProp, false);
-        setManualExposure(12, 255);
+        setManualExposure(8, 255);
         myVisionPortal.setProcessorEnabled(aprilTag, true);
         portalState = PortalState.APRILTAG;
     }

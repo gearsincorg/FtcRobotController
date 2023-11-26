@@ -68,6 +68,7 @@ public class GFORCE_Teleop extends LinearOpMode
         telemetry.update();
         while (opModeInInit()) {
             arm.runManualGrippers();
+            arm.readSensors();
         }
 
         arm.setLiftSetpoint(0);
@@ -80,19 +81,24 @@ public class GFORCE_Teleop extends LinearOpMode
             robot.readSensors();
             arm.runArmControl();
             arm.manualArmControl();
-            vision.telemetryAprilTag();
+            arm.setRangeEnable(true);
 
+            vision.telemetryAprilTag();
 
             //  ==  CoPilot Controls  ===================================
 
             //controls for Automatic Arm movements
             if (gamepad2.a){
+                arm.setRangeEnable(true);
                 arm.gotoHome();
             } else if (gamepad2.x){
+                arm.setRangeEnable(false);
                 arm.gotoSafeDriving();
             } else if (gamepad2.b) {
+                arm.setRangeEnable(false);
                 arm.gotoFrontScore();
             } else if (gamepad2.y) {
+                arm.setRangeEnable(false);
                 arm.gotoBackScore();
             }
 

@@ -12,7 +12,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
@@ -46,19 +45,15 @@ public class Robot {
     private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
 
     // Adjust these numbers to suit your robot.
-    final double V_DESIRED_DISTANCE = 7.0; //  this is how close the camera should get to the target (inches)
+    private final double V_DESIRED_DISTANCE = 7.0; //  this is how close the camera should get to the target (inches)
+    private final double V_DRIVE_TOLERANCE = 0.4;
 
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
     //  Drive = Error * Gain    Make these values smaller for smoother control, or larger for a more aggressive response.
-    final double V_SPEED_GAIN  =  0.02  ;   //  Forward Speed Control "Gain". eg: Ramp up to 50% power at a 25 inch error.   (0.50 / 25.0)
-    final double V_STRAFE_GAIN =  0.01 ;   //  Strafe Speed Control "Gain".  eg: Ramp up to 25% power at a 25 degree Yaw error.   (0.25 / 25.0)
-    final double V_TURN_GAIN   =  0.01  ;   //  Turn Control "Gain".  eg: Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
-
-    final double V_MAX_AUTO_SPEED = 0.5;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double V_MAX_AUTO_STRAFE= 0.5;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double V_MAX_AUTO_TURN  = 0.3;   //  Clip the turn speed to this max value (adjust for your robot)
-
+    private final double V_DRIVE_GAIN  =  0.02  ;   //  Forward Speed Control "Gain".
+    private final double V_STRAFE_GAIN =  0.05 ;    //  Strafe Speed Control "Gain".
+    private final double V_STRAFE_MAX_AUTO = 0.5;     // "default" Maximum Lateral power limit during autonomous
 
     // Public Members
     public double driveDistance     = 0; // scaled axial distance (+ = forward)
@@ -69,6 +64,9 @@ public class Robot {
     public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, DRIVE_MAX_AUTO, DRIVE_TOLERANCE, DRIVE_DEADBAND, false);
     public ProportionalControl strafeController    = new ProportionalControl(STRAFE_GAIN, STRAFE_ACCEL, STRAFE_MAX_AUTO, STRAFE_TOLERANCE, STRAFE_DEADBAND, false);
     public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, YAW_MAX_AUTO, YAW_TOLERANCE,YAW_DEADBAND, true);
+
+    public ProportionalControl v_driveController   = new ProportionalControl(V_DRIVE_GAIN, DRIVE_ACCEL, DRIVE_MAX_AUTO, V_DRIVE_TOLERANCE, DRIVE_DEADBAND, false);
+    public ProportionalControl v_strafeController  = new ProportionalControl(V_STRAFE_GAIN, STRAFE_ACCEL, V_STRAFE_MAX_AUTO, STRAFE_TOLERANCE, STRAFE_DEADBAND, false);
 
     // ---  Private Members
 
@@ -229,7 +227,7 @@ public class Robot {
                 holdTimer.reset();
             }
             myArm.runArmControl();
-            myOpMode.sleep(10);
+            myOpMode.sleep(1);
         }
         stopRobot();
     }
@@ -262,7 +260,7 @@ public class Robot {
                 holdTimer.reset();
             }
             myArm.runArmControl();
-            myOpMode.sleep(10);
+            myOpMode.sleep(1);
         }
         stopRobot();
     }
@@ -291,18 +289,24 @@ public class Robot {
                 holdTimer.reset();
             }
             myArm.runArmControl();
-            myOpMode.sleep(10);
+            myOpMode.sleep(1);
         }
         stopRobot();
     }
 
     public void driveToTag(int desiredTagID) {
-        double rangeError = 10;
-        double headingError;
-        double yawError;
-        while (myOpMode.opModeIsActive()) {
+
+        v_driveController.reset(V_DESIRED_DISTANCE);      // achieve desired drive distance
+        v_strafeController.reset(0);              // Maintain zero strafe drift
+        yawController.reset();
+        holdTimer.reset();
+
+        while (myOpMode.opModeIsActive() && readSensors()){
+
             boolean targetFound = false;
             AprilTagDetection desiredTag = null;
+
+            myArm.runArmControl();  // keep the arm doing what it's meant to do;
 
             // Step through the list of detected tags and look for a matching tag
             List<AprilTagDetection> currentDetections = myVision.aprilTag.getDetections();
@@ -319,26 +323,20 @@ public class Robot {
                     break;  // don't look any further.
                 }
             }
+
             if (targetFound) {
-                // Determine heading, range and Yaw (tag image rotation) error so we can use them to control the robot automatically.
-                rangeError = (desiredTag.ftcPose.range - V_DESIRED_DISTANCE);
-                headingError = desiredTag.ftcPose.bearing;
-                yawError = desiredTag.ftcPose.yaw;
-
-                // Use the speed and turn "gains" to calculate how we want the robot to move.
-                double drive = Range.clip(rangeError * V_SPEED_GAIN, -V_MAX_AUTO_SPEED, V_MAX_AUTO_SPEED);
-                double turn = Range.clip(headingError * V_TURN_GAIN, -V_MAX_AUTO_TURN, V_MAX_AUTO_TURN);
-                double strafe = Range.clip(-yawError * V_STRAFE_GAIN, -V_MAX_AUTO_STRAFE, V_MAX_AUTO_STRAFE);
-
-                moveRobot(drive, strafe, turn);
+                moveRobot(-v_driveController.getOutput((desiredTag.ftcPose.y)), v_strafeController.getOutput(desiredTag.ftcPose.x), yawController.getOutput(heading));
             } else {
+                myOpMode.telemetry.addLine("Desired AprilTag NOT found");
                 stopRobot();
             }
-            myArm.runArmControl();
 
-            if (Math.abs(rangeError) < 0.5){
-                break;
+            // Time to exit?
+            if (v_driveController.inPosition()) {
+                break;   // Exit loop if we are in position
             }
+
+            myOpMode.sleep(1);
         }
         stopRobot();
     }
