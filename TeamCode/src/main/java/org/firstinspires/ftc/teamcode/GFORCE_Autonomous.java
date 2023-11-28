@@ -58,27 +58,53 @@ public class GFORCE_Autonomous extends LinearOpMode
             telemetry.update();
         }
 
-        // Grab preload pixels and start auto
-        arm.closeRightGrabber();
-        arm.closeLeftGrabber();
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
+            // Grab preload pixels and start auto
+            arm.closeRightGrabber();
+            arm.closeLeftGrabber();
+
             vision.enableAprilTag();
             robot.resetHeading();
 
-            // Drive a path and return to start.
-            robot.drive(28, 0.45, 0.20);
-            robot.turnTo(90, 0.35, 0);
-            arm.gotoFrontScore();
-            arm.runArmControl(2);
-            robot.driveToTag(9);
-            arm.waitTillArmInPosition();
-            arm.openGrabbers();
-            arm.runArmControl(1);
-            robot.drive(-4, 0.5, 0);
-            arm.gotoHome();
+            //code for front blue allliance start
+            {// Drive a path and return to start.
+                if(teamPropLocation == TeamPropLocation.LEFT_SIDE) {
+                    robot.drive(18, 0.45, 0.0);
+                    arm.setLiftSetpoint(5);
+                    arm.setExtendSetpoint(5);
+                    robot.turnTo(45, 0.35, 0);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.turnTo(0, 0.35, 0);
+                    robot.drive(33, 0.45, 0.0);
+                    robot.turnTo(90, 0.35, 0);
+                    robot.drive(72, 0.45, 0);
+                    arm.gotoFrontScore();
+                    robot.strafe(28, 0.45, 0.0);
+                    robot.driveToTag(1);
+                    arm.waitTillArmInPosition();
+                    arm.openGrabbers();
+                    arm.runArmControl(1);
+                    robot.drive(-4, 0.5, 0);
+                    arm.gotoHome();
+                    /*arm.gotoFrontScore();
+                    arm.runArmControl(2);
+                    robot.driveToTag(9);
+                    arm.waitTillArmInPosition();
+                    arm.openGrabbers();
+                    arm.runArmControl(1);
+                    robot.drive(-4, 0.5, 0);
+                    arm.gotoHome();*/
+
+                }
+
+            }
+
         }
         vision.disableAll();
         arm.runArmControl(5);
