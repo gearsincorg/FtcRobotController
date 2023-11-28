@@ -22,9 +22,9 @@ import java.util.List;
 
 public class Robot {
     // Adjust these numbers to suit your robot.
-    private final double ODOM_INCHES_PER_COUNT   = 0.002969;   //  GoBilda Odometry Pod (1/226.8)
-    private final boolean INVERT_DRIVE_ODOMETRY  = true;       //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
-    private final boolean INVERT_STRAFE_ODOMETRY = true;       //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
+    private final double ODOM_INCHES_PER_COUNT      = 0.002969;   //  GoBilda Odometry Pod (1/226.8)
+    private final boolean INVERT_DRIVE_ODOMETRY     = true;    //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
+    private final boolean INVERT_STRAFE_ODOMETRY    = true;    //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
 
     private static final double DRIVE_GAIN          = 0.03;    // Strength of axial position control
     private static final double DRIVE_ACCEL         = 2.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
@@ -38,27 +38,28 @@ public class Robot {
     private static final double STRAFE_DEADBAND     = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double STRAFE_MAX_AUTO     = 0.6;     // "default" Maximum Lateral power limit during autonomous
 
-    private static final double YAW_GAIN            = 0.015;    // Strength of Yaw position control
+    private static final double YAW_GAIN            = 0.015;   // Strength of Yaw position control
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
 
     // Adjust these numbers to suit your robot.
-    private final double V_DESIRED_DISTANCE = 7.0; //  this is how close the camera should get to the target (inches)
-    private final double V_DRIVE_TOLERANCE = 0.4;
+    private final double V_DESIRED_DISTANCE         = 7.0;     //  this is how close the camera should get to the target (inches)
+    private final double V_DRIVE_TOLERANCE          = 0.4;
 
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
     //  Drive = Error * Gain    Make these values smaller for smoother control, or larger for a more aggressive response.
     private final double V_DRIVE_GAIN  =  0.02  ;   //  Forward Speed Control "Gain".
     private final double V_STRAFE_GAIN =  0.05 ;    //  Strafe Speed Control "Gain".
-    private final double V_STRAFE_MAX_AUTO = 0.5;     // "default" Maximum Lateral power limit during autonomous
+    private final double V_STRAFE_MAX_AUTO = 0.5;   // "default" Maximum Lateral power limit during autonomous
 
     // Public Members
     public double driveDistance     = 0; // scaled axial distance (+ = forward)
     public double strafeDistance    = 0; // scaled lateral distance (+ = left)
     public double heading           = 0; // Latest Robot heading from IMU
+    public double pitch             = 0; // Latest Robot tilt up from IMU
 
     // Establish a proportional controller for each axis to calculate the required power to achieve a setpoint.
     public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, DRIVE_MAX_AUTO, DRIVE_TOLERANCE, DRIVE_DEADBAND, false);
@@ -148,6 +149,7 @@ public class Robot {
                 new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,
                                              RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
         imu.initialize(new IMU.Parameters(orientationOnRobot));
+        setHeading(Globals.LAST_HEADING);
 
         // zero out all the odometry readings.
         resetOdometry();
@@ -177,17 +179,24 @@ public class Robot {
      * @return true
      */
     public boolean readSensors() {
-        rawDriveOdometer = driveEncoder.getCurrentPosition() * (INVERT_DRIVE_ODOMETRY ? -1 : 1);
-        rawStrafeOdometer = strafeEncoder.getCurrentPosition() * (INVERT_STRAFE_ODOMETRY ? -1 : 1);
-        driveDistance = (rawDriveOdometer - driveOdometerOffset) * ODOM_INCHES_PER_COUNT;
-        strafeDistance = (rawStrafeOdometer - strafeOdometerOffset) * ODOM_INCHES_PER_COUNT;
+
+        if (Globals.IS_AUTO) {
+            // these are only used in Auto;
+            rawDriveOdometer = driveEncoder.getCurrentPosition() * (INVERT_DRIVE_ODOMETRY ? -1 : 1);
+            rawStrafeOdometer = strafeEncoder.getCurrentPosition() * (INVERT_STRAFE_ODOMETRY ? -1 : 1);
+            driveDistance = (rawDriveOdometer - driveOdometerOffset) * ODOM_INCHES_PER_COUNT;
+            strafeDistance = (rawStrafeOdometer - strafeOdometerOffset) * ODOM_INCHES_PER_COUNT;
+        } else {
+            // these are only used in Teleop;
+            AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
+            turnRate    = angularVelocity.zRotationRate;
+        }
 
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
-
         rawHeading  = orientation.getYaw(AngleUnit.DEGREES);
-        heading     = rawHeading - headingOffset;
-        turnRate    = angularVelocity.zRotationRate;
+        pitch       = orientation.getPitch(AngleUnit.DEGREES);
+        heading     = normalizeHeading(rawHeading - headingOffset);
+        Globals.LAST_HEADING = heading ;
 
         if (showTelemetry) {
             // myOpMode.telemetry.addData("Odom Ax:Lat", "%6d %6d", rawDriveOdometer - driveOdometerOffset, rawStrafeOdometer - strafeOdometerOffset);
@@ -411,14 +420,25 @@ public class Robot {
      * Teleop to correct any gyro drift that may occur.
      */
     public void resetHeading() {
+        setHeading(0);
+    }
+
+    public void setHeading(double newHeading) {
         readSensors();
-        headingOffset = rawHeading;
-        yawController.reset(0);
-        heading = 0;
+        headingOffset = rawHeading - newHeading;
+        yawController.reset(newHeading);
+        heading = newHeading;
+        Globals.LAST_HEADING = heading ;
     }
 
     public double getHeading() {return heading;}
     public double getTurnRate() {return turnRate;}
+
+    public double normalizeHeading(double aHeading) {
+        while (aHeading > 180)  aHeading -= 360;
+        while (aHeading <= -180) aHeading += 360;
+        return aHeading;
+    }
 
     /**
      * Set the drive telemetry on or off

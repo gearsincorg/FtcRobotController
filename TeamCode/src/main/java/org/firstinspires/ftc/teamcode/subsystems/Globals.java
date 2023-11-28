@@ -7,7 +7,6 @@ public class Globals {
      */
     public static Side ALLIANCE = Side.RED;
     public static Side START_POSITION = Side.BACK;
-
     public static boolean IS_AUTO = false;
 
     /**
@@ -19,4 +18,6 @@ public class Globals {
 
     public static ManipulatorState ARM_STATE = ManipulatorState.UNKNOWN;
     public static WristState WRIST_STATE = WristState.UNKNOWN;
+
+    public static double LAST_HEADING = 0;
 }

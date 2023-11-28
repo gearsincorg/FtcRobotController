@@ -37,9 +37,11 @@ public class GFORCE_Autonomous extends LinearOpMode
         vision.initialize(true);
 
         arm.initialize(true);
+        arm.setRangeEnable(false);
         arm.homeArm();
         arm.wristToPickupPosition();  //  FIX THIS... should be Auto Pickup position for grabbers.
 
+        // Turn on OpenCV Vision processing.
         vision.enableTeamProp();
 
         // Loop while waiting for match to start;
@@ -65,8 +67,9 @@ public class GFORCE_Autonomous extends LinearOpMode
         {
             vision.enableAprilTag();
             robot.resetHeading();
+
             // Drive a path and return to start.
-             robot.drive(28, 0.45, 0.20);
+            robot.drive(28, 0.45, 0.20);
             robot.turnTo(90, 0.35, 0);
             arm.gotoFrontScore();
             arm.runArmControl(2);

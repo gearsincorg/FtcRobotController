@@ -41,7 +41,7 @@ public class Drone {
     }
 
     public void runLauncher( ){
-        launcher.setPower(1);
+        launcher.setPower(0.6);
     }
 
     public void stopLauncher( ){

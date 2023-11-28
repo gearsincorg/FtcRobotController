@@ -14,7 +14,6 @@ import org.firstinspires.ftc.teamcode.subsystems.Vision;
 import org.firstinspires.ftc.teamcode.subsystems.WristState;
 
 /*
- * This OpMode illustrates a teleop OpMode for an Omni bot.
  * This OpMode used the IMU gyro to stabilize the heading when the operator is nor requesting a turn.
  * An external "Robot" class is used to manage all motor/sensor interfaces, and to assist driving functions.
  */
@@ -25,8 +24,8 @@ public class GFORCE_Teleop extends LinearOpMode
 {
     final double SAFE_DRIVE_SPEED   =  0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_STRAFE_SPEED  =  0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_YAW_SPEED     =  0.4     ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double HEADING_HOLD_TIME  = 10.0 ; // How long to hold heading once all driver input stops. (Avoids effects of Gyro Drift)
+    final double SAFE_YAW_SPEED     =  0.4 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double HEADING_HOLD_TIME  =  5.0 ; // How long to hold heading once all driver input stops. (Avoids effects of Gyro Drift)
 
     private ElapsedTime stopTime   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
@@ -34,6 +33,7 @@ public class GFORCE_Teleop extends LinearOpMode
     boolean autoHeading = false;
     boolean liftingAction = false;
     boolean lastLiftingAction = false;
+    double  noDriftHeading = 0;
 
     // get an instance of the "Drive" class.
     Robot robot = Robot.getInstance();
@@ -197,12 +197,15 @@ public class GFORCE_Teleop extends LinearOpMode
             }
 
             // Keep track of how long the controls have been idle...
-            // If the robot has just been sitting here for a while, make heading setpoint track any gyro drift to prevent rotating.
-            if ((drive == 0) && (strafe == 0) && (yaw == 0) && gamepad1.a && gamepad1.b && gamepad1.x && gamepad1.y) {
+            // If the robot has just been sitting here for a while, lock gyro heading so any drift is ignored.
+            if ((drive == 0) && (strafe == 0) && (yaw == 0) && !gamepad1.a && !gamepad1.b && !gamepad1.x && !gamepad1.y) {
                 if (stopTime.time() > HEADING_HOLD_TIME) {
-                    robot.yawController.reset(robot.getHeading());  // just keep tracking the current heading
+                    robot.setHeading(noDriftHeading);  // don't let the gyro heading change
+                } else {
+                    noDriftHeading = robot.heading ;
                 }
             } else {
+                noDriftHeading = robot.heading ;
                 stopTime.reset();
             }
 
@@ -212,8 +215,13 @@ public class GFORCE_Teleop extends LinearOpMode
                 telemetry.addData("Heading Error", "%6.3f", robot.yawController.getSetpoint() - robot.heading);
             }
 
-            //  Drive the wheels based on the desired axis motions
-            robot.moveRobot(drive, strafe, yaw);
+            // Drive the wheels based on the desired axis motions
+            // Prevent wheels turning if robot is tilted (eg: lifting)
+            if (Math.abs(robot.pitch) < 20 ) {
+                robot.moveRobot(drive, strafe, yaw);
+            } else {
+                robot.stopRobot();
+            }
         }
 
         Globals.ARM_HAS_HOMED = false;
