@@ -68,7 +68,9 @@ public class GFORCE_Teleop extends LinearOpMode
         telemetry.update();
         while (opModeInInit()) {
             arm.runManualGrippers();
+            robot.readSensors();
             arm.readSensors();
+            telemetry.update();
         }
 
         arm.setLiftSetpoint(0);

@@ -81,7 +81,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
-                    robot.drive(33, 0.45, 0.0);
+                    robot.drive(34, 0.45, 0.0);
                     robot.turnTo(90, 0.35, 0);
                     robot.drive(72, 0.45, 0);
                     arm.gotoFrontScore();
@@ -92,16 +92,56 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.runArmControl(1);
                     robot.drive(-4, 0.5, 0);
                     arm.gotoHome();
-                    /*arm.gotoFrontScore();
-                    arm.runArmControl(2);
-                    robot.driveToTag(9);
+                    robot.strafe(16, 0.45, 0.0);
+
+                } else if (teamPropLocation == TeamPropLocation.RIGHT_SIDE){
+                    robot.drive(10, 0.45, 0.0);
+                    arm.setLiftSetpoint(7);
+                    arm.setExtendSetpoint(11);
+                    robot.turnTo(-40, 0.35, 0);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.turnTo(0, 0.35, 0);
+                    robot.drive(42, 0.45, 0.0);
+                    robot.turnTo(90, 0.35, 0);
+                    robot.drive(72, 0.45, 0);
+                    arm.gotoFrontScore();
+                    robot.strafe(16, 0.45, 0.0);
+                    robot.driveToTag(3);
                     arm.waitTillArmInPosition();
                     arm.openGrabbers();
                     arm.runArmControl(1);
                     robot.drive(-4, 0.5, 0);
-                    arm.gotoHome();*/
+                    arm.gotoHome();
+                    robot.strafe(32, 0.45, 0.0);
+
+                } else if (teamPropLocation == TeamPropLocation.CENTER) {
+                    robot.drive(21, 0.45, 0.0);
+                    arm.setLiftSetpoint(7);
+                    arm.setExtendSetpoint(3);
+                    robot.turnTo(90, 0.35, 0);
+                    robot.drive(-16, 0.45, 0.0);
+                    robot.strafe(-18, 0.45, 0.0);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.strafe(-12, 0.45, 0.0);
+                    robot.drive(86, 0.45, 0);
+                    arm.gotoFrontScore();
+                    robot.strafe(22, 0.45, 0.0);
+                    robot.driveToTag(2);
+                    arm.waitTillArmInPosition();
+                    arm.openGrabbers();
+                    arm.runArmControl(1);
+                    robot.drive(-4, 0.5, 0);
+                    arm.gotoHome();
+                    robot.strafe(24, 0.45, 0.0);
 
                 }
+
 
             }
 
