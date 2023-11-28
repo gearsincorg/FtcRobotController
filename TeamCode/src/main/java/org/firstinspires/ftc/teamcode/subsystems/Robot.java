@@ -6,16 +6,16 @@
 
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import java.util.List;
@@ -83,7 +83,7 @@ public class Robot {
     private LinearOpMode myOpMode;
     private Manipulator myArm;
     private Vision myVision;
-    private IMU imu;
+    private BNO055IMU imu;
     private ElapsedTime holdTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
     private int rawDriveOdometer    = 0; // Unmodified axial odometer count
@@ -97,7 +97,6 @@ public class Robot {
     private boolean showTelemetry     = false;
 
     // Robot Constructor
-
     private static Robot instance = null;
     public boolean enabled;
 
@@ -132,7 +131,15 @@ public class Robot {
         rightFrontDrive = setupDriveMotor("rightfront_drive", DcMotor.Direction.FORWARD);
         leftBackDrive  = setupDriveMotor( "leftback_drive", DcMotor.Direction.REVERSE);
         rightBackDrive = setupDriveMotor( "rightback_drive",DcMotor.Direction.FORWARD);
-        imu = myOpMode.hardwareMap.get(IMU.class, "imu");
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled      = false;
+        //parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample OpMode
+
+        imu = myOpMode.hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
 
         //  Connect to the encoder channels using the name of that channel.
         driveEncoder = myOpMode.hardwareMap.get(DcMotor.class, "axial");
@@ -144,11 +151,6 @@ public class Robot {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        // Tell the software how the Control Hub is mounted on the robot to align the IMU XYZ axes correctly
-        RevHubOrientationOnRobot orientationOnRobot =
-                new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                                             RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
-        imu.initialize(new IMU.Parameters(orientationOnRobot));
         setHeading(Globals.LAST_HEADING);
 
         // zero out all the odometry readings.
@@ -188,20 +190,21 @@ public class Robot {
             strafeDistance = (rawStrafeOdometer - strafeOdometerOffset) * ODOM_INCHES_PER_COUNT;
         } else {
             // these are only used in Teleop;
-            AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
-            turnRate    = angularVelocity.zRotationRate;
+            turnRate    = imu.getAngularVelocity().zRotationRate;
         }
 
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        rawHeading  = orientation.getYaw(AngleUnit.DEGREES);
-        pitch       = orientation.getPitch(AngleUnit.DEGREES);
+        // State used for updating telemetry
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        rawHeading  = angles.firstAngle;
         heading     = normalizeHeading(rawHeading - headingOffset);
         Globals.LAST_HEADING = heading ;
+
+        pitch       = angles.thirdAngle;
 
         if (showTelemetry) {
             // myOpMode.telemetry.addData("Odom Ax:Lat", "%6d %6d", rawDriveOdometer - driveOdometerOffset, rawStrafeOdometer - strafeOdometerOffset);
             myOpMode.telemetry.addData("Dist Ax:Lat", "%5.2f %5.2f", driveDistance, strafeDistance);
-            myOpMode.telemetry.addData("Head Deg:Rate", "%5.2f %5.2f", heading, turnRate);
+            myOpMode.telemetry.addData("Head Deg:Rate Pitch", "%5.2f : %5.2f, %2.1f", heading, turnRate, pitch);
         }
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
     }
