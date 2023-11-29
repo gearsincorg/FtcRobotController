@@ -69,8 +69,8 @@ public class GFORCE_Autonomous extends LinearOpMode
             vision.enableAprilTag();
             robot.resetHeading();
 
-            //code for front blue allliance start
-            {// Drive a path and return to start.
+            //code for front blue alliance start
+            {
                 if(teamPropLocation == TeamPropLocation.LEFT_SIDE) {
                     robot.drive(18, 0.45, 0.0);
                     arm.setLiftSetpoint(5);
@@ -94,6 +94,29 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.gotoHome();
                     robot.strafe(16, 0.45, 0.0);
 
+                }  else if (teamPropLocation == TeamPropLocation.CENTER) {
+                    robot.drive(23, 0.45, 0.0);
+                    robot.turnTo(90, 0.35, 0);
+                    arm.setLiftSetpoint(7);
+                    arm.setExtendSetpoint(3);
+                    robot.drive(-16, 0.45, 0.0);
+                    robot.strafe(-15, 0.45, 0.0);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.strafe(-12, 0.45, 0.0);
+                    robot.drive(86, 0.45, 0);
+                    arm.gotoFrontScore();
+                    robot.strafe(22, 0.45, 0.0);
+                    robot.driveToTag(2);
+                    arm.waitTillArmInPosition();
+                    arm.openGrabbers();
+                    arm.runArmControl(1);
+                    robot.drive(-4, 0.5, 0);
+                    arm.gotoHome();
+                    robot.strafe(24, 0.45, 0.0);
+
                 } else if (teamPropLocation == TeamPropLocation.RIGHT_SIDE){
                     robot.drive(10, 0.45, 0.0);
                     arm.setLiftSetpoint(7);
@@ -116,35 +139,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.drive(-4, 0.5, 0);
                     arm.gotoHome();
                     robot.strafe(32, 0.45, 0.0);
-
-                } else if (teamPropLocation == TeamPropLocation.CENTER) {
-                    robot.drive(21, 0.45, 0.0);
-                    arm.setLiftSetpoint(7);
-                    arm.setExtendSetpoint(3);
-                    robot.turnTo(90, 0.35, 0);
-                    robot.drive(-16, 0.45, 0.0);
-                    robot.strafe(-18, 0.45, 0.0);
-                    arm.waitTillArmInPosition();
-                    arm.openLeftGrabber();
-                    arm.runArmControl(0.5);
-                    arm.setExtendSetpoint(0);
-                    robot.strafe(-12, 0.45, 0.0);
-                    robot.drive(86, 0.45, 0);
-                    arm.gotoFrontScore();
-                    robot.strafe(22, 0.45, 0.0);
-                    robot.driveToTag(2);
-                    arm.waitTillArmInPosition();
-                    arm.openGrabbers();
-                    arm.runArmControl(1);
-                    robot.drive(-4, 0.5, 0);
-                    arm.gotoHome();
-                    robot.strafe(24, 0.45, 0.0);
-
                 }
-
-
             }
-
         }
         vision.disableAll();
         arm.runArmControl(5);
