@@ -87,116 +87,210 @@ public class GFORCE_Autonomous extends LinearOpMode
             // prepare to move.
             robot.resetHeading();
 
-            if (Globals.ALLIANCE == Side.RED) {
-                // Red Side Code
+            // Where is the robot starting on the field?
+            if (autoConfig.autoOptions.startFront) {
+                // Robot is starting at the front of the field.
 
-            } else {
-                // Blue Side Code
+                if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE)) ||
+                    ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
+                    robot.drive(18, 0.45, 0.0);
+                    arm.setLiftSetpoint(5);
+                    arm.setExtendSetpoint(5);
+                    robot.turnTo(45, 0.35, 0);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.turnTo(0, 0.35, 0);
+                    robot.drive(32, 0.45, 0.0);
+                    robot.turnTo(90, 0.35, 0);
 
-                if (autoConfig.autoOptions.startFront) {
-                    if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE)) ||
-                        ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
-                        robot.drive(18, 0.45, 0.0);
-                        arm.setLiftSetpoint(5);
-                        arm.setExtendSetpoint(5);
-                        robot.turnTo(45, 0.35, 0);
+                    if (!autoConfig.autoOptions.skipYellow) {
+                        robot.drive(72, 0.45, 0);
+                        delay(autoConfig.autoOptions.delayYellow);
+                        arm.gotoFrontScore();
+                        robot.strafe(28, 0.45, 0.0);
+                        robot.driveToTag(1);
                         arm.waitTillArmInPosition();
-                        arm.openLeftGrabber();
-                        arm.runArmControl(0.5);
-                        arm.setExtendSetpoint(0);
-                        robot.turnTo(0, 0.35, 0);
-                        robot.drive(32, 0.45, 0.0);
-                        robot.turnTo(90, 0.35, 0);
-
-                        if (!autoConfig.autoOptions.skipYellow) {
-                            robot.drive(72, 0.45, 0);
-                            delay(autoConfig.autoOptions.delayYellow);
-                            arm.gotoFrontScore();
-                            robot.strafe(28, 0.45, 0.0);
-                            robot.driveToTag(1);
-                            arm.waitTillArmInPosition();
-                            arm.openGrabbers();
-                            arm.runArmControl(1);
-                            robot.drive(-4, 0.5, 0);
-                            arm.gotoHome();
-                            if (autoConfig.autoOptions.parkCenter) {
-                                robot.strafe(-30, 0.45, 0.0);
-                            } else {
-                                robot.strafe(18, 0.45, 0.0);
-                            }
-                            robot.drive(4, 0.45, 0);
+                        arm.openGrabbers();
+                        arm.runArmControl(1);
+                        robot.drive(-4, 0.5, 0);
+                        arm.gotoHome();
+                        if (autoConfig.autoOptions.parkCenter) {
+                            robot.strafe(-30, 0.45, 0.0);
                         } else {
-                            arm.gotoHome();
-                        }
-
-                    } else if (teamPropLocation == TeamPropLocation.CENTER) {
-                        robot.drive(23, 0.45, 0.0);
-                        robot.turnTo(90, 0.35, 0);
-                        arm.setLiftSetpoint(7);
-                        arm.setExtendSetpoint(3);
-                        robot.drive(-16, 0.45, 0.0);
-                        robot.strafe(-15, 0.45, 0.0);
-                        arm.waitTillArmInPosition();
-                        arm.openLeftGrabber();
-                        arm.runArmControl(0.5);
-                        arm.setExtendSetpoint(0);
-                        robot.strafe(-11, 0.45, 0.0);
-                        if (!autoConfig.autoOptions.skipYellow) {
-                            robot.drive(86, 0.45, 0);
-                            delay(autoConfig.autoOptions.delayYellow);
-                            arm.gotoFrontScore();
-                            robot.strafe(22, 0.45, 0.0);
-                            robot.driveToTag(2);
-                            arm.waitTillArmInPosition();
-                            arm.openGrabbers();
-                            arm.runArmControl(1);
-                            robot.drive(-4, 0.5, 0);
-                            arm.gotoHome();
-                            if (autoConfig.autoOptions.parkCenter) {
-                                robot.strafe(-24, 0.45, 0.0);
-                            } else {
-                                robot.strafe(24, 0.45, 0.0);
-                            }
-                            robot.drive(4, 0.45, 0);
-                        } else {
-                            arm.gotoHome();
-                        }
-
-                    } else if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
-                               ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
-                        robot.drive(10, 0.45, 0.0);
-                        arm.setLiftSetpoint(7);
-                        arm.setExtendSetpoint(11);
-                        robot.turnTo(-40, 0.35, 0);
-                        arm.waitTillArmInPosition();
-                        arm.openLeftGrabber();
-                        arm.runArmControl(0.5);
-                        arm.setExtendSetpoint(0);
-                        robot.turnTo(0, 0.35, 0);
-                        robot.drive(40, 0.45, 0.0);
-                        robot.turnTo(90, 0.35, 0);
-                        if (!autoConfig.autoOptions.skipYellow) {
-                            robot.drive(72, 0.45, 0);
-                            delay(autoConfig.autoOptions.delayYellow);
-                            arm.gotoFrontScore();
                             robot.strafe(18, 0.45, 0.0);
-                            robot.driveToTag(3);
-                            arm.waitTillArmInPosition();
-                            arm.openGrabbers();
-                            arm.runArmControl(1);
-                            robot.drive(-4, 0.5, 0);
-                            arm.gotoHome();
-                            if (autoConfig.autoOptions.parkCenter) {
-                                robot.strafe(-18, 0.45, 0.0);
-                            } else {
-                                robot.strafe(30, 0.45, 0.0);
-                            }
-                            robot.drive(4, 0.45, 0);
-                        } else {
-                            arm.gotoHome();
                         }
+                        robot.drive(4, 0.45, 0);
+                    } else {
+                        arm.gotoHome();
+                    }
+
+                } else if (teamPropLocation == TeamPropLocation.CENTER) {
+                    robot.drive(23, 0.45, 0.0);
+                    robot.turnTo(90, 0.35, 0);
+                    arm.setLiftSetpoint(7);
+                    arm.setExtendSetpoint(3);
+                    robot.drive(-16, 0.45, 0.0);
+                    robot.strafe(-15, 0.45, 0.0);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.strafe(-11, 0.45, 0.0);
+                    if (!autoConfig.autoOptions.skipYellow) {
+                        robot.drive(86, 0.45, 0);
+                        delay(autoConfig.autoOptions.delayYellow);
+                        arm.gotoFrontScore();
+                        robot.strafe(22, 0.45, 0.0);
+                        robot.driveToTag(2);
+                        arm.waitTillArmInPosition();
+                        arm.openGrabbers();
+                        arm.runArmControl(1);
+                        robot.drive(-4, 0.5, 0);
+                        arm.gotoHome();
+                        if (autoConfig.autoOptions.parkCenter) {
+                            robot.strafe(-24, 0.45, 0.0);
+                        } else {
+                            robot.strafe(24, 0.45, 0.0);
+                        }
+                        robot.drive(4, 0.45, 0);
+                    } else {
+                        arm.gotoHome();
+                    }
+
+                } else if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
+                           ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
+                    robot.drive(10, 0.45, 0.0);
+                    arm.setLiftSetpoint(7);
+                    arm.setExtendSetpoint(11);
+                    robot.turnTo(-40, 0.35, 0);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.turnTo(0, 0.35, 0);
+                    robot.drive(40, 0.45, 0.0);
+                    robot.turnTo(90, 0.35, 0);
+                    if (!autoConfig.autoOptions.skipYellow) {
+                        robot.drive(72, 0.45, 0);
+                        delay(autoConfig.autoOptions.delayYellow);
+                        arm.gotoFrontScore();
+                        robot.strafe(18, 0.45, 0.0);
+                        robot.driveToTag(3);
+                        arm.waitTillArmInPosition();
+                        arm.openGrabbers();
+                        arm.runArmControl(1);
+                        robot.drive(-4, 0.5, 0);
+                        arm.gotoHome();
+                        if (autoConfig.autoOptions.parkCenter) {
+                            robot.strafe(-18, 0.45, 0.0);
+                        } else {
+                            robot.strafe(30, 0.45, 0.0);
+                        }
+                        robot.drive(4, 0.45, 0);
+                    } else {
+                        arm.gotoHome();
                     }
                 }
+            } else {
+                // Robot is starting at the back of the field.
+
+                if ( ((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE )) ||
+                     ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ) {
+                    robot.drive(18, 0.45, 0.0);
+                    arm.setLiftSetpoint(5);
+                    arm.setExtendSetpoint(5);
+                    robot.turnTo(45, 0.35, 0);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.turnTo(90, 0.35, 0);
+
+                    if (!autoConfig.autoOptions.skipYellow) {
+                        delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(24, 0.45, 0.0);
+                        arm.gotoFrontScore();
+                        robot.strafe(-12, 0.45, 0.0);
+                        robot.driveToTag(1);
+                        arm.waitTillArmInPosition();
+                        arm.openGrabbers();
+                        arm.runArmControl(1);
+                        robot.drive(-4, 0.5, 0);
+                        arm.gotoHome();
+                        if (autoConfig.autoOptions.parkCenter) {
+                            robot.strafe(-30, 0.45, 0.0);
+                        } else {
+                            robot.strafe(18, 0.45, 0.0);
+                        }
+                        robot.drive(4, 0.45, 0);
+                    } else {
+                        arm.gotoHome();
+                    }
+
+                } else if (teamPropLocation == TeamPropLocation.CENTER) {
+                    robot.drive(23, 0.45, 0.0);
+                    arm.setLiftSetpoint(7);
+                    arm.setExtendSetpoint(3);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.turnTo(90, 0.35, 0);
+                    if (!autoConfig.autoOptions.skipYellow) {
+                        delay(autoConfig.autoOptions.delayYellow);
+                        arm.gotoFrontScore();
+                        robot.drive(24, 0.45, 0);
+                        robot.driveToTag(2);
+                        arm.waitTillArmInPosition();
+                        arm.openGrabbers();
+                        arm.runArmControl(1);
+                        robot.drive(-4, 0.5, 0);
+                        arm.gotoHome();
+                        if (autoConfig.autoOptions.parkCenter) {
+                            robot.strafe(-24, 0.45, 0.0);
+                        } else {
+                            robot.strafe(24, 0.45, 0.0);
+                        }
+                        robot.drive(4, 0.45, 0);
+                    } else {
+                        arm.gotoHome();
+                    }
+
+                } else if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
+                        ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
+                    robot.drive(10, 0.45, 0.0);
+                    arm.setLiftSetpoint(7);
+                    arm.setExtendSetpoint(11);
+                    robot.turnTo(-40, 0.35, 0);
+                    arm.waitTillArmInPosition();
+                    arm.openLeftGrabber();
+                    arm.runArmControl(0.5);
+                    arm.setExtendSetpoint(0);
+                    robot.turnTo(90, 0.35, 0);
+                    if (!autoConfig.autoOptions.skipYellow) {
+                        delay(autoConfig.autoOptions.delayYellow);
+                        arm.gotoFrontScore();
+                        robot.drive(24, 0.45, 0);
+                        robot.strafe(-12, 0.45, 0.0);
+                        robot.driveToTag(3);
+                        arm.waitTillArmInPosition();
+                        arm.openGrabbers();
+                        arm.runArmControl(1);
+                        robot.drive(-4, 0.5, 0);
+                        arm.gotoHome();
+                        if (autoConfig.autoOptions.parkCenter) {
+                            robot.strafe(-18, 0.45, 0.0);
+                        } else {
+                            robot.strafe(30, 0.45, 0.0);
+                        }
+                        robot.drive(4, 0.45, 0);
+                    } else {
+                        arm.gotoHome();
+                    }
+                }
+
             }
         }
         vision.disableAll();
