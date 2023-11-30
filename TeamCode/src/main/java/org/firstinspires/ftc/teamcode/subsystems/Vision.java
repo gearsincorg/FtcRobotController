@@ -78,11 +78,7 @@ public class Vision {
             if (detection.metadata != null) {
                 myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
                 myOpMode.telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-                myOpMode.telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
                 myOpMode.telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
-            } else {
-                myOpMode.telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                myOpMode.telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
         }   // end for() loop
     }
@@ -91,7 +87,6 @@ public class Vision {
      * Add telemetry about TeamProp detection.
      */
     public void telemetryTeamProp() {
-        //telemetry.addData("Currently Recorded Position", centerStageDetection.getRecordedPropPosition());
         myOpMode.telemetry.addData("Camera State", myVisionPortal.getCameraState());
         myOpMode.telemetry.addLine(teamProp.getTargetString());
         myOpMode.telemetry.addData("Location", teamProp.getTeamPropLocation());
