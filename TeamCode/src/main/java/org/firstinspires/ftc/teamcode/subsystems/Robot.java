@@ -251,6 +251,12 @@ public class Robot {
      * @param holdTime Minimum time (sec) required to hold the final position.  0 = no hold.
      */
     public void strafe(double distanceInches, double power, double holdTime) {
+
+        // flip the Strafe direction if we are on red side
+        if (Globals.ALLIANCE == Side.RED) {
+            distanceInches *= -1.0;
+        }
+
         resetOdometry();
 
         driveController.reset(0.0);             //  Maintain zero drive drift
@@ -285,6 +291,11 @@ public class Robot {
      */
     public void turnTo(double headingDeg, double power, double holdTime) {
 
+        // flip the turn direction if we are on red side
+        if (Globals.ALLIANCE == Side.RED) {
+            headingDeg *= -1.0;
+        }
+
         power = Math.abs(power);
         yawController.reset(headingDeg, power);
         while (myOpMode.opModeIsActive() && readSensors()) {
@@ -307,6 +318,11 @@ public class Robot {
     }
 
     public void driveToTag(int desiredTagID) {
+
+        // change the Tag ID if we are on red side
+        if (Globals.ALLIANCE == Side.RED) {
+            desiredTagID = 7 - desiredTagID;  // change 1,2,3 to 6,5,4
+        }
 
         v_driveController.reset(V_DESIRED_DISTANCE);      // achieve desired drive distance
         v_strafeController.reset(0);              // Maintain zero strafe drift

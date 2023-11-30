@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
+import org.firstinspires.ftc.teamcode.subsystems.Side;
 import org.firstinspires.ftc.teamcode.subsystems.TeamPropLocation;
 import org.firstinspires.ftc.teamcode.subsystems.Vision;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
@@ -66,6 +67,11 @@ public class GFORCE_Autonomous extends LinearOpMode
             telemetry.update();
         }
 
+        if (autoConfig.autoOptions.redAlliance )
+            Globals.ALLIANCE = Side.RED;
+        else
+            Globals.ALLIANCE = Side.BLUE;
+
         // Run Auto if stop was not pressed.
         if (opModeIsActive() && !autoConfig.autoOptions.disabled)
         {
@@ -81,14 +87,15 @@ public class GFORCE_Autonomous extends LinearOpMode
             // prepare to move.
             robot.resetHeading();
 
-            if (autoConfig.autoOptions.redAlliance) {
+            if (Globals.ALLIANCE == Side.RED) {
                 // Red Side Code
 
             } else {
                 // Blue Side Code
 
                 if (autoConfig.autoOptions.startFront) {
-                    if (teamPropLocation == TeamPropLocation.LEFT_SIDE) {
+                    if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE)) ||
+                        ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
                         robot.drive(18, 0.45, 0.0);
                         arm.setLiftSetpoint(5);
                         arm.setExtendSetpoint(5);
@@ -155,7 +162,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                             arm.gotoHome();
                         }
 
-                    } else if (teamPropLocation == TeamPropLocation.RIGHT_SIDE) {
+                    } else if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
+                               ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
                         robot.drive(10, 0.45, 0.0);
                         arm.setLiftSetpoint(7);
                         arm.setExtendSetpoint(11);

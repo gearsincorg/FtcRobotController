@@ -6,10 +6,12 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Drone;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
+import org.firstinspires.ftc.teamcode.subsystems.Side;
 import org.firstinspires.ftc.teamcode.subsystems.Vision;
 import org.firstinspires.ftc.teamcode.subsystems.WristState;
 
@@ -40,6 +42,8 @@ public class GFORCE_Teleop extends LinearOpMode
     Manipulator arm = new Manipulator(this);
     Drone drone = new Drone(this);
     Vision vision = new Vision(this);
+    AutoConfig autoConfig  = new AutoConfig(this);
+
 
     @Override public void runOpMode()
     {
@@ -53,6 +57,12 @@ public class GFORCE_Teleop extends LinearOpMode
 
         vision.initialize(true);
         vision.enableAprilTag();
+
+        autoConfig.initialize();
+        if (autoConfig.autoOptions.redAlliance )
+            Globals.ALLIANCE = Side.RED;
+        else
+            Globals.ALLIANCE = Side.BLUE;
 
         if (!Globals.ARM_HAS_HOMED) {
             arm.homeArm();
