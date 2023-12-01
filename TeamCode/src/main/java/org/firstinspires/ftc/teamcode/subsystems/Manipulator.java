@@ -188,7 +188,7 @@ public class Manipulator {
         }
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Arm ENC L:X", "%5d %5d", liftEncoder, extendEncoder);
+            // myOpMode.telemetry.addData("Arm ENC L:X", "%5d %5d", liftEncoder, extendEncoder);
             myOpMode.telemetry.addData("Arm Pos L:X", "%5.1f %5.1f", liftAngle, extendLength);
             if (rangeEnabled) {
                 myOpMode.telemetry.addData("Pixel L R:T", "%4.0f %s", pixelLeftRange, pixelLeftInRange ? "YES" : "No");

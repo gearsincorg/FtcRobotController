@@ -194,14 +194,14 @@ public class AutoConfig
 
   public void updateMenu ()
   {
-      myOpMode.telemetry.addData((currentMenuIndex == 0) ? "0 > ALLIANCE"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "Blue");
-      myOpMode.telemetry.addData((currentMenuIndex == 2) ? "1 > RUN AUTO"   : "1   Run Auto", autoOptions.disabled ? "no" : "YES");
-      myOpMode.telemetry.addData((currentMenuIndex == 3) ? "2 > START POSITION"   : "2   Start", autoOptions.startFront ? "At Front" : "At Back");
-      myOpMode.telemetry.addData((currentMenuIndex == 1) ? "3 > START DELAY"   : "3   Start Delay", autoOptions.delayStart);
-      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > SCORE YELLOW"   : "4   Score Yellow", autoOptions.skipYellow ? "YES" : "no");
-      myOpMode.telemetry.addData((currentMenuIndex == 1) ? "5 > YELLOW DELAY"   : "5   Yellow Delay", autoOptions.delayStart);
-      myOpMode.telemetry.addData((currentMenuIndex == 7) ? "6 > PARK"   : "6  Park", autoOptions.parkCenter ? "In Center" : "By Wall");
-      myOpMode.telemetry.addData((currentMenuIndex == 8) ? "7 > SPARE 1"   : "7  Spare 1", autoOptions.spare1 ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 0) ? "0 > ALLIANCE"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "BLUE");
+      myOpMode.telemetry.addData((currentMenuIndex == 1) ? "1 > RUN AUTO"   : "1   Run Auto", autoOptions.disabled ? "no" : "YES");
+      myOpMode.telemetry.addData((currentMenuIndex == 2) ? "2 > START POSITION"   : "2   Start", autoOptions.startFront ? "At Front" : "At Back");
+      myOpMode.telemetry.addData((currentMenuIndex == 3) ? "3 > START DELAY"   : "3   Start Delay", autoOptions.delayStart);
+      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > SCORE YELLOW"   : "4   Score Yellow", autoOptions.skipYellow ? "no" : "YES");
+      myOpMode.telemetry.addData((currentMenuIndex == 5) ? "5 > YELLOW DELAY"   : "5   Yellow Delay", autoOptions.delayYellow);
+      myOpMode.telemetry.addData((currentMenuIndex == 6) ? "6 > PARK"   : "6  Park", autoOptions.parkCenter ? "In Center" : "By Wall");
+      myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > SPARE 1"   : "7  Spare 1", autoOptions.spare1 ? "YES" : "no");
       myOpMode.telemetry.addData((currentMenuIndex == 8) ? "8 > SPARE 1"   : "8  Spare 2", autoOptions.spare2 ? "YES" : "no");
       myOpMode.telemetry.update();
   }

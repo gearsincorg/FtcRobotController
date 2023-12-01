@@ -56,7 +56,6 @@ public class GFORCE_Autonomous extends LinearOpMode
         while(opModeInInit()) {
             arm.readSensors();
             arm.runManualGrippers();
-            autoConfig.runMenuUI(); //Run menu system
 
             TeamPropLocation locationTest = vision.getTeamPropLocation();
             if (locationTest != TeamPropLocation.UNKNOWN) {
@@ -64,7 +63,7 @@ public class GFORCE_Autonomous extends LinearOpMode
             }
 
             telemetry.addData("Team Prop", teamPropLocation);
-            telemetry.update();
+            autoConfig.runMenuUI(); //Run menu system
         }
 
         if (autoConfig.autoOptions.redAlliance )
@@ -132,7 +131,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setLiftSetpoint(7);
                     arm.setExtendSetpoint(3);
                     robot.drive(-16, 0.45, 0.0);
-                    robot.strafe(-15, 0.45, 0.0);
+                    robot.strafe(-17, 0.45, 0.0);
                     arm.waitTillArmInPosition();
                     arm.openLeftGrabber();
                     arm.runArmControl(0.5);
@@ -142,7 +141,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.drive(86, 0.45, 0);
                         delay(autoConfig.autoOptions.delayYellow);
                         arm.gotoFrontScore();
-                        robot.strafe(22, 0.45, 0.0);
+                        robot.strafe(24, 0.45, 0.0);
                         robot.driveToTag(2);
                         arm.waitTillArmInPosition();
                         arm.openGrabbers();
