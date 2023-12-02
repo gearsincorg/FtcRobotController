@@ -24,9 +24,9 @@ import org.firstinspires.ftc.teamcode.subsystems.WristState;
 @TeleOp(name="G-FORCE Teleop", group = "AAA")
 public class GFORCE_Teleop extends LinearOpMode
 {
-    final double SAFE_DRIVE_SPEED   =  0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_STRAFE_SPEED  =  0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_YAW_SPEED     =  0.4 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_DRIVE_SPEED   =  0.7 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_STRAFE_SPEED  =  0.7 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_YAW_SPEED     =  0.6 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double HEADING_HOLD_TIME  =  5.0 ; // How long to hold heading once all driver input stops. (Avoids effects of Gyro Drift)
 
     private ElapsedTime stopTime   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
@@ -166,13 +166,13 @@ public class GFORCE_Teleop extends LinearOpMode
             double yaw    = -gamepad1.right_stick_x * SAFE_YAW_SPEED;
 
             if (gamepad1.dpad_left) {
-                strafe = SAFE_DRIVE_SPEED / 2.0;
+                strafe = SAFE_DRIVE_SPEED * 0.8;
             } else if (gamepad1.dpad_right) {
-                strafe = -SAFE_DRIVE_SPEED / 2.0;
+                strafe = -SAFE_DRIVE_SPEED * 0.8;
             } else if (gamepad1.dpad_up) {
-                drive = SAFE_DRIVE_SPEED / 2.0;
+                drive = SAFE_DRIVE_SPEED * 0.8;
             } else if (gamepad1.dpad_down) {
-                drive = -SAFE_STRAFE_SPEED / 2.0;
+                drive = -SAFE_STRAFE_SPEED * 0.8;
             }
 
             // set heading set-point

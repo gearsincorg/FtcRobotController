@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.LED;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -19,7 +21,7 @@ public class Manipulator {
     public static final double LIFT_FRONT_ANGLE = 18.0;
     public static final double LIFT_HANG_ANGLE  = 90.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
-    public static final double LIFT_BACK_SAFE_ANGLE = 90.0;
+    public static final double LIFT_BACK_SAFE_ANGLE = 10.0;
 
     public static final double LIFT_MIN_ANGLE = 0.0;
     public static final double LIFT_MAX_ANGLE = 120.0;
@@ -58,7 +60,7 @@ public class Manipulator {
     private static final double GRAB_RIGHT_OPEN  = 0.50;
     private static final double GRAB_RIGHT_CLOSE = 0.73;
 
-    private static final int MIN_PIXLE_HITS      = 5;
+    private static final int MIN_PIXLE_HITS      = 2;
 
     public  double liftAngle      = 0;   // Arm angle in degrees.  Horizontal = 0 degrees.  Increases to approximately 120 degrees.
     public  double extendLength   = 0;
@@ -75,6 +77,10 @@ public class Manipulator {
     private Servo clawR;        //  control the right claw open/close
     private DistanceSensor pixelL;
     private DistanceSensor pixelR;
+
+    private DistanceSensor led1 ;
+    private DistanceSensor led2 ;
+
 
     private int liftEncoder    = 0;
     private int extendEncoder  = 0;
@@ -242,13 +248,8 @@ public class Manipulator {
                 liftSetpoint = Range.clip(liftSetpoint, LIFT_MIN_ANGLE, LIFT_MAX_ANGLE);
             }
 
-            if (Math.abs(myOpMode.gamepad2.right_stick_x) > 0.25) {
-                extendSetpoint += (myOpMode.gamepad2.right_stick_x * cycleTime * 10.0) ;  // max 10 inches per second
-                extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
-            }
-
             if (Math.abs(myOpMode.gamepad2.right_stick_y) > 0.25) {
-                extendSetpoint += (myOpMode.gamepad2.right_stick_x * cycleTime * 10.0) ;  // max 10 inches per second
+                extendSetpoint += (-myOpMode.gamepad2.right_stick_y * cycleTime * 15.0) ;  // max 10 inches per second
                 extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
             }
 
@@ -671,9 +672,11 @@ public class Manipulator {
                 smGotoBackScore = false;
                 if (smGotoHome) {
                     setLiftSetpoint(LIFT_BACK_SAFE_ANGLE);
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
                     setState(ManipulatorState.BACK_TO_HOME);
                 } else if (smGotoSafeDriving) {
                     setLiftSetpoint(LIFT_BACK_SAFE_ANGLE);
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
                     setState(ManipulatorState.BACK_TO_SAFE);
                 }  else if (smGotoFrontScore) {
                     wristToBackScore();
@@ -690,10 +693,10 @@ public class Manipulator {
                 break;
 
             case BACK_TO_SAFE:
-                if (liftInPosition) {
-                    wristToBackScore();
-                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                    setStateWithDelay(ManipulatorState.SD_LOWER, 0.5);
+                wristToBackScore();
+                if (extendLength < SAFE_EXTEND_DISTANCE) {
+                    setLiftSetpoint(LIFT_HOME_ANGLE);
+                    setState(ManipulatorState.SAFE_DRIVING);
                 }
                 break;
 

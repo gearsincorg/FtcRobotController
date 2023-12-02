@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
  * All robot functions are performed by an external Drive class that manages all hardware interactions.
  */
 
-@Autonomous(name="G-FORCE Autonomous", group = "AAA")
+@Autonomous(name="G-FORCE Autonomous", group = "AAA", preselectTeleOp="G-FORCE TELEOP")
 public class GFORCE_Autonomous extends LinearOpMode
 {
     // get an instance of the "Robot" class, then instanciate all other subsystems
