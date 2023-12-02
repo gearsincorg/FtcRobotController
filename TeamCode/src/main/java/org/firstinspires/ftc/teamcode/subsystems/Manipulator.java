@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.LED;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -78,9 +77,10 @@ public class Manipulator {
     private DistanceSensor pixelL;
     private DistanceSensor pixelR;
 
-    private DistanceSensor led1 ;
-    private DistanceSensor led2 ;
-
+    private DigitalChannel leftGreenLED;
+    private DigitalChannel leftRedLED;
+    private DigitalChannel rightGreenLED;
+    private DigitalChannel rightRedLED;
 
     private int liftEncoder    = 0;
     private int extendEncoder  = 0;
@@ -136,6 +136,19 @@ public class Manipulator {
         clawR = myOpMode.hardwareMap.get(Servo.class, "right_claw");
         pixelL = myOpMode.hardwareMap.get(DistanceSensor.class, "left_pixel");
         pixelR = myOpMode.hardwareMap.get(DistanceSensor.class, "right_pixel");
+
+        leftGreenLED = myOpMode.hardwareMap.get(DigitalChannel.class, "led0");
+        leftRedLED = myOpMode.hardwareMap.get(DigitalChannel.class, "led1");
+        rightGreenLED = myOpMode.hardwareMap.get(DigitalChannel.class, "led2");
+        rightRedLED = myOpMode.hardwareMap.get(DigitalChannel.class, "led3");
+
+        leftRedLED.setMode(DigitalChannel.Mode.OUTPUT);
+        leftGreenLED.setMode(DigitalChannel.Mode.OUTPUT);
+        rightRedLED.setMode(DigitalChannel.Mode.OUTPUT);
+        rightGreenLED.setMode(DigitalChannel.Mode.OUTPUT);
+
+        setLeftLED(LED_COLOR.OFF);
+        setRightLED(LED_COLOR.OFF);
 
         // Do any cleanup in teleop
         if (!Globals.IS_AUTO) {
@@ -441,38 +454,39 @@ public class Manipulator {
 
     public void wristToPickupPosition() {
         wristToHome();
-        clawL.setPosition(GRAB_LEFT_OPEN);
-        clawR.setPosition(GRAB_RIGHT_OPEN);
-        Globals.LEFT_GRABBER_CLOSED = false;
-        Globals.RIGHT_GRABBER_CLOSED = false;
-        Globals.WRIST_STATE = WristState.HOME;
+        openLeftGrabber();
+        openRightGrabber();
     }
 
     public void closeLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_CLOSE);
+        setLeftLED(LED_COLOR.GREEN);
         Globals.LEFT_GRABBER_CLOSED = true;
     }
     public void openLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_OPEN);
+        setLeftLED(LED_COLOR.RED);
         Globals.LEFT_GRABBER_CLOSED = false;
     }
     public void closeRightGrabber (){
         clawR.setPosition(GRAB_RIGHT_CLOSE);
+        setRightLED(LED_COLOR.GREEN);
         Globals.RIGHT_GRABBER_CLOSED = true;
     }
     public void openRightGrabber (){
         clawR.setPosition(GRAB_RIGHT_OPEN);
+        setRightLED(LED_COLOR.RED);
         Globals.RIGHT_GRABBER_CLOSED = false;
     }
     public void openGrabbers (){
-        clawL.setPosition(GRAB_LEFT_OPEN);
-        clawR.setPosition(GRAB_RIGHT_OPEN);
-        Globals.LEFT_GRABBER_CLOSED = false;
-        Globals.RIGHT_GRABBER_CLOSED = false;
+        openRightGrabber();
+        openLeftGrabber();
     }
     public void autoOpenGrabbers (){
         clawL.setPosition(GRAB_LEFT_AUTO);
         clawR.setPosition(GRAB_RIGHT_AUTO);
+        setLeftLED(LED_COLOR.RED);
+        setRightLED(LED_COLOR.RED);
         Globals.LEFT_GRABBER_CLOSED = false;
         Globals.RIGHT_GRABBER_CLOSED = false;
     }
@@ -737,5 +751,43 @@ public class Manipulator {
         currentState = newState;
         Globals.ARM_STATE = newState;
         stateTimer.reset();
+    }
+
+    public void setLeftLED(LED_COLOR color) {
+        switch (color) {
+            case OFF:
+                leftGreenLED.setState(false);
+                leftRedLED.setState(false);
+                break;
+
+            case RED:
+                leftGreenLED.setState(false);
+                leftRedLED.setState(true);
+                break;
+
+            case GREEN:
+                leftGreenLED.setState(true);
+                leftRedLED.setState(false);
+                break;
+        }
+    }
+
+    public void setRightLED(LED_COLOR color) {
+        switch (color) {
+            case OFF:
+                rightGreenLED.setState(false);
+                rightRedLED.setState(false);
+                break;
+
+            case RED:
+                rightGreenLED.setState(false);
+                rightRedLED.setState(true);
+                break;
+
+            case GREEN:
+                rightGreenLED.setState(true);
+                rightRedLED.setState(false);
+                break;
+        }
     }
 }

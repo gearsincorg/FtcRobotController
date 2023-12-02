@@ -6,13 +6,14 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.subsystems.LED_COLOR;
 import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.Side;
 import org.firstinspires.ftc.teamcode.subsystems.TeamPropLocation;
 import org.firstinspires.ftc.teamcode.subsystems.Vision;
-import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 
 /*
  * This OpMode illustrates an autonomous opmode using simple Odometry
@@ -292,6 +293,8 @@ public class GFORCE_Autonomous extends LinearOpMode
 
             }
         }
+        arm.setLeftLED(LED_COLOR.OFF);
+        arm.setRightLED(LED_COLOR.OFF);
         vision.disableAll();
         arm.runArmControl(5);
     }

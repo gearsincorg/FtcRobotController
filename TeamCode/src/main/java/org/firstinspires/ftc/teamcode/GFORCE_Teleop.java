@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Drone;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.subsystems.LED_COLOR;
 import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.Side;
@@ -226,5 +227,7 @@ public class GFORCE_Teleop extends LinearOpMode
         Globals.ARM_HAS_HOMED = false;
         Globals.WRIST_STATE = WristState.UNKNOWN;
         arm.openGrabbers();
+        arm.setLeftLED(LED_COLOR.OFF);
+        arm.setRightLED(LED_COLOR.OFF);
     }
 }
