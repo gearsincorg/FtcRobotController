@@ -7,8 +7,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 public class Drone {
 
-    private static final double DRONE_FIRED = 1;
     private static final double DRONE_READY = 0;
+    private static final double DRONE_FIRE = 0.45;
 
     private DcMotor launcher;
     private Servo fire;
@@ -45,6 +45,6 @@ public class Drone {
     }
 
     public void fireDrone (){
-        fire.setPosition(DRONE_FIRED);
+        fire.setPosition(DRONE_FIRE);
     }
 }

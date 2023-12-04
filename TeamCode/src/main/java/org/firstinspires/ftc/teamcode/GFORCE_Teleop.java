@@ -48,7 +48,8 @@ public class GFORCE_Teleop extends LinearOpMode
     Alert       alert   = new Alert(this);
     AutoConfig  autoConfig  = new AutoConfig(this);
 
-    Gamepad.RumbleEffect customRumbleEffect;    // Use to build a custom rumble sequence.
+    Gamepad.RumbleEffect customRumbleEffectD1;    // Use to build a custom rumble sequence.
+    Gamepad.RumbleEffect customRumbleEffectD2;    // Use to build a custom rumble sequence.
 
     @Override public void runOpMode()
     {
@@ -86,7 +87,21 @@ public class GFORCE_Teleop extends LinearOpMode
         telemetry.update();
 
         // Example 1. a)   start by creating a three-pulse rumble sequence: right, LEFT, LEFT
-        customRumbleEffect = new Gamepad.RumbleEffect.Builder()
+        customRumbleEffectD1 = new Gamepad.RumbleEffect.Builder()
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .build();
+
+        // Example 1. a)   start by creating a three-pulse rumble sequence: right, LEFT, LEFT
+        customRumbleEffectD2 = new Gamepad.RumbleEffect.Builder()
                 .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
                 .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
                 .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
@@ -126,10 +141,10 @@ public class GFORCE_Teleop extends LinearOpMode
             vision.telemetryAprilTag();
 
             // check for rumble
-            if (!hasRumbled && (rumbleTime.seconds() > 110))  {
+            if (!hasRumbled && (rumbleTime.seconds() > 80))  {
                 telemetry.addLine("=== RUMBLE ===");
-                gamepad1.runRumbleEffect(customRumbleEffect);
-                gamepad2.runRumbleEffect(customRumbleEffect);
+                gamepad1.runRumbleEffect(customRumbleEffectD1);
+                gamepad2.runRumbleEffect(customRumbleEffectD2);
                 hasRumbled = true;
             }
 
@@ -153,19 +168,19 @@ public class GFORCE_Teleop extends LinearOpMode
             //controls for our drone laucher
             if (gamepad2.dpad_up){
                 drone.runLauncher();
-            } else if (gamepad2.dpad_right || gamepad2.dpad_right) {
+            } else if (gamepad2.dpad_left || gamepad2.dpad_right) {
                 drone.fireDrone();
             } else if (gamepad2.dpad_down) {
                 drone.stopLauncher();
             }
 
-            //  switch to lifing mode when
-            liftingAction = gamepad2.left_stick_button && gamepad2.right_stick_button;
-            if (!lastLiftingAction && liftingAction) {
-                arm.enablePowerLifting();
+            //  switch to Power lifing mode when
+            if (gamepad2.left_stick_button && gamepad2.right_stick_button) {
+                arm.gotoHang();
             }
 
-            if (arm.weArePowerLifting()) {
+            if (arm.readyToHang()) {
+                alert.setState(AlertState.READY_TO_LIFT);
                 if ((gamepad2.left_trigger > 0.5) && (gamepad2.right_trigger > 0.5) && (arm.liftAngle > 0.0)) {
                     arm.powerLift();
                 } else {

@@ -14,10 +14,10 @@ public enum ManipulatorState {
     SD_LOWER,
     SAFE_DRIVING,
     FS_LIFTING,
-    FS_EXTEND,
     FRONT_SCORE,
-    TH_RETRACTING,
-    TH_LIFTING,
-    TRUSS_HANG,
+    POWER_LIFTING,
+    PL_ROTATE,
+    PL_LIFTING,
+    PL_EXTENDING,
     WAITING
 }

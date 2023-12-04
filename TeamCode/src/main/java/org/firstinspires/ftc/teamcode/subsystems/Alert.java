@@ -59,6 +59,7 @@ public class Alert {
                     break;
 
                 case VIDEO_ERROR:
+                case READY_TO_LIFT:
                     if (onCycle) {
                         setLeftLED(LEDcolor.RED);
                         setRightLED(LEDcolor.GREEN);
@@ -116,6 +117,7 @@ public class Alert {
                     cycleHalfPeriod = 1.0;
                     break;
                 case VIDEO_ERROR:
+                case READY_TO_LIFT:
                     cycleHalfPeriod = 0.2;
                     break;
                 case AUTO_PIXEL:

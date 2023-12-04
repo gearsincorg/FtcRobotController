@@ -4,5 +4,6 @@ public enum AlertState {
     OFF,
     VIDEO_ERROR,
     AUTO_PIXEL,
-    TELEOP_GRABBER
+    TELEOP_GRABBER,
+    READY_TO_LIFT
 }

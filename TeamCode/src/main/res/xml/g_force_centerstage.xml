@@ -1,27 +1,28 @@
-<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <Robot type="FirstInspires-FTC">
-    <Webcam name="Webcam 1" serialNumber="A264717F" />
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Expansion Hub 2" port="2">
-            <goBILDA5202SeriesMotor name="lift" port="0" />
-            <goBILDA5202SeriesMotor name="extend" port="1" />
-            <goBILDA5201SeriesMotor name="lateral" port="2" />
-            <goBILDA5202SeriesMotor name="axial" port="3" />
-            <Servo name="fire" port="0" />
+            <goBILDA5202SeriesMotor name="lift" port="0"/>
+            <goBILDA5202SeriesMotor name="extend" port="1"/>
+            <goBILDA5201SeriesMotor name="lateral" port="2"/>
+            <goBILDA5202SeriesMotor name="axial" port="3"/>
+            <Servo name="fire" port="5"/>
+            <DigitalDevice name="led0" port="0"/>
+            <DigitalDevice name="led1" port="1"/>
+            <DigitalDevice name="led2" port="2"/>
+            <DigitalDevice name="led3" port="3"/>
         </LynxModule>
         <LynxModule name="Control Hub" port="173">
-            <goBILDA5201SeriesMotor name="rightback_drive" port="0" />
-            <goBILDA5201SeriesMotor name="rightfront_drive" port="1" />
-            <goBILDA5201SeriesMotor name="leftback_drive" port="2" />
-            <goBILDA5201SeriesMotor name="leftfront_drive" port="3" />
-            <Servo name="tilt" port="0" />
-            <Servo name="right_claw" port="3" />
-            <Servo name="left_claw" port="4" />
-            <Servo name="wrist" port="5" />
-            <LynxEmbeddedIMU name="imu" port="0" bus="0" />
-            <REV_VL53L0X_RANGE_SENSOR name="front_range" port="0" bus="1" />
-            <REV_VL53L0X_RANGE_SENSOR name="left_pixel" port="0" bus="2" />
-            <REV_VL53L0X_RANGE_SENSOR name="right_pixel" port="0" bus="3" />
+            <goBILDA5201SeriesMotor name="rightback_drive" port="0"/>
+            <goBILDA5201SeriesMotor name="rightfront_drive" port="1"/>
+            <goBILDA5201SeriesMotor name="leftback_drive" port="2"/>
+            <goBILDA5201SeriesMotor name="leftfront_drive" port="3"/>
+            <Servo name="right_claw" port="3"/>
+            <Servo name="left_claw" port="4"/>
+            <Servo name="wrist" port="5"/>
+            <LynxEmbeddedIMU name="imu" port="0" bus="0"/>
+            <REV_VL53L0X_RANGE_SENSOR name="left_pixel" port="0" bus="2"/>
+            <REV_VL53L0X_RANGE_SENSOR name="right_pixel" port="0" bus="3"/>
         </LynxModule>
     </LynxUsbDevice>
+    <Webcam name="Webcam 1" serialNumber="A264717F"/>
 </Robot>

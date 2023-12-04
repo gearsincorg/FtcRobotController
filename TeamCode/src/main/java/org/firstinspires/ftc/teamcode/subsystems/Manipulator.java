@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import static org.firstinspires.ftc.teamcode.subsystems.ManipulatorState.H_RETRACTING;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -12,12 +14,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Manipulator {
     private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
-    private static final double LIFT_TOLERANCE  = 1.0;      // Controller is "inPosition" if position error is < +/- this amount
+    private static final double LIFT_TOLERANCE  = 1.5;      // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE = 0.0;
-    public static final double LIFT_HOVER_ANGLE = 10.0;
     public static final double LIFT_AUTO_ANGLE = 22.0;
     public static final double LIFT_FRONT_ANGLE = 18.0;
-    public static final double LIFT_HANG_ANGLE  = 90.0;
+    public static final double LIFT_HANG_ANGLE  = 85.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
     public static final double LIFT_BACK_SAFE_ANGLE = 10.0;
 
@@ -25,11 +26,12 @@ public class Manipulator {
     public static final double LIFT_MAX_ANGLE = 120.0;
 
     private static final double EXTEND_GAIN     = 0.3;    // Strength of extend position control
-    private static final double EXTEND_TOLERANCE = 0.25;     // Controller is is "inPosition" if position error is < +/- this amount
+    private static final double EXTEND_TOLERANCE = 0.50;     // Controller is is "inPosition" if position error is < +/- this amount
     public static final double EXTEND_HOME_DISTANCE = 0.0;
     public static final double EXTEND_AUTO_DISTANCE = 7.0;
     public static final double EXTEND_FRONT_DISTANCE = 7.0;
     public static final double EXTEND_BACK_DISTANCE = 6.0;
+    public static final double EXTEND_LIFT_LENGTH = 19.0;
     public static final double EXTEND_MIN_LENGTH = 0.0;
     public static final double EXTEND_MAX_LENGTH = 19.5;
     public static final double SAFE_EXTEND_DISTANCE = 5.0;
@@ -251,15 +253,6 @@ public class Manipulator {
         elapsedTime = armTimer.time();
     }
 
-    public void enablePowerLifting() {
-        lift.setPower(0);
-        gotoHang();
-    }
-
-    public void disablePowerLifting() {
-        powerLiftingIsActive = false;
-    }
-
     public void powerLift(){
         lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         setLiftPower(-0.25);
@@ -269,9 +262,9 @@ public class Manipulator {
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         if (liftAngle < 20) {   // holding vertical
             setLiftPower(-0.20);
-        } else if (liftAngle < 87) {
+        } else if (liftAngle < (LIFT_HANG_ANGLE - 3)) {
             setLiftPower(0.10);
-        } else if (liftAngle > 93) {
+        } else if (liftAngle > (LIFT_HANG_ANGLE + 3)) {
             setLiftPower(-0.10);
         } else {
             setLiftPower(0);
@@ -288,9 +281,9 @@ public class Manipulator {
     public void runLiftControl() {
 
         // abort any action if wer are in final lifting.
-        if (powerLiftingIsActive) {
+        if (readyToHang()) {
             if (showTelemetry) {
-                myOpMode.telemetry.addData("Power Lifting", "Is Enabled");
+                myOpMode.telemetry.addData("Power Lifting", "Is Active");
             }
             return;
         }
@@ -312,8 +305,7 @@ public class Manipulator {
 
         lift.setPower(power);
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Lift E:P", "%6.1f %6.2f", error, power);
-
+            // myOpMode.telemetry.addData("Lift E:P", "%6.1f %6.2f", error, power);
         }
 
         liftInPosition = (Math.abs(error) < LIFT_TOLERANCE);
@@ -335,7 +327,7 @@ public class Manipulator {
 
         extend.setPower(power);
         if (showTelemetry) {
-            // myOpMode.telemetry.addData("Extend E:P", "%6.1f %6.2f", error, power);
+            myOpMode.telemetry.addData("Extend E:P", "%6.1f %6.2f", error, power);
         }
 
         extendInPosition =  (Math.abs(error) < EXTEND_TOLERANCE);
@@ -455,6 +447,15 @@ public class Manipulator {
         clawR.setPosition(GRAB_RIGHT_OPEN);
         Globals.RIGHT_GRABBER_CLOSED = false;
     }
+
+    public void openPurpleGrabber() {
+        if (Globals.PURPLE_PIXEL_ON_RIGHT) {
+            openRightGrabber();
+        } else {
+            openLeftGrabber();
+        }
+    }
+
     public void openGrabbers (){
         openRightGrabber();
         openLeftGrabber();
@@ -487,6 +488,7 @@ public class Manipulator {
     private boolean smGotoSafeDriving = false;
     private boolean smGotoFrontScore  = false;
     private boolean smGotoBackScore  = false;
+    private boolean smGotoPOWERLIFT  = false;
 
     public void gotoHome() {
         smGotoHome = true;
@@ -517,11 +519,13 @@ public class Manipulator {
     }
 
     public void gotoHang() {
-        closeLeftGrabber();
-        closeRightGrabber();
-        setExtendSetpoint(EXTEND_HOME_DISTANCE);
-        setState(ManipulatorState.TH_RETRACTING);
+        smGotoPOWERLIFT = true;
     }
+
+    public boolean readyToHang() {
+        return (currentState == ManipulatorState.POWER_LIFTING);
+    }
+
 
     // State machine.
     public void runStateMachine(){
@@ -548,6 +552,7 @@ public class Manipulator {
                 smGotoSafeDriving = false;
                 smGotoFrontScore  = false;
                 smGotoBackScore  = false;
+                smGotoPOWERLIFT = false;
                 smGotoHome = false;
                 if ((!Globals.LEFT_GRABBER_CLOSED && !Globals.RIGHT_GRABBER_CLOSED) || stateTimer.time() > 1.0 ) {
                     openGrabbers();
@@ -559,7 +564,7 @@ public class Manipulator {
             case HOME:
                 if (smGotoHome) {
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                    setState(ManipulatorState.H_RETRACTING);
+                    setState(H_RETRACTING);
                 } else if (smGotoSafeDriving) {
                     if (Globals.LEFT_GRABBER_CLOSED && Globals.RIGHT_GRABBER_CLOSED) {
                         wristToBackScore();
@@ -580,6 +585,11 @@ public class Manipulator {
                 } else if (smGotoBackScore) {
                     setLiftSetpoint(LIFT_BACK_ANGLE);
                     setStateWithDelay(ManipulatorState.BS_LIFTING, 0.25);
+                } else if (smGotoPOWERLIFT) {
+                    wristToBackScore();
+                    closeLeftGrabber();
+                    closeRightGrabber();
+                    setStateWithDelay(ManipulatorState.PL_ROTATE, 0.250);
                 }
                 break;
 
@@ -601,13 +611,16 @@ public class Manipulator {
                 if (smGotoHome) {
                     wristToHome();
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                    setState(ManipulatorState.H_RETRACTING);
+                    setState(H_RETRACTING);
                 } else if (smGotoFrontScore) {
                     setLiftSetpoint(LIFT_FRONT_ANGLE);
                     setState(ManipulatorState.FS_LIFTING);
                 } else if (smGotoBackScore) {
                     setLiftSetpoint(LIFT_BACK_ANGLE);
                     setState(ManipulatorState.BS_LIFTING);
+                }  else if (smGotoPOWERLIFT) {
+                    setLiftSetpoint(LIFT_HANG_ANGLE);
+                    setState(ManipulatorState.PL_LIFTING);
                 }
                 break;
 
@@ -624,7 +637,7 @@ public class Manipulator {
                 if (smGotoHome) {
                     wristToHome();
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                    setState(ManipulatorState.H_RETRACTING);
+                    setState(H_RETRACTING);
                 } else if (smGotoSafeDriving) {
                     wristToBackScore();
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
@@ -683,22 +696,38 @@ public class Manipulator {
                 }
                 break;
 
-            case TH_RETRACTING:
-                if(extendInPosition) {
-                    setLiftSetpoint(LIFT_HANG_ANGLE);
-                    wristToBackScore();
-                    setState(ManipulatorState.TH_LIFTING);
+
+            // -- Power Lifting --
+            case PL_ROTATE:
+                setLiftSetpoint(LIFT_HANG_ANGLE);
+                setState(ManipulatorState.PL_LIFTING);
+                break;
+
+            case PL_LIFTING:
+                smGotoPOWERLIFT = false;
+                if (liftInPosition) {
+                    setExtendSetpoint(EXTEND_LIFT_LENGTH);
+                    setState(ManipulatorState.PL_EXTENDING);
                 }
                 break;
 
-            case TH_LIFTING:
-                if(liftInPosition) {
-                    setStateWithDelay(ManipulatorState.TRUSS_HANG, 0.5);
+            case PL_EXTENDING:
+                smGotoPOWERLIFT = false;
+                if (extendInPosition) {
+                    setState(ManipulatorState.POWER_LIFTING);
+                } else if (smGotoHome) {
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
+                    setState(H_RETRACTING);
                 }
+
                 break;
 
-            case TRUSS_HANG:
-                powerLiftingIsActive = true;
+            case POWER_LIFTING:
+                smGotoPOWERLIFT = false;
+                if (smGotoHome) {
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
+                    setState(H_RETRACTING);
+                }
                 break;
 
             case WAITING:

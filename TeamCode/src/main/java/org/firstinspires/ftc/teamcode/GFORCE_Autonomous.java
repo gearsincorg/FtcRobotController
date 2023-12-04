@@ -124,7 +124,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setExtendSetpoint(5);
                     robot.turnTo(45, 0.35, 0);
                     arm.waitTillArmInPosition();
-                    arm.openLeftGrabber();
+                    arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
@@ -160,7 +160,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.drive(-16, 0.45, 0.0);
                     robot.strafe(-17, 0.45, 0.0);
                     arm.waitTillArmInPosition();
-                    arm.openLeftGrabber();
+                    arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.strafe(-11, 0.45, 0.0);
@@ -193,7 +193,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setExtendSetpoint(11);
                     robot.turnTo(-40, 0.35, 0);
                     arm.waitTillArmInPosition();
-                    arm.openLeftGrabber();
+                    arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
@@ -231,7 +231,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setExtendSetpoint(11);
                     robot.turnTo(40, 0.35, 0);
                     arm.waitTillArmInPosition();
-                    arm.openRightGrabber();
+                    arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
@@ -241,7 +241,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.strafe(24, 0.45, 0.0);
                         robot.turnTo(90, 0.35, 0);
                         arm.gotoFrontScore();
-                        robot.strafe(-18, 0.45, 0.0);
+                        robot.strafe(-12, 0.45, 0.0);
                         robot.driveToTag(1);
                         arm.waitTillArmInPosition();
                         arm.openGrabbers();
@@ -263,7 +263,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setLiftSetpoint(7);
                     arm.setExtendSetpoint(7);
                     arm.waitTillArmInPosition();
-                    arm.openLeftGrabber();
+                    arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(90, 0.35, 0);
@@ -271,6 +271,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         delay(autoConfig.autoOptions.delayYellow);
                         arm.gotoFrontScore();
                         robot.drive(24, 0.5, 0);
+                        robot.strafe(-6, 0.45, 0.0);
                         robot.driveToTag(2);
                         arm.waitTillArmInPosition();
                         arm.openGrabbers();
@@ -295,7 +296,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setExtendSetpoint(5);
                     robot.turnTo(-45, 0.35, 0);
                     arm.waitTillArmInPosition();
-                    arm.openLeftGrabber();
+                    arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
@@ -304,7 +305,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.strafe(24, 0.45, 0);
                         robot.turnTo(90, 0.35, 0);
                         arm.gotoFrontScore();
-                        robot.strafe(-24, 0.45, 0.0);
+                        robot.strafe(-18, 0.45, 0.0);
                         robot.driveToTag(3);
                         arm.waitTillArmInPosition();
                         arm.openGrabbers();
