@@ -6,12 +6,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.subsystems.Alert;
+import org.firstinspires.ftc.teamcode.subsystems.AlertState;
+import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
-import org.firstinspires.ftc.teamcode.subsystems.LED_COLOR;
 import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
-import org.firstinspires.ftc.teamcode.subsystems.Side;
 import org.firstinspires.ftc.teamcode.subsystems.TeamPropLocation;
 import org.firstinspires.ftc.teamcode.subsystems.Vision;
 
@@ -24,10 +25,11 @@ import org.firstinspires.ftc.teamcode.subsystems.Vision;
 public class GFORCE_Autonomous extends LinearOpMode
 {
     // get an instance of the "Robot" class, then instanciate all other subsystems
-    Robot            robot =  Robot.getInstance();
-    Manipulator      arm =    new Manipulator(this);
-    Vision           vision = new Vision(this);
-    AutoConfig       autoConfig  = new AutoConfig(this);
+    Robot           robot =  Robot.getInstance();
+    Vision          vision = new Vision(this);
+    Manipulator     arm =    new Manipulator(this);
+    Alert           alert = new Alert(this);
+    AutoConfig      autoConfig  = new AutoConfig(this);
 
     private ElapsedTime delayTime   = new ElapsedTime();  // User for delaying auto actions
 
@@ -42,10 +44,9 @@ public class GFORCE_Autonomous extends LinearOpMode
         robot.resetOdometry();
         robot.resetHeading();
 
-        autoConfig.initialize();
         vision.initialize(true);
 
-        arm.initialize(true);
+        arm.initialize(false);
         arm.setRangeEnable(false);
         arm.homeArm();
         arm.wristToPickupPosition();  //  FIX THIS... should be Auto Pickup position for grabbers.
@@ -53,8 +54,27 @@ public class GFORCE_Autonomous extends LinearOpMode
         // Turn on OpenCV Vision processing.
         vision.enableTeamProp();
 
+        alert.initialize(false);
+        autoConfig.initialize();
+
         // Loop while waiting for match to start;
         while(opModeInInit()) {
+
+            autoConfig.runMenuUI(); //Run menu system
+
+            alert.update();     // Update LED status
+            telemetry.addLine("\n");
+
+            // Set GLOBAL flags based on menu choices.
+            if (autoConfig.autoOptions.redAlliance )
+                Globals.ALLIANCE_COLOR = AllianceColor.RED;
+            else
+                Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
+
+            Globals.PURPLE_PIXEL_ON_RIGHT =  ((autoConfig.autoOptions.redAlliance && autoConfig.autoOptions.startFront) ||
+                    (!autoConfig.autoOptions.redAlliance && !autoConfig.autoOptions.startFront));
+
+            // Update additional sensor.
             arm.readSensors();
             arm.runManualGrippers();
 
@@ -63,14 +83,19 @@ public class GFORCE_Autonomous extends LinearOpMode
                 teamPropLocation = locationTest;
             }
 
-            telemetry.addData("Team Prop", teamPropLocation);
-            autoConfig.runMenuUI(); //Run menu system
-        }
+            telemetry.addData("Last Detection", teamPropLocation);
+            telemetry.addLine("\n");
+            vision.telemetryTeamProp();
 
-        if (autoConfig.autoOptions.redAlliance )
-            Globals.ALLIANCE = Side.RED;
-        else
-            Globals.ALLIANCE = Side.BLUE;
+            // Alert the driver to the condition of the robot
+            if (vision.getContourCount() == 0) {
+                alert.setState(AlertState.VIDEO_ERROR);
+            } else {
+                alert.setState(AlertState.AUTO_PIXEL);
+            }
+
+            telemetry.update();
+        }
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive() && !autoConfig.autoOptions.disabled)
@@ -91,8 +116,8 @@ public class GFORCE_Autonomous extends LinearOpMode
             if (autoConfig.autoOptions.startFront) {
                 // Robot is starting at the front of the field.
 
-                if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE)) ||
-                    ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
+                if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE)) ||
+                    ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
                     robot.drive(18, 0.45, 0.0);
                     arm.setLiftSetpoint(5);
                     arm.setExtendSetpoint(5);
@@ -159,8 +184,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.gotoHome();
                     }
 
-                } else if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
-                           ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
+                } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
+                           ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
                     robot.drive(10, 0.45, 0.0);
                     arm.setLiftSetpoint(7);
                     arm.setExtendSetpoint(11);
@@ -196,8 +221,8 @@ public class GFORCE_Autonomous extends LinearOpMode
             } else {
                 // Robot is starting at the back of the field.
 
-                if ( ((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE )) ||
-                     ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ) {
+                if ( ((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE )) ||
+                     ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ) {
                     robot.drive(18, 0.45, 0.0);
                     arm.setLiftSetpoint(5);
                     arm.setExtendSetpoint(5);
@@ -258,8 +283,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.gotoHome();
                     }
 
-                } else if (((Globals.ALLIANCE == Side.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
-                        ((Globals.ALLIANCE == Side.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
+                } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
+                        ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
                     robot.drive(10, 0.45, 0.0);
                     arm.setLiftSetpoint(7);
                     arm.setExtendSetpoint(11);
@@ -293,9 +318,9 @@ public class GFORCE_Autonomous extends LinearOpMode
 
             }
         }
-        arm.setLeftLED(LED_COLOR.OFF);
-        arm.setRightLED(LED_COLOR.OFF);
+
         vision.disableAll();
+        alert.setState(AlertState.OFF);
         arm.runArmControl(5);
     }
 

@@ -32,7 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.subsystems.PortalState;
+import org.firstinspires.ftc.teamcode.subsystems.VisionPortalState;
 import org.firstinspires.ftc.teamcode.subsystems.Vision;
 
 /*
@@ -59,15 +59,15 @@ public class DoubleVision extends LinearOpMode {
         while (!isStopRequested()) {
 
             // User instructions:
-            if (visionPortal.portalState == PortalState.NONE) {
+            if (visionPortal.portalState == VisionPortalState.NONE) {
                 telemetry.addLine("Dpad Left to enable Team Prop");
                 telemetry.addLine("Dpad right to enable AprilTag");
-            } else if (visionPortal.portalState == PortalState.APRILTAG) {
+            } else if (visionPortal.portalState == VisionPortalState.APRILTAG) {
                 telemetry.addLine("Dpad Left to enable Team Prop");
                 telemetry.addLine("Dpad down to disable all");
                 telemetry.addLine();
                 visionPortal.telemetryAprilTag();
-            } else if (visionPortal.portalState == PortalState.TEAM_PROP) {
+            } else if (visionPortal.portalState == VisionPortalState.TEAM_PROP) {
                 telemetry.addLine("Dpad right to enable AprilTag");
                 telemetry.addLine("Dpad down to disable all");
                 telemetry.addLine();

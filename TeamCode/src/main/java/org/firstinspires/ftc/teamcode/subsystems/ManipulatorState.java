@@ -8,7 +8,6 @@ public enum ManipulatorState {
     BACK_TO_HOME,
     BACK_TO_SAFE,
     H_RETRACTING,
-    H_ROTATE,
     H_LATE_OPEN,
     HOME,
     SD_CLOSING,
@@ -21,5 +20,4 @@ public enum ManipulatorState {
     TH_LIFTING,
     TRUSS_HANG,
     WAITING
-
 }

@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class Vision {
-    public  PortalState portalState = PortalState.NONE;
+    public VisionPortalState portalState = VisionPortalState.NONE;
     public AprilTagProcessor aprilTag;
 
     private LinearOpMode myOpMode;
@@ -46,25 +46,26 @@ public class Vision {
         myVisionPortal.setProcessorEnabled(teamProp, false);
         setManualExposure(8, 255);
         myVisionPortal.setProcessorEnabled(aprilTag, true);
-        portalState = PortalState.APRILTAG;
+        portalState = VisionPortalState.APRILTAG;
     }
 
     public void enableTeamProp() {
         myVisionPortal.setProcessorEnabled(aprilTag, false);
         setAutoExposure();
         myVisionPortal.setProcessorEnabled(teamProp, true);
-        portalState = PortalState.TEAM_PROP;
+        portalState = VisionPortalState.TEAM_PROP;
     }
 
     public void disableAll() {
         myVisionPortal.setProcessorEnabled(teamProp, false);
         myVisionPortal.setProcessorEnabled(aprilTag, false);
-        portalState = PortalState.NONE;
+        portalState = VisionPortalState.NONE;
     }
 
     public TeamPropLocation getTeamPropLocation() {
         return teamProp.getTeamPropLocation();
     }
+    public int getContourCount() { return teamProp.getContourCount();}
 
     /**
      * Add telemetry about AprilTag detections.
@@ -87,9 +88,10 @@ public class Vision {
      * Add telemetry about TeamProp detection.
      */
     public void telemetryTeamProp() {
-        myOpMode.telemetry.addData("Camera State", myVisionPortal.getCameraState());
-        myOpMode.telemetry.addLine(teamProp.getTargetString());
         myOpMode.telemetry.addData("Location", teamProp.getTeamPropLocation());
+        myOpMode.telemetry.addData("Camera State", myVisionPortal.getCameraState());
+        myOpMode.telemetry.addLine("\n");
+        // myOpMode.telemetry.addLine(teamProp.getTargetString());
     }
 
     /**

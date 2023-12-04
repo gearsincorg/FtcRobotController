@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-public enum LED_COLOR {
-    OFF,
+public enum AllianceColor {
     RED,
-    GREEN
+    BLUE
 }

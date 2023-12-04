@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -77,11 +76,6 @@ public class Manipulator {
     private DistanceSensor pixelL;
     private DistanceSensor pixelR;
 
-    private DigitalChannel leftGreenLED;
-    private DigitalChannel leftRedLED;
-    private DigitalChannel rightGreenLED;
-    private DigitalChannel rightRedLED;
-
     private int liftEncoder    = 0;
     private int extendEncoder  = 0;
 
@@ -136,19 +130,6 @@ public class Manipulator {
         clawR = myOpMode.hardwareMap.get(Servo.class, "right_claw");
         pixelL = myOpMode.hardwareMap.get(DistanceSensor.class, "left_pixel");
         pixelR = myOpMode.hardwareMap.get(DistanceSensor.class, "right_pixel");
-
-        leftGreenLED = myOpMode.hardwareMap.get(DigitalChannel.class, "led0");
-        leftRedLED = myOpMode.hardwareMap.get(DigitalChannel.class, "led1");
-        rightGreenLED = myOpMode.hardwareMap.get(DigitalChannel.class, "led2");
-        rightRedLED = myOpMode.hardwareMap.get(DigitalChannel.class, "led3");
-
-        leftRedLED.setMode(DigitalChannel.Mode.OUTPUT);
-        leftGreenLED.setMode(DigitalChannel.Mode.OUTPUT);
-        rightRedLED.setMode(DigitalChannel.Mode.OUTPUT);
-        rightGreenLED.setMode(DigitalChannel.Mode.OUTPUT);
-
-        setLeftLED(LED_COLOR.OFF);
-        setRightLED(LED_COLOR.OFF);
 
         // Do any cleanup in teleop
         if (!Globals.IS_AUTO) {
@@ -460,49 +441,44 @@ public class Manipulator {
 
     public void closeLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_CLOSE);
-        setLeftLED(LED_COLOR.GREEN);
         Globals.LEFT_GRABBER_CLOSED = true;
     }
     public void openLeftGrabber (){
         clawL.setPosition(GRAB_LEFT_OPEN);
-        setLeftLED(LED_COLOR.RED);
         Globals.LEFT_GRABBER_CLOSED = false;
     }
     public void closeRightGrabber (){
         clawR.setPosition(GRAB_RIGHT_CLOSE);
-        setRightLED(LED_COLOR.GREEN);
         Globals.RIGHT_GRABBER_CLOSED = true;
     }
     public void openRightGrabber (){
         clawR.setPosition(GRAB_RIGHT_OPEN);
-        setRightLED(LED_COLOR.RED);
         Globals.RIGHT_GRABBER_CLOSED = false;
     }
     public void openGrabbers (){
         openRightGrabber();
         openLeftGrabber();
     }
+
     public void autoOpenGrabbers (){
         clawL.setPosition(GRAB_LEFT_AUTO);
         clawR.setPosition(GRAB_RIGHT_AUTO);
-        setLeftLED(LED_COLOR.RED);
-        setRightLED(LED_COLOR.RED);
         Globals.LEFT_GRABBER_CLOSED = false;
         Globals.RIGHT_GRABBER_CLOSED = false;
     }
 
     public void wristToHome(){
         setAbsoluteWristAngle(WRIST_HOME_ABS);
-        Globals.WRIST_STATE = WristState.HOME;
+        Globals.WRIST_STATE = ManipulatorWristState.HOME;
     }
 
     public void wristToFrontScore(){
         setRelativeWristAngle(WRIST_SCORE_FRONT_REL);
-        Globals.WRIST_STATE = WristState.FRONT_SCORE;
+        Globals.WRIST_STATE = ManipulatorWristState.FRONT_SCORE;
     }
     public void wristToBackScore(){
         setAbsoluteWristAngle(WRIST_SCORE_BACK_ABS);
-        Globals.WRIST_STATE = WristState.BACK_SCORE;
+        Globals.WRIST_STATE = ManipulatorWristState.BACK_SCORE;
     }
 
     //------------- state machine functions -------------
@@ -560,24 +536,19 @@ public class Manipulator {
                 break;
 
             // -- Home  ----------
-            case H_ROTATE:
-                wristToHome();
-                setState(ManipulatorState.H_RETRACTING);
-                break;
-
             case H_RETRACTING:
                 if (extendLength < SAFE_EXTEND_DISTANCE) {  // was extendInPosition
                     setLiftSetpoint(LIFT_HOME_ANGLE);
-                    smGotoSafeDriving = false;
-                    smGotoFrontScore  = false;
-                    smGotoBackScore  = false;
-                    smGotoHome = false;
                     setState(ManipulatorState.H_LATE_OPEN);
                 }
                 break;
 
             case H_LATE_OPEN:
                 // If either gripper is closed, wait for a sc to open them.
+                smGotoSafeDriving = false;
+                smGotoFrontScore  = false;
+                smGotoBackScore  = false;
+                smGotoHome = false;
                 if ((!Globals.LEFT_GRABBER_CLOSED && !Globals.RIGHT_GRABBER_CLOSED) || stateTimer.time() > 1.0 ) {
                     openGrabbers();
                     setState(ManipulatorState.HOME);
@@ -604,6 +575,7 @@ public class Manipulator {
                     } else {
                         setLiftSetpoint(LIFT_FRONT_ANGLE);
                     }
+                    wristToFrontScore();
                     setState(ManipulatorState.FS_LIFTING);
                 } else if (smGotoBackScore) {
                     setLiftSetpoint(LIFT_BACK_ANGLE);
@@ -642,21 +614,17 @@ public class Manipulator {
             // -- Front Score  ----------
             case FS_LIFTING:
                 if (liftInPosition){
-                    wristToFrontScore();
-                    setStateWithDelay(ManipulatorState.FS_EXTEND, 0.5);
+                    setExtendSetpoint(EXTEND_FRONT_DISTANCE);
+                    setState(ManipulatorState.FRONT_SCORE);
                 }
-                break;
-
-            case FS_EXTEND:
-                setExtendSetpoint(EXTEND_FRONT_DISTANCE);
-                setState(ManipulatorState.FRONT_SCORE);
                 break;
 
             case FRONT_SCORE:
                 smGotoFrontScore = false;
                 if (smGotoHome) {
+                    wristToHome();
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                    setStateWithDelay(ManipulatorState.H_ROTATE, 0.5);
+                    setState(ManipulatorState.H_RETRACTING);
                 } else if (smGotoSafeDriving) {
                     wristToBackScore();
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
@@ -700,9 +668,10 @@ public class Manipulator {
                 break;
 
             case BACK_TO_HOME:
-                if (liftInPosition) {
-                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                    setState(ManipulatorState.H_ROTATE);
+                if (extendLength < SAFE_EXTEND_DISTANCE) {
+                    wristToHome();
+                    setLiftSetpoint(LIFT_HOME_ANGLE);
+                    setState(ManipulatorState.H_LATE_OPEN);
                 }
                 break;
 
@@ -753,41 +722,4 @@ public class Manipulator {
         stateTimer.reset();
     }
 
-    public void setLeftLED(LED_COLOR color) {
-        switch (color) {
-            case OFF:
-                leftGreenLED.setState(false);
-                leftRedLED.setState(false);
-                break;
-
-            case RED:
-                leftGreenLED.setState(false);
-                leftRedLED.setState(true);
-                break;
-
-            case GREEN:
-                leftGreenLED.setState(true);
-                leftRedLED.setState(false);
-                break;
-        }
-    }
-
-    public void setRightLED(LED_COLOR color) {
-        switch (color) {
-            case OFF:
-                rightGreenLED.setState(false);
-                rightRedLED.setState(false);
-                break;
-
-            case RED:
-                rightGreenLED.setState(false);
-                rightRedLED.setState(true);
-                break;
-
-            case GREEN:
-                rightGreenLED.setState(true);
-                rightRedLED.setState(false);
-                break;
-        }
-    }
 }

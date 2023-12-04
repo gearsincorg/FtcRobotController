@@ -4,17 +4,19 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.subsystems.Alert;
+import org.firstinspires.ftc.teamcode.subsystems.AlertState;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Drone;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
-import org.firstinspires.ftc.teamcode.subsystems.LED_COLOR;
 import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
-import org.firstinspires.ftc.teamcode.subsystems.Side;
+import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.Vision;
-import org.firstinspires.ftc.teamcode.subsystems.WristState;
+import org.firstinspires.ftc.teamcode.subsystems.ManipulatorWristState;
 
 /*
  * This OpMode used the IMU gyro to stabilize the heading when the operator is nor requesting a turn.
@@ -30,63 +32,86 @@ public class GFORCE_Teleop extends LinearOpMode
     final double SAFE_YAW_SPEED     =  0.6 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double HEADING_HOLD_TIME  =  5.0 ; // How long to hold heading once all driver input stops. (Avoids effects of Gyro Drift)
 
-    private ElapsedTime stopTime   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
+    private ElapsedTime rumbleTime   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
     // Driving parameters
     boolean autoHeading = false;
     boolean liftingAction = false;
     boolean lastLiftingAction = false;
-    double  noDriftHeading = 0;
+    boolean hasRumbled  = false;
 
     // get an instance of the "Drive" class.
-    Robot robot = Robot.getInstance();
-    Manipulator arm = new Manipulator(this);
-    Drone drone = new Drone(this);
-    Vision vision = new Vision(this);
-    AutoConfig autoConfig  = new AutoConfig(this);
+    Robot       robot   = Robot.getInstance();
+    Manipulator arm     = new Manipulator(this);
+    Drone       drone   = new Drone(this);
+    Vision      vision  = new Vision(this);
+    Alert       alert   = new Alert(this);
+    AutoConfig  autoConfig  = new AutoConfig(this);
 
+    Gamepad.RumbleEffect customRumbleEffect;    // Use to build a custom rumble sequence.
 
     @Override public void runOpMode()
     {
         Globals.IS_AUTO = false;
 
-        // Initialize the drive hardware & Turn on telemetry
+        // Initialize the robot's hardware & Turn on telemetry
         robot.initialize(this, arm, vision,true);
         arm.initialize(true);
-        drone.initialize(true);
-        robot.resetOdometry();
-
         vision.initialize(true);
-        vision.enableAprilTag();
-
+        drone.initialize(true);
+        alert.initialize(false);
         autoConfig.initialize();
+
         if (autoConfig.autoOptions.redAlliance )
-            Globals.ALLIANCE = Side.RED;
+            Globals.ALLIANCE_COLOR = AllianceColor.RED;
         else
-            Globals.ALLIANCE = Side.BLUE;
+            Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
 
         if (!Globals.ARM_HAS_HOMED) {
             arm.homeArm();
         }
 
+        alert.setState(AlertState.TELEOP_GRABBER);
+
+        vision.enableAprilTag();
+        robot.resetOdometry();
+
         // reset wrist if in unknown state
-        if (Globals.WRIST_STATE == WristState.UNKNOWN) {
+        if (Globals.WRIST_STATE == ManipulatorWristState.UNKNOWN) {
             arm.wristToHome();
         }
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to drive");
         telemetry.update();
+
+        // Example 1. a)   start by creating a three-pulse rumble sequence: right, LEFT, LEFT
+        customRumbleEffect = new Gamepad.RumbleEffect.Builder()
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .addStep(1.0, 1.0, 500)  //  Rumble right motor 100% for 500 mSec
+                .addStep(0.0, 0.0, 1500) //  Pause for 1.5 mSec
+                .build();
+
+        // Display Sensors while waiting...
         while (opModeInInit()) {
-            arm.runManualGrippers();
             robot.readSensors();
             arm.readSensors();
+            arm.runManualGrippers();
+            alert.update();
+
             telemetry.update();
         }
 
+        // prep for Teleop.
         arm.setLiftSetpoint(0);
-
-        // Reset heading control loop to lock in current heading
+        rumbleTime.reset();
         robot.yawController.reset();
 
         arm.setRangeEnable(true);
@@ -96,8 +121,17 @@ public class GFORCE_Teleop extends LinearOpMode
             robot.readSensors();
             arm.runArmControl();
             arm.manualArmControl();
+            alert.update();
 
             vision.telemetryAprilTag();
+
+            // check for rumble
+            if (!hasRumbled && (rumbleTime.seconds() > 110))  {
+                telemetry.addLine("=== RUMBLE ===");
+                gamepad1.runRumbleEffect(customRumbleEffect);
+                gamepad2.runRumbleEffect(customRumbleEffect);
+                hasRumbled = true;
+            }
 
             //  ==  CoPilot Controls  ===================================
 
@@ -109,7 +143,7 @@ public class GFORCE_Teleop extends LinearOpMode
                 arm.setRangeEnable(false);
                 arm.gotoSafeDriving();
             } else if (gamepad2.b) {
-                arm.setRangeEnable(false);
+                arm.setRangeEnable(true);
                 arm.gotoFrontScore();
             } else if (gamepad2.y) {
                 arm.setRangeEnable(false);
@@ -225,9 +259,7 @@ public class GFORCE_Teleop extends LinearOpMode
         }
 
         Globals.ARM_HAS_HOMED = false;
-        Globals.WRIST_STATE = WristState.UNKNOWN;
+        Globals.WRIST_STATE = ManipulatorWristState.UNKNOWN;
         arm.openGrabbers();
-        arm.setLeftLED(LED_COLOR.OFF);
-        arm.setRightLED(LED_COLOR.OFF);
     }
 }

@@ -253,7 +253,7 @@ public class Robot {
     public void strafe(double distanceInches, double power, double holdTime) {
 
         // flip the Strafe direction if we are on red side
-        if (Globals.ALLIANCE == Side.RED) {
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED) {
             distanceInches *= -1.0;
         }
 
@@ -292,7 +292,7 @@ public class Robot {
     public void turnTo(double headingDeg, double power, double holdTime) {
 
         // flip the turn direction if we are on red side
-        if (Globals.ALLIANCE == Side.RED) {
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED) {
             headingDeg *= -1.0;
         }
 
@@ -320,7 +320,7 @@ public class Robot {
     public void driveToTag(int desiredTagID) {
 
         // change the Tag ID if we are on red side
-        if (Globals.ALLIANCE == Side.RED) {
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED) {
             desiredTagID = 7 - desiredTagID;  // change 1,2,3 to 6,5,4
         }
 

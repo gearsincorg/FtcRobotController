@@ -5,9 +5,9 @@ public class Globals {
     /**
      * Match constants.
      */
-    public static Side ALLIANCE = Side.RED;
-    public static Side START_POSITION = Side.BACK;
+    public static AllianceColor ALLIANCE_COLOR = AllianceColor.RED;
     public static boolean IS_AUTO = false;
+    public static boolean PURPLE_PIXEL_ON_RIGHT = false;
 
     /**
      * Robot state constants.
@@ -17,7 +17,7 @@ public class Globals {
     public static boolean RIGHT_GRABBER_CLOSED = false;
 
     public static ManipulatorState ARM_STATE = ManipulatorState.UNKNOWN;
-    public static WristState WRIST_STATE = WristState.UNKNOWN;
+    public static ManipulatorWristState WRIST_STATE = ManipulatorWristState.UNKNOWN;
 
     public static double LAST_HEADING = 0;
 }

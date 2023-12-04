@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-public enum WristState {
+public enum ManipulatorWristState {
     UNKNOWN,
     HOME,
     FRONT_SCORE,

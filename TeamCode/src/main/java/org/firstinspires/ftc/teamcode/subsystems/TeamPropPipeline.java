@@ -41,7 +41,7 @@ public class TeamPropPipeline implements VisionProcessor {
 	private boolean isBlue = false;
 	private Paint linePaint;
 	private final Mat hierarchy = new Mat();
-	private MatOfPoint largestContour;
+	private int countoursFound = 0;
 
 	private String targetString = new String();
 
@@ -75,10 +75,12 @@ public class TeamPropPipeline implements VisionProcessor {
 
 		List<Rect> detectedRects = new ArrayList<>();
 
+		int	contourCount = 0;
 		double maxArea = 0;
 		Rect maxBox = new Rect();
 
 		for (MatOfPoint contour : contours) {
+			contourCount++;
 			if (Imgproc.contourArea(contour) > MIN_AREA) {
 					Rect box = Imgproc.boundingRect(contour);
 					detectedRects.add(box);
@@ -103,6 +105,9 @@ public class TeamPropPipeline implements VisionProcessor {
 				teamPropLocation = TeamPropLocation.UNKNOWN;
 			}
 		}
+
+		countoursFound = contourCount;
+
 		targetString = detectedRects.toString();
 		return detectedRects;
 	}
@@ -133,6 +138,10 @@ public class TeamPropPipeline implements VisionProcessor {
 
 	public String getTargetString() {
 		return targetString;
+	}
+
+	public int	getContourCount() {
+		return countoursFound;
 	}
 
 	public TeamPropLocation getTeamPropLocation() {

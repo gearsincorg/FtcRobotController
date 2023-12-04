@@ -203,6 +203,5 @@ public class AutoConfig
       myOpMode.telemetry.addData((currentMenuIndex == 6) ? "6 > PARK"   : "6  Park", autoOptions.parkCenter ? "In Center" : "By Wall");
       myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > SPARE 1"   : "7  Spare 1", autoOptions.spare1 ? "YES" : "no");
       myOpMode.telemetry.addData((currentMenuIndex == 8) ? "8 > SPARE 1"   : "8  Spare 2", autoOptions.spare2 ? "YES" : "no");
-      myOpMode.telemetry.update();
   }
 }
