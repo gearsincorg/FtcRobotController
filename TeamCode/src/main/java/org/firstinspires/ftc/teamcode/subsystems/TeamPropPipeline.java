@@ -22,19 +22,14 @@ public class TeamPropPipeline implements VisionProcessor {
 	/**
 	 * Uses HSVs for the scalars
 	 */
-	private final Scalar redLowerHSV = new Scalar(0,   180, 110); // the lower hsv threshold for your detection
-	private final Scalar redUpperHSV = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
-
-	private final Scalar blueLowerHSV = new Scalar(50,  90,  90); // the lower hsv threshold for your detection
-	private final Scalar blueUpperHSV = new Scalar(120, 160,160); // the upper hsv threshold for your detection
+	private final Scalar lowerHSV = new Scalar(0,   180,   0); // the lower hsv threshold for your detection
+	private final Scalar upperHSV = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
 
 	private final double MIN_AREA   = 1000; // the minimum area for the detection to consider for your prop
 	private final double LEFT_LINE  = 213 ;
 	private final double RIGHT_LINE = 426 ;
 
 	// Private Members
-	private Scalar lowerHSV;
-	private Scalar upperHSV;
 	private boolean allianceIsBlue = false;
 	private TeamPropLocation teamPropLocation;
 
@@ -53,8 +48,6 @@ public class TeamPropPipeline implements VisionProcessor {
 		linePaint.setStrokeWidth(10); // or this
 		linePaint.setStrokeCap(Paint.Cap.ROUND);
 		linePaint.setStrokeJoin(Paint.Join.ROUND);
-
-		setAllianceColor(false);
 	}
 
 	@Override
@@ -81,14 +74,17 @@ public class TeamPropPipeline implements VisionProcessor {
 
 		for (MatOfPoint contour : contours) {
 			contourCount++;
-			if (Imgproc.contourArea(contour) > MIN_AREA) {
-					Rect box = Imgproc.boundingRect(contour);
-					detectedRects.add(box);
+			Rect box = Imgproc.boundingRect(contour);
 
-					if (box.area() > maxArea) {
-						maxArea = box.area();
-						maxBox = box;
-					}
+			// Only process reasonable shapes.
+			if ((box.area() > MIN_AREA) && (box.width < 100) && (box.height < 100)) {
+				detectedRects.add(box);
+
+				// choose biggest box
+				if (box.area() > maxArea) {
+					maxArea = box.area();
+					maxBox = box;
+				}
 			}
 
 			// find out where the biggest target is.
@@ -146,18 +142,6 @@ public class TeamPropPipeline implements VisionProcessor {
 
 	public TeamPropLocation getTeamPropLocation() {
 		return teamPropLocation;
-	}
-
-	public void setAllianceColor(boolean blueAlliance) {
-		allianceIsBlue = blueAlliance;
-
-		if (allianceIsBlue) {
-			lowerHSV = blueLowerHSV;
-			upperHSV = blueUpperHSV;
-		} else {
-			lowerHSV = redLowerHSV;
-			upperHSV = redUpperHSV;
-		}
 	}
 
 	private android.graphics.Rect makeGraphicsRect(Rect rect, float scaleBmpPxToCanvasPx) {

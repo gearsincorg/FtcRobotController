@@ -53,8 +53,7 @@ public class DoubleVision extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-        visionPortal.initialize(true);
-        visionPortal.setAllianceColor(false);
+        visionPortal.initialize(false);
 
         while (!isStopRequested()) {
 
@@ -81,8 +80,6 @@ public class DoubleVision extends LinearOpMode {
                 visionPortal.enableAprilTag();
             } else if (gamepad1.dpad_down) {
                 visionPortal.disableAll();
-            } else if (gamepad1.dpad_up) {
-                visionPortal.setAllianceColor(true);
             }
 
             sleep(20);

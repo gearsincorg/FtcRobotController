@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
@@ -20,12 +19,10 @@ public class Vision {
     public AprilTagProcessor aprilTag;
 
     private LinearOpMode myOpMode;
-    private boolean showTelemetry = false;
-    private ElapsedTime visionTimer = new ElapsedTime();
-
     private TeamPropPipeline teamProp;
-
     private VisionPortal myVisionPortal;
+
+    private boolean showTelemetry;
 
     public Vision (LinearOpMode opmode) {
         myOpMode = opmode;
@@ -36,10 +33,6 @@ public class Vision {
         myVisionPortal.setProcessorEnabled(aprilTag, false);
         myVisionPortal.setProcessorEnabled(teamProp, false);
         this.showTelemetry = showTelemetry;
-    }
-
-    public void setAllianceColor(boolean isBlue) {
-        teamProp.setAllianceColor(isBlue);
     }
 
     public void enableAprilTag() {
@@ -90,8 +83,7 @@ public class Vision {
     public void telemetryTeamProp() {
         myOpMode.telemetry.addData("Location", teamProp.getTeamPropLocation());
         myOpMode.telemetry.addData("Camera State", myVisionPortal.getCameraState());
-        myOpMode.telemetry.addLine("\n");
-        // myOpMode.telemetry.addLine(teamProp.getTargetString());
+        myOpMode.telemetry.addLine(teamProp.getTargetString());
     }
 
     /**
@@ -109,7 +101,6 @@ public class Vision {
         // Team Prop Configuration
         // -----------------------------------------------------------------------------------------
         teamProp = new TeamPropPipeline();
-        teamProp.setAllianceColor(false);
 
         // -----------------------------------------------------------------------------------------
         // Camera Configuration
@@ -120,7 +111,6 @@ public class Vision {
                 .setCameraResolution(new Size(640, 360))
                 .build();
     }
-
 
     /*
      Manually set the camera gain and exposure.
