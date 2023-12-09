@@ -145,18 +145,18 @@ public class GFORCE_Teleop extends LinearOpMode
 
             // Attempt to reset the gyro if robot is under the truss and sees the small apriltag within 5 degrees.
             // Enable with driver right joystick click.
-            if (gamepad1.right_stick_button) {
+            if (gamepad1.share) {
                 stackTarget = vision.findStack();
                 if ( stackTarget.targetFound &&
-                    (stackTarget.rangeInch > 54) && (stackTarget.rangeInch < 60) &&
+                    (stackTarget.rangeInch > 50) && (stackTarget.rangeInch < 58) &&
                     (Math.abs(Math.abs(robot.heading) - 90) < 15) &&
                     (Math.abs(stackTarget.bearingDeg) < 15) )  {
                     // reset the heading assuming that the target is actually on the +/- 90 axis)
                     // Apply the new heading with a filter
                     double headingError = -stackTarget.bearingDeg ;
                     double filtHeading = robot.heading + (headingError * GYRO_ADJUST_TC);
-                    telemetry.addData("GYRO DRIFT", "H:E:F %4.1f : %4.2f : %4.1f");
-                    robot.setHeading(robot.normalizeHeading(filtHeading));
+                    telemetry.addData("GYRO DRIFT", "H:E:F %4.1f : %4.2f : %4.1f", robot.heading, headingError, filtHeading);
+                    robot.correctHeading(robot.normalizeHeading(filtHeading));
                  }
             }
 
@@ -216,27 +216,28 @@ public class GFORCE_Teleop extends LinearOpMode
             // Start and stop reser using the touchpad button.
             // remember any button presses during the reset and use this
             // as the target for the reset when the touchpad is released.
-            thisGyroReset = gamepad1.touchpad;
-            if (thisGyroReset){
-                // check for new press
-                if (!lastGyroReset) {
-                    gyroHeadingReset = 0;
-                }
 
+            if (gamepad1.touchpad){
+                // set heading
                 if (gamepad1.y) {
-                    gyroHeadingReset = 0;
+                   robot.setHeading(0);
                 } else if (gamepad1.b) {
-                    gyroHeadingReset = -90;
+                    robot.setHeading(-90);
                 } else if (gamepad1.a) {
-                    gyroHeadingReset = 180;
+                    robot.setHeading(180);
                 } else if (gamepad1.x) {
-                    gyroHeadingReset = 90;
+                    robot.setHeading(90);
                 }
             } else {
-                // check for new release
-                if (lastGyroReset) {
-                    robot.setHeading(gyroHeadingReset);
-                    robot.resetOdometry();
+                // set heading set-point
+                if (gamepad1.triangle){
+                    robot.yawController.reset(0);
+                } else if (gamepad1.square){
+                    robot.yawController.reset(90);
+                } else if(gamepad1.cross){
+                    robot.yawController.reset(180);
+                } else if(gamepad1.circle){
+                    robot.yawController.reset(270);
                 }
             }
 
@@ -271,16 +272,7 @@ public class GFORCE_Teleop extends LinearOpMode
                 drive = -SAFE_STRAFE_SPEED * 0.8;
             }
 
-            // set heading set-point
-            if (gamepad1.triangle){
-                robot.yawController.reset(0);
-            } else if (gamepad1.square){
-                robot.yawController.reset(90);
-            } else if(gamepad1.cross){
-                robot.yawController.reset(180);
-            } else if(gamepad1.circle){
-                robot.yawController.reset(270);
-            }
+
 
             // Apply field centric driving
             double fieldAxial  = (drive * Math.cos(Math.toRadians(-robot.getHeading()))) -

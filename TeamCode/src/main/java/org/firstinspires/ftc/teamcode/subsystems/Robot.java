@@ -443,9 +443,13 @@ public class Robot {
     }
 
     public void setHeading(double newHeading) {
+        correctHeading(newHeading);
+        yawController.reset(newHeading);
+    }
+
+    public void correctHeading(double newHeading) {
         readSensors();
         headingOffset = rawHeading - newHeading;
-        yawController.reset(newHeading);
         heading = newHeading;
         Globals.LAST_HEADING = heading ;
     }
