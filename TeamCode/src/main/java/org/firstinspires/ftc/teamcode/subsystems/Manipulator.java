@@ -527,7 +527,8 @@ public class Manipulator {
     }
 
     public boolean readyToHang() {
-        return (currentState == ManipulatorState.POWER_LIFTING);
+
+        return ((currentState == ManipulatorState.POWER_LIFTING) || (currentState == ManipulatorState.PL_EXTENDING));
     }
 
 

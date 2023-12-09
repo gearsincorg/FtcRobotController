@@ -9,14 +9,15 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.Alert;
 import org.firstinspires.ftc.teamcode.subsystems.AlertState;
+import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Drone;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.Manipulator;
-import org.firstinspires.ftc.teamcode.subsystems.Robot;
-import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
-import org.firstinspires.ftc.teamcode.subsystems.Vision;
 import org.firstinspires.ftc.teamcode.subsystems.ManipulatorWristState;
+import org.firstinspires.ftc.teamcode.subsystems.Robot;
+import org.firstinspires.ftc.teamcode.subsystems.Target;
+import org.firstinspires.ftc.teamcode.subsystems.Vision;
 
 /*
  * This OpMode used the IMU gyro to stabilize the heading when the operator is nor requesting a turn.
@@ -30,15 +31,19 @@ public class GFORCE_Teleop extends LinearOpMode
     final double SAFE_DRIVE_SPEED   =  0.7 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_STRAFE_SPEED  =  0.7 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_YAW_SPEED     =  0.6 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double HEADING_HOLD_TIME  =  5.0 ; // How long to hold heading once all driver input stops. (Avoids effects of Gyro Drift)
+    final double GYRO_ADJUST_TC     =  0.5 ; // time constant used to slew heading to apriltag derived value
 
     private ElapsedTime rumbleTime   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
     // Driving parameters
     boolean autoHeading = false;
-    boolean liftingAction = false;
-    boolean lastLiftingAction = false;
     boolean hasRumbled  = false;
+
+    boolean thisGyroReset = false;
+    boolean lastGyroReset = false;
+    double gyroHeadingReset = 0;
+
+    Target stackTarget = new Target();
 
     // get an instance of the "Drive" class.
     Robot       robot   = Robot.getInstance();
@@ -138,7 +143,22 @@ public class GFORCE_Teleop extends LinearOpMode
             arm.manualArmControl();
             alert.update();
 
-            vision.telemetryAprilTag();
+            // Attempt to reset the gyro if robot is under the truss and sees the small apriltag within 5 degrees.
+            // Enable with driver right joystick click.
+            if (gamepad1.right_stick_button) {
+                stackTarget = vision.findStack();
+                if ( stackTarget.targetFound &&
+                    (stackTarget.rangeInch > 54) && (stackTarget.rangeInch < 60) &&
+                    (Math.abs(Math.abs(robot.heading) - 90) < 15) &&
+                    (Math.abs(stackTarget.bearingDeg) < 15) )  {
+                    // reset the heading assuming that the target is actually on the +/- 90 axis)
+                    // Apply the new heading with a filter
+                    double headingError = -stackTarget.bearingDeg ;
+                    double filtHeading = robot.heading + (headingError * GYRO_ADJUST_TC);
+                    telemetry.addData("GYRO DRIFT", "H:E:F %4.1f : %4.2f : %4.1f");
+                    robot.setHeading(robot.normalizeHeading(filtHeading));
+                 }
+            }
 
             // check for rumble
             if (!hasRumbled && (rumbleTime.seconds() > 80))  {
@@ -182,8 +202,10 @@ public class GFORCE_Teleop extends LinearOpMode
             if (arm.readyToHang()) {
                 alert.setState(AlertState.READY_TO_LIFT);
                 if ((gamepad2.left_trigger > 0.5) && (gamepad2.right_trigger > 0.5) && (arm.liftAngle > 0.0)) {
+                    arm.setExtendSetpoint(Manipulator.EXTEND_LIFT_LENGTH - 0.5);
                     arm.powerLift();
                 } else {
+                    arm.setExtendSetpoint(Manipulator.EXTEND_LIFT_LENGTH);
                     arm.powerHold();
                 }
             }
@@ -191,10 +213,34 @@ public class GFORCE_Teleop extends LinearOpMode
             //  ==  Pilot Controls  =======================================
 
             // Allow driver to reset the gyro
-            if (gamepad1.touchpad){
-                robot.resetHeading();
-                robot.resetOdometry();
+            // Start and stop reser using the touchpad button.
+            // remember any button presses during the reset and use this
+            // as the target for the reset when the touchpad is released.
+            thisGyroReset = gamepad1.touchpad;
+            if (thisGyroReset){
+                // check for new press
+                if (!lastGyroReset) {
+                    gyroHeadingReset = 0;
+                }
+
+                if (gamepad1.y) {
+                    gyroHeadingReset = 0;
+                } else if (gamepad1.b) {
+                    gyroHeadingReset = -90;
+                } else if (gamepad1.a) {
+                    gyroHeadingReset = 180;
+                } else if (gamepad1.x) {
+                    gyroHeadingReset = 90;
+                }
+            } else {
+                // check for new release
+                if (lastGyroReset) {
+                    robot.setHeading(gyroHeadingReset);
+                    robot.resetOdometry();
+                }
             }
+
+            lastGyroReset = thisGyroReset;
 
             if (gamepad1.left_trigger > 0.25) {
                 arm.openLeftGrabber();
