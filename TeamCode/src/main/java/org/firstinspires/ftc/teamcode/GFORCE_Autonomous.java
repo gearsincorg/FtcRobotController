@@ -49,7 +49,7 @@ public class GFORCE_Autonomous extends LinearOpMode
         arm.initialize(false);
         arm.setRangeEnable(false);
         arm.homeArm();
-        arm.wristToPickupPosition();  //  FIX THIS... should be Auto Pickup position for grabbers.
+        arm.wristToAutonomousPosition();
 
         // Turn on OpenCV Vision processing.
         vision.enableTeamProp();
@@ -142,12 +142,13 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.runArmControl(1);
                         robot.drive(-4, 0.5, 0);
                         arm.gotoHome();
+                        robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(-30, 0.45, 0.0);
+                            robot.strafe(30, 0.45, 0.0);
                         } else {
-                            robot.strafe(18, 0.45, 0.0);
+                            robot.strafe(-18, 0.45, 0.0);
                         }
-                        robot.drive(4, 0.45, 0);
+                        robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
                     }
@@ -175,12 +176,13 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.runArmControl(1);
                         robot.drive(-4, 0.5, 0);
                         arm.gotoHome();
+                        robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(-24, 0.45, 0.0);
-                        } else {
                             robot.strafe(24, 0.45, 0.0);
+                        } else {
+                            robot.strafe(-24, 0.45, 0.0);
                         }
-                        robot.drive(4, 0.45, 0);
+                        robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
                     }
@@ -210,12 +212,13 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.runArmControl(1);
                         robot.drive(-4, 0.5, 0);
                         arm.gotoHome();
+                        robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(-18, 0.45, 0.0);
+                            robot.strafe(18, 0.45, 0.0);
                         } else {
-                            robot.strafe(30, 0.45, 0.0);
+                            robot.strafe(-30, 0.45, 0.0);
                         }
-                        robot.drive(4, 0.45, 0);
+                        robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
                     }
@@ -248,12 +251,13 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.runArmControl(1);
                         robot.drive(-4, 0.5, 0);
                         arm.gotoHome();
+                        robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(-30, 0.45, 0.0);
+                            robot.strafe(30, 0.45, 0.0);
                         } else {
-                            robot.strafe(18, 0.45, 0.0);
+                            robot.strafe(-18, 0.45, 0.0);
                         }
-                        robot.drive(4, 0.45, 0);
+                        robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
                     }
@@ -278,12 +282,13 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.runArmControl(1);
                         robot.drive(-4, 0.5, 0);
                         arm.gotoHome();
+                        robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(-24, 0.45, 0.0);
-                        } else {
                             robot.strafe(24, 0.45, 0.0);
+                        } else {
+                            robot.strafe(-24, 0.45, 0.0);
                         }
-                        robot.drive(4, 0.45, 0);
+                        robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
                     }
@@ -312,12 +317,13 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.runArmControl(1);
                         robot.drive(-4, 0.5, 0);
                         arm.gotoHome();
+                        robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(-18, 0.45, 0.0);
+                            robot.strafe(18, 0.45, 0.0);
                         } else {
-                            robot.strafe(30, 0.45, 0.0);
+                            robot.strafe(-30, 0.45, 0.0);
                         }
-                        robot.drive(4, 0.45, 0);
+                        robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
                     }

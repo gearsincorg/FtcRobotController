@@ -52,11 +52,11 @@ public class Manipulator {
     private static final double WRIST_SCORE_FRONT_REL =  60;
     private static final double WRIST_SCORE_BACK_ABS  = 180;
 
-    private static final double GRAB_LEFT_AUTO   = 0.55;
+    private static final double GRAB_LEFT_AUTO   = 0.60;
     private static final double GRAB_LEFT_OPEN   = 0.50;
     private  static final double GRAB_LEFT_CLOSE = 0.25;
 
-    private static final double GRAB_RIGHT_AUTO  = 0.45;
+    private static final double GRAB_RIGHT_AUTO  = 0.40;
     private static final double GRAB_RIGHT_OPEN  = 0.50;
     private static final double GRAB_RIGHT_CLOSE = 0.73;
 
@@ -429,6 +429,10 @@ public class Manipulator {
         wristToHome();
         openLeftGrabber();
         openRightGrabber();
+    }
+    public void wristToAutonomousPosition(){
+        wristToHome();
+        autoOpenGrabbers();
     }
 
     public void closeLeftGrabber (){
