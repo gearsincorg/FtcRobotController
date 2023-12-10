@@ -20,12 +20,10 @@ import org.firstinspires.ftc.teamcode.subsystems.Target;
 import org.firstinspires.ftc.teamcode.subsystems.Vision;
 
 /*
- * This OpMode used the IMU gyro to stabilize the heading when the operator is nor requesting a turn.
- * An external "Robot" class is used to manage all motor/sensor interfaces, and to assist driving functions.
+ * This is the Teleop OpMode for G-FORCE's Center Stage robot
  */
 
-
-@TeleOp(name="G-FORCE Teleop", group = "AAA")
+@TeleOp(name="G-FORCE TELEOP", group = "AAA")
 public class GFORCE_Teleop extends LinearOpMode
 {
     final double SAFE_DRIVE_SPEED   =  0.7 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0

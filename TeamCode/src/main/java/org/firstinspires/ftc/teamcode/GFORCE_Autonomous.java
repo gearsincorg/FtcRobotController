@@ -17,11 +17,10 @@ import org.firstinspires.ftc.teamcode.subsystems.TeamPropLocation;
 import org.firstinspires.ftc.teamcode.subsystems.Vision;
 
 /*
- * This OpMode illustrates an autonomous opmode using simple Odometry
- * All robot functions are performed by an external Drive class that manages all hardware interactions.
+ * This is the Autonomous OpMode for G-FORCE's Center Stage robot
  */
 
-@Autonomous(name="G-FORCE Autonomous", group = "AAA", preselectTeleOp="G-FORCE TELEOP")
+@Autonomous(name="G-FORCE AUTONOMOUS", group = "AAA", preselectTeleOp="G-FORCE TELEOP")
 public class GFORCE_Autonomous extends LinearOpMode
 {
     // get an instance of the "Robot" class, then instanciate all other subsystems
