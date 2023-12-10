@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 public class Drone {
 
@@ -35,10 +36,6 @@ public class Drone {
         this.showTelemetry = showTelemetry;
     }
 
-    public void runLauncher( ){
-        launcher.setPower(0.6);
-    }
-
     public void stopLauncher( ){
         fire.setPosition(DRONE_READY);
         launcher.setPower(0);
@@ -46,5 +43,15 @@ public class Drone {
 
     public void fireDrone (){
         fire.setPosition(DRONE_FIRE);
+    }
+
+    public void setDroneSpeed ( double speedCPS ){
+        VoltageSensor battery = myOpMode.hardwareMap.voltageSensor.get("Control Hub");
+        double voltage= battery.getVoltage();
+
+        double motorPower = ((speedCPS / voltage) * 0.0062) + 0.0195;
+
+        launcher.setPower(motorPower);
+
     }
 }

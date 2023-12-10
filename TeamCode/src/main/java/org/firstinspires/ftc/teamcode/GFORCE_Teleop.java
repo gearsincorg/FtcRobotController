@@ -32,6 +32,7 @@ public class GFORCE_Teleop extends LinearOpMode
     final double SAFE_STRAFE_SPEED  =  0.7 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_YAW_SPEED     =  0.6 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double GYRO_ADJUST_TC     =  0.5 ; // time constant used to slew heading to apriltag derived value
+    final double LAUNCHER_SPEED = 1200 ; //
 
     private ElapsedTime rumbleTime   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
@@ -187,7 +188,7 @@ public class GFORCE_Teleop extends LinearOpMode
 
             //controls for our drone laucher
             if (gamepad2.dpad_up){
-                drone.runLauncher();
+                drone.setDroneSpeed(LAUNCHER_SPEED);
             } else if (gamepad2.dpad_left || gamepad2.dpad_right) {
                 drone.fireDrone();
             } else if (gamepad2.dpad_down) {

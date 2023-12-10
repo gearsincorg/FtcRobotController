@@ -18,7 +18,7 @@ public class Manipulator {
     public static final double LIFT_HOME_ANGLE = 0.0;
     public static final double LIFT_AUTO_ANGLE = 22.0;
     public static final double LIFT_FRONT_ANGLE = 18.0;
-    public static final double LIFT_HANG_ANGLE  = 85.0;
+    public static final double LIFT_HANG_ANGLE  = 80.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
     public static final double LIFT_BACK_SAFE_ANGLE = 10.0;
 
@@ -31,7 +31,7 @@ public class Manipulator {
     public static final double EXTEND_AUTO_DISTANCE = 7.0;
     public static final double EXTEND_FRONT_DISTANCE = 7.0;
     public static final double EXTEND_BACK_DISTANCE = 6.0;
-    public static final double EXTEND_LIFT_LENGTH = 19.0;
+    public static final double EXTEND_LIFT_LENGTH = 19.2;
     public static final double EXTEND_MIN_LENGTH = 0.0;
     public static final double EXTEND_MAX_LENGTH = 19.5;
     public static final double SAFE_EXTEND_DISTANCE = 5.0;
@@ -262,17 +262,13 @@ public class Manipulator {
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         if (liftAngle < 20) {   // holding vertical
             setLiftPower(-0.20);
-        } else if (liftAngle < (LIFT_HANG_ANGLE - 3)) {
-            setLiftPower(0.10);
-        } else if (liftAngle > (LIFT_HANG_ANGLE + 3)) {
-            setLiftPower(-0.10);
+        } else if (liftAngle < (LIFT_HANG_ANGLE - 2)) {
+            setLiftPower(0.20);
+        } else if (liftAngle > (LIFT_HANG_ANGLE + 2 )) {
+            setLiftPower(-0.20);
         } else {
             setLiftPower(0);
         }
-    }
-
-    public boolean weArePowerLifting() {
-        return powerLiftingIsActive;
     }
 
     /**
