@@ -46,7 +46,7 @@ public class Robot {
 
     // Adjust these numbers to suit your robot.
     private final double V_DESIRED_DISTANCE         = 7.0;     //  this is how close the camera should get to the target (inches)
-    private final double V_DRIVE_TOLERANCE          = 0.4;
+    private final double V_DRIVE_TOLERANCE          = 0.5;
 
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.

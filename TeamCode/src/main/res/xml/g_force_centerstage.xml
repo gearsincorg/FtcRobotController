@@ -16,10 +16,10 @@
             <goBILDA5201SeriesMotor name="rightfront_drive" port="1"/>
             <goBILDA5201SeriesMotor name="leftback_drive" port="2"/>
             <goBILDA5201SeriesMotor name="leftfront_drive" port="3"/>
-            <Servo name="right_claw" port="3"/>
-            <Servo name="left_claw" port="4"/>
+            <Servo name="right_claw" port="1"/>
+            <Servo name="left_claw" port="3"/>
             <Servo name="wrist" port="5"/>
-            <LynxEmbeddedIMU name="imu" port="0" bus="0"/>
+            <LynxEmbeddedIMU name="imu" port="0 " bus="0"/>
             <REV_VL53L0X_RANGE_SENSOR name="left_pixel" port="0" bus="2"/>
             <REV_VL53L0X_RANGE_SENSOR name="right_pixel" port="0" bus="3"/>
         </LynxModule>
