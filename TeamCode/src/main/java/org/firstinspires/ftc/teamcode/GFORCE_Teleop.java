@@ -78,7 +78,7 @@ public class GFORCE_Teleop extends LinearOpMode
 
         alert.setState(AlertState.TELEOP_GRABBER);
 
-        vision.enableAprilTag();
+        // vision.enableAprilTag();
         robot.resetOdometry();
 
         // reset wrist if in unknown state
@@ -177,7 +177,7 @@ public class GFORCE_Teleop extends LinearOpMode
                 arm.setRangeEnable(false);
                 arm.gotoSafeDriving();
             } else if (gamepad2.b) {
-                arm.setRangeEnable(true);
+                arm.setRangeEnable(false);
                 arm.gotoFrontScore();
             } else if (gamepad2.y) {
                 arm.setRangeEnable(false);

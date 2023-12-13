@@ -573,7 +573,7 @@ public class Manipulator {
                     } else {
                         closeLeftGrabber();
                         closeRightGrabber();
-                        setStateWithDelay(ManipulatorState.SD_CLOSING, 0.5);
+                        setStateWithDelay(ManipulatorState.SD_CLOSING, 0.25);
                     }
                 } else if (smGotoFrontScore) {
                     if (Globals.IS_AUTO) {

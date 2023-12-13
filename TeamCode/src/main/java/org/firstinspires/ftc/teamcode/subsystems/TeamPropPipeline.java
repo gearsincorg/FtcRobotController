@@ -31,7 +31,7 @@ public class TeamPropPipeline implements VisionProcessor {
 
 	// Private Members
 	private boolean allianceIsBlue = false;
-	private TeamPropLocation teamPropLocation;
+	private TeamPropLocation teamPropLocation = TeamPropLocation.UNKNOWN;
 
 	private boolean isBlue = false;
 	private Paint linePaint;

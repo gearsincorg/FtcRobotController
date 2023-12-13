@@ -85,6 +85,7 @@ public class Robot {
     private Vision myVision;
     private BNO055IMU imu;
     private ElapsedTime holdTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
+    private ElapsedTime cycleTimer = new ElapsedTime();  // User for measuring cycle times of controller
 
     private int rawDriveOdometer    = 0; // Unmodified axial odometer count
     private int driveOdometerOffset = 0; // Used to offset axial odometer
@@ -95,6 +96,7 @@ public class Robot {
 
     private double turnRate           = 0; // Latest Robot Turn Rate from IMU
     private boolean showTelemetry     = false;
+    private double filtCycleTime      = 0  ;
 
     // Robot Constructor
     private static Robot instance = null;
@@ -407,7 +409,11 @@ public class Robot {
         if (showTelemetry) {
             myOpMode.telemetry.addData("Axes D:S:Y", "%5.2f %5.2f %5.2f", drive, strafe, yaw);
             //myOpMode.telemetry.addData("Wheels lf:rf:lb:rb", "%5.2f %5.2f %5.2f %5.2f", lF, rF, lB, rB);
+
+            filtCycleTime +=   (cycleTimer.milliseconds() - filtCycleTime) * 0.10;
+            myOpMode.telemetry.addData("Cycle", "%3.0f mS", filtCycleTime);
             myOpMode.telemetry.update(); //  Assume this is the last thing done in the loop.
+            cycleTimer.reset();
         }
     }
 

@@ -56,7 +56,6 @@ public class GFORCE_Autonomous extends LinearOpMode
         alert.initialize(false);
         autoConfig.initialize();
 
-        // Loop while waiting for match to start;
         while(opModeInInit()) {
 
             autoConfig.runMenuUI(); //Run menu system
@@ -131,10 +130,10 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.turnTo(90, 0.35, 0);
 
                     if (!autoConfig.autoOptions.skipYellow) {
-                        robot.drive(72, 0.45, 0);
                         delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(72, 0.7, 0);
                         arm.gotoFrontScore();
-                        robot.strafe(28, 0.45, 0.0);
+                        robot.strafe(28, 0.6, 0.0);
                         robot.driveToTag(1);
                         arm.waitTillArmInPosition();
                         arm.openGrabbers();
@@ -143,16 +142,17 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.gotoHome();
                         robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(30, 0.45, 0.0);
+                            robot.strafe(30, 0.5, 0.0);
                         } else {
-                            robot.strafe(-18, 0.45, 0.0);
+                            robot.strafe(-18, 0.5, 0.0);
                         }
                         robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
+                        arm.runArmControl(3);
                     }
 
-                } else if (teamPropLocation == TeamPropLocation.CENTER) {
+                } else if ((teamPropLocation == TeamPropLocation.CENTER) || (teamPropLocation == TeamPropLocation.UNKNOWN)) {
                     robot.drive(23, 0.45, 0.0);
                     robot.turnTo(90, 0.35, 0);
                     arm.setLiftSetpoint(7);
@@ -165,10 +165,10 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setExtendSetpoint(0);
                     robot.strafe(-11, 0.45, 0.0);
                     if (!autoConfig.autoOptions.skipYellow) {
-                        robot.drive(86, 0.45, 0);
                         delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(86, 0.7, 0);
                         arm.gotoFrontScore();
-                        robot.strafe(24, 0.45, 0.0);
+                        robot.strafe(24, 0.6, 0.0);
                         robot.driveToTag(2);
                         arm.waitTillArmInPosition();
                         arm.openGrabbers();
@@ -177,13 +177,14 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.gotoHome();
                         robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(24, 0.45, 0.0);
+                            robot.strafe(24, 0.5, 0.0);
                         } else {
-                            robot.strafe(-24, 0.45, 0.0);
+                            robot.strafe(-24, 0.5, 0.0);
                         }
                         robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
+                        arm.runArmControl(5);
                     }
 
                 } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
@@ -201,10 +202,10 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.drive(40, 0.45, 0.0);
                     robot.turnTo(90, 0.35, 0);
                     if (!autoConfig.autoOptions.skipYellow) {
-                        robot.drive(72, 0.45, 0);
                         delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(72, 0.7, 0);
                         arm.gotoFrontScore();
-                        robot.strafe(18, 0.45, 0.0);
+                        robot.strafe(18, 0.6, 0.0);
                         robot.driveToTag(3);
                         arm.waitTillArmInPosition();
                         arm.openGrabbers();
@@ -213,13 +214,14 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.gotoHome();
                         robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(18, 0.45, 0.0);
+                            robot.strafe(18, 0.5, 0.0);
                         } else {
-                            robot.strafe(-30, 0.45, 0.0);
+                            robot.strafe(-30, 0.5, 0.0);
                         }
                         robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
+                        arm.runArmControl(3);
                     }
                 }
             } else {
@@ -252,16 +254,17 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.gotoHome();
                         robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(30, 0.45, 0.0);
+                            robot.strafe(30, 0.5, 0.0);
                         } else {
-                            robot.strafe(-18, 0.45, 0.0);
+                            robot.strafe(-18, 0.5, 0.0);
                         }
                         robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
+                        arm.runArmControl(3);
                     }
 
-                } else if (teamPropLocation == TeamPropLocation.CENTER) {
+                } else if ((teamPropLocation == TeamPropLocation.CENTER) || (teamPropLocation == TeamPropLocation.UNKNOWN)) {
                     robot.drive(23, 0.45, 0.0);
                     arm.setLiftSetpoint(7);
                     arm.setExtendSetpoint(7);
@@ -283,13 +286,14 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.gotoHome();
                         robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(24, 0.45, 0.0);
+                            robot.strafe(24, 0.5, 0.0);
                         } else {
-                            robot.strafe(-24, 0.45, 0.0);
+                            robot.strafe(-24, 0.5, 0.0);
                         }
                         robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
+                        arm.runArmControl(3);
                     }
 
                 } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
@@ -318,13 +322,14 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.gotoHome();
                         robot.turnTo(-90,0.35,0);
                         if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(18, 0.45, 0.0);
+                            robot.strafe(18, 0.5, 0.0);
                         } else {
-                            robot.strafe(-30, 0.45, 0.0);
+                            robot.strafe(-30, 0.5, 0.0);
                         }
                         robot.drive(-16, 0.45, 0);
                     } else {
                         arm.gotoHome();
+                        arm.runArmControl(3);
                     }
                 }
 
@@ -333,7 +338,6 @@ public class GFORCE_Autonomous extends LinearOpMode
 
         vision.disableAll();
         alert.setState(AlertState.OFF);
-        arm.runArmControl(5);
     }
 
     void delay(double delaySec) {
