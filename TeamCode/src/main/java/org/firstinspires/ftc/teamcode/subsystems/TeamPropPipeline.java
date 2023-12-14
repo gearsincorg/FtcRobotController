@@ -28,6 +28,11 @@ public class TeamPropPipeline implements VisionProcessor {
 	private final double MIN_AREA   = 1000; // the minimum area for the detection to consider for your prop
 	private final double LEFT_LINE  = 213 ;
 	private final double RIGHT_LINE = 426 ;
+	private final double LOWER_Y_LIMIT = 100 ;  // box's y Origin must be above this value
+	private final Rect   LEFT_TARGET = new Rect(100,200,1,1);
+	private final Rect   CENTER_TARGET = new Rect(300,200,1,1);
+	private final Rect   RIGHT_TARGET = new Rect(500,200,1,1);
+
 
 	// Private Members
 	private boolean allianceIsBlue = false;
@@ -67,6 +72,7 @@ public class TeamPropPipeline implements VisionProcessor {
 		Imgproc.findContours(frame, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
 		List<Rect> detectedRects = new ArrayList<>();
+		List<Rect> validRects    = new ArrayList<>();
 
 		int	contourCount = 0;
 		double maxArea = 0;
@@ -75,38 +81,71 @@ public class TeamPropPipeline implements VisionProcessor {
 		for (MatOfPoint contour : contours) {
 			contourCount++;
 			Rect box = Imgproc.boundingRect(contour);
+			Rect cpBox = new Rect(box.x + (box.width / 2), box.y + (box.height/ 2), box.width, box.height );
+			detectedRects.add(cpBox);
 
-			// Only process reasonable shapes.
-			if ((box.area() > MIN_AREA) && (box.width < 100) && (box.height < 100)) {
-				detectedRects.add(box);
-
-				// choose biggest box
-				if (box.area() > maxArea) {
-					maxArea = box.area();
-					maxBox = box;
-				}
-			}
-
-			// find out where the biggest target is.
-			if (maxArea > 0) {
-				double x = maxBox.x;
-				if (x < LEFT_LINE) {
-					teamPropLocation = TeamPropLocation.LEFT_SIDE;
-				} else if (x > RIGHT_LINE) {
-					teamPropLocation = TeamPropLocation.RIGHT_SIDE;
-				} else {
-					teamPropLocation = TeamPropLocation.CENTER;
-				}
-			} else {
-				teamPropLocation = TeamPropLocation.UNKNOWN;
+			// Mark reasonable shapes. (low, correct size, in general correct area.)
+			if ((box.y > LOWER_Y_LIMIT) &&
+				(cpBox.area() > MIN_AREA) &&
+				(cpBox.width < 100) &&
+				(cpBox.height < 100)
+			   ) {
+				validRects.add(cpBox);
 			}
 		}
 
+		// find out which target we want
+		if (validRects.size() > 0) {
+			// only one good target match
+			teamPropLocation = decideLocation(validRects);
+		} else if (detectedRects.size() > 0) {
+			teamPropLocation = decideLocation(detectedRects);
+		}
+
+		if (maxArea > 0) {
+			double x = maxBox.x;
+			if (x < LEFT_LINE) {
+				teamPropLocation = TeamPropLocation.LEFT_SIDE;
+			} else if (x > RIGHT_LINE) {
+				teamPropLocation = TeamPropLocation.RIGHT_SIDE;
+			} else {
+				teamPropLocation = TeamPropLocation.CENTER;
+			}
+		} else {
+			teamPropLocation = TeamPropLocation.UNKNOWN;
+		}
 		countoursFound = contourCount;
 
 		targetString = detectedRects.toString();
 		return detectedRects;
 	}
+
+	private TeamPropLocation decideLocation(List<Rect> rects) {
+
+		TeamPropLocation location = TeamPropLocation.UNKNOWN;
+		double minRange = 10000;
+		double range 	 = 10000;
+
+		for (Rect rect : rects) {
+			if ((range = getRange(rect, LEFT_TARGET)) < minRange) {
+				minRange = range;
+				location = TeamPropLocation.LEFT_SIDE;
+			} else if ((range = getRange(rect, CENTER_TARGET)) < minRange) {
+				minRange = range;
+				location = TeamPropLocation.CENTER;
+			}if ((range = getRange(rect, RIGHT_TARGET)) < minRange) {
+				minRange = range;
+				location = TeamPropLocation.RIGHT_SIDE;
+			}
+		}
+
+		return location;
+	}
+
+	private double getRange(Rect box, Rect target) {
+		return(Math.hypot(target.x - box.x, target.y - box.y));
+	}
+
 	
 	@Override
 	public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
