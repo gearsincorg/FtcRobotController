@@ -25,14 +25,17 @@ public class TeamPropPipeline implements VisionProcessor {
 	private final Scalar lowerHSV = new Scalar(0,   180,   0); // the lower hsv threshold for your detection
 	private final Scalar upperHSV = new Scalar(180, 255, 255); // the upper hsv threshold for your detection
 
-	private final double MIN_AREA   = 1000; // the minimum area for the detection to consider for your prop
-	private final double LEFT_LINE  = 213 ;
-	private final double RIGHT_LINE = 426 ;
-	private final double LOWER_Y_LIMIT = 100 ;  // box's y Origin must be above this value
-	private final Rect   LEFT_TARGET = new Rect(100,200,1,1);
-	private final Rect   CENTER_TARGET = new Rect(300,200,1,1);
-	private final Rect   RIGHT_TARGET = new Rect(500,200,1,1);
+	private final double MIN_AREA   = 1000; // the minimum area for the detection
+	private final int MIN_WIDTH     = 20;  //
+	private final int MIN_HEIGHT    = 20;  //
 
+	private final int MAX_WIDTH     = 120; //
+	private final int MAX_HEIGHT    = 120; //
+	private final int TOP_OF_TARGET = 170 ;  // box's top must be greater than this value (lower in frame)
+	private final int BOTTOM_OF_PERIMETER = 200 ;  // box's bottom must be greater than this value (lower in frame)
+	private final Rect   LEFT_TARGET = new Rect(125,221,1,1);
+	private final Rect   CENTER_TARGET = new Rect(318,211,1,1);
+	private final Rect   RIGHT_TARGET = new Rect(519,217,1,1);
 
 	// Private Members
 	private boolean allianceIsBlue = false;
@@ -81,16 +84,21 @@ public class TeamPropPipeline implements VisionProcessor {
 		for (MatOfPoint contour : contours) {
 			contourCount++;
 			Rect box = Imgproc.boundingRect(contour);
-			Rect cpBox = new Rect(box.x + (box.width / 2), box.y + (box.height/ 2), box.width, box.height );
-			detectedRects.add(cpBox);
 
-			// Mark reasonable shapes. (low, correct size, in general correct area.)
-			if ((box.y > LOWER_Y_LIMIT) &&
-				(cpBox.area() > MIN_AREA) &&
-				(cpBox.width < 100) &&
-				(cpBox.height < 100)
-			   ) {
-				validRects.add(cpBox);
+			if ((box.width > MIN_WIDTH) && (box.height > MIN_HEIGHT) && (box.area() > MIN_AREA)) {
+				detectedRects.add(box);
+
+				// Mark reasonable shapes. (low, correct size, in general correct area.)
+				if ((box.y > TOP_OF_TARGET) &&
+					((box.y + box.height) > BOTTOM_OF_PERIMETER) &&
+					(box.width < MAX_WIDTH) &&
+					(box.height < MAX_HEIGHT)
+				) {
+					double aspect = (double)box.width / (double)box.height;
+					if ((aspect > 0.5) && (aspect < 1.5)) {
+						validRects.add(box);
+					}
+				}
 			}
 		}
 
@@ -100,40 +108,39 @@ public class TeamPropPipeline implements VisionProcessor {
 			teamPropLocation = decideLocation(validRects);
 		} else if (detectedRects.size() > 0) {
 			teamPropLocation = decideLocation(detectedRects);
-		}
-
-		if (maxArea > 0) {
-			double x = maxBox.x;
-			if (x < LEFT_LINE) {
-				teamPropLocation = TeamPropLocation.LEFT_SIDE;
-			} else if (x > RIGHT_LINE) {
-				teamPropLocation = TeamPropLocation.RIGHT_SIDE;
-			} else {
-				teamPropLocation = TeamPropLocation.CENTER;
-			}
 		} else {
 			teamPropLocation = TeamPropLocation.UNKNOWN;
 		}
+
 		countoursFound = contourCount;
 
 		targetString = detectedRects.toString();
-		return detectedRects;
+		return new Targets(detectedRects,validRects);
 	}
 
 	private TeamPropLocation decideLocation(List<Rect> rects) {
 
 		TeamPropLocation location = TeamPropLocation.UNKNOWN;
 		double minRange = 10000;
-		double range 	 = 10000;
+		double range 	;
 
+		// check the distance from each of the three known target locations
+		// Find the closest match
 		for (Rect rect : rects) {
-			if ((range = getRange(rect, LEFT_TARGET)) < minRange) {
+			range = getRange(rect, LEFT_TARGET);
+			if (range < minRange) {
 				minRange = range;
 				location = TeamPropLocation.LEFT_SIDE;
-			} else if ((range = getRange(rect, CENTER_TARGET)) < minRange) {
+			}
+
+			range = getRange(rect, CENTER_TARGET);
+			if (range < minRange) {
 				minRange = range;
 				location = TeamPropLocation.CENTER;
-			}if ((range = getRange(rect, RIGHT_TARGET)) < minRange) {
+			}
+
+			range = getRange(rect, RIGHT_TARGET);
+			if (range < minRange) {
 				minRange = range;
 				location = TeamPropLocation.RIGHT_SIDE;
 			}
@@ -143,7 +150,7 @@ public class TeamPropPipeline implements VisionProcessor {
 	}
 
 	private double getRange(Rect box, Rect target) {
-		return(Math.hypot(target.x - box.x, target.y - box.y));
+		return(Math.hypot(target.x - (box.x + (box.width / 2)), target.y - (box.y + (box.height / 2)) ));
 	}
 
 	
@@ -160,8 +167,11 @@ public class TeamPropPipeline implements VisionProcessor {
 		greenPaint.setStrokeWidth(scaleCanvasDensity * 4);
 
 		if (userContext != null) {
-			List<Rect> detectedRects = (List<Rect>) userContext;
-			for (Rect arect : detectedRects) {
+			Targets targets = (Targets)userContext;
+			for (Rect arect : targets.detectedRects) {
+				canvas.drawRect(makeGraphicsRect(arect, scaleBmpPxToCanvasPx), redPaint);
+			}
+			for (Rect arect : targets.validRects) {
 				canvas.drawRect(makeGraphicsRect(arect, scaleBmpPxToCanvasPx), greenPaint);
 			}
 		}
@@ -190,5 +200,16 @@ public class TeamPropPipeline implements VisionProcessor {
 		int bottom = top + Math.round(rect.height * scaleBmpPxToCanvasPx);
 
 		return new android.graphics.Rect(left, top, right, bottom);
+	}
+}
+
+class Targets {
+
+	public List<Rect> detectedRects;
+	public List<Rect> validRects;
+
+	public Targets(List<Rect> detected, List<Rect> valid ){
+		detectedRects = detected;
+		validRects = valid;
 	}
 }
