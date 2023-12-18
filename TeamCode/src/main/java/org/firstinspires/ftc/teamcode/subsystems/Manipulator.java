@@ -16,7 +16,8 @@ public class Manipulator {
     private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
     private static final double LIFT_TOLERANCE  = 1.5;      // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE = 0.0;
-    public static final double LIFT_AUTO_ANGLE = 22.0;
+    public static final double LIFT_LOW_AUTO_ANGLE  = 18.0;
+    public static final double LIFT_HIGH_AUTO_ANGLE = 22.0;
     public static final double LIFT_FRONT_ANGLE = 18.0;
     public static final double LIFT_HANG_ANGLE  = 80.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
@@ -28,9 +29,10 @@ public class Manipulator {
     private static final double EXTEND_GAIN     = 0.3;    // Strength of extend position control
     private static final double EXTEND_TOLERANCE = 0.50;     // Controller is is "inPosition" if position error is < +/- this amount
     public static final double EXTEND_HOME_DISTANCE = 0.0;
-    public static final double EXTEND_AUTO_DISTANCE = 7.0;
+    public static final double EXTEND_LOW_AUTO_DISTANCE  = 5.0;
+    public static final double EXTEND_HIGH_AUTO_DISTANCE = 7.0;
     public static final double EXTEND_FRONT_DISTANCE = 7.0;
-    public static final double EXTEND_BACK_DISTANCE = 6.0;
+    public static final double EXTEND_BACK_DISTANCE = 0.0;  // was 6"
     public static final double EXTEND_LIFT_LENGTH = 19.2;
     public static final double EXTEND_MIN_LENGTH = 0.0;
     public static final double EXTEND_MAX_LENGTH = 19.5;
@@ -421,31 +423,34 @@ public class Manipulator {
         }
     }
 
-    public void wristToPickupPosition() {
-        wristToHome();
-        openLeftGrabber();
-        openRightGrabber();
-    }
     public void wristToAutonomousPosition(){
         wristToHome();
         autoOpenGrabbers();
     }
 
-    public void closeLeftGrabber (){
+    public void closeLeftGrabber(){
         clawL.setPosition(GRAB_LEFT_CLOSE);
         Globals.LEFT_GRABBER_CLOSED = true;
     }
-    public void openLeftGrabber (){
+    public void openLeftGrabber(){
         clawL.setPosition(GRAB_LEFT_OPEN);
         Globals.LEFT_GRABBER_CLOSED = false;
     }
-    public void closeRightGrabber (){
+    public void closeRightGrabber(){
         clawR.setPosition(GRAB_RIGHT_CLOSE);
         Globals.RIGHT_GRABBER_CLOSED = true;
     }
-    public void openRightGrabber (){
+    public void openRightGrabber(){
         clawR.setPosition(GRAB_RIGHT_OPEN);
         Globals.RIGHT_GRABBER_CLOSED = false;
+    }
+
+    public void openYellowGrabber(){
+        if (Globals.YELLOW_PIXEL_ON_RIGHT) {
+            openRightGrabber();
+        } else {
+            openLeftGrabber();
+        }
     }
 
     public void openPurpleGrabber() {
@@ -477,6 +482,7 @@ public class Manipulator {
         setRelativeWristAngle(WRIST_SCORE_FRONT_REL);
         Globals.WRIST_STATE = ManipulatorWristState.FRONT_SCORE;
     }
+
     public void wristToBackScore(){
         setAbsoluteWristAngle(WRIST_SCORE_BACK_ABS);
         Globals.WRIST_STATE = ManipulatorWristState.BACK_SCORE;
@@ -527,7 +533,6 @@ public class Manipulator {
         return ((currentState == ManipulatorState.POWER_LIFTING) || (currentState == ManipulatorState.PL_EXTENDING));
     }
 
-
     // State machine.
     public void runStateMachine(){
 
@@ -559,7 +564,6 @@ public class Manipulator {
                     openGrabbers();
                     setState(ManipulatorState.HOME);
                 }
-
                 break;
 
             case HOME:
@@ -577,7 +581,7 @@ public class Manipulator {
                     }
                 } else if (smGotoFrontScore) {
                     if (Globals.IS_AUTO) {
-                        setLiftSetpoint(LIFT_AUTO_ANGLE);
+                        setLiftSetpoint(Globals.PLACE_YELLOW_HIGH ? LIFT_HIGH_AUTO_ANGLE : LIFT_LOW_AUTO_ANGLE);
                     } else {
                         setLiftSetpoint(LIFT_FRONT_ANGLE);
                     }
@@ -628,7 +632,11 @@ public class Manipulator {
             // -- Front Score  ----------
             case FS_LIFTING:
                 if (liftInPosition){
-                    setExtendSetpoint(EXTEND_FRONT_DISTANCE);
+                    if (Globals.IS_AUTO) {
+                        setExtendSetpoint(Globals.PLACE_YELLOW_HIGH ? EXTEND_HIGH_AUTO_DISTANCE : EXTEND_LOW_AUTO_DISTANCE);
+                    } else {
+                        setExtendSetpoint(EXTEND_FRONT_DISTANCE);
+                    }
                     setState(ManipulatorState.FRONT_SCORE);
                 }
                 break;
@@ -697,7 +705,6 @@ public class Manipulator {
                 }
                 break;
 
-
             // -- Power Lifting --
             case PL_ROTATE:
                 setLiftSetpoint(LIFT_HANG_ANGLE);
@@ -720,7 +727,6 @@ public class Manipulator {
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
                     setState(H_RETRACTING);
                 }
-
                 break;
 
             case POWER_LIFTING:
@@ -751,5 +757,4 @@ public class Manipulator {
         Globals.ARM_STATE = newState;
         stateTimer.reset();
     }
-
 }

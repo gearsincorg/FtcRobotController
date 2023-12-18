@@ -232,6 +232,18 @@ public class Robot {
             // implement desired axis powers
             moveRobot(driveController.getOutput(driveDistance), strafeController.getOutput(strafeDistance), yawController.getOutput(heading));
 
+            // Are we picking up a yellow pixel
+            if (endOnYellow) {
+                // check for yellow pixel found
+                if (Globals.YELLOW_PIXEL_ON_RIGHT && myArm.pixelRightInRange) {
+                    myArm.closeRightGrabber();
+                    break;   // Exit loop because we have Pixel
+                } else if (!Globals.YELLOW_PIXEL_ON_RIGHT && myArm.pixelLeftInRange) {
+                    myArm.closeLeftGrabber();
+                    break;   // Exit loop because we have Pixel
+                }
+            }
+
             // Time to exit?
             if (driveController.inPosition() && yawController.inPosition()) {
                 if (holdTimer.time() > holdTime) {
@@ -240,6 +252,7 @@ public class Robot {
             } else {
                 holdTimer.reset();
             }
+
             myArm.runArmControl();
             myOpMode.sleep(1);
         }

@@ -69,8 +69,10 @@ public class GFORCE_Autonomous extends LinearOpMode
             else
                 Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
 
+            // determine colored pixel locations
             Globals.PURPLE_PIXEL_ON_RIGHT =  ((autoConfig.autoOptions.redAlliance && autoConfig.autoOptions.startFront) ||
                     (!autoConfig.autoOptions.redAlliance && !autoConfig.autoOptions.startFront));
+            Globals.YELLOW_PIXEL_ON_RIGHT = !Globals.PURPLE_PIXEL_ON_RIGHT;
 
             // Update additional sensor.
             arm.readSensors();
@@ -113,6 +115,7 @@ public class GFORCE_Autonomous extends LinearOpMode
             // Where is the robot starting on the field?
             if (autoConfig.autoOptions.startFront) {
                 // Robot is starting at the front of the field.
+                Globals.PLACE_YELLOW_HIGH = false;
 
                 if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE)) ||
                     ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
@@ -213,6 +216,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                 }
             } else {
                 // Robot is starting at the back of the field.
+                Globals.PLACE_YELLOW_HIGH = true;
 
                 if ( ((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE )) ||
                      ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ) {
@@ -224,25 +228,27 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.waitTillArmInPosition();
                     arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
-
                     arm.gotoSafeDriving();
                     robot.turnTo(0, 0.35, 0);
 
 
                     if (autoConfig.autoOptions.doubleYellow) {
                         robot.drive(-7, 0.45, 0.1, false);
+                        arm.waitTillArmInPosition();  // should already be there.
                         robot.turnTo(-90, 0.35, 0.25);
-                        arm.gotoHome();
-                        arm.waitTillArmInPosition();
+                        arm.wristToHome();
+                        arm.openYellowGrabber();
                         robot.drive(24, 0.45, 0.0, false);
                         robot.drive(4, 0.25, 0.0, true);   // Grab Pixel
+                        arm.runArmControl(0.5);
+                        robot.drive(-52, 0.45, 0.0, false);
+                        robot.strafe(12, 0.45, 0.0);
 
                     } else {
-
+                        robot.strafe(24, 0.45, 0.0);
                     }
 
                     delay(autoConfig.autoOptions.delayYellow);
-                    robot.strafe(24, 0.45, 0.0);
                     robot.turnTo(90, 0.35, 0);
                     arm.gotoFrontScore();
                     robot.strafe(-12, 0.45, 0.0);
