@@ -219,7 +219,7 @@ public class Robot {
      * @param power Maximum power to apply.  This number should always be positive.
      * @param holdTime Minimum time (sec) required to hold the final position.  0 = no hold.
      */
-    public void drive(double distanceInches, double power, double holdTime) {
+    public void drive(double distanceInches, double power, double holdTime, boolean endOnYellow) {
         resetOdometry();
 
         driveController.reset(distanceInches, power);   // achieve desired drive distance

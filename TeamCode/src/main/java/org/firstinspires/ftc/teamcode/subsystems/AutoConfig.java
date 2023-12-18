@@ -29,7 +29,7 @@ public class AutoConfig
       public boolean disabled       = false;
       public boolean startFront     = false;
       public int delayStart         = 0;
-      public boolean skipYellow     = false;
+      public boolean doubleYellow = false;
       public int delayYellow        = 0;
       public boolean parkCenter     = false;
       public boolean spare1         = false;
@@ -59,89 +59,6 @@ public class AutoConfig
       autoOptions = new Param();
   }
 
-  public void initialize() {
-    context  = myOpMode.hardwareMap.appContext;
-
-    // Get the current auto configuration
-    currentMenuIndex = 0;
-    readConfig();
-
-    // setup initial toggle memory states for buttons used
-    lastPrev =false;
-    lastX1   =false;
-    lastB1   =false;
-    lastNext =false;
-  }
-
-  public void runMenuUI() {
-
-    // read the gamepad state
-    prev = myOpMode.gamepad1.dpad_up;
-    x1 = myOpMode.gamepad1.dpad_left;
-    b1 = myOpMode.gamepad1.dpad_right;
-    next = myOpMode.gamepad1.dpad_down;
-
-    // checking to see if we are switching to the next menu item.
-    if (next && !lastNext) {
-      // move to next menu item
-      currentMenuIndex = (currentMenuIndex + 1 ) % MENU_ITEMS;
-    }
-    // checking to see if we are switching to the prev menu item.
-    else if (prev && !lastPrev) {
-      // move to prev menu item
-      currentMenuIndex = (currentMenuIndex + MENU_ITEMS - 1 ) % MENU_ITEMS;
-    }
-    // checking if we are moving to the next menu item.
-    else if ((b1 && !lastB1) || (x1 && !lastX1)) {
-      // select next option
-      switch (currentMenuIndex) {
-          case 0:
-              autoOptions.redAlliance = !autoOptions.redAlliance;
-              break;
-          case 1:
-              autoOptions.disabled = !autoOptions.disabled;
-              break;
-          case 2:
-              autoOptions.startFront = !autoOptions.startFront;
-              break;
-          case 3:
-              if (b1)
-                  autoOptions.delayStart++;
-              else
-              if (autoOptions.delayStart > 0)
-                  autoOptions.delayStart--;
-              break;
-          case 4:
-              autoOptions.skipYellow = !autoOptions.skipYellow;
-              break;
-          case 5:
-              if (b1)
-                  autoOptions.delayYellow++;
-              else
-              if (autoOptions.delayYellow > 0)
-                  autoOptions.delayYellow--;
-              break;
-          case 6:
-              autoOptions.parkCenter = !autoOptions.parkCenter;
-              break;
-          case 7:
-              autoOptions.spare1 = !autoOptions.spare1;
-              break;
-          case 8:
-              autoOptions.spare2 = !autoOptions.spare2;
-              break;
-      }
-      saveConfig();
-    }
-    updateMenu();
-
-    // update toggle memory for next call
-    lastPrev = prev;
-    lastX1 = x1;
-    lastB1 = b1;
-    lastNext  = next;
-  }
-
   public void saveConfig() {
     try {
       OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(configFileName, Context.MODE_PRIVATE));
@@ -151,7 +68,7 @@ public class AutoConfig
         outputStreamWriter.write(Boolean.toString(autoOptions.disabled)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.startFront)  + "\n");
         outputStreamWriter.write(Integer.toString(autoOptions.delayStart)   + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.skipYellow)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.doubleYellow)  + "\n");
         outputStreamWriter.write(Integer.toString(autoOptions.delayYellow)   + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.parkCenter)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.spare1)  + "\n");
@@ -179,7 +96,7 @@ public class AutoConfig
         autoOptions.disabled = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.startFront = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.delayStart = Integer.valueOf(bufferedReader.readLine());
-        autoOptions.skipYellow = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.doubleYellow = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.delayYellow = Integer.valueOf(bufferedReader.readLine());
         autoOptions.parkCenter = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.spare1 = Boolean.valueOf(bufferedReader.readLine());
@@ -198,10 +115,93 @@ public class AutoConfig
       myOpMode.telemetry.addData((currentMenuIndex == 1) ? "1 > RUN AUTO"   : "1   Run Auto", autoOptions.disabled ? "no" : "YES");
       myOpMode.telemetry.addData((currentMenuIndex == 2) ? "2 > START POSITION"   : "2   Start", autoOptions.startFront ? "At Front" : "At Back");
       myOpMode.telemetry.addData((currentMenuIndex == 3) ? "3 > START DELAY"   : "3   Start Delay", autoOptions.delayStart);
-      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > SCORE YELLOW"   : "4   Score Yellow", autoOptions.skipYellow ? "no" : "YES");
+      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > YELLOW PIXELS"   : "4   Yellow Pixels", autoOptions.doubleYellow ? "Double" : "Single");
       myOpMode.telemetry.addData((currentMenuIndex == 5) ? "5 > YELLOW DELAY"   : "5   Yellow Delay", autoOptions.delayYellow);
       myOpMode.telemetry.addData((currentMenuIndex == 6) ? "6 > PARK"   : "6  Park", autoOptions.parkCenter ? "In Center" : "By Wall");
       myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > SPARE 1"   : "7  Spare 1", autoOptions.spare1 ? "YES" : "no");
       myOpMode.telemetry.addData((currentMenuIndex == 8) ? "8 > SPARE 1"   : "8  Spare 2", autoOptions.spare2 ? "YES" : "no");
   }
+
+    public void initialize() {
+        context  = myOpMode.hardwareMap.appContext;
+
+        // Get the current auto configuration
+        currentMenuIndex = 0;
+        readConfig();
+
+        // setup initial toggle memory states for buttons used
+        lastPrev =false;
+        lastX1   =false;
+        lastB1   =false;
+        lastNext =false;
+    }
+
+    public void runMenuUI() {
+
+        // read the gamepad state
+        prev = myOpMode.gamepad1.dpad_up;
+        x1 = myOpMode.gamepad1.dpad_left;
+        b1 = myOpMode.gamepad1.dpad_right;
+        next = myOpMode.gamepad1.dpad_down;
+
+        // checking to see if we are switching to the next menu item.
+        if (next && !lastNext) {
+            // move to next menu item
+            currentMenuIndex = (currentMenuIndex + 1 ) % MENU_ITEMS;
+        }
+        // checking to see if we are switching to the prev menu item.
+        else if (prev && !lastPrev) {
+            // move to prev menu item
+            currentMenuIndex = (currentMenuIndex + MENU_ITEMS - 1 ) % MENU_ITEMS;
+        }
+        // checking if we are moving to the next menu item.
+        else if ((b1 && !lastB1) || (x1 && !lastX1)) {
+            // select next option
+            switch (currentMenuIndex) {
+                case 0:
+                    autoOptions.redAlliance = !autoOptions.redAlliance;
+                    break;
+                case 1:
+                    autoOptions.disabled = !autoOptions.disabled;
+                    break;
+                case 2:
+                    autoOptions.startFront = !autoOptions.startFront;
+                    break;
+                case 3:
+                    if (b1)
+                        autoOptions.delayStart++;
+                    else
+                    if (autoOptions.delayStart > 0)
+                        autoOptions.delayStart--;
+                    break;
+                case 4:
+                    autoOptions.doubleYellow = !autoOptions.doubleYellow;
+                    break;
+                case 5:
+                    if (b1)
+                        autoOptions.delayYellow++;
+                    else
+                    if (autoOptions.delayYellow > 0)
+                        autoOptions.delayYellow--;
+                    break;
+                case 6:
+                    autoOptions.parkCenter = !autoOptions.parkCenter;
+                    break;
+                case 7:
+                    autoOptions.spare1 = !autoOptions.spare1;
+                    break;
+                case 8:
+                    autoOptions.spare2 = !autoOptions.spare2;
+                    break;
+            }
+            saveConfig();
+        }
+        updateMenu();
+
+        // update toggle memory for next call
+        lastPrev = prev;
+        lastX1 = x1;
+        lastB1 = b1;
+        lastNext  = next;
+    }
 }
