@@ -72,7 +72,6 @@ public class GFORCE_Autonomous extends LinearOpMode
             // determine colored pixel locations
             Globals.PURPLE_PIXEL_ON_RIGHT =  ((autoConfig.autoOptions.redAlliance && autoConfig.autoOptions.startFront) ||
                     (!autoConfig.autoOptions.redAlliance && !autoConfig.autoOptions.startFront));
-            Globals.YELLOW_PIXEL_ON_RIGHT = !Globals.PURPLE_PIXEL_ON_RIGHT;
 
             // Update additional sensor.
             arm.readSensors();
@@ -121,7 +120,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
                     // Purple near Truss
                     robot.drive(18, 0.45, 0.0, false);
-                    arm.setLiftSetpoint(5);
+                    arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(5);
                     robot.turnTo(45, 0.35, 0);
                     arm.waitTillArmInPosition();
@@ -153,7 +152,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                 } else if ((teamPropLocation == TeamPropLocation.CENTER) || (teamPropLocation == TeamPropLocation.UNKNOWN)) {
                     robot.drive(23, 0.45, 0.0, false);
                     robot.turnTo(90, 0.35, 0);
-                    arm.setLiftSetpoint(7);
+                    arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(3);
                     robot.drive(-16, 0.45, 0.0, false);
                     robot.strafe(-17, 0.45, 0.0);
@@ -185,7 +184,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                            ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
                     // Purple away from Truss
                     robot.drive(10, 0.45, 0.0, false);
-                    arm.setLiftSetpoint(7);
+                    arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(11);
                     robot.turnTo(-40, 0.35, 0);
                     arm.waitTillArmInPosition();
@@ -222,40 +221,44 @@ public class GFORCE_Autonomous extends LinearOpMode
                      ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ) {
                     // Purple away from Truss
                     robot.drive(10, 0.45, 0.0, false);
-                    arm.setLiftSetpoint(7);
+                    arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(11);
                     robot.turnTo(40, 0.35, 0);
                     arm.waitTillArmInPosition();
                     arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
-                    arm.gotoSafeDriving();
+                    arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
-
 
                     if (autoConfig.autoOptions.doubleYellow) {
                         robot.drive(-7, 0.45, 0.1, false);
                         arm.waitTillArmInPosition();  // should already be there.
                         robot.turnTo(-90, 0.35, 0.25);
-                        arm.wristToHome();
-                        arm.openYellowGrabber();
-                        robot.drive(24, 0.45, 0.0, false);
-                        robot.drive(4, 0.25, 0.0, true);   // Grab Pixel
+                        //arm.wristToHome();
+                        arm.openPurpleGrabber();
+                        arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
+                        robot.drive(24, 0.35, 0.0, false); //  Should be 24
+                        robot.drive(6, 0.25, 0.0, true);   // Grab Pixel
                         arm.runArmControl(0.5);
-                        robot.drive(-52, 0.45, 0.0, false);
-                        robot.strafe(12, 0.45, 0.0);
-
+                        arm.gotoSafeDriving();
+                        delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(-54, 0.45, 0.0, false);
+                        robot.strafe(18, 0.45, 0.0);
+                        arm.gotoFrontScore();
+                        robot.turnTo(90, 0.35, 0);
                     } else {
+                        delay(autoConfig.autoOptions.delayYellow);
                         robot.strafe(24, 0.45, 0.0);
+                        robot.turnTo(90, 0.35, 0);
+                        arm.gotoFrontScore();
+                        robot.strafe(-12, 0.45, 0.0);
                     }
 
-                    delay(autoConfig.autoOptions.delayYellow);
-                    robot.turnTo(90, 0.35, 0);
-                    arm.gotoFrontScore();
-                    robot.strafe(-12, 0.45, 0.0);
                     robot.driveToTag(1);
                     arm.waitTillArmInPosition();
                     arm.openGrabbers();
                     arm.runArmControl(1);
+
                     robot.drive(-4, 0.5, 0, false);
                     arm.gotoHome();
                     robot.turnTo(-90,0.35,0);
@@ -268,42 +271,57 @@ public class GFORCE_Autonomous extends LinearOpMode
 
                 } else if ((teamPropLocation == TeamPropLocation.CENTER) || (teamPropLocation == TeamPropLocation.UNKNOWN)) {
                     robot.drive(23, 0.45, 0.0, false);
-                    arm.setLiftSetpoint(7);
+                    arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(7);
                     arm.waitTillArmInPosition();
                     arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
 
-                    robot.turnTo(90, 0.35, 0);
-
                     if (autoConfig.autoOptions.doubleYellow) {
+                        robot.drive(-20, 0.45, 0.1, false);
+                        arm.waitTillArmInPosition();  // should already be there.
+                        robot.turnTo(-90, 0.35, 0.25);
+                        //arm.wristToHome();
+                        arm.openPurpleGrabber();
+                        arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
+                        robot.drive(24, 0.35, 0.0, false); //  Should be 24
+                        robot.drive(6, 0.25, 0.0, true);   // Grab Pixel
+                        arm.runArmControl(0.5);
+                        arm.gotoSafeDriving();
                         delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(-54, 0.45, 0.0, false);
+                        robot.strafe(26, 0.45, 0.0);
                         arm.gotoFrontScore();
-                        robot.drive(24, 0.5, 0, false);
-                        robot.strafe(-6, 0.45, 0.0);
-                        robot.driveToTag(2);
-                        arm.waitTillArmInPosition();
-                        arm.openGrabbers();
-                        arm.runArmControl(1);
-                        robot.drive(-4, 0.5, 0, false);
-                        arm.gotoHome();
-                        robot.turnTo(-90,0.35,0);
-                        if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(24, 0.5, 0.0);
-                        } else {
-                            robot.strafe(-24, 0.5, 0.0);
-                        }
-                        robot.drive(-16, 0.45, 0, false);
+                        robot.turnTo(90, 0.35, 0);
+
                     } else {
-                        // go get second yellow
+                        delay(autoConfig.autoOptions.delayYellow);
+                        robot.turnTo(90, 0.35, 0);
+                        robot.drive(24, 0.5, 0, false);
+                        arm.gotoFrontScore();
+                        robot.strafe(-6, 0.45, 0.0);
                     }
+
+                    robot.driveToTag(2);
+                    arm.waitTillArmInPosition();
+                    arm.openGrabbers();
+                    arm.runArmControl(1);
+                    robot.drive(-4, 0.5, 0, false);
+                    arm.gotoHome();
+                    robot.turnTo(-90,0.35,0);
+                    if (autoConfig.autoOptions.parkCenter) {
+                        robot.strafe(24, 0.5, 0.0);
+                    } else {
+                        robot.strafe(-24, 0.5, 0.0);
+                    }
+                    robot.drive(-16, 0.45, 0, false);
 
                 } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
                         ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
                     // Purple near Truss
                     robot.drive(18, 0.45, 0.0, false);
-                    arm.setLiftSetpoint(5);
+                    arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(5);
                     robot.turnTo(-45, 0.35, 0);
                     arm.waitTillArmInPosition();
@@ -313,27 +331,43 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.turnTo(0, 0.35, 0);
 
                     if (autoConfig.autoOptions.doubleYellow) {
+                        robot.drive(-15, 0.45, 0.1, false);
+                        arm.waitTillArmInPosition();  // should already be there.
+                        robot.turnTo(-90, 0.35, 0.25);
+                        //arm.wristToHome();
+                        arm.openPurpleGrabber();
+                        arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
+                        robot.drive(24, 0.35, 0.0, false); //  Should be 24
+                        robot.drive(6, 0.25, 0.0, true);   // Grab Pixel
+                        arm.runArmControl(0.5);
+                        arm.gotoSafeDriving();
                         delay(autoConfig.autoOptions.delayYellow);
-                        robot.strafe(24, 0.45, 0);
+                        robot.drive(-54, 0.45, 0.0, false);
+                        robot.strafe(28, 0.45, 0.0);
+                        arm.gotoFrontScore();
+                        robot.turnTo(90, 0.35, 0);
+                    } else {
+                        delay(autoConfig.autoOptions.delayYellow);
+                        robot.strafe(24, 0.45, 0.0);
                         robot.turnTo(90, 0.35, 0);
                         arm.gotoFrontScore();
                         robot.strafe(-18, 0.45, 0.0);
-                        robot.driveToTag(3);
-                        arm.waitTillArmInPosition();
-                        arm.openGrabbers();
-                        arm.runArmControl(1);
-                        robot.drive(-4, 0.5, 0, false);
-                        arm.gotoHome();
-                        robot.turnTo(-90,0.35,0);
-                        if (autoConfig.autoOptions.parkCenter) {
-                            robot.strafe(18, 0.5, 0.0);
-                        } else {
-                            robot.strafe(-30, 0.5, 0.0);
-                        }
-                        robot.drive(-16, 0.45, 0, false);
-                    } else {
-                        // Go get second yellow
                     }
+
+                    robot.driveToTag(3);
+                    arm.waitTillArmInPosition();
+                    arm.openGrabbers();
+                    arm.runArmControl(1);
+
+                    robot.drive(-4, 0.5, 0, false);
+                    arm.gotoHome();
+                    robot.turnTo(-90,0.35,0);
+                    if (autoConfig.autoOptions.parkCenter) {
+                        robot.strafe(18, 0.5, 0.0);
+                    } else {
+                        robot.strafe(-30, 0.5, 0.0);
+                    }
+                    robot.drive(-16, 0.45, 0, false);
                 }
 
             }

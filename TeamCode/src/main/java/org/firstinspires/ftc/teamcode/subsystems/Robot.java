@@ -227,6 +227,10 @@ public class Robot {
         yawController.reset();                          // Maintain last turn heading
         holdTimer.reset();
 
+        if (endOnYellow) {
+            myArm.setRangeEnable(true);
+        }
+
         while (myOpMode.opModeIsActive() && readSensors()){
 
             // implement desired axis powers
@@ -235,10 +239,10 @@ public class Robot {
             // Are we picking up a yellow pixel
             if (endOnYellow) {
                 // check for yellow pixel found
-                if (Globals.YELLOW_PIXEL_ON_RIGHT && myArm.pixelRightInRange) {
+                if (Globals.PURPLE_PIXEL_ON_RIGHT && myArm.pixelRightInRange) {
                     myArm.closeRightGrabber();
                     break;   // Exit loop because we have Pixel
-                } else if (!Globals.YELLOW_PIXEL_ON_RIGHT && myArm.pixelLeftInRange) {
+                } else if (!Globals.PURPLE_PIXEL_ON_RIGHT && myArm.pixelLeftInRange) {
                     myArm.closeLeftGrabber();
                     break;   // Exit loop because we have Pixel
                 }
@@ -257,6 +261,10 @@ public class Robot {
             myOpMode.sleep(1);
         }
         stopRobot();
+
+        if (endOnYellow) {
+            myArm.setRangeEnable(true);
+        }
     }
 
     /**

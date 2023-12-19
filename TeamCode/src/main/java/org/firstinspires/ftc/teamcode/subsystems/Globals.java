@@ -8,7 +8,6 @@ public class Globals {
     public static AllianceColor ALLIANCE_COLOR = AllianceColor.RED;
     public static boolean IS_AUTO = false;
     public static boolean PURPLE_PIXEL_ON_RIGHT = false;
-    public static boolean YELLOW_PIXEL_ON_RIGHT = false;
     public static boolean PLACE_YELLOW_HIGH = false;
 
     /**

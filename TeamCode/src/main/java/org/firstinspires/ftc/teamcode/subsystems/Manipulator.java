@@ -445,14 +445,6 @@ public class Manipulator {
         Globals.RIGHT_GRABBER_CLOSED = false;
     }
 
-    public void openYellowGrabber(){
-        if (Globals.YELLOW_PIXEL_ON_RIGHT) {
-            openRightGrabber();
-        } else {
-            openLeftGrabber();
-        }
-    }
-
     public void openPurpleGrabber() {
         if (Globals.PURPLE_PIXEL_ON_RIGHT) {
             openRightGrabber();
