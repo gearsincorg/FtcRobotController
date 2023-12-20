@@ -92,6 +92,7 @@ public class Vision {
                         stack.rangeInch = detection.ftcPose.range;
                         stack.bearingDeg = detection.ftcPose.bearing;
                         stack.x = detection.ftcPose.x;
+                        stack.y = detection.ftcPose.y;
                         break;
                     }
                 }
@@ -115,6 +116,7 @@ public class Vision {
                         match.rangeInch = detection.ftcPose.range;
                         match.bearingDeg = detection.ftcPose.bearing;
                         match.x = detection.ftcPose.x;
+                        match.y = detection.ftcPose.y;
                         break;
                     }
                 }

@@ -5,4 +5,5 @@ public class Target {
     public double  rangeInch = 0;
     public double  bearingDeg = 0;
     public double  x = 0;
+    public double  y = 0;
 }

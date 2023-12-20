@@ -354,31 +354,13 @@ public class Robot {
 
         while (myOpMode.opModeIsActive() && readSensors()){
 
-            boolean targetFound = false;
-            AprilTagDetection desiredTag = null;
-
             myArm.runArmControl();  // keep the arm doing what it's meant to do;
-
-            // Step through the list of detected tags and look for a matching tag
-            List<AprilTagDetection> currentDetections = myVision.aprilTag.getDetections();
-            for (AprilTagDetection detection : currentDetections) {
-                // Look to see if we have size info on this tag.
-                if ((detection.metadata != null) && (detection.id == desiredTagID)) {
-                    // Yes, we want to use this tag.
-                    targetFound = true;
-                    desiredTag = detection;
-                    myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                    myOpMode.telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-                    myOpMode.telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
-                    myOpMode.telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
-                    break;  // don't look any further.
-                }
-            }
-
-            if (targetFound) {
-                moveRobot(-v_driveController.getOutput((desiredTag.ftcPose.y)), v_strafeController.getOutput(desiredTag.ftcPose.x), yawController.getOutput(heading));
+            Target target = myVision.findTarget(desiredTagID);
+            if (target.targetFound) {
+                myOpMode.telemetry.addLine(String.format("AprilTag XY %6.1f %6.1f", target.x, target.y));
+                moveRobot(-v_driveController.getOutput(target.y), v_strafeController.getOutput(target.x), yawController.getOutput(heading));
             } else {
-                myOpMode.telemetry.addLine("Desired AprilTag NOT found");
+                myOpMode.telemetry.addLine("AprilTag NOT found");
                 stopRobot();
             }
 
@@ -391,7 +373,6 @@ public class Robot {
         }
         stopRobot();
     }
-
 
     //  ########################  Low level control functions.  ###############################
 
