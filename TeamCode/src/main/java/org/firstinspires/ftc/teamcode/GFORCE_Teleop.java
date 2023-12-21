@@ -78,7 +78,7 @@ public class GFORCE_Teleop extends LinearOpMode
 
         alert.setState(AlertState.TELEOP_GRABBER);
 
-        // vision.enableAprilTag();
+        vision.enableAprilTag(); //DEBUG ONLY
         robot.resetOdometry();
 
         // reset wrist if in unknown state

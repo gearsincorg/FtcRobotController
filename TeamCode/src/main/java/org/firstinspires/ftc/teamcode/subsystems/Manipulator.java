@@ -16,8 +16,8 @@ public class Manipulator {
     private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
     private static final double LIFT_TOLERANCE  = 1.5;      // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE = 0.0;
-    public static final double LIFT_LOW_AUTO_ANGLE  = 18.0;
-    public static final double LIFT_HIGH_AUTO_ANGLE = 22.0;
+    public static final double LIFT_LOW_AUTO_ANGLE  = 19.0;
+    public static final double LIFT_HIGH_AUTO_ANGLE = 23.0;
     public static final double LIFT_FRONT_ANGLE = 18.0;
     public static final double LIFT_HANG_ANGLE  = 80.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
@@ -29,8 +29,8 @@ public class Manipulator {
     private static final double EXTEND_GAIN     = 0.3;    // Strength of extend position control
     private static final double EXTEND_TOLERANCE = 0.50;     // Controller is is "inPosition" if position error is < +/- this amount
     public static final double EXTEND_HOME_DISTANCE = 0.0;
-    public static final double EXTEND_LOW_AUTO_DISTANCE  = 5.0;
-    public static final double EXTEND_HIGH_AUTO_DISTANCE = 7.0;
+    public static final double EXTEND_LOW_AUTO_DISTANCE  = 5.5;
+    public static final double EXTEND_HIGH_AUTO_DISTANCE = 7.5;
     public static final double EXTEND_FRONT_DISTANCE = 7.0;
     public static final double EXTEND_BACK_DISTANCE = 0.0;  // was 6"
     public static final double EXTEND_LIFT_LENGTH = 19.2;
@@ -47,7 +47,7 @@ public class Manipulator {
     private static final double SHORT_HOLD_POWER = 0.21  ;
     private static final double LONG_HOLD_POWER  = 0.10  ;
 
-    private static final double WRIST_SCORE_BACK = 0.65;
+    private static final double WRIST_SCORE_BACK = 0.675;  // was 6.5
     private static final double WRIST_DEGREE_SCALE = WRIST_SCORE_BACK / 180;
 
     private static final double WRIST_HOME_ABS        =   0;
@@ -278,7 +278,7 @@ public class Manipulator {
      */
     public void runLiftControl() {
 
-        // abort any action if wer are in final lifting.
+        // abort any action if w er are in final lifting.
         if (readyToHang()) {
             if (showTelemetry) {
                 myOpMode.telemetry.addData("Power Lifting", "Is Active");
@@ -498,7 +498,11 @@ public class Manipulator {
 
     public void gotoFrontScore() {
         if (currentState == ManipulatorState.FRONT_SCORE) {
-            setLiftSetpoint(LIFT_FRONT_ANGLE);
+            if (Globals.IS_AUTO) {
+                setLiftSetpoint(Globals.PLACE_YELLOW_HIGH ? LIFT_HIGH_AUTO_ANGLE : LIFT_LOW_AUTO_ANGLE);
+            } else {
+                setLiftSetpoint(LIFT_FRONT_ANGLE);
+            }
             setExtendSetpoint(EXTEND_FRONT_DISTANCE);
             setAbsoluteWristAngle(60);
         } else {
@@ -610,7 +614,11 @@ public class Manipulator {
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
                     setState(H_RETRACTING);
                 } else if (smGotoFrontScore) {
-                    setLiftSetpoint(LIFT_FRONT_ANGLE);
+                    if (Globals.IS_AUTO) {
+                        setLiftSetpoint(Globals.PLACE_YELLOW_HIGH ? LIFT_HIGH_AUTO_ANGLE : LIFT_LOW_AUTO_ANGLE);
+                    } else {
+                        setLiftSetpoint(LIFT_FRONT_ANGLE);
+                    }
                     setState(ManipulatorState.FS_LIFTING);
                 } else if (smGotoBackScore) {
                     setLiftSetpoint(LIFT_BACK_ANGLE);

@@ -104,12 +104,12 @@ public class Vision {
     public Target findTarget(int ID) {
         Target match = new Target();
 
-        List<AprilTagDetection> currentDetections = aprilTag.getFreshDetections();
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         if(currentDetections != null) {
             for (AprilTagDetection detection : currentDetections) {
                 if (detection.metadata != null) {
                     if (showTelemetry) {
-                        myOpMode.telemetry.addLine(String.format("Target %d  R:B:X %6.1f %6.1f", detection.id, detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.x));
+                        myOpMode.telemetry.addLine(String.format("Target %d  R:B:X %6.1f %6.1f  %6.1f", detection.id, detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.x));
                     }
                     if (detection.id == ID) {
                         match.targetFound = true;

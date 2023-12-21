@@ -45,7 +45,7 @@ public class GFORCE_Autonomous extends LinearOpMode
 
         vision.initialize(true);
 
-        arm.initialize(false);
+        arm.initialize(true);
         arm.setRangeEnable(false);
         arm.homeArm();
         arm.wristToAutonomousPosition();
@@ -114,7 +114,7 @@ public class GFORCE_Autonomous extends LinearOpMode
             // Where is the robot starting on the field?
             if (autoConfig.autoOptions.startFront) {
                 // Robot is starting at the front of the field.
-                Globals.PLACE_YELLOW_HIGH = false;
+                Globals.PLACE_YELLOW_HIGH = true;
 
                 if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE)) ||
                     ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
@@ -215,7 +215,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                 }
             } else {
                 // Robot is starting at the back of the field.
-                Globals.PLACE_YELLOW_HIGH = true;
+                Globals.PLACE_YELLOW_HIGH = false;
 
                 if ( ((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE )) ||
                      ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ) {
@@ -244,8 +244,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                         delay(autoConfig.autoOptions.delayYellow);
                         robot.drive(-57, 0.45, 0.0, false);
                         robot.strafe(18, 0.45, 0.0);
-                        robot.turnTo(90, 0.35, 0);
                         arm.gotoFrontScore();
+                        robot.turnTo(90, 0.35, 0);
                     } else {
                         delay(autoConfig.autoOptions.delayYellow);
                         robot.strafe(24, 0.45, 0.0);
@@ -292,8 +292,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                         delay(autoConfig.autoOptions.delayYellow);
                         robot.drive(-57, 0.45, 0.0, false);
                         robot.strafe(26, 0.45, 0.0);
-                        robot.turnTo(90, 0.35, 0);
                         arm.gotoFrontScore();
+                        robot.turnTo(90, 0.35, 0);
 
                     } else {
                         delay(autoConfig.autoOptions.delayYellow);
@@ -344,8 +344,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                         delay(autoConfig.autoOptions.delayYellow);
                         robot.drive(-57, 0.45, 0.0, false);
                         robot.strafe(28, 0.45, 0.0);
-                        robot.turnTo(90, 0.35, 0);
                         arm.gotoFrontScore();
+                        robot.turnTo(90, 0.35, 0);
                     } else {
                         delay(autoConfig.autoOptions.delayYellow);
                         robot.strafe(24, 0.45, 0.0);
