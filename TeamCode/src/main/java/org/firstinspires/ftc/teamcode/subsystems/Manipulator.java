@@ -14,12 +14,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Manipulator {
     private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
-    private static final double LIFT_TOLERANCE  = 1.5;      // Controller is "inPosition" if position error is < +/- this amount
+    private static final double LIFT_TOLERANCE  = 1.75;      // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE = 0.0;
     public static final double LIFT_LOW_AUTO_ANGLE  = 19.0;
     public static final double LIFT_HIGH_AUTO_ANGLE = 23.0;
     public static final double LIFT_FRONT_ANGLE = 18.0;
-    public static final double LIFT_HANG_ANGLE  = 80.0;
+    public static final double LIFT_HANG_ANGLE  = 92.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
     public static final double LIFT_BACK_SAFE_ANGLE = 10.0;
 
@@ -52,6 +52,7 @@ public class Manipulator {
 
     private static final double WRIST_HOME_ABS        =   0;
     private static final double WRIST_SCORE_FRONT_REL =  60;
+    private static final double WRIST_HANG_ABS        = 140;
     private static final double WRIST_SCORE_BACK_ABS  = 180;
 
     private static final double GRAB_LEFT_AUTO   = 0.60;
@@ -257,7 +258,7 @@ public class Manipulator {
 
     public void powerLift(){
         lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        setLiftPower(-0.25);
+        setLiftPower(-0.35);
     }
 
     public void powerHold(){
@@ -265,9 +266,9 @@ public class Manipulator {
         if (liftAngle < 20) {   // holding vertical
             setLiftPower(-0.20);
         } else if (liftAngle < (LIFT_HANG_ANGLE - 2)) {
-            setLiftPower(0.20);
+            setLiftPower(0.25);
         } else if (liftAngle > (LIFT_HANG_ANGLE + 2 )) {
-            setLiftPower(-0.20);
+            setLiftPower(-0.25);
         } else {
             setLiftPower(0);
         }
@@ -296,7 +297,7 @@ public class Manipulator {
         //causes the lift power to be zero if the arms angle is past a certain point, or sitting at home
         if (((liftSetpoint < 1) && (liftAngle < 5)) ||
             ((power < 0) && (liftAngle < 25)) ||
-            ((power > 0) && (liftAngle > 110))
+            ((power > 0) && (liftAngle > 100))
             ){
             power = 0;
         }
@@ -475,6 +476,11 @@ public class Manipulator {
         Globals.WRIST_STATE = ManipulatorWristState.FRONT_SCORE;
     }
 
+    public void wristToPowerLift(){
+        setAbsoluteWristAngle(WRIST_HANG_ABS);
+        Globals.WRIST_STATE = ManipulatorWristState.BACK_SCORE;
+    }
+
     public void wristToBackScore(){
         setAbsoluteWristAngle(WRIST_SCORE_BACK_ABS);
         Globals.WRIST_STATE = ManipulatorWristState.BACK_SCORE;
@@ -557,7 +563,8 @@ public class Manipulator {
                 smGotoPOWERLIFT = false;
                 smGotoHome = false;
                 if ((!Globals.LEFT_GRABBER_CLOSED && !Globals.RIGHT_GRABBER_CLOSED) || stateTimer.time() > 1.0 ) {
-                    openGrabbers();
+                    setAbsoluteWristAngle(WRIST_HOME_ABS);
+                     openGrabbers();
                     setState(ManipulatorState.HOME);
                 }
                 break;
@@ -587,7 +594,7 @@ public class Manipulator {
                     setLiftSetpoint(LIFT_BACK_ANGLE);
                     setStateWithDelay(ManipulatorState.BS_LIFTING, 0.25);
                 } else if (smGotoPOWERLIFT) {
-                    wristToBackScore();
+                    wristToPowerLift();
                     closeLeftGrabber();
                     closeRightGrabber();
                     setStateWithDelay(ManipulatorState.PL_ROTATE, 0.250);
@@ -624,6 +631,7 @@ public class Manipulator {
                     setLiftSetpoint(LIFT_BACK_ANGLE);
                     setState(ManipulatorState.BS_LIFTING);
                 }  else if (smGotoPOWERLIFT) {
+                    wristToPowerLift();
                     setLiftSetpoint(LIFT_HANG_ANGLE);
                     setState(ManipulatorState.PL_LIFTING);
                 }
@@ -653,6 +661,7 @@ public class Manipulator {
                     setStateWithDelay(ManipulatorState.SD_LOWER, 0.5);
                 } else if (smGotoBackScore) {
                     setLiftSetpoint(LIFT_BACK_ANGLE);
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
                     setState(ManipulatorState.BS_LIFTING);
                 } else {
                     setRelativeWristAngle(WRIST_SCORE_FRONT_REL);
@@ -713,9 +722,12 @@ public class Manipulator {
 
             case PL_LIFTING:
                 smGotoPOWERLIFT = false;
-                if (liftInPosition) {
+                if (liftInPosition && (!myOpMode.gamepad2.left_stick_button && !myOpMode.gamepad2.right_stick_button)) {
                     setExtendSetpoint(EXTEND_LIFT_LENGTH);
                     setState(ManipulatorState.PL_EXTENDING);
+                }  else if (smGotoHome) {
+                    setLiftSetpoint(LIFT_HOME_ANGLE);
+                    setState(ManipulatorState.H_LATE_OPEN);
                 }
                 break;
 

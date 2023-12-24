@@ -168,6 +168,9 @@ public class GFORCE_Teleop extends LinearOpMode
             }
 
             //  ==  CoPilot Controls  ===================================
+            if (gamepad2.touchpad) {
+                arm.gotoHome();
+            }
 
             //controls for Automatic Arm movements
             if (gamepad2.a){
