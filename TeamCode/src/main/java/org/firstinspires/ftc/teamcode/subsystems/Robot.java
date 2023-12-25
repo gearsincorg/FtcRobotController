@@ -16,7 +16,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import java.util.List;
 
@@ -47,6 +46,8 @@ public class Robot {
     // Adjust these numbers to suit your robot.
     private final double V_DESIRED_DISTANCE         = 7.0;     //  this is how close the camera should get to the target (inches)
     private final double V_DRIVE_TOLERANCE          = 0.5;
+    private final double V_WHITE_PIXEL_OFFSET       = 2.0;
+
 
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
@@ -219,7 +220,7 @@ public class Robot {
      * @param power Maximum power to apply.  This number should always be positive.
      * @param holdTime Minimum time (sec) required to hold the final position.  0 = no hold.
      */
-    public void drive(double distanceInches, double power, double holdTime, boolean endOnYellow) {
+    public void drive(double distanceInches, double power, double holdTime, boolean endOnPixel) {
         resetOdometry();
 
         driveController.reset(distanceInches, power);   // achieve desired drive distance
@@ -227,7 +228,7 @@ public class Robot {
         yawController.reset();                          // Maintain last turn heading
         holdTimer.reset();
 
-        if (endOnYellow) {
+        if (endOnPixel) {
             myArm.setRangeEnable(true);
         }
 
@@ -237,7 +238,7 @@ public class Robot {
             moveRobot(driveController.getOutput(driveDistance), strafeController.getOutput(strafeDistance), yawController.getOutput(heading));
 
             // Are we picking up a yellow pixel
-            if (endOnYellow) {
+            if (endOnPixel) {
                 // check for yellow pixel found
                 if (Globals.PURPLE_PIXEL_ON_RIGHT && myArm.pixelRightInRange) {
                     myArm.closeRightGrabber();
@@ -262,7 +263,7 @@ public class Robot {
         }
         stopRobot();
 
-        if (endOnYellow) {
+        if (endOnPixel) {
             myArm.setRangeEnable(true);
         }
     }
@@ -340,7 +341,7 @@ public class Robot {
         stopRobot();
     }
 
-    public void driveToTag(int desiredTagID) {
+    public void driveToBackdropTag(int desiredTagID) {
 
         // change the Tag ID if we are on red side
         if (Globals.ALLIANCE_COLOR == AllianceColor.RED) {
@@ -357,7 +358,7 @@ public class Robot {
             myArm.runArmControl();  // keep the arm doing what it's meant to do;
             Target target = myVision.findTarget(desiredTagID);
             if (target.targetFound) {
-                myOpMode.telemetry.addLine(String.format("AprilTag XY %6.1f %6.1f", target.x, target.y));
+                myOpMode.telemetry.addLine(String.format("Backdrop XY %6.1f %6.1f", target.x, target.y));
                 moveRobot(-v_driveController.getOutput(target.y), v_strafeController.getOutput(target.x), yawController.getOutput(heading));
             } else {
                 myOpMode.telemetry.addLine("AprilTag NOT found");
@@ -366,6 +367,43 @@ public class Robot {
 
             // Time to exit?
             if (v_driveController.inPosition()) {
+                break;   // Exit loop if we are in position
+            }
+
+            myOpMode.sleep(1);
+        }
+        stopRobot();
+    }
+
+    public void driveToStack() {
+
+        // change the Tag ID if we are on red side
+        int desiredTagID = (Globals.ALLIANCE_COLOR == AllianceColor.BLUE) ? 9 : 8;
+
+        v_driveController.reset(V_DESIRED_DISTANCE);      // achieve desired drive distance
+        yawController.reset();
+
+        if (Globals.PURPLE_PIXEL_ON_RIGHT) {
+            v_strafeController.reset(-V_WHITE_PIXEL_OFFSET);
+        } else {
+            v_strafeController.reset(V_WHITE_PIXEL_OFFSET);
+        }
+
+        holdTimer.reset();
+        while (myOpMode.opModeIsActive() && readSensors()){
+
+            myArm.runArmControl();  // keep the arm doing what it's meant to do;
+            Target target = myVision.findTarget(desiredTagID);
+            if (target.targetFound) {
+                myOpMode.telemetry.addLine(String.format("Stack XY %6.1f %6.1f", target.x, target.y));
+                moveRobot(-v_driveController.getOutput(target.y), v_strafeController.getOutput(target.x), yawController.getOutput(heading));
+            } else {
+                myOpMode.telemetry.addLine("AprilTag NOT found");
+                stopRobot();
+            }
+
+            // Time to exit?
+            if (v_driveController.inPosition() && v_strafeController.inPosition()) {
                 break;   // Exit loop if we are in position
             }
 

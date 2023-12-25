@@ -32,7 +32,7 @@ public class AutoConfig
       public boolean doubleYellow = false;
       public int delayYellow        = 0;
       public boolean parkCenter     = false;
-      public boolean spare1         = false;
+      public boolean whitePixel = false;
       public boolean spare2         = false;
 
       //public List<AutoMenuItem> menuItems = new ArrayList<>(LOCATION_ITEMS);
@@ -71,7 +71,7 @@ public class AutoConfig
         outputStreamWriter.write(Boolean.toString(autoOptions.doubleYellow)  + "\n");
         outputStreamWriter.write(Integer.toString(autoOptions.delayYellow)   + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.parkCenter)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.spare1)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.whitePixel)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.spare2)  + "\n");
 
       outputStreamWriter.close();
@@ -99,7 +99,7 @@ public class AutoConfig
         autoOptions.doubleYellow = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.delayYellow = Integer.valueOf(bufferedReader.readLine());
         autoOptions.parkCenter = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.spare1 = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.whitePixel = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.spare2 = Boolean.valueOf(bufferedReader.readLine());
         inputStream.close();
       }
@@ -115,10 +115,10 @@ public class AutoConfig
       myOpMode.telemetry.addData((currentMenuIndex == 1) ? "1 > RUN AUTO"   : "1   Run Auto", autoOptions.disabled ? "no" : "YES");
       myOpMode.telemetry.addData((currentMenuIndex == 2) ? "2 > START POSITION"   : "2   Start", autoOptions.startFront ? "At Front" : "At Back");
       myOpMode.telemetry.addData((currentMenuIndex == 3) ? "3 > START DELAY"   : "3   Start Delay", autoOptions.delayStart);
-      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > YELLOW PIXELS"   : "4   Yellow Pixels", autoOptions.doubleYellow ? "Double" : "Single");
+      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > YELLOW PIXEL"   : "4   Yellow Pixel", autoOptions.doubleYellow ? "Double" : "Single");
       myOpMode.telemetry.addData((currentMenuIndex == 5) ? "5 > YELLOW DELAY"   : "5   Yellow Delay", autoOptions.delayYellow);
       myOpMode.telemetry.addData((currentMenuIndex == 6) ? "6 > PARK"   : "6  Park", autoOptions.parkCenter ? "In Center" : "By Wall");
-      myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > SPARE 1"   : "7  Spare 1", autoOptions.spare1 ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > WHITE PIXEL"   : "7  White Pixel", autoOptions.whitePixel ? "YES" : "no");
       myOpMode.telemetry.addData((currentMenuIndex == 8) ? "8 > SPARE 1"   : "8  Spare 2", autoOptions.spare2 ? "YES" : "no");
   }
 
@@ -188,7 +188,7 @@ public class AutoConfig
                     autoOptions.parkCenter = !autoOptions.parkCenter;
                     break;
                 case 7:
-                    autoOptions.spare1 = !autoOptions.spare1;
+                    autoOptions.whitePixel = !autoOptions.whitePixel;
                     break;
                 case 8:
                     autoOptions.spare2 = !autoOptions.spare2;

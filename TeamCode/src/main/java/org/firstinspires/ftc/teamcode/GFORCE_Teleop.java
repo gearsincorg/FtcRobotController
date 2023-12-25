@@ -142,23 +142,6 @@ public class GFORCE_Teleop extends LinearOpMode
             arm.manualArmControl();
             alert.update();
 
-            // Attempt to reset the gyro if robot is under the truss and sees the small apriltag within 5 degrees.
-            // Enable with driver right joystick click.
-            if (gamepad1.share) {
-                stackTarget = vision.findStack();
-                if ( stackTarget.targetFound &&
-                    (stackTarget.rangeInch > 50) && (stackTarget.rangeInch < 58) &&
-                    (Math.abs(Math.abs(robot.heading) - 90) < 15) &&
-                    (Math.abs(stackTarget.bearingDeg) < 15) )  {
-                    // reset the heading assuming that the target is actually on the +/- 90 axis)
-                    // Apply the new heading with a filter
-                    double headingError = -stackTarget.bearingDeg ;
-                    double filtHeading = robot.heading + (headingError * GYRO_ADJUST_TC);
-                    telemetry.addData("GYRO DRIFT", "H:E:F %4.1f : %4.2f : %4.1f", robot.heading, headingError, filtHeading);
-                    robot.correctHeading(robot.normalizeHeading(filtHeading));
-                 }
-            }
-
             // check for rumble
             if (!hasRumbled && (rumbleTime.seconds() > 80))  {
                 telemetry.addLine("=== RUMBLE ===");

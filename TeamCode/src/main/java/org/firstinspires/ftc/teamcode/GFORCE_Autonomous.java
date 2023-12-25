@@ -118,7 +118,9 @@ public class GFORCE_Autonomous extends LinearOpMode
 
                 if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE)) ||
                     ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
-                    // Purple near Truss
+                    //  ####
+                    //  ####   FRONT :  SPIKE NEAR TRUSS   ########################################################################
+                    //  ####
                     robot.drive(18, 0.45, 0.0, false);
                     arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(5);
@@ -128,14 +130,32 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
-                    robot.drive(32, 0.45, 0.0, false);
-                    robot.turnTo(90, 0.35, 0);
 
-                    delay(autoConfig.autoOptions.delayYellow);
-                    robot.drive(72, 0.7, 0, false);
+                    if (autoConfig.autoOptions.whitePixel) {
+                        robot.turnTo(-90, 0.35, 0);
+                        robot.drive(22, 0.45, 0.0, false);
+                        robot.strafe(9, 0.5, 0.0);
+                        robot.driveToStack();
+                        robot.drive(4, 0.35, 0.0, true);  // Grab White Pixel
+                        arm.runArmControl(0.5);
+                        robot.drive(-6, 0.45, 0.0, false);
+                        robot.strafe(24, 0.5, 0.0);
+
+                        robot.turnTo(90, 0.35, 0);
+                        delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(93, 0.7, 0, false);
+                    } else {
+                        robot.turnTo(0, 0.35, 0);
+                        robot.drive(32, 0.45, 0.0, false);
+
+                        robot.turnTo(90, 0.35, 0);
+                        delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(72, 0.7, 0, false);
+                    }
+
                     arm.gotoFrontScore();
                     robot.strafe(28, 0.6, 0.0);
-                    robot.driveToTag(1);
+                    robot.driveToBackdropTag(1);
                     arm.waitTillArmInPosition();
                     arm.openGrabbers();
                     arm.runArmControl(1);
@@ -150,6 +170,9 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.drive(-16, 0.45, 0, false);
 
                 } else if ((teamPropLocation == TeamPropLocation.CENTER) || (teamPropLocation == TeamPropLocation.UNKNOWN)) {
+                    //  ####
+                    //  ####   FRONT :  CENTER SPIKE   ########################################################################
+                    //  ####
                     robot.drive(23, 0.45, 0.0, false);
                     robot.turnTo(90, 0.35, 0);
                     arm.setLiftSetpoint(10);
@@ -166,7 +189,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.drive(86, 0.7, 0, false);
                     arm.gotoFrontScore();
                     robot.strafe(24, 0.6, 0.0);
-                    robot.driveToTag(2);
+                    robot.driveToBackdropTag(2);
                     arm.waitTillArmInPosition();
                     arm.openGrabbers();
                     arm.runArmControl(1);
@@ -182,7 +205,9 @@ public class GFORCE_Autonomous extends LinearOpMode
 
                 } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
                            ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
-                    // Purple away from Truss
+                    //  ####
+                    //  ####   FRONT :  SPIKE NEAR PERIMETER   ########################################################################
+                    //  ####
                     robot.drive(10, 0.45, 0.0, false);
                     arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(11);
@@ -199,7 +224,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.drive(72, 0.7, 0, false);
                     arm.gotoFrontScore();
                     robot.strafe(18, 0.6, 0.0);
-                    robot.driveToTag(3);
+                    robot.driveToBackdropTag(3);
                     arm.waitTillArmInPosition();
                     arm.openGrabbers();
                     arm.runArmControl(1);
@@ -214,12 +239,13 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.drive(-16, 0.45, 0, false);
                 }
             } else {
-                // Robot is starting at the back of the field.
                 Globals.PLACE_YELLOW_HIGH = false;
 
                 if ( ((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE )) ||
                      ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ) {
-                    // Purple away from Truss
+                    //  ####
+                    //  ####   REAR :  SPIKE NEAR BACKDROP  ########################################################################
+                    //  ####
                     robot.drive(10, 0.45, 0.0, false);
                     arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(11);
@@ -254,7 +280,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.strafe(-12, 0.45, 0.0);
                     }
 
-                    robot.driveToTag(1);
+                    robot.driveToBackdropTag(1);
                     arm.waitTillArmInPosition();
                     arm.openGrabbers();
                     arm.runArmControl(1);
@@ -270,6 +296,9 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.drive(-16, 0.45, 0, false);
 
                 } else if ((teamPropLocation == TeamPropLocation.CENTER) || (teamPropLocation == TeamPropLocation.UNKNOWN)) {
+                    //  ####
+                    //  ####   REAR :  CENTER SPIKE   ########################################################################
+                    //  ####
                     robot.drive(23, 0.45, 0.0, false);
                     arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(7);
@@ -303,7 +332,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.strafe(-6, 0.45, 0.0);
                     }
 
-                    robot.driveToTag(2);
+                    robot.driveToBackdropTag(2);
                     arm.waitTillArmInPosition();
                     arm.openGrabbers();
                     arm.runArmControl(1);
@@ -319,7 +348,9 @@ public class GFORCE_Autonomous extends LinearOpMode
 
                 } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
                         ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
-                    // Purple near Truss
+                    //  ####
+                    //  ####   REAR :  SPIKE NEAR TRUSS   ########################################################################
+                    //  ####
                     robot.drive(18, 0.45, 0.0, false);
                     arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(5);
@@ -354,7 +385,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.strafe(-18, 0.45, 0.0);
                     }
 
-                    robot.driveToTag(3);
+                    robot.driveToBackdropTag(3);
                     arm.waitTillArmInPosition();
                     arm.openGrabbers();
                     arm.runArmControl(1);

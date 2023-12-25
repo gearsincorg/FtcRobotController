@@ -77,30 +77,6 @@ public class Vision {
         }   // end for() loop
     }
 
-    public Target findStack() {
-        Target stack = new Target();
-
-        List<AprilTagDetection> currentDetections = aprilTag.getFreshDetections();
-        if(currentDetections != null) {
-            for (AprilTagDetection detection : currentDetections) {
-                if (detection.metadata != null) {
-                    if (showTelemetry) {
-                        myOpMode.telemetry.addLine(String.format("Stack %d  R:B %6.1f %6.1f", detection.id, detection.ftcPose.range, detection.ftcPose.bearing));
-                    }
-                    if ((detection.id == 8) || (detection.id == 9)) {
-                        stack.targetFound = true;
-                        stack.rangeInch = detection.ftcPose.range;
-                        stack.bearingDeg = detection.ftcPose.bearing;
-                        stack.x = detection.ftcPose.x;
-                        stack.y = detection.ftcPose.y;
-                        break;
-                    }
-                }
-            }
-        }
-        return stack;
-    }
-
     public Target findTarget(int ID) {
         Target match = new Target();
 
