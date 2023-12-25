@@ -183,10 +183,25 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
-                    robot.strafe(-11, 0.45, 0.0);
 
-                    delay(autoConfig.autoOptions.delayYellow);
-                    robot.drive(86, 0.7, 0, false);
+                    if (autoConfig.autoOptions.whitePixel) {
+                        robot.strafe(-13, 0.45, 0.0);
+                        robot.turnTo(-90, 0.35, 0);
+                        robot.driveToStack();
+                        robot.drive(4, 0.35, 0.0, true);  // Grab White Pixel
+                        arm.runArmControl(0.5);
+                        robot.drive(-6, 0.45, 0.0, false);
+                        robot.strafe(24, 0.5, 0.0);
+
+                        robot.turnTo(90, 0.35, 0);
+                        delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(93, 0.7, 0, false);
+                    } else {
+                        robot.strafe(-11, 0.45, 0.0);
+                        delay(autoConfig.autoOptions.delayYellow);
+                        robot.drive(86, 0.7, 0, false);
+                    }
+
                     arm.gotoFrontScore();
                     robot.strafe(24, 0.6, 0.0);
                     robot.driveToBackdropTag(2);
