@@ -129,16 +129,18 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.openPurpleGrabber();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
-                    robot.turnTo(0, 0.35, 0);
 
                     if (autoConfig.autoOptions.whitePixel) {
                         robot.turnTo(-90, 0.35, 0);
                         robot.drive(22, 0.45, 0.0, false);
+                        arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
                         robot.strafe(9, 0.5, 0.0);
-                        robot.driveToStack();
+                        robot.driveToStackTag();
+                        arm.setLiftSetpoint(Manipulator.LIFT_STACK_LEVEL5);
                         robot.drive(4, 0.35, 0.0, true);  // Grab White Pixel
                         arm.runArmControl(0.5);
                         robot.drive(-6, 0.45, 0.0, false);
+                        arm.gotoSafeDriving();
                         robot.strafe(24, 0.5, 0.0);
 
                         robot.turnTo(90, 0.35, 0);
@@ -146,8 +148,9 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.drive(93, 0.7, 0, false);
                     } else {
                         robot.turnTo(0, 0.35, 0);
-                        robot.drive(32, 0.45, 0.0, false);
+                        arm.gotoSafeDriving();
 
+                        robot.drive(32, 0.45, 0.0, false);
                         robot.turnTo(90, 0.35, 0);
                         delay(autoConfig.autoOptions.delayYellow);
                         robot.drive(72, 0.7, 0, false);
@@ -186,11 +189,14 @@ public class GFORCE_Autonomous extends LinearOpMode
 
                     if (autoConfig.autoOptions.whitePixel) {
                         robot.strafe(-13, 0.45, 0.0);
+                        arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
                         robot.turnTo(-90, 0.35, 0);
-                        robot.driveToStack();
+                        robot.driveToStackTag();
+                        arm.setLiftSetpoint(Manipulator.LIFT_STACK_LEVEL5);
                         robot.drive(4, 0.35, 0.0, true);  // Grab White Pixel
                         arm.runArmControl(0.5);
                         robot.drive(-6, 0.45, 0.0, false);
+                        arm.gotoSafeDriving();
                         robot.strafe(24, 0.5, 0.0);
 
                         robot.turnTo(90, 0.35, 0);
@@ -198,6 +204,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.drive(93, 0.7, 0, false);
                     } else {
                         robot.strafe(-11, 0.45, 0.0);
+                        arm.gotoSafeDriving();
                         delay(autoConfig.autoOptions.delayYellow);
                         robot.drive(86, 0.7, 0, false);
                     }
@@ -232,6 +239,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
+                    arm.gotoSafeDriving();
                     robot.drive(40, 0.45, 0.0, false);
                     robot.turnTo(90, 0.35, 0);
 

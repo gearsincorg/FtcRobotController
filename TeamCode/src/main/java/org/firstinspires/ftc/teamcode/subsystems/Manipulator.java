@@ -16,6 +16,10 @@ public class Manipulator {
     private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
     private static final double LIFT_TOLERANCE  = 1.75;      // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE = 0.0;
+    public static final double LIFT_STACK_LEVEL2 = 2.0;
+    public static final double LIFT_STACK_LEVEL3 = 4.0;
+    public static final double LIFT_STACK_LEVEL4 = 6.0;
+    public static final double LIFT_STACK_LEVEL5 = 8.0;
     public static final double LIFT_LOW_AUTO_ANGLE  = 19.0;
     public static final double LIFT_HIGH_AUTO_ANGLE = 23.0;
     public static final double LIFT_FRONT_ANGLE = 18.0;

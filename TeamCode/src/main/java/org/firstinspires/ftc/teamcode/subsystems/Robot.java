@@ -375,7 +375,7 @@ public class Robot {
         stopRobot();
     }
 
-    public void driveToStack() {
+    public void driveToStackTag() {
 
         // change the Tag ID if we are on red side
         int desiredTagID = (Globals.ALLIANCE_COLOR == AllianceColor.BLUE) ? 9 : 8;
