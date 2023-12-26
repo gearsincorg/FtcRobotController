@@ -25,35 +25,35 @@ public class Robot {
     private final boolean INVERT_DRIVE_ODOMETRY     = true;    //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
     private final boolean INVERT_STRAFE_ODOMETRY    = true;    //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
 
-    private static final double DRIVE_GAIN          = 0.03;    // Strength of axial position control
+    private static final double DRIVE_GAIN          = 0.04;    // Strength of axial position control
     private static final double DRIVE_ACCEL         = 2.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double DRIVE_TOLERANCE     = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double DRIVE_DEADBAND      = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
-    private static final double DRIVE_MAX_AUTO      = 0.6;     // "default" Maximum Axial power limit during autonomous
+    private static final double DRIVE_MAX_AUTO      = 0.7;     // "default" Maximum Axial power limit during autonomous
 
-    private static final double STRAFE_GAIN         = 0.03;    // Strength of lateral position control
+    private static final double STRAFE_GAIN         = 0.04;    // Strength of lateral position control
     private static final double STRAFE_ACCEL        = 1.5;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double STRAFE_TOLERANCE    = 0.5;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double STRAFE_DEADBAND     = 0.2;     // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
-    private static final double STRAFE_MAX_AUTO     = 0.6;     // "default" Maximum Lateral power limit during autonomous
+    private static final double STRAFE_MAX_AUTO     = 0.7;     // "default" Maximum Lateral power limit during autonomous
 
     private static final double YAW_GAIN            = 0.015;   // Strength of Yaw position control
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
-    private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
+    private static final double YAW_MAX_AUTO        = 0.7;     // "default" Maximum Yaw power limit during autonomous
 
     // Adjust these numbers to suit your robot.
     private final double V_DESIRED_DISTANCE         = 7.0;     //  this is how close the camera should get to the target (inches)
-    private final double V_DRIVE_TOLERANCE          = 0.5;
+    private final double V_DRIVE_TOLERANCE          = 0.75;
     private final double V_WHITE_PIXEL_OFFSET       = 2.0;
 
 
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
     //  Drive = Error * Gain    Make these values smaller for smoother control, or larger for a more aggressive response.
-    private final double V_DRIVE_GAIN  =  0.02  ;   //  Forward Speed Control "Gain".
-    private final double V_STRAFE_GAIN =  0.05 ;    //  Strafe Speed Control "Gain".
+    private final double V_DRIVE_GAIN  =  0.025 ;   //  Forward Speed Control "Gain".
+    private final double V_STRAFE_GAIN =  0.05  ;    //  Strafe Speed Control "Gain".
     private final double V_STRAFE_MAX_AUTO = 0.5;   // "default" Maximum Lateral power limit during autonomous
 
     // Public Members
@@ -384,9 +384,9 @@ public class Robot {
         yawController.reset();
 
         if (Globals.PURPLE_PIXEL_ON_RIGHT) {
-            v_strafeController.reset(-V_WHITE_PIXEL_OFFSET);
-        } else {
             v_strafeController.reset(V_WHITE_PIXEL_OFFSET);
+        } else {
+            v_strafeController.reset(-V_WHITE_PIXEL_OFFSET);
         }
 
         holdTimer.reset();

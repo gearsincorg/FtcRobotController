@@ -16,10 +16,10 @@ public class Manipulator {
     private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
     private static final double LIFT_TOLERANCE  = 1.75;      // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE = 0.0;
-    public static final double LIFT_STACK_LEVEL2 = 2.0;
-    public static final double LIFT_STACK_LEVEL3 = 4.0;
-    public static final double LIFT_STACK_LEVEL4 = 6.0;
-    public static final double LIFT_STACK_LEVEL5 = 8.0;
+    public static final double LIFT_STACK_LEVEL2 = 4.0;
+    public static final double LIFT_STACK_LEVEL3 = 6.0;
+    public static final double LIFT_STACK_LEVEL4 = 8.0;
+    public static final double LIFT_STACK_LEVEL5 = 10.0;
     public static final double LIFT_LOW_AUTO_ANGLE  = 19.0;
     public static final double LIFT_HIGH_AUTO_ANGLE = 23.0;
     public static final double LIFT_FRONT_ANGLE = 18.0;
@@ -224,7 +224,7 @@ public class Manipulator {
     }
 
     public void waitTillArmInPosition() {
-        while (myOpMode.opModeIsActive() && !(liftInPosition || extendInPosition)) {
+        while (myOpMode.opModeIsActive() && !(liftInPosition && extendInPosition)) {
             runArmControl();
             myOpMode.sleep(1);
         }
@@ -458,6 +458,14 @@ public class Manipulator {
         }
     }
 
+    public void openYellowGrabber() {
+        if (Globals.PURPLE_PIXEL_ON_RIGHT) {
+            openLeftGrabber();
+        } else {
+            openRightGrabber();
+        }
+    }
+
     public void openGrabbers (){
         openRightGrabber();
         openLeftGrabber();
@@ -580,11 +588,12 @@ public class Manipulator {
                 } else if (smGotoSafeDriving) {
                     if (Globals.LEFT_GRABBER_CLOSED && Globals.RIGHT_GRABBER_CLOSED) {
                         wristToBackScore();
-                        setStateWithDelay(ManipulatorState.SAFE_DRIVING, 0.25);
+                        setExtendSetpoint(EXTEND_HOME_DISTANCE);
+                        setState(ManipulatorState.SD_RETRACTING);
                     } else {
                         closeLeftGrabber();
                         closeRightGrabber();
-                        setStateWithDelay(ManipulatorState.SD_CLOSING, 0.25);
+                        setStateWithDelay(ManipulatorState.SD_RETRACT, 0.25);
                     }
                 } else if (smGotoFrontScore) {
                     if (Globals.IS_AUTO) {
@@ -606,16 +615,18 @@ public class Manipulator {
                 break;
 
             // -- Safe Driving  ----------
-            case SD_CLOSING:
-                wristToBackScore();
-                setStateWithDelay(ManipulatorState.SAFE_DRIVING, 0.25);
+            case SD_RETRACT:
+                setExtendSetpoint(EXTEND_HOME_DISTANCE);
+                setState(ManipulatorState.SD_RETRACTING);
                 break;
 
-            case SD_LOWER:
-                setLiftSetpoint(LIFT_HOME_ANGLE);
-                closeLeftGrabber();
-                closeRightGrabber();
-                setState(ManipulatorState.SAFE_DRIVING);
+            case SD_RETRACTING:
+                if (extendInPosition) {
+                    setLiftSetpoint(LIFT_HOME_ANGLE);
+                    closeLeftGrabber();
+                    closeRightGrabber();
+                    setState(ManipulatorState.SAFE_DRIVING);
+                }
                 break;
 
             case SAFE_DRIVING:
@@ -662,7 +673,7 @@ public class Manipulator {
                 } else if (smGotoSafeDriving) {
                     wristToBackScore();
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                    setStateWithDelay(ManipulatorState.SD_LOWER, 0.5);
+                    setStateWithDelay(ManipulatorState.SD_RETRACTING, 0.5);
                 } else if (smGotoBackScore) {
                     setLiftSetpoint(LIFT_BACK_ANGLE);
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
