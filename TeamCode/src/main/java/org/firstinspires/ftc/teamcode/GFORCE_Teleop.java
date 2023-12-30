@@ -230,25 +230,23 @@ public class GFORCE_Teleop extends LinearOpMode
 
             if (gamepad1.left_trigger > 0.25) {
                 if (arm.reverseGrippers()) {
-                    arm.openRightGrabber();
+                    arm.dropRightPixel();
                 } else {
-                    arm.openLeftGrabber();
+                    arm.dropLeftPixel();
                 }
             } else if (gamepad1.left_bumper || arm.pixelLeftInRange) {
-                arm.closeLeftGrabber();
+                arm.grabLeftPixel();
             }
 
             if (gamepad1.right_trigger > 0.25) {
                 if (arm.reverseGrippers()) {
-                    arm.openLeftGrabber();
+                    arm.dropLeftPixel();
                 } else {
-                    arm.openRightGrabber();
+                    arm.dropRightPixel();
                 }
             } else if (gamepad1.right_bumper  || arm.pixelRightInRange){
-                arm.closeRightGrabber();
+                arm.grabRightPixel();
             }
-
-            // arm.autoPickup();
 
             // read joystick values and scale according to limits in Robot class
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;
@@ -306,6 +304,6 @@ public class GFORCE_Teleop extends LinearOpMode
 
         Globals.ARM_HAS_HOMED = false;
         Globals.WRIST_STATE = ManipulatorWristState.UNKNOWN;
-        arm.openGrabbers();
+        arm.dropPixels();
     }
 }

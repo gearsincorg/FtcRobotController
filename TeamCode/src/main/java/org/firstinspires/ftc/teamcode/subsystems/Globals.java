@@ -14,8 +14,8 @@ public class Globals {
      * Robot state constants.
      */
     public static boolean ARM_HAS_HOMED = false;
-    public static boolean LEFT_GRABBER_CLOSED = false;
-    public static boolean RIGHT_GRABBER_CLOSED = false;
+    public static boolean HOLDING_LEFT_PIXEL = false;
+    public static boolean HOLDING_RIGHT_PIXEL = false;
 
     public static ManipulatorState ARM_STATE = ManipulatorState.UNKNOWN;
     public static ManipulatorWristState WRIST_STATE = ManipulatorWristState.UNKNOWN;

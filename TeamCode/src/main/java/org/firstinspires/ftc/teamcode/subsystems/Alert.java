@@ -83,7 +83,7 @@ public class Alert {
                     break;
 
                 case TELEOP_GRABBER:
-                    if (Globals.LEFT_GRABBER_CLOSED) {
+                    if (Globals.HOLDING_LEFT_PIXEL) {
                         if (onCycle) {
                             setLeftLED(LEDcolor.RED);
                         } else {
@@ -93,7 +93,7 @@ public class Alert {
                         setLeftLED(LEDcolor.GREEN);
                     }
 
-                    if (Globals.RIGHT_GRABBER_CLOSED) {
+                    if (Globals.HOLDING_RIGHT_PIXEL) {
                         if (onCycle) {
                             setRightLED(LEDcolor.RED);
                         } else {

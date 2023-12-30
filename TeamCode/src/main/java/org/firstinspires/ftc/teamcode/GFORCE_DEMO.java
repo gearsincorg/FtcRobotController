@@ -135,6 +135,6 @@ public class GFORCE_DEMO extends LinearOpMode
 
         Globals.ARM_HAS_HOMED = false;
         Globals.WRIST_STATE = ManipulatorWristState.UNKNOWN;
-        arm.openGrabbers();
+        arm.dropPixels();
     }
 }

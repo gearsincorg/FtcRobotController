@@ -241,10 +241,10 @@ public class Robot {
             if (endOnPixel) {
                 // check for yellow pixel found
                 if (Globals.PURPLE_PIXEL_ON_RIGHT && myArm.pixelRightInRange) {
-                    myArm.closeRightGrabber();
+                    myArm.grabRightPixel();
                     break;   // Exit loop because we have Pixel
                 } else if (!Globals.PURPLE_PIXEL_ON_RIGHT && myArm.pixelLeftInRange) {
-                    myArm.closeLeftGrabber();
+                    myArm.grabLeftPixel();
                     break;   // Exit loop because we have Pixel
                 }
             }

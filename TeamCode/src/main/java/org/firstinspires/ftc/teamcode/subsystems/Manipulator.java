@@ -145,10 +145,10 @@ public class Manipulator {
         if (!Globals.IS_AUTO) {
 
             // if we have not explicitly closed a grabber, make it safe by opening it (could be in auto state)
-            if (!Globals.LEFT_GRABBER_CLOSED) {
+            if (!Globals.HOLDING_LEFT_PIXEL) {
                 openLeftGrabber();
             }
-            if (!Globals.RIGHT_GRABBER_CLOSED) {
+            if (!Globals.HOLDING_RIGHT_PIXEL) {
                 openRightGrabber();
             }
             currentState = Globals.ARM_STATE;
@@ -434,49 +434,66 @@ public class Manipulator {
         autoOpenGrabbers();
     }
 
+    // ----------   LEFT Grabber functions.
+
+    public void grabLeftPixel(){
+        Globals.HOLDING_LEFT_PIXEL = true;
+        closeLeftGrabber();
+    }
     public void closeLeftGrabber(){
         clawL.setPosition(GRAB_LEFT_CLOSE);
-        Globals.LEFT_GRABBER_CLOSED = true;
+    }
+
+    public void dropLeftPixel(){
+        Globals.HOLDING_LEFT_PIXEL = false;
+        openLeftGrabber();
     }
     public void openLeftGrabber(){
         clawL.setPosition(GRAB_LEFT_OPEN);
-        Globals.LEFT_GRABBER_CLOSED = false;
+    }
+
+    // ----------   RIGHT Grabber functions.
+
+    public void grabRightPixel(){
+        Globals.HOLDING_RIGHT_PIXEL = true;
+        closeRightGrabber();
     }
     public void closeRightGrabber(){
         clawR.setPosition(GRAB_RIGHT_CLOSE);
-        Globals.RIGHT_GRABBER_CLOSED = true;
+    }
+
+    public void dropRightPixel(){
+        Globals.HOLDING_RIGHT_PIXEL = false;
+        openRightGrabber();
     }
     public void openRightGrabber(){
         clawR.setPosition(GRAB_RIGHT_OPEN);
-        Globals.RIGHT_GRABBER_CLOSED = false;
     }
 
-    public void openPurpleGrabber() {
+    public void dropPurplePixel() {
         if (Globals.PURPLE_PIXEL_ON_RIGHT) {
-            openRightGrabber();
+            dropRightPixel();
         } else {
-            openLeftGrabber();
+            dropLeftPixel();
         }
     }
 
-    public void openYellowGrabber() {
+    public void dropYellowPixel() {
         if (Globals.PURPLE_PIXEL_ON_RIGHT) {
-            openLeftGrabber();
+            dropLeftPixel();
         } else {
-            openRightGrabber();
+            dropRightPixel();
         }
     }
 
-    public void openGrabbers (){
-        openRightGrabber();
-        openLeftGrabber();
+    public void dropPixels(){
+        dropRightPixel();
+        dropLeftPixel();
     }
 
     public void autoOpenGrabbers (){
         clawL.setPosition(GRAB_LEFT_AUTO);
         clawR.setPosition(GRAB_RIGHT_AUTO);
-        Globals.LEFT_GRABBER_CLOSED = false;
-        Globals.RIGHT_GRABBER_CLOSED = false;
     }
 
     public void wristToHome(){
@@ -566,26 +583,28 @@ public class Manipulator {
 
             // -- Home  ----------
             case H_RETRACTING:
-                setRangeEnable(true);
                 if (extendLength < SAFE_EXTEND_DISTANCE) {  // was extendInPosition
                     setLiftSetpoint(LIFT_HOME_ANGLE);
-                    setState(ManipulatorState.H_LATE_OPEN);
+                    setState(ManipulatorState.H_OPEN);
                 }
                 break;
 
-            case H_LATE_OPEN:
+            case H_OPEN:
                 // If either gripper is closed, wait for a sc to open them.
                 smGotoSafeDriving = false;
                 smGotoFrontScore  = false;
                 smGotoBackScore  = false;
                 smGotoPOWERLIFT = false;
                 smGotoHome = false;
+                setAbsoluteWristAngle(WRIST_HOME_ABS);
                 setRangeEnable(true);
-                if ((!Globals.LEFT_GRABBER_CLOSED && !Globals.RIGHT_GRABBER_CLOSED) || stateTimer.time() > 1.0 ) {
-                    setAbsoluteWristAngle(WRIST_HOME_ABS);
-                     openGrabbers();
-                    setState(ManipulatorState.HOME);
+                if (!Globals.HOLDING_LEFT_PIXEL) {
+                    openLeftGrabber();
                 }
+                if (!Globals.HOLDING_RIGHT_PIXEL) {
+                    openRightGrabber();
+                }
+                setState(ManipulatorState.HOME);
                 break;
 
             case HOME:
@@ -594,15 +613,9 @@ public class Manipulator {
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
                     setState(H_RETRACTING);
                 } else if (smGotoSafeDriving) {
-                    if (Globals.LEFT_GRABBER_CLOSED && Globals.RIGHT_GRABBER_CLOSED) {
-                        wristToBackScore();
-                        setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                        setState(ManipulatorState.SD_RETRACTING);
-                    } else {
-                        closeLeftGrabber();
-                        closeRightGrabber();
-                        setStateWithDelay(ManipulatorState.SD_RETRACT, 0.25);
-                    }
+                    wristToBackScore();
+                    setExtendSetpoint(EXTEND_HOME_DISTANCE);
+                    setState(ManipulatorState.SD_RETRACTING);
                 } else if (smGotoFrontScore) {
                     if (Globals.IS_AUTO) {
                         setLiftSetpoint(Globals.PLACE_YELLOW_HIGH ? LIFT_HIGH_AUTO_ANGLE : LIFT_LOW_AUTO_ANGLE);
@@ -620,13 +633,6 @@ public class Manipulator {
                     closeRightGrabber();
                     setStateWithDelay(ManipulatorState.PL_ROTATE, 0.250);
                 }
-                break;
-
-            // -- Safe Driving  ----------
-            case SD_RETRACT:
-                wristToBackScore();
-                setExtendSetpoint(EXTEND_HOME_DISTANCE);
-                setState(ManipulatorState.SD_RETRACTING);
                 break;
 
             case SD_RETRACTING:
@@ -726,7 +732,7 @@ public class Manipulator {
                 if (extendLength < SAFE_EXTEND_DISTANCE) {
                     wristToHome();
                     setLiftSetpoint(LIFT_HOME_ANGLE);
-                    setState(ManipulatorState.H_LATE_OPEN);
+                    setState(ManipulatorState.H_OPEN);
                 }
                 break;
 
@@ -751,7 +757,7 @@ public class Manipulator {
                     setState(ManipulatorState.PL_EXTENDING);
                 }  else if (smGotoHome) {
                     setLiftSetpoint(LIFT_HOME_ANGLE);
-                    setState(ManipulatorState.H_LATE_OPEN);
+                    setState(ManipulatorState.H_OPEN);
                 }
                 break;
 

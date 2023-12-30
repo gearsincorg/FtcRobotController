@@ -100,8 +100,8 @@ public class GFORCE_Autonomous extends LinearOpMode
         if (opModeIsActive() && !autoConfig.autoOptions.disabled)
         {
             // Grab preload pixels and start auto
-            arm.closeRightGrabber();
-            arm.closeLeftGrabber();
+            arm.grabLeftPixel();
+            arm.grabRightPixel();
 
             vision.enableAprilTag();
 
@@ -126,7 +126,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setExtendSetpoint(5);
                     robot.turnTo(45, 0.35, 0);
                     arm.waitTillArmInPosition();
-                    arm.openPurpleGrabber();
+                    arm.dropPurplePixel();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
@@ -163,11 +163,11 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.waitTillArmInPosition();
 
                     if (autoConfig.autoOptions.whitePixel) {
-                        arm.openYellowGrabber();
+                        arm.dropYellowPixel();
                         arm.runArmControl(0.5);
-                        arm.openPurpleGrabber();
+                        arm.dropPurplePixel();
                     } else {
-                        arm.openGrabbers();
+                        arm.dropPixels();
                     }
                     arm.runArmControl(1);
                     robot.drive(-4, 0.5, 0, false);
@@ -189,7 +189,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setLiftSetpoint(5);
                     arm.setExtendSetpoint(5);
                     arm.waitTillArmInPosition();
-                    arm.openPurpleGrabber();
+                    arm.dropPurplePixel();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     arm.waitTillArmInPosition();
@@ -231,11 +231,11 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.waitTillArmInPosition();
 
                     if (autoConfig.autoOptions.whitePixel) {
-                        arm.openYellowGrabber();
+                        arm.dropYellowPixel();
                         arm.runArmControl(0.5);
-                        arm.openPurpleGrabber();
+                        arm.dropPurplePixel();
                     } else {
-                        arm.openGrabbers();
+                        arm.dropPixels();
                     }
 
                     arm.runArmControl(1);
@@ -259,7 +259,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setExtendSetpoint(11);
                     robot.turnTo(-40, 0.35, 0);
                     arm.waitTillArmInPosition();
-                    arm.openPurpleGrabber();
+                    arm.dropPurplePixel();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
@@ -273,7 +273,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.strafe(18, 0.7, 0.0);
                     robot.driveToBackdropTag(3);
                     arm.waitTillArmInPosition();
-                    arm.openGrabbers();
+                    arm.dropPixels();
                     arm.runArmControl(1);
                     robot.drive(-4, 0.5, 0, false);
                     arm.gotoHome();
@@ -298,7 +298,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setExtendSetpoint(11);
                     robot.turnTo(40, 0.35, 0);
                     arm.waitTillArmInPosition();
-                    arm.openPurpleGrabber();
+                    arm.dropPurplePixel();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
@@ -308,7 +308,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.waitTillArmInPosition();  // should already be there.
                         robot.turnTo(-90, 0.5, 0.25);
                         //arm.wristToHome();
-                        arm.openPurpleGrabber();
+                        arm.dropPurplePixel();
                         arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
                         robot.drive(27, 0.5, 0.0, false);
                         robot.drive(6, 0.25, 0.0, true);   // Grab Pixel
@@ -329,7 +329,7 @@ public class GFORCE_Autonomous extends LinearOpMode
 
                     robot.driveToBackdropTag(1);
                     arm.waitTillArmInPosition();
-                    arm.openGrabbers();
+                    arm.dropPixels();
                     arm.runArmControl(1);
 
                     robot.drive(-4, 0.7, 0, false);
@@ -350,7 +350,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setLiftSetpoint(10);
                     arm.setExtendSetpoint(7);
                     arm.waitTillArmInPosition();
-                    arm.openPurpleGrabber();
+                    arm.dropPurplePixel();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
 
@@ -359,7 +359,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.waitTillArmInPosition();  // should already be there.
                         robot.turnTo(-90, 0.5, 0.25);
                         //arm.wristToHome();
-                        arm.openPurpleGrabber();
+                        arm.dropPurplePixel();
                         arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
                         robot.drive(27, 0.5, 0.0, false);
                         robot.drive(6, 0.25, 0.0, true);   // Grab Pixel
@@ -381,7 +381,7 @@ public class GFORCE_Autonomous extends LinearOpMode
 
                     robot.driveToBackdropTag(2);
                     arm.waitTillArmInPosition();
-                    arm.openGrabbers();
+                    arm.dropPixels();
                     arm.runArmControl(1);
                     robot.drive(-4, 0.7, 0, false);
                     arm.gotoHome();
@@ -403,7 +403,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.setExtendSetpoint(5);
                     robot.turnTo(-45, 0.35, 0);
                     arm.waitTillArmInPosition();
-                    arm.openPurpleGrabber();
+                    arm.dropPurplePixel();
                     arm.runArmControl(0.5);
                     arm.setExtendSetpoint(0);
                     robot.turnTo(0, 0.35, 0);
@@ -413,7 +413,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.waitTillArmInPosition();  // should already be there.
                         robot.turnTo(-90, 0.5, 0.25);
                         //arm.wristToHome();
-                        arm.openPurpleGrabber();
+                        arm.dropPurplePixel();
                         arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
                         robot.drive(27, 0.5, 0.0, false);
                         robot.drive(6, 0.25, 0.0, true);   // Grab Pixel
@@ -434,7 +434,7 @@ public class GFORCE_Autonomous extends LinearOpMode
 
                     robot.driveToBackdropTag(3);
                     arm.waitTillArmInPosition();
-                    arm.openGrabbers();
+                    arm.dropPixels();
                     arm.runArmControl(1);
 
                     robot.drive(-4, 0.7, 0, false);
