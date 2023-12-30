@@ -229,13 +229,21 @@ public class GFORCE_Teleop extends LinearOpMode
             lastGyroReset = thisGyroReset;
 
             if (gamepad1.left_trigger > 0.25) {
-                arm.openLeftGrabber();
+                if (arm.reverseGrippers()) {
+                    arm.openRightGrabber();
+                } else {
+                    arm.openLeftGrabber();
+                }
             } else if (gamepad1.left_bumper || arm.pixelLeftInRange) {
                 arm.closeLeftGrabber();
             }
 
             if (gamepad1.right_trigger > 0.25) {
-                arm.openRightGrabber();
+                if (arm.reverseGrippers()) {
+                    arm.openLeftGrabber();
+                } else {
+                    arm.openRightGrabber();
+                }
             } else if (gamepad1.right_bumper  || arm.pixelRightInRange){
                 arm.closeRightGrabber();
             }

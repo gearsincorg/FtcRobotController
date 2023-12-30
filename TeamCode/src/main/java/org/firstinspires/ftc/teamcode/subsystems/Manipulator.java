@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import static org.firstinspires.ftc.teamcode.subsystems.ManipulatorState.BACK_SCORE;
 import static org.firstinspires.ftc.teamcode.subsystems.ManipulatorState.H_RETRACTING;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -13,17 +14,17 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Manipulator {
-    private static final double LIFT_GAIN       = 0.06;    // Strength of lift position control
+    private static final double LIFT_GAIN       = 0.07;    // Strength of lift position control  was 0.06
     private static final double LIFT_TOLERANCE  = 1.75;      // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE = 0.0;
     public static final double LIFT_STACK_LEVEL2 = 4.0;
     public static final double LIFT_STACK_LEVEL3 = 6.0;
     public static final double LIFT_STACK_LEVEL4 = 8.0;
-    public static final double LIFT_STACK_LEVEL5 = 10.0;
+    public static final double LIFT_STACK_LEVEL5 = 10.2;
     public static final double LIFT_LOW_AUTO_ANGLE  = 19.0;
     public static final double LIFT_HIGH_AUTO_ANGLE = 23.0;
     public static final double LIFT_FRONT_ANGLE = 18.0;
-    public static final double LIFT_HANG_ANGLE  = 92.0;
+    public static final double LIFT_HANG_ANGLE  = 89.0;
     public static final double LIFT_BACK_ANGLE = 115.0;
     public static final double LIFT_BACK_SAFE_ANGLE = 10.0;
 
@@ -498,6 +499,10 @@ public class Manipulator {
         Globals.WRIST_STATE = ManipulatorWristState.BACK_SCORE;
     }
 
+    public boolean reverseGrippers(){
+        return (currentState == BACK_SCORE);
+    }
+
     //------------- state machine functions -------------
 
     private boolean smGotoHome       = false;
@@ -561,6 +566,7 @@ public class Manipulator {
 
             // -- Home  ----------
             case H_RETRACTING:
+                setRangeEnable(true);
                 if (extendLength < SAFE_EXTEND_DISTANCE) {  // was extendInPosition
                     setLiftSetpoint(LIFT_HOME_ANGLE);
                     setState(ManipulatorState.H_LATE_OPEN);
@@ -574,6 +580,7 @@ public class Manipulator {
                 smGotoBackScore  = false;
                 smGotoPOWERLIFT = false;
                 smGotoHome = false;
+                setRangeEnable(true);
                 if ((!Globals.LEFT_GRABBER_CLOSED && !Globals.RIGHT_GRABBER_CLOSED) || stateTimer.time() > 1.0 ) {
                     setAbsoluteWristAngle(WRIST_HOME_ABS);
                      openGrabbers();
@@ -582,6 +589,7 @@ public class Manipulator {
                 break;
 
             case HOME:
+                setRangeEnable(true);
                 if (smGotoHome) {
                     setExtendSetpoint(EXTEND_HOME_DISTANCE);
                     setState(H_RETRACTING);
@@ -616,6 +624,7 @@ public class Manipulator {
 
             // -- Safe Driving  ----------
             case SD_RETRACT:
+                wristToBackScore();
                 setExtendSetpoint(EXTEND_HOME_DISTANCE);
                 setState(ManipulatorState.SD_RETRACTING);
                 break;
