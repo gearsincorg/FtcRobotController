@@ -49,8 +49,8 @@ public class Manipulator {
     private static final double MIN_PIXEL_RANGE_DETECT = 18 ;
     private static final double MAX_PIXEL_RANGE_DETECT = 85 ;
 
-    private static final double SHORT_HOLD_POWER = 0.21  ;
-    private static final double LONG_HOLD_POWER  = 0.10  ;
+    private static final double SHORT_HOLD_POWER = 0.25  ;
+    private static final double LONG_HOLD_POWER  = 0.15  ;
 
     private static final double WRIST_SCORE_BACK = 0.675;  // was 6.5
     private static final double WRIST_DEGREE_SCALE = WRIST_SCORE_BACK / 180;
@@ -297,9 +297,9 @@ public class Manipulator {
         double weightPower = SHORT_HOLD_POWER  + (LONG_HOLD_POWER * extendLength / EXTEND_MAX_LENGTH);
         double power = errorPower + (weightPower * Math.cos(Math.toRadians(liftAngle)));
 
-        power = Range.clip(power, -0.4, 0.5);
+        power = Range.clip(power, -0.5, 0.75);  /// was -0.4 & 0.5
 
-        //causes the lift power to be zero if the arms angle is past a certain point, or sitting at home
+        //causes the lift power to be zero (break) if the arms angle is past a certain point, or sitting at home
         if (((liftSetpoint < 1) && (liftAngle < 5)) ||
             ((power < 0) && (liftAngle < 25)) ||
             ((power > 0) && (liftAngle > 100))
