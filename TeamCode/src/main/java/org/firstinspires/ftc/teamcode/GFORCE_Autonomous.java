@@ -185,7 +185,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     //  ####   FRONT :  CENTER SPIKE   ########################################################################
                     //  ####
 
-                    robot.drive(24, 0.5, 0.0, false);
+                    robot.drive(23, 0.5, 0.0, false);
                     arm.setLiftSetpoint(5);
                     arm.setExtendSetpoint(5);
                     arm.waitTillArmInPosition();
@@ -207,17 +207,10 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.drive(-7, 0.5, 0.0, false);
                         arm.gotoSafeDriving();
                         robot.turnTo(90, 0.5, 0);
-                        robot.strafe(-28, 0.75, 0.0);
+                        robot.strafe(-29, 0.75, 0.0);
                         delay(autoConfig.autoOptions.delayYellow);
                         robot.drive(93, 0.7, 0, false);
                     } else {
-                        /*
-                        robot.strafe(-11, 0.7, 0.0);
-                        arm.gotoSafeDriving();
-                        delay(autoConfig.autoOptions.delayYellow);
-                        robot.drive(86, 0.7, 0, false);
-                        */
-
                         arm.gotoSafeDriving();
                         robot.strafe(-20, 0.7, 0.0);
                         robot.drive(28, 0.7, 0.0, false);
