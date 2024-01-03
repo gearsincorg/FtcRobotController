@@ -24,12 +24,15 @@ public class Manipulator {
     public static final double LIFT_LOW_AUTO_ANGLE  = 19.0;
     public static final double LIFT_HIGH_AUTO_ANGLE = 23.0;
     public static final double LIFT_FRONT_ANGLE = 18.0;
-    public static final double LIFT_HANG_ANGLE  = 89.0;
-    public static final double LIFT_BACK_ANGLE = 115.0;
+    public static final double LIFT_HANG_ANGLE  = 82.0;
+    public static final double LIFT_BACK_ANGLE = 114.0;
     public static final double LIFT_BACK_SAFE_ANGLE = 10.0;
 
     public static final double LIFT_MIN_ANGLE = 0.0;
     public static final double LIFT_MAX_ANGLE = 120.0;
+
+    public static final double LIFT_MIN_POWER = -0.6;
+    public static final double LIFT_MAX_POWER =  0.6 ;
 
     private static final double EXTEND_GAIN     = 0.3;    // Strength of extend position control
     private static final double EXTEND_TOLERANCE = 0.50;     // Controller is is "inPosition" if position error is < +/- this amount
@@ -37,7 +40,7 @@ public class Manipulator {
     public static final double EXTEND_LOW_AUTO_DISTANCE  = 5.5;
     public static final double EXTEND_HIGH_AUTO_DISTANCE = 7.5;
     public static final double EXTEND_FRONT_DISTANCE = 7.0;
-    public static final double EXTEND_BACK_DISTANCE = 0.0;  // was 6"
+    public static final double EXTEND_BACK_DISTANCE = 3.0;  // was 6"
     public static final double EXTEND_LIFT_LENGTH = 19.2;
     public static final double EXTEND_MIN_LENGTH = 0.0;
     public static final double EXTEND_MAX_LENGTH = 19.5;
@@ -263,19 +266,15 @@ public class Manipulator {
 
     public void powerLift(){
         lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        setLiftPower(-0.35);
+        setLiftPower(-0.4);
     }
 
     public void powerHold(){
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        if (liftAngle < 20) {   // holding vertical
+        if (liftAngle < 20) {   // holding robot tilted vertical
             setLiftPower(-0.20);
-        } else if (liftAngle < (LIFT_HANG_ANGLE - 2)) {
-            setLiftPower(0.25);
-        } else if (liftAngle > (LIFT_HANG_ANGLE + 2 )) {
-            setLiftPower(-0.25);
         } else {
-            setLiftPower(0);
+            setLiftPower((liftSetpoint - liftAngle) * LIFT_GAIN);
         }
     }
 
@@ -297,7 +296,7 @@ public class Manipulator {
         double weightPower = SHORT_HOLD_POWER  + (LONG_HOLD_POWER * extendLength / EXTEND_MAX_LENGTH);
         double power = errorPower + (weightPower * Math.cos(Math.toRadians(liftAngle)));
 
-        power = Range.clip(power, -0.5, 0.75);  /// was -0.4 & 0.5
+        power = Range.clip(power, LIFT_MIN_POWER, LIFT_MAX_POWER);  /// was -0.4 & 0.5
 
         //causes the lift power to be zero (break) if the arms angle is past a certain point, or sitting at home
         if (((liftSetpoint < 1) && (liftAngle < 5)) ||
@@ -309,7 +308,7 @@ public class Manipulator {
 
         lift.setPower(power);
         if (showTelemetry) {
-            // myOpMode.telemetry.addData("Lift E:P", "%6.1f %6.2f", error, power);
+            myOpMode.telemetry.addData("Lift E:P", "%6.1f %6.2f", error, power);
         }
 
         liftInPosition = (Math.abs(error) < LIFT_TOLERANCE);
@@ -631,7 +630,7 @@ public class Manipulator {
                     wristToPowerLift();
                     closeLeftGrabber();
                     closeRightGrabber();
-                    setStateWithDelay(ManipulatorState.PL_ROTATE, 0.250);
+                    setStateWithDelay(ManipulatorState.PL_ROTATE, 0.200);
                 }
                 break;
 

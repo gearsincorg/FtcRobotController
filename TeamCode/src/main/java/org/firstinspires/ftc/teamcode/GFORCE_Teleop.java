@@ -187,10 +187,10 @@ public class GFORCE_Teleop extends LinearOpMode
             if (arm.readyToHang()) {
                 alert.setState(AlertState.READY_TO_LIFT);
                 if ((gamepad2.left_trigger > 0.5) && (gamepad2.right_trigger > 0.5) && (arm.liftAngle > 0.0)) {
-                    arm.setExtendSetpoint(Manipulator.EXTEND_LIFT_LENGTH - 0.5);
+                    // arm.setExtendSetpoint(Manipulator.EXTEND_LIFT_LENGTH - 0.5);
                     arm.powerLift();
                 } else {
-                    arm.setExtendSetpoint(Manipulator.EXTEND_LIFT_LENGTH);
+                    // arm.setExtendSetpoint(Manipulator.EXTEND_LIFT_LENGTH);
                     arm.powerHold();
                 }
             }
