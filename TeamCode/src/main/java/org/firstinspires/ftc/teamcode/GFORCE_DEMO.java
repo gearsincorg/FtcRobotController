@@ -47,7 +47,7 @@ public class GFORCE_DEMO extends LinearOpMode
         arm.initialize(true);
         vision.initialize(true);
         drone.initialize(true);
-        alert.initialize(false);
+        alert.initialize(true);
         autoConfig.initialize();
 
         if (autoConfig.autoOptions.redAlliance )
@@ -131,6 +131,8 @@ public class GFORCE_DEMO extends LinearOpMode
             } else if (gamepad2.right_bumper || arm.pixelRightInRange) {
                 arm.closeRightGrabber();
             }
+
+            telemetry.update();
         }
 
         Globals.ARM_HAS_HOMED = false;
