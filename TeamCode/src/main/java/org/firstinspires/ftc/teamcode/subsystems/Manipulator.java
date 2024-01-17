@@ -71,6 +71,10 @@ public class Manipulator {
     private static final double GRAB_RIGHT_OPEN  = 0.50;
     private static final double GRAB_RIGHT_CLOSE = 0.73;
 
+    private static final double STACK_WACKER_DOWN = 0.0;
+    private static final double STACK_WACKER_UP   = 0.5;
+
+
     private static final int MIN_PIXLE_HITS      = 2;
 
     public  double liftAngle      = 0;   // Arm angle in degrees.  Horizontal = 0 degrees.  Increases to approximately 120 degrees.
@@ -86,6 +90,7 @@ public class Manipulator {
     private Servo wrist;        //  control the claw rotation wrist
     private Servo clawL;        //  control the left claw open/close
     private Servo clawR;        //  control the right claw open/close
+    private Servo stackWacker;  //  control the rear StackWacker
     private DistanceSensor pixelL;
     private DistanceSensor pixelR;
 
@@ -141,6 +146,7 @@ public class Manipulator {
         wrist = myOpMode.hardwareMap.get(Servo.class, "wrist");
         clawL = myOpMode.hardwareMap.get(Servo.class, "left_claw");
         clawR = myOpMode.hardwareMap.get(Servo.class, "right_claw");
+        stackWacker = myOpMode.hardwareMap.get(Servo.class, "whacker");
         pixelL = myOpMode.hardwareMap.get(DistanceSensor.class, "left_pixel");
         pixelR = myOpMode.hardwareMap.get(DistanceSensor.class, "right_pixel");
 
@@ -156,6 +162,8 @@ public class Manipulator {
             }
             currentState = Globals.ARM_STATE;
         }
+
+        stackWackerUp();
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -432,6 +440,15 @@ public class Manipulator {
         wristToHome();
         autoOpenGrabbers();
     }
+
+    public void stackWackerUp(){
+        stackWacker.setPosition(STACK_WACKER_UP);
+    }
+
+    public void stackWackerDown(){
+        stackWacker.setPosition(STACK_WACKER_DOWN);
+    }
+
 
     // ----------   LEFT Grabber functions.
 

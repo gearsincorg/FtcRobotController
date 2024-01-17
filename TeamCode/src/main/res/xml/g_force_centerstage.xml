@@ -5,6 +5,7 @@
             <goBILDA5202SeriesMotor name="extend" port="1"/>
             <goBILDA5201SeriesMotor name="lateral" port="2"/>
             <goBILDA5202SeriesMotor name="axial" port="3"/>
+            <Servo name="whacker" port="4"/>
             <Servo name="fire" port="5"/>
             <DigitalDevice name="led0" port="0"/>
             <DigitalDevice name="led1" port="1"/>

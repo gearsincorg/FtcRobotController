@@ -5,6 +5,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.Alert;
@@ -177,6 +178,13 @@ public class GFORCE_Teleop extends LinearOpMode
                 drone.fireDrone();
             } else if (gamepad2.dpad_down) {
                 drone.stopLauncher();
+            }
+
+            // control for Stack Whacker
+            if (gamepad2.left_bumper) {
+                arm.stackWackerDown();
+            } else {
+                arm.stackWackerUp();
             }
 
             //  switch to Power lifing mode when
