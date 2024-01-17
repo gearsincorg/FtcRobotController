@@ -27,11 +27,11 @@ import org.firstinspires.ftc.teamcode.subsystems.Vision;
 @TeleOp(name="G-FORCE TELEOP", group = "AAA")
 public class GFORCE_Teleop extends LinearOpMode
 {
-    final double SAFE_DRIVE_SPEED   =  0.7 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_STRAFE_SPEED  =  0.7 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_YAW_SPEED     =  0.6 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double GYRO_ADJUST_TC     =  0.5 ; // time constant used to slew heading to apriltag derived value
-    final double LAUNCHER_SPEED = 1200 ; //
+    final double SAFE_DRIVE_SPEED   =  0.85 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_STRAFE_SPEED  =  0.85 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_YAW_SPEED     =  0.75 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double GYRO_ADJUST_TC     =  0.50 ; // time constant used to slew heading to apriltag derived value
+    final double LAUNCHER_SPEED     =  1150 ; //
 
     private ElapsedTime rumbleTime   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
