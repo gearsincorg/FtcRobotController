@@ -32,7 +32,7 @@ public class GFORCE_Autonomous extends LinearOpMode
 
     private ElapsedTime delayTime   = new ElapsedTime();  // User for delaying auto actions
 
-    TeamPropLocation teamPropLocation = TeamPropLocation.UNKNOWN;
+    // TeamPropLocation teamPropLocation = TeamPropLocation.UNKNOWN;
 
     @Override public void runOpMode()
     {
@@ -79,15 +79,15 @@ public class GFORCE_Autonomous extends LinearOpMode
 
             TeamPropLocation locationTest = vision.getTeamPropLocation();
             if (locationTest != TeamPropLocation.UNKNOWN) {
-                teamPropLocation = locationTest;
+                Globals.TEAM_PROP_LOCATION = locationTest;
             }
 
-            telemetry.addData("Last Detection", teamPropLocation);
+            telemetry.addData("Last Detection", Globals.TEAM_PROP_LOCATION);
             telemetry.addLine("\n");
             vision.telemetryTeamProp();
 
             // Alert the driver to the condition of the robot
-            if (vision.getContourCount() == 0) {
+            if ((vision.getContourCount() == 0) || (Math.abs(robot.pitch) > 10) ){
                 alert.setState(AlertState.VIDEO_ERROR);
             } else {
                 alert.setState(AlertState.AUTO_PIXEL);
@@ -116,8 +116,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                 // Robot is starting at the front of the field.
                 Globals.PLACE_YELLOW_HIGH = true;
 
-                if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE)) ||
-                    ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE))) {
+                if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.LEFT_SIDE)) ||
+                    ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.RIGHT_SIDE))) {
                     //  ####
                     //  ####   FRONT :  SPIKE NEAR TRUSS   ########################################################################
                     //  ####
@@ -180,7 +180,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     }
                     robot.drive(-16, 0.45, 0, false);
 
-                } else if ((teamPropLocation == TeamPropLocation.CENTER) || (teamPropLocation == TeamPropLocation.UNKNOWN)) {
+                } else if ((Globals.TEAM_PROP_LOCATION == TeamPropLocation.CENTER) || (Globals.TEAM_PROP_LOCATION == TeamPropLocation.UNKNOWN)) {
                     //  ####
                     //  ####   FRONT :  CENTER SPIKE   ########################################################################
                     //  ####
@@ -242,8 +242,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                     }
                     robot.drive(-16, 0.45, 0, false);
 
-                } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
-                           ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
+                } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.RIGHT_SIDE)) ||
+                           ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.LEFT_SIDE))) {
                     //  ####
                     //  ####   FRONT :  SPIKE NEAR PERIMETER   ########################################################################
                     //  ####
@@ -281,8 +281,8 @@ public class GFORCE_Autonomous extends LinearOpMode
             } else {
                 Globals.PLACE_YELLOW_HIGH = false;
 
-                if ( ((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.LEFT_SIDE )) ||
-                     ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ) {
+                if ( ((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.LEFT_SIDE )) ||
+                     ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.RIGHT_SIDE)) ) {
                     //  ####
                     //  ####   REAR :  SPIKE NEAR BACKDROP  ########################################################################
                     //  ####
@@ -335,7 +335,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     }
                     robot.drive(-16, 0.7, 0, false);
 
-                } else if ((teamPropLocation == TeamPropLocation.CENTER) || (teamPropLocation == TeamPropLocation.UNKNOWN)) {
+                } else if ((Globals.TEAM_PROP_LOCATION == TeamPropLocation.CENTER) || (Globals.TEAM_PROP_LOCATION == TeamPropLocation.UNKNOWN)) {
                     //  ####
                     //  ####   REAR :  CENTER SPIKE   ########################################################################
                     //  ####
@@ -386,8 +386,8 @@ public class GFORCE_Autonomous extends LinearOpMode
                     }
                     robot.drive(-16, 0.5, 0, false);
 
-                } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (teamPropLocation == TeamPropLocation.RIGHT_SIDE)) ||
-                        ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (teamPropLocation == TeamPropLocation.LEFT_SIDE))) {
+                } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.RIGHT_SIDE)) ||
+                        ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.LEFT_SIDE))) {
                     //  ####
                     //  ####   REAR :  SPIKE NEAR TRUSS   ########################################################################
                     //  ####

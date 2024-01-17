@@ -121,15 +121,15 @@ public class GFORCE_DEMO extends LinearOpMode
 
             //  ==  Assign grabbers to copilot for demo  =======================================
             if (gamepad2.left_trigger > 0.25) {
-                arm.openLeftGrabber();
+                arm.dropLeftPixel();
             } else if (gamepad2.left_bumper || arm.pixelLeftInRange) {
-                arm.closeLeftGrabber();
+                arm.grabLeftPixel();
             }
 
             if (gamepad2.right_trigger > 0.25) {
-                arm.openRightGrabber();
+                arm.dropRightPixel();
             } else if (gamepad2.right_bumper || arm.pixelRightInRange) {
-                arm.closeRightGrabber();
+                arm.grabRightPixel();
             }
 
             telemetry.update();

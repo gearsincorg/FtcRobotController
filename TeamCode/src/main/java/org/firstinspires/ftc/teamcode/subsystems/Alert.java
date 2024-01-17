@@ -12,7 +12,8 @@ public class Alert {
     private final ElapsedTime alertTimer = new ElapsedTime();
     private AlertState  alertState = AlertState.OFF;
     private boolean onCycle = false;
-    private double cycleHalfPeriod = 0.5;
+    private double cycleOnPeriod = 0.5;
+    private double cycleOffPeriod = 0.5;
 
     private DigitalChannel leftGreenLED;
     private DigitalChannel leftRedLED;
@@ -43,7 +44,7 @@ public class Alert {
     }
 
     public void update() {
-        if (alertTimer.time() >= cycleHalfPeriod){
+        if (alertTimer.time() >= (onCycle ? cycleOnPeriod : cycleOffPeriod)){
             alertTimer.reset();
             onCycle = !onCycle;
 
@@ -77,8 +78,22 @@ public class Alert {
                             setLeftLED(LEDcolor.RED);
                         }
                     } else {
-                        setLeftLED(LEDcolor.OFF);
-                        setRightLED(LEDcolor.OFF);
+                        switch (Globals.TEAM_PROP_LOCATION) {
+                            case LEFT_SIDE :
+                                setLeftLED(LEDcolor.GREEN);
+                                setRightLED(LEDcolor.OFF);
+                                break;
+
+                            case CENTER :
+                                setLeftLED(LEDcolor.GREEN);
+                                setRightLED(LEDcolor.GREEN);
+                                break;
+
+                            case RIGHT_SIDE :
+                                setLeftLED(LEDcolor.OFF);
+                                setRightLED(LEDcolor.GREEN);
+                                break;
+                        }
                     }
                     break;
 
@@ -114,17 +129,21 @@ public class Alert {
             onCycle = false;
             switch (alertState) {
                 case OFF:
-                    cycleHalfPeriod = 1.0;
+                    cycleOnPeriod  = 0.01;
+                    cycleOffPeriod = 1.0;
                     break;
                 case VIDEO_ERROR:
                 case READY_TO_LIFT:
-                    cycleHalfPeriod = 0.2;
+                    cycleOnPeriod  = 0.2;
+                    cycleOffPeriod = 0.2;
                     break;
                 case AUTO_PIXEL:
-                    cycleHalfPeriod = 0.4;
+                    cycleOnPeriod  = 0.2;
+                    cycleOffPeriod = 0.8;
                     break;
                 case TELEOP_GRABBER:
-                    cycleHalfPeriod = 0.1;
+                    cycleOnPeriod  = 0.3;
+                    cycleOffPeriod = 0.1;
                     break;
             }
             update();

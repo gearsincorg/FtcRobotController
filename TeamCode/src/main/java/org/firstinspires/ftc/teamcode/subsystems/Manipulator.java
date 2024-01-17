@@ -410,6 +410,7 @@ public class Manipulator {
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         extend.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         Globals.ARM_HAS_HOMED = true;
+        wrist.setPosition(WRIST_HOME_ABS);
         setState(ManipulatorState.HOME);
     }
 

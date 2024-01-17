@@ -20,5 +20,7 @@ public class Globals {
     public static ManipulatorState ARM_STATE = ManipulatorState.UNKNOWN;
     public static ManipulatorWristState WRIST_STATE = ManipulatorWristState.UNKNOWN;
 
+    public static TeamPropLocation TEAM_PROP_LOCATION = TeamPropLocation.UNKNOWN;
+
     public static double LAST_HEADING = 0;
 }
