@@ -139,6 +139,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.driveToStackTag();
                         arm.setLiftSetpoint(Manipulator.LIFT_STACK_LEVEL5);
                         arm.waitTillArmInPosition();
+                        arm.runArmControl(0.25);
 
                         robot.drive(5, 0.35, 0.0, true);  // Grab White Pixel
                         arm.runArmControl(0.5);
@@ -201,6 +202,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.driveToStackTag();
                         arm.setLiftSetpoint(Manipulator.LIFT_STACK_LEVEL5);
                         arm.waitTillArmInPosition();
+                        arm.runArmControl(0.25);
 
                         robot.drive(5, 0.35, 0.0, true);  // Grab White Pixel
                         arm.runArmControl(0.5);

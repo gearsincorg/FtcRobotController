@@ -55,7 +55,7 @@ public class Manipulator {
     private static final double SHORT_HOLD_POWER = 0.25  ;
     private static final double LONG_HOLD_POWER  = 0.15  ;
 
-    private static final double WRIST_SCORE_BACK = 0.675;  // was 6.5
+    private static final double WRIST_SCORE_BACK = 0.66;  // was 6.75
     private static final double WRIST_DEGREE_SCALE = WRIST_SCORE_BACK / 180;
 
     private static final double WRIST_HOME_ABS        =   0;
@@ -72,7 +72,7 @@ public class Manipulator {
     private static final double GRAB_RIGHT_CLOSE = 0.73;
 
     private static final double STACK_WACKER_DOWN = 0.0;
-    private static final double STACK_WACKER_UP   = 0.5;
+    private static final double STACK_WACKER_UP   = 0.75;
 
 
     private static final int MIN_PIXLE_HITS      = 2;
