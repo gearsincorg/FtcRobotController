@@ -22,17 +22,16 @@ public class AutoConfig
   Context context;
   OpMode myOpMode;
 
-  public static int MENU_ITEMS = 9;
+  public static int MENU_ITEMS = 8;
 
   public class Param {
       public boolean redAlliance    = false;
-      public boolean disabled       = false;
       public boolean startFront     = false;
       public int delayStart         = 0;
-      public boolean doubleYellow = false;
+      public boolean doubleYellow   = false;
       public int delayYellow        = 0;
       public boolean parkCenter     = false;
-      public boolean whitePixel = false;
+      public boolean whitePixel     = false;
       public boolean spare2         = false;
 
       //public List<AutoMenuItem> menuItems = new ArrayList<>(LOCATION_ITEMS);
@@ -65,7 +64,6 @@ public class AutoConfig
 
       // write each configuration parameter as a string on its own line
         outputStreamWriter.write(Boolean.toString(autoOptions.redAlliance)   + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.disabled)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.startFront)  + "\n");
         outputStreamWriter.write(Integer.toString(autoOptions.delayStart)   + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.doubleYellow)  + "\n");
@@ -93,7 +91,6 @@ public class AutoConfig
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
         autoOptions.redAlliance = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.disabled = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.startFront = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.delayStart = Integer.valueOf(bufferedReader.readLine());
         autoOptions.doubleYellow = Boolean.valueOf(bufferedReader.readLine());
@@ -112,14 +109,13 @@ public class AutoConfig
   public void updateMenu ()
   {
       myOpMode.telemetry.addData((currentMenuIndex == 0) ? "0 > ALLIANCE"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "BLUE");
-      myOpMode.telemetry.addData((currentMenuIndex == 1) ? "1 > RUN AUTO"   : "1   Run Auto", autoOptions.disabled ? "no" : "YES");
-      myOpMode.telemetry.addData((currentMenuIndex == 2) ? "2 > START POSITION"   : "2   Start", autoOptions.startFront ? "At Front" : "At Back");
-      myOpMode.telemetry.addData((currentMenuIndex == 3) ? "3 > START DELAY"   : "3   Start Delay", autoOptions.delayStart);
-      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > YELLOW PIXEL"   : "4   Yellow Pixel", autoOptions.doubleYellow ? "Double" : "Single");
-      myOpMode.telemetry.addData((currentMenuIndex == 5) ? "5 > YELLOW DELAY"   : "5   Yellow Delay", autoOptions.delayYellow);
-      myOpMode.telemetry.addData((currentMenuIndex == 6) ? "6 > PARK"   : "6  Park", autoOptions.parkCenter ? "In Center" : "By Wall");
-      myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > WHITE PIXEL"   : "7  White Pixel", autoOptions.whitePixel ? "YES" : "no");
-      myOpMode.telemetry.addData((currentMenuIndex == 8) ? "8 > SPARE 1"   : "8  Spare 2", autoOptions.spare2 ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 1) ? "1 > START POSITION"   : "1   Start", autoOptions.startFront ? "At Front" : "At Back");
+      myOpMode.telemetry.addData((currentMenuIndex == 2) ? "2 > START DELAY"   : "2   Start Delay", autoOptions.delayStart);
+      myOpMode.telemetry.addData((currentMenuIndex == 3) ? "3 > YELLOW PIXEL"   : "3   Yellow Pixel", autoOptions.doubleYellow ? "Double" : "Single");
+      myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > YELLOW DELAY"   : "4   Yellow Delay", autoOptions.delayYellow);
+      myOpMode.telemetry.addData((currentMenuIndex == 5) ? "5 > PARK"   : "5  Park", autoOptions.parkCenter ? "In Center" : "By Wall");
+      myOpMode.telemetry.addData((currentMenuIndex == 6) ? "6 > WHITE PIXEL"   : "6  White Pixel", autoOptions.whitePixel ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > SPARE 1"   : "7  Spare 2", autoOptions.spare2 ? "YES" : "no");
   }
 
     public void initialize() {
@@ -162,35 +158,32 @@ public class AutoConfig
                     autoOptions.redAlliance = !autoOptions.redAlliance;
                     break;
                 case 1:
-                    autoOptions.disabled = !autoOptions.disabled;
-                    break;
-                case 2:
                     autoOptions.startFront = !autoOptions.startFront;
                     break;
-                case 3:
+                case 2:
                     if (b1)
                         autoOptions.delayStart++;
                     else
                     if (autoOptions.delayStart > 0)
                         autoOptions.delayStart--;
                     break;
-                case 4:
+                case 3:
                     autoOptions.doubleYellow = !autoOptions.doubleYellow;
                     break;
-                case 5:
+                case 4:
                     if (b1)
                         autoOptions.delayYellow++;
                     else
                     if (autoOptions.delayYellow > 0)
                         autoOptions.delayYellow--;
                     break;
-                case 6:
+                case 5:
                     autoOptions.parkCenter = !autoOptions.parkCenter;
                     break;
-                case 7:
+                case 6:
                     autoOptions.whitePixel = !autoOptions.whitePixel;
                     break;
-                case 8:
+                case 7:
                     autoOptions.spare2 = !autoOptions.spare2;
                     break;
             }

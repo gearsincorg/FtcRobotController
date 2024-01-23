@@ -97,7 +97,7 @@ public class GFORCE_Autonomous extends LinearOpMode
         }
 
         // Run Auto if stop was not pressed.
-        if (opModeIsActive() && !autoConfig.autoOptions.disabled)
+        if (opModeIsActive())
         {
             // Grab preload pixels and start auto
             arm.grabLeftPixel();
