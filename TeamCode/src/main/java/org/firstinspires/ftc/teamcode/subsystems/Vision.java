@@ -77,6 +77,10 @@ public class Vision {
         }   // end for() loop
     }
 
+    public boolean canSeeStack(){
+        return findTarget((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) ? 9 : 8).targetFound;
+    }
+
     public Target findTarget(int ID) {
         Target match = new Target();
 
