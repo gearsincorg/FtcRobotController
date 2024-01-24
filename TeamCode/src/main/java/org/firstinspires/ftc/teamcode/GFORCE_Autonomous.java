@@ -59,6 +59,7 @@ public class GFORCE_Autonomous extends LinearOpMode
         while(opModeInInit()) {
 
             autoConfig.runMenuUI(); //Run menu system
+            arm.setWristOffset(autoConfig.autoOptions.wristOffset);
 
             alert.update();     // Update LED status
             telemetry.addLine("\n");
@@ -143,13 +144,13 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.runArmControl(1);
                     robot.drive(-4, 0.5, 0, false);
                     arm.gotoHome();
-                    robot.turnTo(-90,0.5,0);
+                    robot.turnTo(-90,0.55,0);
                     if (autoConfig.autoOptions.parkCenter) {
                         robot.strafe(30, 0.7, 0.0);
                     } else {
                         robot.strafe(-18, 0.7, 0.0);
                     }
-                    robot.drive(-16, 0.45, 0, false);
+                    robot.drive(-15, 0.45, 0, false);
 
                 } else if ((Globals.TEAM_PROP_LOCATION == TeamPropLocation.CENTER) || (Globals.TEAM_PROP_LOCATION == TeamPropLocation.UNKNOWN)) {
                     //  ####
@@ -178,14 +179,14 @@ public class GFORCE_Autonomous extends LinearOpMode
                     arm.runArmControl(1);
                     robot.drive(-4, 0.5, 0, false);
                     arm.gotoHome();
-                    robot.turnTo(-90,0.35,0);
+                    robot.turnTo(-90,0.55,0);
 
                     if (autoConfig.autoOptions.parkCenter) {
-                        robot.strafe(24, 0.5, 0.0);
+                        robot.strafe(24, 0.7, 0.0);
                     } else {
-                        robot.strafe(-24, 0.5, 0.0);
+                        robot.strafe(-24, 0.7, 0.0);
                     }
-                    robot.drive(-16, 0.45, 0, false);
+                    robot.drive(-15, 0.45, 0, false);
 
                 } else if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.RIGHT_SIDE)) ||
                            ((Globals.ALLIANCE_COLOR == AllianceColor.RED)  && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.LEFT_SIDE))) {
@@ -399,7 +400,7 @@ public class GFORCE_Autonomous extends LinearOpMode
         arm.runArmControl(0.5);
         arm.setExtendSetpoint(0);
         robot.turnTo(0, 0.35, 0);
-        robot.strafe(-12, 0.7, 0.0);
+        robot.strafe(-17, 0.7, 0.0);
         arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
         robot.turnTo(-90, 0.5, 0);
         robot.strafe(7, 0.7, 0.0);
@@ -413,12 +414,17 @@ public class GFORCE_Autonomous extends LinearOpMode
 
             robot.drive(3, 0.35, 0.0, true);  // Grab White Pixel
             arm.runArmControl(0.5);
-            robot.drive(-7, 0.5, 0.0, false);
+            robot.drive(-6, 0.5, 0.0, false);
         }
 
         arm.gotoSafeDriving();
         robot.turnTo(90, 0.5, 0);
+        if (autoConfig.autoOptions.wackStack) {
+            arm.stackWackerDown();
+        }
+        robot.drive( -4, 0.7, 0.0, false);
         robot.strafe(-29, 0.75, 0.0);
+        arm.stackWackerUp();
         delay(autoConfig.autoOptions.delayYellow);
         robot.drive(93, 0.7, 0, false);
         arm.gotoFrontScore();

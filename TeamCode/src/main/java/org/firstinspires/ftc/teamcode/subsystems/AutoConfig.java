@@ -22,7 +22,7 @@ public class AutoConfig
   Context context;
   OpMode myOpMode;
 
-  public static int MENU_ITEMS = 8;
+  public static int MENU_ITEMS = 9;
 
   public class Param {
       public boolean redAlliance    = false;
@@ -32,7 +32,8 @@ public class AutoConfig
       public int delayYellow        = 0;
       public boolean parkCenter     = false;
       public boolean whitePixel     = false;
-      public boolean spare2         = false;
+      public boolean wackStack      = false;
+      public int wristOffset = 0;
 
       //public List<AutoMenuItem> menuItems = new ArrayList<>(LOCATION_ITEMS);
   }
@@ -70,7 +71,8 @@ public class AutoConfig
         outputStreamWriter.write(Integer.toString(autoOptions.delayYellow)   + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.parkCenter)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.whitePixel)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.spare2)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.wackStack)  + "\n");
+        outputStreamWriter.write(Integer.toString(autoOptions.wristOffset)  + "\n");
 
       outputStreamWriter.close();
     }
@@ -97,7 +99,8 @@ public class AutoConfig
         autoOptions.delayYellow = Integer.valueOf(bufferedReader.readLine());
         autoOptions.parkCenter = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.whitePixel = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.spare2 = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.wackStack = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.wristOffset = Integer.valueOf(bufferedReader.readLine());
         inputStream.close();
       }
     } catch (Exception e)
@@ -115,7 +118,8 @@ public class AutoConfig
       myOpMode.telemetry.addData((currentMenuIndex == 4) ? "4 > YELLOW DELAY"   : "4   Yellow Delay", autoOptions.delayYellow);
       myOpMode.telemetry.addData((currentMenuIndex == 5) ? "5 > PARK"   : "5  Park", autoOptions.parkCenter ? "In Center" : "By Wall");
       myOpMode.telemetry.addData((currentMenuIndex == 6) ? "6 > WHITE PIXEL"   : "6  White Pixel", autoOptions.whitePixel ? "YES" : "no");
-      myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > SPARE 1"   : "7  Spare 2", autoOptions.spare2 ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 7) ? "7 > WACK STACK"   : "7  Wack Stack", autoOptions.wackStack ? "YES" : "no");
+      myOpMode.telemetry.addData((currentMenuIndex == 8) ? "8 > WRIST OFFSET"   : "8  Wrist Offset", autoOptions.wristOffset);
   }
 
     public void initialize() {
@@ -184,7 +188,16 @@ public class AutoConfig
                     autoOptions.whitePixel = !autoOptions.whitePixel;
                     break;
                 case 7:
-                    autoOptions.spare2 = !autoOptions.spare2;
+                    autoOptions.wackStack = !autoOptions.wackStack;
+                    break;
+                case 8:
+                    if (b1) {
+                        if (autoOptions.wristOffset < 20)
+                            autoOptions.wristOffset++;
+                    } else {
+                        if (autoOptions.wristOffset > -20)
+                            autoOptions.wristOffset--;
+                    }
                     break;
             }
             saveConfig();

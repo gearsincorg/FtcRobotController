@@ -17,13 +17,12 @@ public class Manipulator {
     private static final double LIFT_GAIN       = 0.07;    // Strength of lift position control  was 0.06
     private static final double LIFT_TOLERANCE  = 1.75;      // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE = 0.0;
-    public static final double LIFT_STACK_LEVEL2 = 4.0;
-    public static final double LIFT_STACK_LEVEL3 = 6.0;
-    public static final double LIFT_STACK_LEVEL4 = 8.0;
-    public static final double LIFT_STACK_LEVEL5 = 10.2;
+    public static final double LIFT_STACK_PICK_2_3 = 4.0;
+    public static final double LIFT_STACK_PICK_4_5 = 8.0;
+    public static final double LIFT_STACK_LEVEL5   = 10.0;
     public static final double LIFT_LOW_AUTO_ANGLE  = 19.0;
     public static final double LIFT_HIGH_AUTO_ANGLE = 23.0;
-    public static final double LIFT_FRONT_ANGLE = 18.0;
+    public static final double LIFT_FRONT_ANGLE = 27.0;
     public static final double LIFT_HANG_ANGLE  = 82.0;
     public static final double LIFT_BACK_ANGLE = 114.0;
     public static final double LIFT_BACK_SAFE_ANGLE = 10.0;
@@ -40,7 +39,7 @@ public class Manipulator {
     public static final double EXTEND_LOW_AUTO_DISTANCE  = 5.5;
     public static final double EXTEND_HIGH_AUTO_DISTANCE = 7.5;
     public static final double EXTEND_FRONT_DISTANCE = 7.0;
-    public static final double EXTEND_BACK_DISTANCE = 3.0;  // was 6"
+    public static final double EXTEND_BACK_DISTANCE = 0.0;  // Start out at 0.
     public static final double EXTEND_LIFT_LENGTH = 19.2;
     public static final double EXTEND_MIN_LENGTH = 0.0;
     public static final double EXTEND_MAX_LENGTH = 19.5;
@@ -55,19 +54,20 @@ public class Manipulator {
     private static final double SHORT_HOLD_POWER = 0.25  ;
     private static final double LONG_HOLD_POWER  = 0.15  ;
 
-    private static final double WRIST_SCORE_BACK = 0.66;  // was 6.75
-    private static final double WRIST_DEGREE_SCALE = WRIST_SCORE_BACK / 180;
+    private static final double WRIST_POS_HOME       = 0.08 ;  // was 0.00
+    private static final double WRIST_POS_SCORE_BACK = 0.75;  // was 0.66
+    private static final double WRIST_DEGREE_SCALE = (WRIST_POS_SCORE_BACK - WRIST_POS_HOME) / 180;
 
     private static final double WRIST_HOME_ABS        =   0;
-    private static final double WRIST_SCORE_FRONT_REL =  60;
+    private static final double WRIST_SCORE_FRONT_REL =  65;
     private static final double WRIST_HANG_ABS        = 140;
     private static final double WRIST_SCORE_BACK_ABS  = 180;
 
-    private static final double GRAB_LEFT_AUTO   = 0.60;
+    private static final double GRAB_LEFT_AUTO   = 0.62;  // was .60
     private static final double GRAB_LEFT_OPEN   = 0.50;
     private  static final double GRAB_LEFT_CLOSE = 0.25;
 
-    private static final double GRAB_RIGHT_AUTO  = 0.40;
+    private static final double GRAB_RIGHT_AUTO  = 0.38;  // was .40
     private static final double GRAB_RIGHT_OPEN  = 0.50;
     private static final double GRAB_RIGHT_CLOSE = 0.73;
 
@@ -83,6 +83,7 @@ public class Manipulator {
     public boolean pixelLeftInRange = false;
     public boolean pixelRightInRange = false;
     public double  lastBackExtend;
+    public double  wristOffset = 0;
 
     // Hardware interface Objects
     private DcMotor lift;       //  control the arm Lift Motor
@@ -424,8 +425,13 @@ public class Manipulator {
     }
 
     //------------ Servo Functions ------
+    public void setWristOffset(int offset){
+        wristOffset = (double)offset / 200.0;
+        setRelativeWristAngle(WRIST_HOME_ABS);
+    }
+
     public void setAbsoluteWristAngle( double angDeg) {
-        wrist.setPosition(angDeg * WRIST_DEGREE_SCALE);
+        wrist.setPosition((angDeg * WRIST_DEGREE_SCALE) + WRIST_POS_HOME + wristOffset);
     }
 
     public void setRelativeWristAngle( double angDeg) {
@@ -658,6 +664,8 @@ public class Manipulator {
                     closeLeftGrabber();
                     closeRightGrabber();
                     setStateWithDelay(ManipulatorState.PL_ROTATE, 0.200);
+                } else {
+                    // setRelativeWristAngle(WRIST_HOME_ABS);
                 }
                 break;
 

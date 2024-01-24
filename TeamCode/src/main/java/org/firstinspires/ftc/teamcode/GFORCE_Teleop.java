@@ -32,6 +32,7 @@ public class GFORCE_Teleop extends LinearOpMode
     final double SAFE_YAW_SPEED     =  0.75 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double GYRO_ADJUST_TC     =  0.50 ; // time constant used to slew heading to apriltag derived value
     final double LAUNCHER_SPEED     =  1150 ; //
+    final double DPAD_JOG_SPEED     =  0.20 ; //
 
     private ElapsedTime rumbleTime   = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
@@ -187,18 +188,22 @@ public class GFORCE_Teleop extends LinearOpMode
                 arm.stackWackerUp();
             }
 
-            //  switch to Power lifing mode when
+            // control for Top Two White Pixels
+            if (gamepad2.right_bumper) {
+                arm.setLiftSetpoint(Manipulator.LIFT_STACK_PICK_4_5);
+            }
+
+                //  switch to Power lifing mode when
             if (gamepad2.left_stick_button && gamepad2.right_stick_button) {
                 arm.gotoHang();
             }
 
+            // Arm control is different when power lifting
             if (arm.readyToHang()) {
                 alert.setState(AlertState.READY_TO_LIFT);
                 if ((gamepad2.left_trigger > 0.5) && (gamepad2.right_trigger > 0.5) && (arm.liftAngle > 0.0)) {
-                    // arm.setExtendSetpoint(Manipulator.EXTEND_LIFT_LENGTH - 0.5);
                     arm.powerLift();
                 } else {
-                    // arm.setExtendSetpoint(Manipulator.EXTEND_LIFT_LENGTH);
                     arm.powerHold();
                 }
             }
@@ -262,16 +267,14 @@ public class GFORCE_Teleop extends LinearOpMode
             double yaw    = -gamepad1.right_stick_x * SAFE_YAW_SPEED;
 
             if (gamepad1.dpad_left) {
-                strafe = SAFE_DRIVE_SPEED * 0.8;
+                strafe = DPAD_JOG_SPEED;
             } else if (gamepad1.dpad_right) {
-                strafe = -SAFE_DRIVE_SPEED * 0.8;
+                strafe = -DPAD_JOG_SPEED;
             } else if (gamepad1.dpad_up) {
-                drive = SAFE_DRIVE_SPEED * 0.8;
+                drive = DPAD_JOG_SPEED;
             } else if (gamepad1.dpad_down) {
-                drive = -SAFE_STRAFE_SPEED * 0.8;
+                drive = -DPAD_JOG_SPEED;
             }
-
-
 
             // Apply field centric driving
             double fieldAxial  = (drive * Math.cos(Math.toRadians(-robot.getHeading()))) -
@@ -310,6 +313,7 @@ public class GFORCE_Teleop extends LinearOpMode
             }
         }
 
+        // reset global states when exiting Teleop
         Globals.ARM_HAS_HOMED = false;
         Globals.WRIST_STATE = ManipulatorWristState.UNKNOWN;
         arm.dropPixels();
