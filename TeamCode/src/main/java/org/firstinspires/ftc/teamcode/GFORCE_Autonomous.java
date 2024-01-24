@@ -114,7 +114,7 @@ public class GFORCE_Autonomous extends LinearOpMode
 
             // Where is the robot starting on the field?
             if (autoConfig.autoOptions.startFront) {
-                // Robot is starting at the front of the field.
+                // Robot is starting at the front of the field.  =========================================================================
                 Globals.PLACE_YELLOW_HIGH = true;
 
                 if (((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.LEFT_SIDE)) ||
@@ -158,9 +158,9 @@ public class GFORCE_Autonomous extends LinearOpMode
                     //  ####
 
                     robot.drive(18, 0.5, 0.0, false);
-                    arm.setLiftSetpoint(7);
+                    arm.setLiftSetpoint(8);
                     arm.setExtendSetpoint(10);
-                    robot.turnTo(-10, 0.35, 0);
+                    robot.turnTo(-15, 0.5, 0);
 
                     commonWhitePixelScoreAndYellow();
 
@@ -182,7 +182,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     robot.turnTo(-90,0.55,0);
 
                     if (autoConfig.autoOptions.parkCenter) {
-                        robot.strafe(24, 0.7, 0.0);
+                        robot.strafe(25, 0.7, 0.0);
                     } else {
                         robot.strafe(-24, 0.7, 0.0);
                     }
@@ -194,7 +194,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     //  ####   FRONT :  SPIKE NEAR PERIMETER   ########################################################################
                     //  ####
                     robot.drive(10, 0.5, 0.0, false);
-                    arm.setLiftSetpoint(10);
+                    arm.setLiftSetpoint(8);
                     arm.setExtendSetpoint(11);
                     robot.turnTo(-40, 0.35, 0);
                     arm.waitTillArmInPosition();
@@ -222,9 +222,10 @@ public class GFORCE_Autonomous extends LinearOpMode
                     } else {
                         robot.strafe(-30, 0.7, 0.0);
                     }
-                    robot.drive(-16, 0.7, 0, false);
+                    robot.drive(-15, 0.7, 0, false);
                 }
             } else {
+                // Robot is starting at the rear of the field =============================================================================
                 Globals.PLACE_YELLOW_HIGH = false;
 
                 if ( ((Globals.ALLIANCE_COLOR == AllianceColor.BLUE) && (Globals.TEAM_PROP_LOCATION == TeamPropLocation.LEFT_SIDE )) ||
@@ -233,7 +234,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     //  ####   REAR :  SPIKE NEAR BACKDROP  ########################################################################
                     //  ####
                     robot.drive(10, 0.45, 0.0, false);
-                    arm.setLiftSetpoint(10);
+                    arm.setLiftSetpoint(8);
                     arm.setExtendSetpoint(11);
                     robot.turnTo(40, 0.35, 0);
                     arm.waitTillArmInPosition();
@@ -246,7 +247,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         robot.drive(-7, 0.7, 0.1, false);
                         arm.waitTillArmInPosition();  // should already be there.
                         robot.turnTo(-90, 0.5, 0.25);
-                        //arm.wristToHome();
+
                         arm.dropPurplePixel();
                         arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
                         robot.drive(27, 0.5, 0.0, false);
@@ -338,7 +339,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                     //  ####   REAR :  SPIKE NEAR TRUSS   ########################################################################
                     //  ####
                     robot.drive(18, 0.45, 0.0, false);
-                    arm.setLiftSetpoint(10);
+                    arm.setLiftSetpoint(5);
                     arm.setExtendSetpoint(5);
                     robot.turnTo(-45, 0.35, 0);
                     arm.waitTillArmInPosition();
@@ -422,8 +423,8 @@ public class GFORCE_Autonomous extends LinearOpMode
         if (autoConfig.autoOptions.wackStack) {
             arm.stackWackerDown();
         }
-        robot.drive( -4, 0.7, 0.0, false);
-        robot.strafe(-29, 0.75, 0.0);
+        robot.drive( -3.5, 0.7, 0.0, false);
+        robot.strafe(-28, 0.75, 0.0);
         arm.stackWackerUp();
         delay(autoConfig.autoOptions.delayYellow);
         robot.drive(93, 0.7, 0, false);
