@@ -82,7 +82,7 @@ public class Manipulator {
 
     public boolean pixelLeftInRange = false;
     public boolean pixelRightInRange = false;
-    public boolean powerLiftingIsActive = false;
+    public double  lastBackExtend;
 
     // Hardware interface Objects
     private DcMotor lift;       //  control the arm Lift Motor
@@ -149,6 +149,8 @@ public class Manipulator {
         stackWacker = myOpMode.hardwareMap.get(Servo.class, "whacker");
         pixelL = myOpMode.hardwareMap.get(DistanceSensor.class, "left_pixel");
         pixelR = myOpMode.hardwareMap.get(DistanceSensor.class, "right_pixel");
+
+        lastBackExtend = EXTEND_BACK_DISTANCE;
 
         // Do any cleanup in teleop
         if (!Globals.IS_AUTO) {
@@ -257,16 +259,23 @@ public class Manipulator {
         if (elapsedTime > 0) {
             double cycleTime = (armTimer.time() - elapsedTime);
 
-            // Check for manual adjustments to arm positions.
+            // Check for manual adjustments to lift angle.
             if (Math.abs(myOpMode.gamepad2.left_stick_y) > 0.25) {
                 liftSetpoint += (-myOpMode.gamepad2.left_stick_y * cycleTime * 20);   //  max 20 degrees per second
                 liftSetpoint = Range.clip(liftSetpoint, LIFT_MIN_ANGLE, LIFT_MAX_ANGLE);
             }
 
+            // Check for manual adjustments to extend distance.
             if (Math.abs(myOpMode.gamepad2.right_stick_y) > 0.25) {
                 extendSetpoint += (-myOpMode.gamepad2.right_stick_y * cycleTime * 15.0) ;  // max 10 inches per second
                 extendSetpoint = Range.clip(extendSetpoint, EXTEND_MIN_LENGTH, EXTEND_MAX_LENGTH);
+
+                // should we save this for next Back Score
+                if (currentState == BACK_SCORE) {
+                    lastBackExtend = extendSetpoint;
+                }
             }
+
 
         }
         elapsedTime = armTimer.time();
@@ -570,7 +579,7 @@ public class Manipulator {
     public void gotoBackScore() {
         if (currentState == ManipulatorState.BACK_SCORE) {
             setLiftSetpoint(LIFT_BACK_ANGLE);
-            setExtendSetpoint(EXTEND_BACK_DISTANCE);
+            setExtendSetpoint(lastBackExtend);
             setAbsoluteWristAngle(60);
         } else {
             smGotoBackScore = true;
@@ -724,7 +733,7 @@ public class Manipulator {
                 break;
 
             case BS_EXTEND:
-                setExtendSetpoint(EXTEND_BACK_DISTANCE);
+                setExtendSetpoint(lastBackExtend);
                 setState(ManipulatorState.BACK_SCORE);
                 break;
 
