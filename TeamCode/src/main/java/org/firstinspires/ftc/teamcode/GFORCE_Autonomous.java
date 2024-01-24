@@ -423,7 +423,7 @@ public class GFORCE_Autonomous extends LinearOpMode
         if (autoConfig.autoOptions.wackStack) {
             arm.stackWackerDown();
         }
-        robot.drive( -3.5, 0.7, 0.0, false);
+        robot.drive( -4, 0.7, 0.0, false);
         robot.strafe(-28, 0.75, 0.0);
         arm.stackWackerUp();
         delay(autoConfig.autoOptions.delayYellow);
