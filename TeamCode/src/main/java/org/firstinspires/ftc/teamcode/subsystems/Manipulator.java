@@ -20,7 +20,7 @@ public class Manipulator {
     public static final double LIFT_HOME_ANGLE      =  0.0;
     public static final double LIFT_STACK_PICK_2_3  =  4.0;
     public static final double LIFT_STACK_PICK_4_5  =  8.0;
-    public static final double LIFT_STACK_LEVEL5    =  9.5;
+    public static final double LIFT_STACK_LEVEL5    =  9.0;
     public static final double LIFT_LOW_AUTO_ANGLE  = 19.0;
     public static final double LIFT_HIGH_AUTO_ANGLE = 23.0;
     public static final double LIFT_FRONT_ANGLE     = 27.0;
