@@ -245,10 +245,10 @@ public class Robot {
             // Are we picking up a yellow pixel
             if (endOnPixel) {
                 // check for yellow pixel found
-                if ((Globals.PURPLE_PIXEL_ON_RIGHT && myArm.pixelRightInRange) || (timeoutTimer.time() > TIMEOUT)) {
+                if (Globals.PURPLE_PIXEL_ON_RIGHT && (myArm.pixelRightInRange || (timeoutTimer.time() > TIMEOUT))) {
                     myArm.grabRightPixel();
                     break;   // Exit loop because we have Pixel
-                } else if ((!Globals.PURPLE_PIXEL_ON_RIGHT && myArm.pixelLeftInRange) || (timeoutTimer.time() > TIMEOUT)) {
+                } else if (!Globals.PURPLE_PIXEL_ON_RIGHT && (myArm.pixelLeftInRange || (timeoutTimer.time() > TIMEOUT))) {
                     myArm.grabLeftPixel();
                     break;   // Exit loop because we have Pixel
                 }

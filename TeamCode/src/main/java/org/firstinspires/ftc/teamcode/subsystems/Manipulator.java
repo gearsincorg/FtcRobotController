@@ -19,8 +19,8 @@ public class Manipulator {
     private static final double LIFT_TOLERANCE      =  1.75;    // Controller is "inPosition" if position error is < +/- this amount
     public static final double LIFT_HOME_ANGLE      =  0.0;
     public static final double LIFT_STACK_PICK_2_3  =  4.0;
-    public static final double LIFT_STACK_PICK_4_5  =  7.6;     //  7.3 = 40 mm,  8.0 = 44 mm
-    public static final double LIFT_STACK_LEVEL5    =  9.5;
+    public static final double LIFT_STACK_PICK_4_5  =  7.6;  // 7.6 = 40 mm,  8.0 = 44 mm
+    public static final double LIFT_STACK_LEVEL5    =  9.2;  // 9.0 = 50 mm,  9.9 = 62 mm
     public static final double LIFT_LOW_AUTO_ANGLE  = 19.0;
     public static final double LIFT_HIGH_AUTO_ANGLE = 23.0;
     public static final double LIFT_FRONT_ANGLE     = 27.0;
