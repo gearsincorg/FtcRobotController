@@ -5,7 +5,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.Alert;
@@ -262,10 +261,11 @@ public class GFORCE_Teleop extends LinearOpMode
             }
 
             // read joystick values and scale according to limits in Robot class
-            double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;
-            double strafe = -gamepad1.left_stick_x * SAFE_STRAFE_SPEED;
-            double yaw    = -gamepad1.right_stick_x * SAFE_YAW_SPEED;
+            double drive  = -square(gamepad1.left_stick_y) * SAFE_DRIVE_SPEED;
+            double strafe = -square(gamepad1.left_stick_x) * SAFE_STRAFE_SPEED;
+            double yaw    = -square(gamepad1.right_stick_x) * SAFE_YAW_SPEED;
 
+            // Override with any DPAD moves
             if (gamepad1.dpad_left) {
                 strafe = DPAD_JOG_SPEED;
             } else if (gamepad1.dpad_right) {
@@ -317,5 +317,9 @@ public class GFORCE_Teleop extends LinearOpMode
         Globals.ARM_HAS_HOMED = false;
         Globals.WRIST_STATE = ManipulatorWristState.UNKNOWN;
         arm.dropPixels();
+    }
+
+    private double square(double joystick) {
+        return Math.signum(joystick) * joystick * joystick;
     }
 }

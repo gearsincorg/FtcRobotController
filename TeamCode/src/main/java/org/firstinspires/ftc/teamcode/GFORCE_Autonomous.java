@@ -251,7 +251,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.dropPurplePixel();
                         arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
                         robot.drive(27, 0.5, 0.0, false);
-                        robot.drive(6, 0.25, 0.0, true);   // Grab Pixel
+                        robot.drive(8, 0.25, 0.0, true);   // Grab Pixel
                         arm.runArmControl(0.5);
                         arm.gotoSafeDriving();
                         delay(autoConfig.autoOptions.delayYellow);
@@ -302,7 +302,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.dropPurplePixel();
                         arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
                         robot.drive(27, 0.5, 0.0, false);
-                        robot.drive(6, 0.25, 0.0, true);   // Grab Pixel
+                        robot.drive(8, 0.25, 0.0, true);   // Grab Pixel
                         arm.runArmControl(0.5);
                         arm.gotoSafeDriving();
                         delay(autoConfig.autoOptions.delayYellow);
@@ -356,7 +356,7 @@ public class GFORCE_Autonomous extends LinearOpMode
                         arm.dropPurplePixel();
                         arm.setLiftSetpoint(Manipulator.LIFT_HOME_ANGLE);
                         robot.drive(27, 0.5, 0.0, false);
-                        robot.drive(6, 0.25, 0.0, true);   // Grab Pixel
+                        robot.drive(8, 0.25, 0.0, true);   // Grab Pixel
                         arm.runArmControl(0.5);
                         arm.gotoSafeDriving();
                         delay(autoConfig.autoOptions.delayYellow);
@@ -411,7 +411,7 @@ public class GFORCE_Autonomous extends LinearOpMode
 
             arm.setLiftSetpoint(Manipulator.LIFT_STACK_LEVEL5);
             arm.waitTillArmInPosition();
-            arm.runArmControl(0.25);
+            arm.runArmControl(0.5);
 
             robot.drive(3, 0.35, 0.0, true);  // Grab White Pixel
             arm.runArmControl(0.5);
