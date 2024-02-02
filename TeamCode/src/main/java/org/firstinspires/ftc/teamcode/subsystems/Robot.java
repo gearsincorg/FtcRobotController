@@ -48,6 +48,8 @@ public class Robot {
     private final double V_DRIVE_TOLERANCE          = 0.75;
     private final double V_WHITE_PIXEL_OFFSET       = 2.0;
 
+    private final double TIMEOUT                    = 2.5;      // Maximum tome looking for Pixel.  Probably hit wall in mean time.
+
 
     //  Set the GAIN constants to control the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
@@ -85,8 +87,9 @@ public class Robot {
     private Manipulator myArm;
     private Vision myVision;
     private BNO055IMU imu;
-    private ElapsedTime holdTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
-    private ElapsedTime cycleTimer = new ElapsedTime();  // User for measuring cycle times of controller
+    private ElapsedTime holdTimer    = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
+    private ElapsedTime cycleTimer   = new ElapsedTime();  // User for measuring cycle times of controller
+    private ElapsedTime timeoutTimer = new ElapsedTime();  // User for aborting long motions
 
     private int rawDriveOdometer    = 0; // Unmodified axial odometer count
     private int driveOdometerOffset = 0; // Used to offset axial odometer
@@ -222,12 +225,14 @@ public class Robot {
      */
     public void drive(double distanceInches, double power, double holdTime, boolean endOnPixel) {
         resetOdometry();
+        timeoutTimer.reset();
 
         driveController.reset(distanceInches, power);   // achieve desired drive distance
         strafeController.reset(0);              // Maintain zero strafe drift
         yawController.reset();                          // Maintain last turn heading
         holdTimer.reset();
 
+        // Turn on pixel detection if we are ending on Pixel
         if (endOnPixel) {
             myArm.setRangeEnable(true);
         }
@@ -240,14 +245,15 @@ public class Robot {
             // Are we picking up a yellow pixel
             if (endOnPixel) {
                 // check for yellow pixel found
-                if (Globals.PURPLE_PIXEL_ON_RIGHT && myArm.pixelRightInRange) {
+                if (Globals.PURPLE_PIXEL_ON_RIGHT && (myArm.pixelRightInRange || (timeoutTimer.time() > TIMEOUT))) {
                     myArm.grabRightPixel();
                     break;   // Exit loop because we have Pixel
-                } else if (!Globals.PURPLE_PIXEL_ON_RIGHT && myArm.pixelLeftInRange) {
+                } else if (!Globals.PURPLE_PIXEL_ON_RIGHT && (myArm.pixelLeftInRange || (timeoutTimer.time() > TIMEOUT))) {
                     myArm.grabLeftPixel();
                     break;   // Exit loop because we have Pixel
                 }
             }
+
 
             // Time to exit?
             if (driveController.inPosition() && yawController.inPosition()) {
@@ -263,8 +269,9 @@ public class Robot {
         }
         stopRobot();
 
+        // Turn off pixel detection
         if (endOnPixel) {
-            myArm.setRangeEnable(true);
+            myArm.setRangeEnable(false);
         }
     }
 
