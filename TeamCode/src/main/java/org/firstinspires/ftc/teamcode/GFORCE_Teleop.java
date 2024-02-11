@@ -79,7 +79,7 @@ public class GFORCE_Teleop extends LinearOpMode
 
         alert.setState(AlertState.TELEOP_GRABBER);
 
-        vision.enableAprilTag(); //DEBUG ONLY
+        //  vision.enableAprilTag(); //DEBUG ONLY
         robot.resetOdometry();
 
         // reset wrist if in unknown state
@@ -153,7 +153,8 @@ public class GFORCE_Teleop extends LinearOpMode
 
             //  ==  CoPilot Controls  ===================================
             if (gamepad2.touchpad) {
-                arm.gotoHome();
+                // arm.gotoHome();   old code
+                arm.homeArm();
             }
 
             //controls for Automatic Arm movements
