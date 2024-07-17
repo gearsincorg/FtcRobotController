@@ -31,22 +31,21 @@ import java.util.Comparator;
 public class HuePipeline implements VisionProcessor {
 
 	// Private Members
-	private	DetectedColor detectedColor = new DetectedColor(ColorSwatch.BLACK, 0,0,0);
+	private	DetectedColor detectedColor = new DetectedColor();
 
 	private Rect	window;
 	private int		numPixels;
 
-	//  These values give you more colors, but greater chance of the wrong color being detected.
+	//  These values give you more color choices, but greater chance of the wrong color being detected.
 	// private int[]   			colorHues  = { 0, 15, 23, 60, 90, 120, 135, 150};  // hues range from 0 - 180
 	// private ColorSwatch[] 	colorNames = {ColorSwatch.RED, ColorSwatch.ORANGE, ColorSwatch.YELLOW,
 	//							  		  	  ColorSwatch.GREEN, ColorSwatch.CYAN, ColorSwatch.BLUE,
 	//									  	  ColorSwatch.VIOLET, ColorSwatch.MAGENTA};
 
-	//  These values give you less colors, but smaller chance of the wrong color being detected.
-	private int[]   		colorHues  = { 0, 23, 60, 120, 140};  // hues range from 0 - 180
+	//  These values give you less color choices but smaller chance of the wrong color being detected.
+	private int[]   		colorHues  = { 0, 23, 60, 120};  // hues range from 0 - 180
 	private ColorSwatch[] 	colorNames = {ColorSwatch.RED, ColorSwatch.YELLOW,
-								  		  ColorSwatch.GREEN, ColorSwatch.BLUE,
-										  ColorSwatch.PURPLE};
+								  		  ColorSwatch.GREEN, ColorSwatch.BLUE};
 
 
 	private int K = 3; // Get the top 3 color hues
@@ -78,7 +77,7 @@ public class HuePipeline implements VisionProcessor {
 		Mat satValues = new Mat();
 		Mat valValues = new Mat();
 
-		// select window of interest and convert to HSV space.
+		// extract the window of interest and convert to HSV space.
 		Mat hsvWOI = new Mat();
 		Imgproc.cvtColor(new Mat(rgbImage, window), hsvWOI, COLOR_RGB2HSV);
 
@@ -87,13 +86,13 @@ public class HuePipeline implements VisionProcessor {
 		Core.extractChannel(hsvWOI, valValues, 2);
 
 		// Test for black & White first, to avoid more taxing KMEANS code.
-		double avgValue = Core.sumElems(valValues).val[0] / numPixels;
-		double avgSaturation = Core.sumElems(satValues).val[0] / numPixels;
+		int avgSaturation = (int)(Core.sumElems(satValues).val[0] / numPixels);
+		int avgValue 	  = (int)(Core.sumElems(valValues).val[0] / numPixels);
 
 		if (avgValue < 40) {
-			detectedColor = new DetectedColor(ColorSwatch.BLACK,0, 0, 0);
+			detectedColor = new DetectedColor(ColorSwatch.BLACK, 0, avgSaturation, avgValue);
 		} else if ((avgSaturation < 40) && (avgValue > 100)) {
-			detectedColor = new DetectedColor(ColorSwatch.WHITE,0, 0,	255 );
+			detectedColor = new DetectedColor(ColorSwatch.WHITE, 0, avgSaturation, avgValue);
 		} else {
 
 			// Reshape the hue values into a 1D array
@@ -124,6 +123,7 @@ public class HuePipeline implements VisionProcessor {
 			Comparator<Integer> customComparator = Comparator.comparingInt(color -> clusterCounts[Arrays.asList(clusterHue).indexOf(color)]);
 			Arrays.sort(clusterHue, customComparator);
 			Arrays.sort(clusterCounts);
+
 			int primeHue = clusterHue[0];
 
 			// now scan the colorHue table to fin the table entry closest to the prime hue.
@@ -141,8 +141,7 @@ public class HuePipeline implements VisionProcessor {
 					shortestHueIndex = i;
 				}
 			}
-
-			detectedColor = new DetectedColor(colorNames[shortestHueIndex] ,clusterHue[0], 255,	255 );
+			detectedColor = new DetectedColor(colorNames[shortestHueIndex], primeHue, avgSaturation, avgValue);
 		}
 
 		return detectedColor;
@@ -151,19 +150,29 @@ public class HuePipeline implements VisionProcessor {
 
 	@Override
 	/**
-	 * Draw a rectangle arounfd the current Window of interest.
-	 * Make the color of the rectangle the same as the prime detected color (in HSV)
+	 *  Draw a rectangle around the current Window of interest.
+	 *  Make the inner color of the rectangle the same as the prime detected color (in HSV)
 	 */
 	public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
 
+		float[] borderHSV;
 		DetectedColor detectedColor = (DetectedColor)userContext;
 
-		float[] primeHSV = {(float)detectedColor.hsv()[0] * 2, (float)detectedColor.hsv()[1], detectedColor.hsv()[2]};
-		Paint primeHuePaint = new Paint();
-		primeHuePaint.setStyle(Paint.Style.STROKE);
-		primeHuePaint.setStrokeWidth(scaleCanvasDensity * 8);
-		primeHuePaint.setColor(android.graphics.Color.HSVToColor(primeHSV));
-		canvas.drawRect(makeGraphicsRect(window, scaleBmpPxToCanvasPx), primeHuePaint);
+		ColorSwatch swatch = detectedColor.swatch();
+
+		if (swatch == ColorSwatch.BLACK) {
+			borderHSV = new float[]{0, 0, 0};
+		} else if (swatch == ColorSwatch.WHITE) {
+			borderHSV = new float[] {0, 0, 255};
+		} else {
+			borderHSV = new float[] {(float)detectedColor.hue() * 2, 255, 255};
+		}
+
+		Paint woiPaint = new Paint();
+		woiPaint.setStyle(Paint.Style.STROKE);
+		woiPaint.setStrokeWidth(scaleCanvasDensity * 8);
+		woiPaint.setColor(android.graphics.Color.HSVToColor(borderHSV));
+		canvas.drawRect(makeGraphicsRect(window, scaleBmpPxToCanvasPx), woiPaint);
 	}
 
 	public DetectedColor getDetectedColor() {

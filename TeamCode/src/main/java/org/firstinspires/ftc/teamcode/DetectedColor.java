@@ -1,28 +1,38 @@
 package org.firstinspires.ftc.teamcode;
 
 public class DetectedColor {
-    private ColorSwatch detectedSwatch;
-    private int[]       detectedHSV;
+    private int         detectedHue;
+    private ColorSwatch matchingSwatch;
+    private int         avgSaturation;
+    private int         avgValue;
+
+    public DetectedColor() {
+        matchingSwatch = ColorSwatch.BLACK;
+        detectedHue    = 0;
+        avgSaturation  = 0;
+        avgValue       = 0;
+    }
 
     public DetectedColor(ColorSwatch swatch) {
-        detectedSwatch = swatch;
-        detectedHSV = null;
-    }
-    public DetectedColor(ColorSwatch swatch, int hue) {
-        detectedSwatch = swatch;
-        detectedHSV = new int[] {hue, 255, 255};
+        matchingSwatch  = swatch;
+        detectedHue     = 0;
+        avgSaturation   = 0;
+        avgValue        = 0;
     }
 
     public DetectedColor(ColorSwatch swatch, int hue, int sat, int val) {
-        detectedSwatch = swatch;
-        detectedHSV = new int[] {hue, sat, val};
+        matchingSwatch  = swatch;
+        detectedHue     = hue;
+        avgSaturation   = sat;
+        avgValue        = val;
     }
 
-    public ColorSwatch swatch() {return detectedSwatch;}
-    public int[] hsv() {return detectedHSV;}
+
+    public ColorSwatch swatch() {return matchingSwatch;}
+    public int hue() {return detectedHue;}
 
     public String toString() {
-        return String.format("%s  [%d, %d, %d]", detectedSwatch, detectedHSV[0], detectedHSV[1], detectedHSV[2] );
+        return String.format("%8s (%3d %3d %3d)", matchingSwatch, detectedHue, avgSaturation, avgValue);
     }
 }
 
