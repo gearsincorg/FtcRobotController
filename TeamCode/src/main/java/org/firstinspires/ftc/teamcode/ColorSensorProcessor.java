@@ -17,56 +17,52 @@ import org.opencv.imgproc.Imgproc;
 import java.util.Arrays;
 import java.util.Comparator;
 
-		/*
-		Black: To create black in HSV:
-		Set the value (V) to 0%. This plunges us into the abyss of darkness.
-		Hue and saturation can be anything—they’re irrelevant when V is at rock bottom.
-		White: Ah, the purity of light! To conjure white in HSV:
-		Set the value (V) to 100%. We’re bathing in celestial radiance.
-		Saturation (S) takes a backseat—it’s 0%. No vividness here.
-		Hue can still be anything—it’s like the chameleon of colors.
-		*/
-
-
-public class HuePipeline implements VisionProcessor {
+public class ColorSensorProcessor implements VisionProcessor {
 
 	// Private Members
-	private	DetectedColor detectedColor = new DetectedColor();
+	private SensedColor sensedColor = new SensedColor();
+	private ColorWOI	colorWOI;
+	private int			srcWidth;
+	private int			srcHeight;
+	private	Rect		window = new Rect();
 
-	private Rect	window;
-	private int		numPixels;
-
-	//  These values give you more color choices, but greater chance of the wrong color being detected.
-	// private int[]   			colorHues  = { 0, 15, 23, 60, 90, 120, 135, 150};  // hues range from 0 - 180
-	// private ColorSwatch[] 	colorNames = {ColorSwatch.RED, ColorSwatch.ORANGE, ColorSwatch.YELLOW,
-	//							  		  	  ColorSwatch.GREEN, ColorSwatch.CYAN, ColorSwatch.BLUE,
-	//									  	  ColorSwatch.VIOLET, ColorSwatch.MAGENTA};
+	// These values give you more color choices, but greater chance of the wrong color being detected.
+	private int[]   		colorHues  = { 0, 15, 23, 60, 90, 120, 135, 150};  // hues range from 0 - 180
+	private ColorSwatch[] 	colorNames = {ColorSwatch.RED, ColorSwatch.ORANGE, ColorSwatch.YELLOW,
+							  		  	  ColorSwatch.GREEN, ColorSwatch.CYAN, ColorSwatch.BLUE,
+									  	  ColorSwatch.PURPLE, ColorSwatch.MAGENTA};
 
 	//  These values give you less color choices but smaller chance of the wrong color being detected.
-	private int[]   		colorHues  = { 0, 23, 60, 120};  // hues range from 0 - 180
-	private ColorSwatch[] 	colorNames = {ColorSwatch.RED, ColorSwatch.YELLOW,
-								  		  ColorSwatch.GREEN, ColorSwatch.BLUE};
+	// private int[]   		colorHues  = { 0, 23, 60, 120};  // hues range from 0 - 180
+	// private ColorSwatch[] 	colorNames = {ColorSwatch.RED, ColorSwatch.YELLOW, ColorSwatch.GREEN, ColorSwatch.BLUE};
 
-
-	private int K = 3; // Get the top 3 color hues
+	private int K = 10; // Get the top n color hues
 	private int	shortestHueDist		= 180;
 	private int	shortestHueIndex	= 0;
 
-	public HuePipeline(int X, int Y, int width, int height) {
-		// set the Window of Interest   Michael: lts discuss how this should be defined for ease of use.
-		setWindow(X, Y, width, height);
+	public ColorSensorProcessor() {
+		colorWOI = new ColorWOI();  // defaults to UNITY_CENTER_ORIGIN mode. Full Window
 	}
 
-	public void	setWindow(int X, int Y, int width, int height) {
-		// current:  Center the window of the x:y position in pixels.
-		X = Math.max(X - (width / 2), 0);
-		Y = Math.max(Y - (height / 2), 0);
-		window = new Rect(X, Y, width, height);
-		numPixels = width * height;
+	public ColorSensorProcessor(ColorWOI colorWOI) {
+		this.colorWOI = colorWOI;  // Set according to user request
+	}
+
+	/*
+	 * Used to change the window of interest after the processor has been created.
+	 */
+	public void	setColorWOI(ColorWOI colorWOI) {
+		this.colorWOI = colorWOI;  // Set according to user request
+		if (srcWidth >0 && srcHeight > 0) {
+			window = colorWOI.getOpenCVRect(srcWidth, srcHeight);
+		}
 	}
 
 	@Override
 	public void init(int width, int height, CameraCalibration calibration) {
+		srcWidth = width;
+		srcHeight = height;
+		window = colorWOI.getOpenCVRect(srcWidth, srcHeight);
 	}
 	
 	@Override
@@ -77,6 +73,8 @@ public class HuePipeline implements VisionProcessor {
 		Mat satValues = new Mat();
 		Mat valValues = new Mat();
 
+		int srcPixels = window.width * window.height;
+
 		// extract the window of interest and convert to HSV space.
 		Mat hsvWOI = new Mat();
 		Imgproc.cvtColor(new Mat(rgbImage, window), hsvWOI, COLOR_RGB2HSV);
@@ -86,13 +84,13 @@ public class HuePipeline implements VisionProcessor {
 		Core.extractChannel(hsvWOI, valValues, 2);
 
 		// Test for black & White first, to avoid more taxing KMEANS code.
-		int avgSaturation = (int)(Core.sumElems(satValues).val[0] / numPixels);
-		int avgValue 	  = (int)(Core.sumElems(valValues).val[0] / numPixels);
+		int avgSaturation = (int)(Core.sumElems(satValues).val[0] / srcPixels);
+		int avgValue 	  = (int)(Core.sumElems(valValues).val[0] / srcPixels);
 
-		if (avgValue < 40) {
-			detectedColor = new DetectedColor(ColorSwatch.BLACK, 0, avgSaturation, avgValue);
-		} else if ((avgSaturation < 40) && (avgValue > 100)) {
-			detectedColor = new DetectedColor(ColorSwatch.WHITE, 0, avgSaturation, avgValue);
+		if (avgValue < 50) {
+			sensedColor = new SensedColor(ColorSwatch.BLACK, 0, avgSaturation, avgValue);
+		} else if ((avgSaturation < 50) && (avgValue > 100)) {
+			sensedColor = new SensedColor(ColorSwatch.WHITE, 0, avgSaturation, avgValue);
 		} else {
 
 			// Reshape the hue values into a 1D array
@@ -124,14 +122,19 @@ public class HuePipeline implements VisionProcessor {
 			Arrays.sort(clusterHue, customComparator);
 			Arrays.sort(clusterCounts);
 
-			int primeHue = clusterHue[0];
+			//Log.d("HUE ALL", showMat(reshapedHue));
+			//Log.d("HUES TOP", showArray(clusterHue));
+			//Log.d("HUES CNT", showArray(clusterCounts));
+
+			// Grab the hue of the cluster with the most close colors...  this is the best hue match.
+			int bestHue = clusterHue[K-1];
 
 			// now scan the colorHue table to fin the table entry closest to the prime hue.
 			shortestHueDist  = 180;
 			shortestHueIndex = 0;
 
 			for (int i = 0; i < colorHues.length; i++) {
-				int length = Math.abs(primeHue - colorHues[i]);
+				int length = Math.abs(bestHue - colorHues[i]);
 				if (length > 90) {
 					// wrap it around
 					length = 180 - length;
@@ -141,31 +144,30 @@ public class HuePipeline implements VisionProcessor {
 					shortestHueIndex = i;
 				}
 			}
-			detectedColor = new DetectedColor(colorNames[shortestHueIndex], primeHue, avgSaturation, avgValue);
+			sensedColor = new SensedColor(colorNames[shortestHueIndex], bestHue, avgSaturation, avgValue);
 		}
 
-		return detectedColor;
+		return sensedColor;
 	}
-
 
 	@Override
 	/**
 	 *  Draw a rectangle around the current Window of interest.
-	 *  Make the inner color of the rectangle the same as the prime detected color (in HSV)
+	 *  Make the color of the rectangle the same as the prime detected color (in HSV)
 	 */
 	public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
 
 		float[] borderHSV;
-		DetectedColor detectedColor = (DetectedColor)userContext;
+		SensedColor sensedColor = (SensedColor)userContext;
 
-		ColorSwatch swatch = detectedColor.swatch();
+		ColorSwatch swatch = sensedColor.swatch();
 
 		if (swatch == ColorSwatch.BLACK) {
 			borderHSV = new float[]{0, 0, 0};
 		} else if (swatch == ColorSwatch.WHITE) {
 			borderHSV = new float[] {0, 0, 255};
 		} else {
-			borderHSV = new float[] {(float)detectedColor.hue() * 2, 255, 255};
+			borderHSV = new float[] {(float) sensedColor.hue() * 2, 255, 255};
 		}
 
 		Paint woiPaint = new Paint();
@@ -175,8 +177,8 @@ public class HuePipeline implements VisionProcessor {
 		canvas.drawRect(makeGraphicsRect(window, scaleBmpPxToCanvasPx), woiPaint);
 	}
 
-	public DetectedColor getDetectedColor() {
-		return detectedColor;
+	public SensedColor getSensedColor() {
+		return sensedColor;
 	}
 
 	private android.graphics.Rect makeGraphicsRect(Rect rect, float scaleBmpPxToCanvasPx) {
@@ -187,5 +189,23 @@ public class HuePipeline implements VisionProcessor {
 
 		return new android.graphics.Rect(left, top, right, bottom);
 	}
+
+	private String showMat(Mat stuff) {
+		String result = "";
+		for (int i = 0 ; i < stuff.rows(); i++) {
+			result += String.format("%.0f ", stuff.get(i, 0)[0]);
+		}
+		return result;
+	}
+
+	private String showArray(Integer[] stuff) {
+		String result = "";
+
+		for (int i = 0 ; i < stuff.length; i++) {
+			result += String.format("%d ", stuff[i]);
+		}
+		return result;
+	}
+
 }
 
