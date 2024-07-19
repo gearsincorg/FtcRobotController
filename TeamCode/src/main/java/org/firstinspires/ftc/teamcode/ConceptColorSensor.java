@@ -17,6 +17,11 @@ import org.firstinspires.ftc.vision.VisionPortal;
 @TeleOp(name="Video Color Sensor", group = "Sensor")
 public class ConceptColorSensor extends LinearOpMode
 {
+    // The color sensor will choose between the Swatch values you pass it here, so you have the freedom to choose
+    // as man or few as you need.  Suggestion: remove any Swatches that you don't want to find :)
+    // WHITE and BLACK swatches are automatically included, and are always possible results
+    private Swatch[]    swatches = { Swatch.RED, Swatch.ORANGE, Swatch.YELLOW, Swatch.GREEN,
+                                     Swatch.CYAN, Swatch.BLUE, Swatch.PURPLE, Swatch.MAGENTA};
 
     // Create a VisionPortal and ColorSensorProcessor
     private VisionPortal         myVisionPortal;
@@ -46,7 +51,7 @@ public class ConceptColorSensor extends LinearOpMode
         //  (smaller window provides faster processing frame rate)
         // -----------------------------------------------------------------------------------------
         colorWIO = new ColorWOI(ColorWOI.DefineType.UNITY_CENTER_ORIGIN, 0, 0, 0.25, 0.25);
-        colorSensorProcessor = new ColorSensorProcessor(colorWIO);
+        colorSensorProcessor = new ColorSensorProcessor(colorWIO, swatches);
 
         // -----------------------------------------------------------------------------------------
         // Camera Configuration (lower resolution provides faster processing frame rate)

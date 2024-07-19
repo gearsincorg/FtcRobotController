@@ -14,8 +14,10 @@ import org.opencv.core.Rect;
 import org.opencv.core.TermCriteria;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 public class ColorSensorProcessor implements VisionProcessor {
 
@@ -25,37 +27,30 @@ public class ColorSensorProcessor implements VisionProcessor {
 	private int			srcWidth;
 	private int			srcHeight;
 	private	Rect		window = new Rect();
-
-	// These values give you more color choices, but greater chance of the wrong color being detected.
-	private int[]   		colorHues  = { 0, 15, 23, 60, 90, 120, 135, 150};  // hues range from 0 - 180
-	private ColorSwatch[] 	colorNames = {ColorSwatch.RED, ColorSwatch.ORANGE, ColorSwatch.YELLOW,
-							  		  	  ColorSwatch.GREEN, ColorSwatch.CYAN, ColorSwatch.BLUE,
-									  	  ColorSwatch.PURPLE, ColorSwatch.MAGENTA};
-
-	//  These values give you less color choices but smaller chance of the wrong color being detected.
-	// private int[]   		colorHues  = { 0, 23, 60, 120};  // hues range from 0 - 180
-	// private ColorSwatch[] 	colorNames = {ColorSwatch.RED, ColorSwatch.YELLOW, ColorSwatch.GREEN, ColorSwatch.BLUE};
+	private Swatch[] 	swatches;
 
 	private int K = 10; // Get the top n color hues
 	private int	shortestHueDist		= 180;
 	private int	shortestHueIndex	= 0;
 
-	public ColorSensorProcessor() {
-		colorWOI = new ColorWOI();  // defaults to UNITY_CENTER_ORIGIN mode. Full Window
-	}
-
-	public ColorSensorProcessor(ColorWOI colorWOI) {
+	public ColorSensorProcessor(ColorWOI colorWOI, Swatch[] swatches) {
 		this.colorWOI = colorWOI;  // Set according to user request
+		this.swatches = swatches;
 	}
 
 	/*
-	 * Used to change the window of interest after the processor has been created.
+	 * Change the window of interest after the processor has been created.
 	 */
 	public void	setColorWOI(ColorWOI colorWOI) {
 		this.colorWOI = colorWOI;  // Set according to user request
-		if (srcWidth >0 && srcHeight > 0) {
-			window = colorWOI.getOpenCVRect(srcWidth, srcHeight);
-		}
+		window = colorWOI.getOpenCVRect(srcWidth, srcHeight);
+	}
+
+	/*
+	 * Change the window of interest after the processor has been created.
+	 */
+	public void	setSwatches(Swatch[] swatches) {
+		this.swatches = swatches;
 	}
 
 	@Override
@@ -88,9 +83,9 @@ public class ColorSensorProcessor implements VisionProcessor {
 		int avgValue 	  = (int)(Core.sumElems(valValues).val[0] / srcPixels);
 
 		if (avgValue < 50) {
-			sensedColor = new SensedColor(ColorSwatch.BLACK, 0, avgSaturation, avgValue);
+			sensedColor = new SensedColor(Swatch.BLACK, 0, avgSaturation, avgValue);
 		} else if ((avgSaturation < 50) && (avgValue > 100)) {
-			sensedColor = new SensedColor(ColorSwatch.WHITE, 0, avgSaturation, avgValue);
+			sensedColor = new SensedColor(Swatch.WHITE, 0, avgSaturation, avgValue);
 		} else {
 
 			// Reshape the hue values into a 1D array
@@ -133,8 +128,17 @@ public class ColorSensorProcessor implements VisionProcessor {
 			shortestHueDist  = 180;
 			shortestHueIndex = 0;
 
-			for (int i = 0; i < colorHues.length; i++) {
-				int length = Math.abs(bestHue - colorHues[i]);
+			// build a list of valid hues from the swatches, eliminate black and white
+			List<Integer> colorHues = new ArrayList<>();
+			for (Swatch swatch : swatches){
+				if (swatch.getHue() >= 0) {
+					colorHues.add(swatch.getHue());
+				}
+			}
+
+
+			for (int i = 0; i < colorHues.size(); i++) {
+				int length = Math.abs(bestHue - colorHues.get(i));
 				if (length > 90) {
 					// wrap it around
 					length = 180 - length;
@@ -160,11 +164,11 @@ public class ColorSensorProcessor implements VisionProcessor {
 		float[] borderHSV;
 		SensedColor sensedColor = (SensedColor)userContext;
 
-		ColorSwatch swatch = sensedColor.swatch();
+		Swatch swatch = sensedColor.swatch();
 
-		if (swatch == ColorSwatch.BLACK) {
+		if (swatch == Swatch.BLACK) {
 			borderHSV = new float[]{0, 0, 0};
-		} else if (swatch == ColorSwatch.WHITE) {
+		} else if (swatch == Swatch.WHITE) {
 			borderHSV = new float[] {0, 0, 255};
 		} else {
 			borderHSV = new float[] {(float) sensedColor.hue() * 2, 255, 255};

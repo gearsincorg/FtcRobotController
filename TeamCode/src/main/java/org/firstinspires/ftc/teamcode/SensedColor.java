@@ -2,23 +2,23 @@ package org.firstinspires.ftc.teamcode;
 
 public class SensedColor {
     private int         detectedHue;
-    private ColorSwatch matchingSwatch;
+    private Swatch matchingSwatch;
     private int         avgSaturation;
     private int         avgValue;
 
     public SensedColor() {
-        setContent(ColorSwatch.BLACK, 0, 0, 0);
+        setContent(Swatch.BLACK, 0, 0, 0);
     }
 
-    public SensedColor(ColorSwatch swatch) {
+    public SensedColor(Swatch swatch) {
         setContent(swatch, 0, 0, 0);
     }
 
-    public SensedColor(ColorSwatch swatch, int hue, int sat, int val) {
+    public SensedColor(Swatch swatch, int hue, int sat, int val) {
         setContent(swatch, hue, sat, val);
     }
 
-    private void setContent(ColorSwatch swatch, int hue, int sat, int val){
+    private void setContent(Swatch swatch, int hue, int sat, int val){
         matchingSwatch  = swatch;
         detectedHue     = hue;
         avgSaturation   = sat;
@@ -26,7 +26,7 @@ public class SensedColor {
     }
 
     // getters
-    public ColorSwatch  swatch() {return matchingSwatch;}
+    public Swatch swatch() {return matchingSwatch;}
     public int          hue() {return detectedHue;}
 
     // To display contents as human readable.
