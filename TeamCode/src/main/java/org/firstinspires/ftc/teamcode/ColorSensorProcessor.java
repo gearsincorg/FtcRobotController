@@ -29,9 +29,9 @@ public class ColorSensorProcessor implements VisionProcessor {
 	private	Rect		window = new Rect();
 	private Swatch[] 	swatches;
 
-	private int K = 10; // Get the top n color hues
-	private int	shortestHueDist		= 180;
-	private int	shortestHueIndex	= 0;
+	private int 	K = 10; // Get the top n color hues
+	private int		shortestHueDist		= 180;
+	private	Swatch 	bestSwatch;
 
 	public ColorSensorProcessor(ColorWOI colorWOI, Swatch[] swatches) {
 		this.colorWOI = colorWOI;  // Set according to user request
@@ -124,31 +124,30 @@ public class ColorSensorProcessor implements VisionProcessor {
 			// Grab the hue of the cluster with the most close colors...  this is the best hue match.
 			int bestHue = clusterHue[K-1];
 
-			// now scan the colorHue table to fin the table entry closest to the prime hue.
-			shortestHueDist  = 180;
-			shortestHueIndex = 0;
-
 			// build a list of valid hues from the swatches, eliminate black and white
-			List<Integer> colorHues = new ArrayList<>();
+			List<Swatch> colorHues = new ArrayList<>();
 			for (Swatch swatch : swatches){
 				if (swatch.getHue() >= 0) {
-					colorHues.add(swatch.getHue());
+					colorHues.add(swatch);
 				}
 			}
 
+			// now scan the colorHue table to fin the table entry closest to the prime hue.
+			shortestHueDist  = 180;
+			bestSwatch = colorHues.get(0);
 
-			for (int i = 0; i < colorHues.size(); i++) {
-				int length = Math.abs(bestHue - colorHues.get(i));
-				if (length > 90) {
+			for (Swatch swatch : colorHues) {
+				int hueError = Math.abs(bestHue - swatch.getHue());
+				if (hueError > 90) {
 					// wrap it around
-					length = 180 - length;
+					hueError = 180 - hueError;
 				}
-				if (length < shortestHueDist) {
-					shortestHueDist = length;
-					shortestHueIndex = i;
+				if (hueError < shortestHueDist) {
+					shortestHueDist = hueError;
+					bestSwatch = swatch;
 				}
 			}
-			sensedColor = new SensedColor(colorNames[shortestHueIndex], bestHue, avgSaturation, avgValue);
+			sensedColor = new SensedColor(bestSwatch, bestHue, avgSaturation, avgValue);
 		}
 
 		return sensedColor;

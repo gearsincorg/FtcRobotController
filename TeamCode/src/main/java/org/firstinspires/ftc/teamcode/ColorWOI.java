@@ -5,9 +5,7 @@ import org.opencv.core.Rect;
 public class ColorWOI {
 
     public enum DefineType {
-        IMAGE_PIXELS,
-        GRAPH_STYLE_PIXELS,
-        UNITY_BOTTOM_LEFT_ORIGIN,
+        OPENCV_LOPLEFT_ORIGIN,
         UNITY_CENTER_ORIGIN
     }
 
@@ -45,24 +43,8 @@ public class ColorWOI {
         Rect openCVRect;
 
         switch (defineType) {
-            case IMAGE_PIXELS: {
+            case OPENCV_LOPLEFT_ORIGIN: {
                 openCVRect = new Rect((int)x, (int)y, (int)width, (int)height);
-                break;
-            }
-
-            case GRAPH_STYLE_PIXELS: {
-                openCVRect = new Rect((int)x,
-                                      (int)(srcHeight - (y + height)),
-                                      (int)width,
-                                      (int)height);
-                break;
-            }
-
-            case UNITY_BOTTOM_LEFT_ORIGIN: {
-                openCVRect = new Rect((int)(srcWidth * x),
-                                      (int)(srcHeight - (srcHeight * (y + height))),
-                                      (int)(srcWidth  * width),
-                                      (int)(srcHeight * height));
                 break;
             }
 

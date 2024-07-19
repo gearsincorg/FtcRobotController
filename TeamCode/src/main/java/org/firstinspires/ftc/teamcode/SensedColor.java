@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 public class SensedColor {
     private int         detectedHue;
-    private Swatch matchingSwatch;
+    private Swatch      matchingSwatch;
     private int         avgSaturation;
     private int         avgValue;
 
@@ -31,7 +31,7 @@ public class SensedColor {
 
     // To display contents as human readable.
     public String toString() {
-        return String.format("%8s (%3d %3d %3d)", matchingSwatch, detectedHue, avgSaturation, avgValue);
+        return String.format("%s (H:%3d S:%3d V:%3d)", matchingSwatch, detectedHue, avgSaturation, avgValue);
     }
 }
 
