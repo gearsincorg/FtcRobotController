@@ -41,7 +41,7 @@ public class ColorSensorProcessor implements VisionProcessor {
 	/*
 	 * Change the window of interest after the processor has been created.
 	 */
-	public void	setColorWOI(ColorWOI colorWOI) {
+	public void setWOI(ColorWOI colorWOI) {
 		this.colorWOI = colorWOI;  // Set according to user request
 		window = colorWOI.getOpenCVRect(srcWidth, srcHeight);
 	}
@@ -71,12 +71,12 @@ public class ColorSensorProcessor implements VisionProcessor {
 		int srcPixels = window.width * window.height;
 
 		// extract the window of interest and convert to HSV space.
-		Mat hsvWOI = new Mat();
-		Imgproc.cvtColor(new Mat(rgbImage, window), hsvWOI, COLOR_RGB2HSV);
+		Mat myWOI = new Mat();
+		Imgproc.cvtColor(new Mat(rgbImage, window), myWOI, COLOR_RGB2HSV);
 
-		Core.extractChannel(hsvWOI, hueValues, 0);  // Michael... could probably be done as a 2D single array...
-		Core.extractChannel(hsvWOI, satValues, 1);
-		Core.extractChannel(hsvWOI, valValues, 2);
+		Core.extractChannel(myWOI, hueValues, 0);  // Michael... could probably be done as a 2D single array...
+		Core.extractChannel(myWOI, satValues, 1);
+		Core.extractChannel(myWOI, valValues, 2);
 
 		// Test for black & White first, to avoid more taxing KMEANS code.
 		int avgSaturation = (int)(Core.sumElems(satValues).val[0] / srcPixels);
@@ -192,6 +192,8 @@ public class ColorSensorProcessor implements VisionProcessor {
 
 		return new android.graphics.Rect(left, top, right, bottom);
 	}
+
+	// ===  FOR Debugging Only...   ===============================================
 
 	private String showMat(Mat stuff) {
 		String result = "";

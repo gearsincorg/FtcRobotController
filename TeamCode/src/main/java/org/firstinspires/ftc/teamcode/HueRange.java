@@ -19,7 +19,7 @@ public class HueRange {
 
     private int hueMin = 0;     // 0 - 180
     private int hueMax = 180;   // 0 - 180
-    private boolean invertRange = false;
+    private boolean splitHue = false;
 
     public HueRange () {
         setRange(90, 180);
@@ -30,21 +30,24 @@ public class HueRange {
     }
 
     public void setRange(int center, int span) {
-        int half    = hueSpan / 2;
         hueCenter   = clamp(center, 0, 180);
         hueSpan     = clamp(span, 0, 180);
-        hueMin      = hueCenter - half;
-        hueMax      = hueCenter + half;
+        hueMin      = hueCenter - (span / 2);
+        hueMax      = hueCenter + (span / 2);
 
         // Allow search range to wrap around, and then invert the inner selected region.
         if (hueMin < 0) {
-            hueMin += 180;
-            invertRange = true;
+            int temp = hueMin + 180;
+            hueMin   = hueMax;
+            hueMax   = temp;
+            splitHue = true;
         } else if (hueMax > 180) {
-            hueMax -= 180;
-            invertRange = true;
+            int temp = hueMax - 180;
+            hueMax   = hueMin;
+            hueMin   = temp;
+            splitHue = true;
         } else {
-            invertRange = false;
+            splitHue = false;
         }
     }
 
@@ -52,10 +55,10 @@ public class HueRange {
     public int span() { return hueSpan;}
     public int min() { return hueMin;}
     public int max() { return hueMax;}
-    public boolean invert() { return invertRange;}
+    public boolean split() { return splitHue;}
 
     public String toString() {
-        return String.format("Center: %d, Span: %d", hueCenter, hueSpan);
+        return String.format("C: %d, S: %d (%d, %d, %s)", hueCenter, hueSpan, hueMin, hueMax, splitHue);
     }
 
     private static int clamp(int value, int min, int max) {
