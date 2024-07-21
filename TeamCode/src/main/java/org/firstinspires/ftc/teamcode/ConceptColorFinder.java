@@ -35,15 +35,18 @@ public class ConceptColorFinder extends LinearOpMode
     // Here, Hues range from 0 to 180 with Red wrapping around both ends of the range
     // Example hueRanges:
     // RED      HueRange(170, 40);
-    // YELLOW   HueRange( 23, 20);
+    // YELLOW   HueRange( 27, 20);
     // GREEN    HueRange( 60, 40);
     // BLUE     HueRange(120, 40);
 
-    private HueRange    hueRange = new HueRange(75, 30);
+    private ColorRange colorRange = new ColorRange(120, 40, 100, 255, 110, 255);
 
     // Create a VisionPortal and ColorSensorProcessor
     private VisionPortal         myVisionPortal;
     private ColorFinderProcessor colorFinderProcessor;
+
+    private boolean lastBumpUp = false;
+    private boolean lastBumpDn = false;
 
     @Override public void runOpMode()
     {
@@ -51,11 +54,13 @@ public class ConceptColorFinder extends LinearOpMode
 
         // Run this code during the Init period so the Driver Station can display the video window.
         while(opModeInInit()) {
+
+            bumpColor();
             // Display the detected color
             telemetry.addLine("use \'Menu - Camera Stream\' to view color Finder\n");
             telemetry.addData("Rectangle ", colorWIO.getOpenCVRect(320,240).toString());
-            telemetry.addData("hueRange", hueRange.toString());
-            telemetry.addData("BlobsColor", colorFinderProcessor.getFoundBlobs().toString());
+            telemetry.addLine(colorRange.toString());
+            telemetry.addLine(colorFinderProcessor.getFoundBlobs().toString());
             telemetry.update();
         }
     }
@@ -69,7 +74,7 @@ public class ConceptColorFinder extends LinearOpMode
         //  (smaller window provides faster processing frame rate), and a list of the
         //  color swatches you are interested in.
         // -----------------------------------------------------------------------------------------
-        colorFinderProcessor = new ColorFinderProcessor(colorWIO, hueRange);
+        colorFinderProcessor = new ColorFinderProcessor(colorWIO, colorRange);
 
         // -----------------------------------------------------------------------------------------
         // Camera Configuration (lower resolution provides faster processing frame rate)
@@ -79,5 +84,48 @@ public class ConceptColorFinder extends LinearOpMode
                 .addProcessors(colorFinderProcessor)
                 .setCameraResolution(new Size(320, 240))
                 .build();
+    }
+
+    private void bumpColor() {
+        boolean thisBumpUp = gamepad1.dpad_up;
+        boolean thisBumpDn = gamepad1.dpad_down;
+
+        if (thisBumpUp && !lastBumpUp) {
+            if (gamepad1.left_bumper) {
+                colorRange.setHueRange(colorRange.center() + 1, colorRange.span());
+            } else if (gamepad1.right_bumper) {
+                colorRange.setHueRange(colorRange.center(), colorRange.span() + 1);
+            } else if (gamepad1.square) {
+                colorRange.setSatRange(colorRange.minS() + 1, colorRange.maxS());
+            } else if (gamepad1.circle) {
+                colorRange.setSatRange(colorRange.minS(), colorRange.maxS() + 1);
+            } else if (gamepad1.cross) {
+                colorRange.setValRange(colorRange.minV() + 1, colorRange.maxV());
+            } else if (gamepad1.triangle) {
+                colorRange.setValRange(colorRange.minV(), colorRange.maxV() + 1);
+            }
+
+            colorFinderProcessor.setColorRange(colorRange);
+
+        } else if (thisBumpDn && !lastBumpDn) {
+            if (gamepad1.left_bumper) {
+                colorRange.setHueRange(colorRange.center() - 1, colorRange.span());
+            } else if (gamepad1.right_bumper) {
+                colorRange.setHueRange(colorRange.center(), colorRange.span() - 1);
+            } else if (gamepad1.square) {
+                colorRange.setSatRange(colorRange.minS() - 1, colorRange.maxS());
+            } else if (gamepad1.circle) {
+                colorRange.setSatRange(colorRange.minS(), colorRange.maxS() - 1);
+            } else if (gamepad1.cross) {
+                colorRange.setValRange(colorRange.minV() - 1, colorRange.maxV());
+            } else if (gamepad1.triangle) {
+                colorRange.setValRange(colorRange.minV(), colorRange.maxV() - 1);
+            }
+
+            colorFinderProcessor.setColorRange(colorRange);
+        }
+
+        lastBumpUp = thisBumpUp;
+        lastBumpDn = thisBumpDn;
     }
 }

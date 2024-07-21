@@ -26,7 +26,7 @@ public class ColorFinderProcessor implements VisionProcessor {
 
 	// Private Members
 	private ColorWOI	colorWOI;
-	private	HueRange	hueRange;
+	private ColorRange colorRange;
 	private int			srcWidth;
 	private int			srcHeight;
 	private	Rect		window = new Rect();
@@ -37,9 +37,9 @@ public class ColorFinderProcessor implements VisionProcessor {
 	private static final int LOWER_VAL = 100;  // 110
 	private static final int UPPER_VAL = 255;
 
-	public ColorFinderProcessor(ColorWOI colorWOI, HueRange hueRange) {
-		this.colorWOI = colorWOI;  // Set according to user request
-		this.hueRange = hueRange;
+	public ColorFinderProcessor(ColorWOI colorWOI, ColorRange colorRange) {
+		this.colorWOI   = colorWOI;  // Set according to user request
+		this.colorRange = colorRange;
 	}
 
 	/*
@@ -53,8 +53,8 @@ public class ColorFinderProcessor implements VisionProcessor {
 	/*
 	 * Change the window of interest after the processor has been created.
 	 */
-	public void	setHueRange(HueRange hueRange) {
-		this.hueRange = hueRange;
+	public void setColorRange(ColorRange colorRange) {
+		this.colorRange = colorRange;
 	}
 
 	@Override
@@ -83,22 +83,26 @@ public class ColorFinderProcessor implements VisionProcessor {
 		int kernelSize = 6 * radius + 1;
 		Imgproc.GaussianBlur(myWOI, myWOI, new Size(kernelSize, kernelSize), radius);
 
-		if (hueRange.split()) {
-			lowerHSV = new Scalar(0, LOWER_SAT, LOWER_VAL); // the lower hsv threshold
-			upperHSV = new Scalar(hueRange.min(), UPPER_SAT, UPPER_VAL); // the upper hsv threshold
+		if (colorRange.split()) {
+			lowerHSV = new Scalar(0, colorRange.minS(), colorRange.minV()); // the lower hsv threshold
+			upperHSV = new Scalar(colorRange.minH(), colorRange.maxS(), colorRange.maxV()); // the upper hsv threshold
 			Mat loMask   = new Mat();
+			Log.d("Lo1HSV", lowerHSV.toString());
+			Log.d("Up1HSV", upperHSV.toString());
 			Core.inRange(myWOI, lowerHSV, upperHSV, loMask);
 
-			lowerHSV = new Scalar(hueRange.max(), LOWER_SAT, LOWER_VAL); // the lower hsv threshold
-			upperHSV = new Scalar(180, UPPER_SAT, UPPER_VAL); // the upper hsv threshold
+			lowerHSV = new Scalar(colorRange.maxH(), colorRange.minS(), colorRange.minV()); // the lower hsv threshold
+			upperHSV = new Scalar(179, colorRange.maxS(), colorRange.maxV()); // the upper hsv threshold
 			Mat hiMask   = new Mat();
+			Log.d("Lo2HSV", lowerHSV.toString());
+			Log.d("Up2HSV", upperHSV.toString());
 			Core.inRange(myWOI, lowerHSV, upperHSV, hiMask);
 
 			Core.bitwise_or(loMask, hiMask, mask);
 		} else {
-			lowerHSV = new Scalar(hueRange.min(), LOWER_SAT, LOWER_VAL); // the lower hsv threshold
-			upperHSV = new Scalar(hueRange.max(), UPPER_SAT, UPPER_VAL); // the upper hsv threshold
-			Log.d("LOHSV", lowerHSV.toString());
+			lowerHSV = new Scalar(colorRange.minH(), colorRange.minS(), colorRange.minV()); // the lower hsv threshold
+			upperHSV = new Scalar(colorRange.maxH(), colorRange.maxS(), colorRange.maxV()); // the upper hsv threshold
+			Log.d("LoHSV", lowerHSV.toString());
 			Log.d("UpHSV", upperHSV.toString());
 			Core.inRange(myWOI, lowerHSV, upperHSV, mask);
 		}
@@ -141,7 +145,7 @@ public class ColorFinderProcessor implements VisionProcessor {
 	public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
 
 		float[] borderHSV   = new float[] {0, 0, 255};
-		float[] blobHSV     = new float[] {(float) hueRange.center() * 2, 255, 255};
+		float[] blobHSV     = new float[] {(float) colorRange.center() * 2, 255, 255};
 
 		// foundBlobs = (ArrayList<Rect>)userContext;
 

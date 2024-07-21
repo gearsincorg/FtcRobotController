@@ -14,6 +14,8 @@ public class ColorWOI {
     private double  y;
     private double  width;
     private double  height;
+    private int  srcWidth;
+    private int  srcHeight;
 
     public ColorWOI (){
         this.defineType = DefineType.UNITY_CENTER_ORIGIN;
@@ -39,8 +41,15 @@ public class ColorWOI {
         this.height = (double)height;
     }
 
+    public void setSrc(int srcWidth, int srcHeight) {
+        this.srcWidth = srcWidth;
+        this.srcHeight = srcHeight;
+    }
+
     public Rect getOpenCVRect(int srcWidth, int srcHeight) {
         Rect openCVRect;
+        this.srcWidth = srcWidth;
+        this.srcHeight = srcHeight;
 
         switch (defineType) {
             case OPENCV_LOPLEFT_ORIGIN: {
@@ -76,6 +85,5 @@ public class ColorWOI {
     private static int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
     }
-
 }
 

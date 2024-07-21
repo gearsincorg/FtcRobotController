@@ -29,7 +29,7 @@ public class ConceptColorSensor extends LinearOpMode
     //                                               +X is to the right, +ve Y is up
     // eg: new ColorWOI(ColorWOI.DefineType.UNITY_CENTER_ORIGIN, -0.5, 0.5, 0.25, 0.25);  // same as example above
 
-    private ColorWOI colorWIO = new ColorWOI(ColorWOI.DefineType.UNITY_CENTER_ORIGIN, -0.5, 0.5, 0.25, 0.25);
+    private ColorWOI colorWIO = new ColorWOI(ColorWOI.DefineType.UNITY_CENTER_ORIGIN, -0.19, -0.19, 0.09, 0.09);
 
     // The color sensor will choose between the Swatch values you pass it here, so you have the freedom to choose
     // as man or few as you need.  Suggestion: remove any Swatches that you don't want to find :)

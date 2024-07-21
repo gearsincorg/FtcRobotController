@@ -4,6 +4,7 @@ import static org.opencv.imgproc.Imgproc.COLOR_RGB2HSV;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.util.Log;
 
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.vision.VisionProcessor;
@@ -29,7 +30,7 @@ public class ColorSensorProcessor implements VisionProcessor {
 	private	Rect		window = new Rect();
 	private Swatch[] 	swatches;
 
-	private int 	K = 10; // Get the top n color hues
+	private int 	K = 5; // Get the top n color hues
 	private int		shortestHueDist		= 180;
 	private	Swatch 	bestSwatch;
 
@@ -96,6 +97,7 @@ public class ColorSensorProcessor implements VisionProcessor {
 			Mat labels = new Mat();
 			Mat centers = new Mat(K, reshapedHue.cols(), reshapedHue.type());
 			TermCriteria criteria = new TermCriteria(TermCriteria.EPS + TermCriteria.MAX_ITER, 10, 2.0);
+
 			Core.kmeans(reshapedHue, K, labels, criteria, 1, Core.KMEANS_PP_CENTERS, centers);
 
 			Integer[] clusterCounts = new Integer[K];
@@ -117,9 +119,9 @@ public class ColorSensorProcessor implements VisionProcessor {
 			Arrays.sort(clusterHue, customComparator);
 			Arrays.sort(clusterCounts);
 
-			//Log.d("HUE ALL", showMat(reshapedHue));
-			//Log.d("HUES TOP", showArray(clusterHue));
-			//Log.d("HUES CNT", showArray(clusterCounts));
+			Log.d("HUE ALL", showMat(reshapedHue));
+			Log.d("HUES TOP", showArray(clusterHue));
+			Log.d("HUES CNT", showArray(clusterCounts));
 
 			// Grab the hue of the cluster with the most close colors...  this is the best hue match.
 			int bestHue = clusterHue[K-1];

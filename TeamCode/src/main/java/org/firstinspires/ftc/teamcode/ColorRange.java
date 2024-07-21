@@ -13,25 +13,34 @@ package org.firstinspires.ftc.teamcode;
  *   eg: A central hue of 5, with a span is 20, causes the desired range to be split into two regions...  0-15 and 175-180
  *   To search these two ranges, the central portion of 15-175 is used, with an Invert option.
  */
-public class HueRange {
-    private int hueCenter;      // 0 - 180
-    private int hueSpan;        // 0 - 180
+public class ColorRange {
+    private int hueCenter;      // 0 - 179
+    private int hueSpan;        // 0 - 179
 
-    private int hueMin = 0;     // 0 - 180
-    private int hueMax = 180;   // 0 - 180
+    private int satMin;        // 0 - 255
+    private int satMax;        // 0 - 255
+    private int valMin;        // 0 - 255
+    private int valMax;        // 0 - 255
+
+    private int hueMin = 0;     // 0 - 179
+    private int hueMax = 179;   // 0 - 179
     private boolean splitHue = false;
 
-    public HueRange () {
-        setRange(90, 180);
+    public ColorRange() {
+        setHueRange(90, 180);
+        setSatRange(0, 255);
+        setValRange(0, 255);
     }
 
-    public HueRange (int center, int span) {
-        setRange(center, span);
+    public ColorRange(int center, int span, int minSat, int satMax, int minVal, int maxVal) {
+        setHueRange(center, span);
+        setSatRange(minSat, satMax);
+        setValRange(minVal, maxVal);
     }
 
-    public void setRange(int center, int span) {
-        hueCenter   = clamp(center, 0, 180);
-        hueSpan     = clamp(span, 0, 180);
+    public void setHueRange(int center, int span) {
+        hueCenter   = clamp(center, 0, 179);
+        hueSpan     = clamp(span, 0, 179);
         hueMin      = hueCenter - (span / 2);
         hueMax      = hueCenter + (span / 2);
 
@@ -41,7 +50,7 @@ public class HueRange {
             hueMin   = hueMax;
             hueMax   = temp;
             splitHue = true;
-        } else if (hueMax > 180) {
+        } else if (hueMax >= 180) {
             int temp = hueMax - 180;
             hueMax   = hueMin;
             hueMin   = temp;
@@ -51,14 +60,29 @@ public class HueRange {
         }
     }
 
+    public void setSatRange(int min, int max) {
+        satMin = clamp(min, 0, 255);
+        satMax = clamp(max, 0, 255);
+    }
+
+    public void setValRange(int min, int max) {
+        valMin = clamp(min, 0, 255);
+        valMax = clamp(max, 0, 255);
+    }
+
     public int center() { return hueCenter;}
     public int span() { return hueSpan;}
-    public int min() { return hueMin;}
-    public int max() { return hueMax;}
+    public int minH() { return hueMin;}
+    public int maxH() { return hueMax;}
+    public int minS() { return satMin;}
+    public int maxS() { return satMax;}
+    public int minV() { return valMin;}
+    public int maxV() { return valMax;}
     public boolean split() { return splitHue;}
 
     public String toString() {
-        return String.format("C: %d, S: %d (%d, %d, %s)", hueCenter, hueSpan, hueMin, hueMax, splitHue);
+        return String.format("C: %d, S: %d (%d, %d, %s) S[%d, %d] V[%d, %d]", hueCenter, hueSpan,
+                                    hueMin, hueMax, splitHue, satMin, satMax, valMin, valMax);
     }
 
     private static int clamp(int value, int min, int max) {
