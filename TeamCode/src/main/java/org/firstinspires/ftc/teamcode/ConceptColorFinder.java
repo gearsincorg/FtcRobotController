@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
+import org.opencv.core.Scalar;
 
 /*
  * This OpMode illustrates using the ColorSensorProcessor to determine the color of a portion of the camera view.
@@ -31,15 +32,16 @@ public class ConceptColorFinder extends LinearOpMode
 
     private ColorWOI colorWIO = new ColorWOI(ColorWOI.DefineType.UNITY_CENTER_ORIGIN, 0.0, 0.0, 0.8, 0.8);
 
-    // Define the range of colors you are looking for by choosing a center Hue and a Span (range) of hues around that center.
-    // Here, Hues range from 0 to 180 with Red wrapping around both ends of the range
-    // Example hueRanges:
-    // RED      HueRange(170, 40);
-    // YELLOW   HueRange( 27, 20);
-    // GREEN    HueRange( 60, 40);
-    // BLUE     HueRange(120, 40);
+    YCrCb_Range blue_YCrCb      = new YCrCb_Range(new Scalar( 32,   0, 120),
+                                                  new Scalar(255, 118, 255));
+    YCrCb_Range red_YCrCb       = new YCrCb_Range(new Scalar( 32, 176,  0),
+                                                  new Scalar(255, 255, 132));
+    YCrCb_Range yellow_YCrCb    = new YCrCb_Range(new Scalar( 32, 128,   0),
+                                                  new Scalar(255, 170, 120));
+    YCrCb_Range green_YCrCb     = new YCrCb_Range(new Scalar( 32,   0,   0),
+                                                  new Scalar(255, 120, 133));
 
-    private ColorRange colorRange = new ColorRange(120, 40, 100, 255, 110, 255);
+    private YCrCb_Range desiredColor = red_YCrCb;
 
     // Create a VisionPortal and ColorSensorProcessor
     private VisionPortal         myVisionPortal;
@@ -55,11 +57,10 @@ public class ConceptColorFinder extends LinearOpMode
         // Run this code during the Init period so the Driver Station can display the video window.
         while(opModeInInit()) {
 
-            bumpColor();
             // Display the detected color
             telemetry.addLine("use \'Menu - Camera Stream\' to view color Finder\n");
             telemetry.addData("Rectangle ", colorWIO.getOpenCVRect(320,240).toString());
-            telemetry.addLine(colorRange.toString());
+            telemetry.addLine(desiredColor.toString());
             telemetry.addLine(colorFinderProcessor.getFoundBlobs().toString());
             telemetry.update();
         }
@@ -74,7 +75,7 @@ public class ConceptColorFinder extends LinearOpMode
         //  (smaller window provides faster processing frame rate), and a list of the
         //  color swatches you are interested in.
         // -----------------------------------------------------------------------------------------
-        colorFinderProcessor = new ColorFinderProcessor(colorWIO, colorRange);
+        colorFinderProcessor = new ColorFinderProcessor(colorWIO, desiredColor);
 
         // -----------------------------------------------------------------------------------------
         // Camera Configuration (lower resolution provides faster processing frame rate)
@@ -84,48 +85,5 @@ public class ConceptColorFinder extends LinearOpMode
                 .addProcessors(colorFinderProcessor)
                 .setCameraResolution(new Size(320, 240))
                 .build();
-    }
-
-    private void bumpColor() {
-        boolean thisBumpUp = gamepad1.dpad_up;
-        boolean thisBumpDn = gamepad1.dpad_down;
-
-        if (thisBumpUp && !lastBumpUp) {
-            if (gamepad1.left_bumper) {
-                colorRange.setHueRange(colorRange.center() + 1, colorRange.span());
-            } else if (gamepad1.right_bumper) {
-                colorRange.setHueRange(colorRange.center(), colorRange.span() + 1);
-            } else if (gamepad1.square) {
-                colorRange.setSatRange(colorRange.minS() + 1, colorRange.maxS());
-            } else if (gamepad1.circle) {
-                colorRange.setSatRange(colorRange.minS(), colorRange.maxS() + 1);
-            } else if (gamepad1.cross) {
-                colorRange.setValRange(colorRange.minV() + 1, colorRange.maxV());
-            } else if (gamepad1.triangle) {
-                colorRange.setValRange(colorRange.minV(), colorRange.maxV() + 1);
-            }
-
-            colorFinderProcessor.setColorRange(colorRange);
-
-        } else if (thisBumpDn && !lastBumpDn) {
-            if (gamepad1.left_bumper) {
-                colorRange.setHueRange(colorRange.center() - 1, colorRange.span());
-            } else if (gamepad1.right_bumper) {
-                colorRange.setHueRange(colorRange.center(), colorRange.span() - 1);
-            } else if (gamepad1.square) {
-                colorRange.setSatRange(colorRange.minS() - 1, colorRange.maxS());
-            } else if (gamepad1.circle) {
-                colorRange.setSatRange(colorRange.minS(), colorRange.maxS() - 1);
-            } else if (gamepad1.cross) {
-                colorRange.setValRange(colorRange.minV() - 1, colorRange.maxV());
-            } else if (gamepad1.triangle) {
-                colorRange.setValRange(colorRange.minV(), colorRange.maxV() - 1);
-            }
-
-            colorFinderProcessor.setColorRange(colorRange);
-        }
-
-        lastBumpUp = thisBumpUp;
-        lastBumpDn = thisBumpDn;
     }
 }

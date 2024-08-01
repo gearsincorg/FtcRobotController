@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.opencv.imgproc.Imgproc.COLOR_RGB2HSV;
+import static org.opencv.imgproc.Imgproc.COLOR_RGB2YCrCb;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -12,12 +12,11 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.TermCriteria;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 public class ColorSensorProcessor implements VisionProcessor {
@@ -64,82 +63,95 @@ public class ColorSensorProcessor implements VisionProcessor {
 	@Override
 	public Object processFrame(Mat rgbImage, long captureTimeNanos) {
 
-		// Extracted channels
-		Mat hueValues = new Mat();
-		Mat satValues = new Mat();
-		Mat valValues = new Mat();
-
 		int srcPixels = window.width * window.height;
 
 		// extract the window of interest and convert to HSV space.
 		Mat myWOI = new Mat();
-		Imgproc.cvtColor(new Mat(rgbImage, window), myWOI, COLOR_RGB2HSV);
+		Imgproc.cvtColor(new Mat(rgbImage, window), myWOI, COLOR_RGB2YCrCb);
 
-		Core.extractChannel(myWOI, hueValues, 0);  // Michael... could probably be done as a 2D single array...
-		Core.extractChannel(myWOI, satValues, 1);
-		Core.extractChannel(myWOI, valValues, 2);
+		// Extract Y, Cr and Cb channels
+		List<Mat> channels = new ArrayList<>();
+		Core.split(myWOI, channels);
+		Mat lChannel = channels.get(0);
+		Mat crChannel = channels.get(1);
+		Mat cbChannel = channels.get(2);
 
-		// Test for black & White first, to avoid more taxing KMEANS code.
-		int avgSaturation = (int)(Core.sumElems(satValues).val[0] / srcPixels);
-		int avgValue 	  = (int)(Core.sumElems(valValues).val[0] / srcPixels);
+		// Determine the average Luminance
+		int avgLuminance 	  = (int)(Core.sumElems(lChannel).val[0] / srcPixels);
 
-		if (avgValue < 50) {
-			sensedColor = new SensedColor(Swatch.BLACK, 0, avgSaturation, avgValue);
-		} else if ((avgSaturation < 50) && (avgValue > 100)) {
-			sensedColor = new SensedColor(Swatch.WHITE, 0, avgSaturation, avgValue);
+		// Flatten data for K-means
+		Mat data = new Mat(srcPixels, 2, CvType.CV_32F);
+		for (int i = 0; i < crChannel.rows(); i++) {
+			for (int j = 0; j < crChannel.cols(); j++) {
+				data.put(i * crChannel.cols() + j, 0, crChannel.get(i, j)[0]);
+				data.put(i * crChannel.cols() + j, 1, cbChannel.get(i, j)[0]);
+			}
+		}
+
+		// Perform K-Means clustering
+		Mat labels = new Mat();
+		Mat centers = new Mat(K, data.cols(), data.type());
+		TermCriteria criteria = new TermCriteria(TermCriteria.EPS + TermCriteria.MAX_ITER, 10, 2.0);
+
+		Core.kmeans(data, K, labels, criteria, 1, Core.KMEANS_PP_CENTERS, centers);
+
+		Integer[] clusterCounts = new Integer[K];
+		int maxCount = 0;
+		int maxCountIndex = 0;
+
+		// Get the number of pixels for each cluster
+		for (int i = 0; i < K; i++) {
+			clusterCounts[i] = 0;
+		}
+
+		// Get the bigest count along the way
+		for (int i = 0; i < labels.rows(); i++) {
+			int clusterIndex = (int) labels.get(i, 0)[0];
+			int newCount = clusterCounts[clusterIndex]++;
+
+			if (newCount > maxCount) {
+				maxCount = newCount;
+				maxCountIndex = clusterIndex;
+			}
+		}
+
+		double Y  = avgLuminance; // Luminance
+		double Cr = centers.get(maxCountIndex, 0)[0]; // Red-difference Chroma
+		double Cb = centers.get(maxCountIndex, 1)[0]; // Blue-difference Chroma
+
+		Log.d("BEST YCrCb", String.format("Y:%.0f, Cr:%.0f, Cb:%.0f", Y, Cr, Cb));
+
+		Scalar yCrCb = new Scalar(Y, Cr, Cb);
+		Scalar hue   = Spectrum.yCrCb2hsv(yCrCb);
+
+		int H = (int)hue.val[0];
+		int S = (int)hue.val[1];
+		int V = (int)hue.val[2];
+
+		Log.d("Best HSV", String.format("H:%d, S:%d, V:%d", H, S, V));
+
+		// Check for Black or White before matching Hue.
+		if ((S < 50) && (V > 180)) {
+			sensedColor = new SensedColor(Swatch.WHITE, H, S, V);
+		} else if ((S < 50) || (V < 50)) {
+			sensedColor = new SensedColor(Swatch.BLACK, H, S, V);
 		} else {
-
-			// Reshape the hue values into a 1D array
-			Mat reshapedHue = hueValues.reshape(1, hueValues.rows() * hueValues.cols());
-			reshapedHue.convertTo(reshapedHue, CvType.CV_32F);
-
-			// Perform K-Means clustering
-			Mat labels = new Mat();
-			Mat centers = new Mat(K, reshapedHue.cols(), reshapedHue.type());
-			TermCriteria criteria = new TermCriteria(TermCriteria.EPS + TermCriteria.MAX_ITER, 10, 2.0);
-
-			Core.kmeans(reshapedHue, K, labels, criteria, 1, Core.KMEANS_PP_CENTERS, centers);
-
-			Integer[] clusterCounts = new Integer[K];
-			Integer[] clusterHue = new Integer[K];
-
-			// Get the cluster centers (representing dominant hues), plus initialize the counts;
-			for (int i = 0; i < K; i++) {
-				clusterHue[i] = (int) centers.get(i, 0)[0];
-				clusterCounts[i] = 0;
-			}
-
-			for (int i = 0; i < labels.rows(); i++) {
-				int clusterIndex = (int) labels.get(i, 0)[0];
-				clusterCounts[clusterIndex]++; //= clusterCounts[clusterIndex] + 1;
-			}
-
-			// Sort the data array using the custom comparator Get the cluster with the most entries.
-			Comparator<Integer> customComparator = Comparator.comparingInt(color -> clusterCounts[Arrays.asList(clusterHue).indexOf(color)]);
-			Arrays.sort(clusterHue, customComparator);
-			Arrays.sort(clusterCounts);
-
-			Log.d("HUE ALL", showMat(reshapedHue));
-			Log.d("HUES TOP", showArray(clusterHue));
-			Log.d("HUES CNT", showArray(clusterCounts));
-
-			// Grab the hue of the cluster with the most close colors...  this is the best hue match.
-			int bestHue = clusterHue[K-1];
 
 			// build a list of valid hues from the swatches, eliminate black and white
 			List<Swatch> colorHues = new ArrayList<>();
-			for (Swatch swatch : swatches){
+			for (Swatch swatch : swatches) {
 				if (swatch.getHue() >= 0) {
 					colorHues.add(swatch);
 				}
 			}
 
-			// now scan the colorHue table to fin the table entry closest to the prime hue.
-			shortestHueDist  = 180;
+			// now scan the colorHue table to find the table entry closest to the prime hue.
+			// watch for hue wrap around at 180.
+			shortestHueDist = 180;
 			bestSwatch = colorHues.get(0);
 
 			for (Swatch swatch : colorHues) {
-				int hueError = Math.abs(bestHue - swatch.getHue());
+				int hueError = Math.abs((int) H - swatch.getHue());
 				if (hueError > 90) {
 					// wrap it around
 					hueError = 180 - hueError;
@@ -149,7 +161,7 @@ public class ColorSensorProcessor implements VisionProcessor {
 					bestSwatch = swatch;
 				}
 			}
-			sensedColor = new SensedColor(bestSwatch, bestHue, avgSaturation, avgValue);
+			sensedColor = new SensedColor(bestSwatch, H, S, V);
 		}
 
 		return sensedColor;
@@ -172,7 +184,7 @@ public class ColorSensorProcessor implements VisionProcessor {
 		} else if (swatch == Swatch.WHITE) {
 			borderHSV = new float[] {0, 0, 255};
 		} else {
-			borderHSV = new float[] {(float) sensedColor.hue() * 2, 255, 255};
+			borderHSV = new float[] {(float) sensedColor.hue() * 2, sensedColor.sat(), sensedColor.val()};
 		}
 
 		Paint woiPaint = new Paint();
@@ -200,7 +212,7 @@ public class ColorSensorProcessor implements VisionProcessor {
 	private String showMat(Mat stuff) {
 		String result = "";
 		for (int i = 0 ; i < stuff.rows(); i++) {
-			result += String.format("%.0f ", stuff.get(i, 0)[0]);
+			result += String.format("[%.0f %.0f] ", stuff.get(i, 0)[0], stuff.get(i, 1)[0]);
 		}
 		return result;
 	}
@@ -213,6 +225,5 @@ public class ColorSensorProcessor implements VisionProcessor {
 		}
 		return result;
 	}
-
 }
 

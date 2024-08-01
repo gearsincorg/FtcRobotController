@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.opencv.imgproc.Imgproc.COLOR_RGB2HSV;
+import static org.opencv.imgproc.Imgproc.COLOR_RGB2YCrCb;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -26,20 +26,15 @@ public class ColorFinderProcessor implements VisionProcessor {
 
 	// Private Members
 	private ColorWOI	colorWOI;
-	private ColorRange colorRange;
+	private YCrCb_Range yCrCb_Range;
 	private int			srcWidth;
 	private int			srcHeight;
 	private	Rect		window = new Rect();
 	private	ArrayList<Rect> foundBlobs = new ArrayList<>();
 
-	private static final int LOWER_SAT = 100;  // 110
-	private static final int UPPER_SAT = 255;
-	private static final int LOWER_VAL = 100;  // 110
-	private static final int UPPER_VAL = 255;
-
-	public ColorFinderProcessor(ColorWOI colorWOI, ColorRange colorRange) {
+	public ColorFinderProcessor(ColorWOI colorWOI, YCrCb_Range yCrCb_Range) {
 		this.colorWOI   = colorWOI;  // Set according to user request
-		this.colorRange = colorRange;
+		this.yCrCb_Range = yCrCb_Range;
 	}
 
 	/*
@@ -53,8 +48,8 @@ public class ColorFinderProcessor implements VisionProcessor {
 	/*
 	 * Change the window of interest after the processor has been created.
 	 */
-	public void setColorRange(ColorRange colorRange) {
-		this.colorRange = colorRange;
+	public void setFindColor(YCrCb_Range yCrCb_Range) {
+		this.yCrCb_Range = yCrCb_Range;
 	}
 
 	@Override
@@ -76,36 +71,17 @@ public class ColorFinderProcessor implements VisionProcessor {
 
 
 		// extract the window of interest and convert to HSV space.
-		Imgproc.cvtColor(new Mat(rgbImage, window), myWOI, COLOR_RGB2HSV);
+		Imgproc.cvtColor(new Mat(rgbImage, window), myWOI, COLOR_RGB2YCrCb);
 
 		// blur the image and then filter for the requested hue range.
-		int radius = 5;
+		int radius = 1;
 		int kernelSize = 6 * radius + 1;
 		Imgproc.GaussianBlur(myWOI, myWOI, new Size(kernelSize, kernelSize), radius);
 
-		if (colorRange.split()) {
-			lowerHSV = new Scalar(0, colorRange.minS(), colorRange.minV()); // the lower hsv threshold
-			upperHSV = new Scalar(colorRange.minH(), colorRange.maxS(), colorRange.maxV()); // the upper hsv threshold
-			Mat loMask   = new Mat();
-			Log.d("Lo1HSV", lowerHSV.toString());
-			Log.d("Up1HSV", upperHSV.toString());
-			Core.inRange(myWOI, lowerHSV, upperHSV, loMask);
+		// Log.d("MAT", showMat(myWOI));
 
-			lowerHSV = new Scalar(colorRange.maxH(), colorRange.minS(), colorRange.minV()); // the lower hsv threshold
-			upperHSV = new Scalar(179, colorRange.maxS(), colorRange.maxV()); // the upper hsv threshold
-			Mat hiMask   = new Mat();
-			Log.d("Lo2HSV", lowerHSV.toString());
-			Log.d("Up2HSV", upperHSV.toString());
-			Core.inRange(myWOI, lowerHSV, upperHSV, hiMask);
-
-			Core.bitwise_or(loMask, hiMask, mask);
-		} else {
-			lowerHSV = new Scalar(colorRange.minH(), colorRange.minS(), colorRange.minV()); // the lower hsv threshold
-			upperHSV = new Scalar(colorRange.maxH(), colorRange.maxS(), colorRange.maxV()); // the upper hsv threshold
-			Log.d("LoHSV", lowerHSV.toString());
-			Log.d("UpHSV", upperHSV.toString());
-			Core.inRange(myWOI, lowerHSV, upperHSV, mask);
-		}
+		mask   = new Mat();
+		Core.inRange(myWOI, yCrCb_Range.loRange, yCrCb_Range.hiRange, mask);
 
 		ArrayList<MatOfPoint> contours = new ArrayList<>();
 		ArrayList<Rect> filteredBlobs  = new ArrayList<>();
@@ -130,9 +106,6 @@ public class ColorFinderProcessor implements VisionProcessor {
 		}
 		Log.d("CONTOUR AREAS", areas);
 
-		//		Collections.sort(rectangles, Comparator.comparingDouble(Imgproc.contourArea(contour));
-		// Sort the Blobs
-
 //		return filteredBlobs;
 		return contours;
 	}
@@ -144,8 +117,9 @@ public class ColorFinderProcessor implements VisionProcessor {
 	 */
 	public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
 
-		float[] borderHSV   = new float[] {0, 0, 255};
-		float[] blobHSV     = new float[] {(float) colorRange.center() * 2, 255, 255};
+		float[] black   = new float[] {0, 0, 0};
+		float[] white   = new float[] {0, 0, 255};
+		float[] magenta = new float[] {300, 255, 255};
 
 		// foundBlobs = (ArrayList<Rect>)userContext;
 
@@ -154,13 +128,13 @@ public class ColorFinderProcessor implements VisionProcessor {
 		Paint woiPaint = new Paint();
 		woiPaint.setStyle(Paint.Style.STROKE);
 		woiPaint.setStrokeWidth(scaleCanvasDensity * 8);
-		woiPaint.setColor(android.graphics.Color.HSVToColor(borderHSV));
+		woiPaint.setColor(android.graphics.Color.HSVToColor(white));
 		canvas.drawRect(makeGraphicsRect(window, scaleBmpPxToCanvasPx), woiPaint);
 
 		Paint blobPaint = new Paint();
 		blobPaint.setStyle(Paint.Style.STROKE);
 		blobPaint.setStrokeWidth(scaleCanvasDensity * 4);
-		blobPaint.setColor(android.graphics.Color.HSVToColor(blobHSV));
+		blobPaint.setColor(android.graphics.Color.HSVToColor(magenta));
 
 		// Draw contours on the canvas
 		for (MatOfPoint contour : contours) {
@@ -174,7 +148,9 @@ public class ColorFinderProcessor implements VisionProcessor {
 			path.close(); // Close the contour path
 
 			canvas.drawPath(path, blobPaint);
+			blobPaint.setColor(android.graphics.Color.HSVToColor(black));
 		}
+
 
 		/*
 		for (Rect blob : foundBlobs) {
@@ -199,5 +175,17 @@ public class ColorFinderProcessor implements VisionProcessor {
 
 		return new android.graphics.Rect(left, top, right, bottom);
 	}
+
+	private String showMat(Mat stuff) {
+		String result = "";
+		for (int r = 0 ; r < stuff.rows(); r++) {
+			for (int c = 0 ; c < stuff.cols(); c++) {
+				double[] pixel = stuff.get(r, c);
+				result += String.format("(%.0f, %.0f, %.0f) ", pixel[0], pixel[1], pixel[2]);
+			}
+		}
+		return result;
+	}
+
 }
 

@@ -5,7 +5,7 @@ import org.opencv.core.Rect;
 public class ColorWOI {
 
     public enum DefineType {
-        OPENCV_LOPLEFT_ORIGIN,
+        OPENCV_TOPLEFT_ORIGIN,
         UNITY_CENTER_ORIGIN
     }
 
@@ -52,7 +52,7 @@ public class ColorWOI {
         this.srcHeight = srcHeight;
 
         switch (defineType) {
-            case OPENCV_LOPLEFT_ORIGIN: {
+            case OPENCV_TOPLEFT_ORIGIN: {
                 openCVRect = new Rect((int)x, (int)y, (int)width, (int)height);
                 break;
             }
