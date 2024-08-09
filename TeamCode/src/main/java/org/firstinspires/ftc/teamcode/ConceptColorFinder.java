@@ -59,7 +59,7 @@ public class ConceptColorFinder extends LinearOpMode
 
             // Display the detected color
             telemetry.addLine("use \'Menu - Camera Stream\' to view color Finder\n");
-            telemetry.addData("Rectangle ", colorWIO.getOpenCVRect(320,240).toString());
+            telemetry.addData("Window of Interest ", colorWIO.getOpenCVRect().toString());
             telemetry.addLine(desiredColor.toString());
             telemetry.addLine(colorFinderProcessor.getFoundBlobs().toString());
             telemetry.update();

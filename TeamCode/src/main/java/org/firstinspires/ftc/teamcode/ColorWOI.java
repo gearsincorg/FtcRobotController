@@ -46,10 +46,8 @@ public class ColorWOI {
         this.srcHeight = srcHeight;
     }
 
-    public Rect getOpenCVRect(int srcWidth, int srcHeight) {
+    public Rect getOpenCVRect() {
         Rect openCVRect;
-        this.srcWidth = srcWidth;
-        this.srcHeight = srcHeight;
 
         switch (defineType) {
             case OPENCV_TOPLEFT_ORIGIN: {

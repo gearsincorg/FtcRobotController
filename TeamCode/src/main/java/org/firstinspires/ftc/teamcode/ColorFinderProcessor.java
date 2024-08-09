@@ -14,7 +14,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
@@ -42,7 +41,8 @@ public class ColorFinderProcessor implements VisionProcessor {
 	 */
 	public void	setWOI(ColorWOI colorWOI) {
 		this.colorWOI = colorWOI;  // Set according to user request
-		window = colorWOI.getOpenCVRect(srcWidth, srcHeight);
+		colorWOI.setSrc(srcWidth, srcHeight);
+		window = colorWOI.getOpenCVRect();
 	}
 
 	/*
@@ -56,8 +56,8 @@ public class ColorFinderProcessor implements VisionProcessor {
 	public void init(int width, int height, CameraCalibration calibration) {
 		srcWidth = width;
 		srcHeight = height;
-		window = colorWOI.getOpenCVRect(srcWidth, srcHeight);
-
+		colorWOI.setSrc(srcWidth, srcHeight);
+		window = colorWOI.getOpenCVRect();
 	}
 	
 	@Override
@@ -66,9 +66,6 @@ public class ColorFinderProcessor implements VisionProcessor {
 		Mat hierarchy 	= new Mat();
 		Mat myWOI 		= new Mat();
 		Mat mask   		= new Mat();
-		Scalar lowerHSV; // the lower hsv threshold
-		Scalar upperHSV; // the upper hsv threshold
-
 
 		// extract the window of interest and convert to HSV space.
 		Imgproc.cvtColor(new Mat(rgbImage, window), myWOI, COLOR_RGB2YCrCb);
@@ -77,8 +74,6 @@ public class ColorFinderProcessor implements VisionProcessor {
 		int radius = 1;
 		int kernelSize = 6 * radius + 1;
 		Imgproc.GaussianBlur(myWOI, myWOI, new Size(kernelSize, kernelSize), radius);
-
-		// Log.d("MAT", showMat(myWOI));
 
 		mask   = new Mat();
 		Core.inRange(myWOI, yCrCb_Range.loRange, yCrCb_Range.hiRange, mask);
@@ -102,6 +97,8 @@ public class ColorFinderProcessor implements VisionProcessor {
 			areas += String.format("%5.0f ", Imgproc.contourArea(contour));
 
 			Rect   box = Imgproc.boundingRect(contour);
+
+			// This is probably what we want to send to the OpMode...
 			filteredBlobs.add(box);
 		}
 		Log.d("CONTOUR AREAS", areas);
@@ -152,13 +149,12 @@ public class ColorFinderProcessor implements VisionProcessor {
 		}
 
 
-		/*
+		/*  Probably really want to just return the enclosing rectangles
 		for (Rect blob : foundBlobs) {
 			blob.x += window.x;
 			blob.y += window.y;
 
 			canvas.drawRect(makeGraphicsRect(blob, scaleBmpPxToCanvasPx), blobPaint);
-
 		}
 		*/
 	}
@@ -175,17 +171,5 @@ public class ColorFinderProcessor implements VisionProcessor {
 
 		return new android.graphics.Rect(left, top, right, bottom);
 	}
-
-	private String showMat(Mat stuff) {
-		String result = "";
-		for (int r = 0 ; r < stuff.rows(); r++) {
-			for (int c = 0 ; c < stuff.cols(); c++) {
-				double[] pixel = stuff.get(r, c);
-				result += String.format("(%.0f, %.0f, %.0f) ", pixel[0], pixel[1], pixel[2]);
-			}
-		}
-		return result;
-	}
-
 }
 

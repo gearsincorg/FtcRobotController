@@ -29,7 +29,8 @@ public class ConceptColorSensor extends LinearOpMode
     //                                               +X is to the right, +ve Y is up
     // eg: new ColorWOI(ColorWOI.DefineType.UNITY_CENTER_ORIGIN, -0.5, 0.5, 0.25, 0.25);  // same as example above
 
-    private ColorWOI colorWIO = new ColorWOI(ColorWOI.DefineType.UNITY_CENTER_ORIGIN, -0.19, -0.19, 0.06, 0.06);
+    //  Define a Window of Interest at the center of the screen, 5% of the full screen width and height.
+    private ColorWOI colorWIO = new ColorWOI(ColorWOI.DefineType.UNITY_CENTER_ORIGIN, 0, 0, 0.1, 0.1);
 
     // The color sensor will choose between the Swatch values you pass it here, so you have the freedom to choose
     // as man or few as you need.  Suggestion: remove any Swatches that you don't want to find :)
@@ -49,8 +50,8 @@ public class ConceptColorSensor extends LinearOpMode
         while(opModeInInit()) {
             // Display the detected color
             telemetry.addLine("use \'Menu - Camera Stream\' to view color Sensor\n");
+            telemetry.addData("Window of Interest ", colorWIO.getOpenCVRect().toString());
             telemetry.addData("Color", colorSensorProcessor.getSensedColor().toString());
-            telemetry.addData("Rectangle ", colorWIO.getOpenCVRect(320,240).toString());
             telemetry.update();
         }
     }

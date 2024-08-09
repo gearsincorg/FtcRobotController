@@ -43,7 +43,8 @@ public class ColorSensorProcessor implements VisionProcessor {
 	 */
 	public void setWOI(ColorWOI colorWOI) {
 		this.colorWOI = colorWOI;  // Set according to user request
-		window = colorWOI.getOpenCVRect(srcWidth, srcHeight);
+		colorWOI.setSrc(srcWidth, srcHeight);
+		window = colorWOI.getOpenCVRect();
 	}
 
 	/*
@@ -57,7 +58,8 @@ public class ColorSensorProcessor implements VisionProcessor {
 	public void init(int width, int height, CameraCalibration calibration) {
 		srcWidth = width;
 		srcHeight = height;
-		window = colorWOI.getOpenCVRect(srcWidth, srcHeight);
+		colorWOI.setSrc(srcWidth, srcHeight);
+		window = colorWOI.getOpenCVRect();
 	}
 	
 	@Override
