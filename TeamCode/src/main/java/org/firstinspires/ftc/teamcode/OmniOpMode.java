@@ -71,17 +71,17 @@ public class OmniOpMode extends LinearOpMode {
     private DcMotor blDrive = null;
     private DcMotor frDrive = null;
     private DcMotor brDrive = null;
-
+    ArmSubsystem arm = new ArmSubsystem(this);
     @Override
     public void runOpMode() {
 
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
-        flDrive = hardwareMap.get(DcMotor.class, "FrontLeft");
-        blDrive = hardwareMap.get(DcMotor.class, "BackLeft");
-        frDrive = hardwareMap.get(DcMotor.class, "FrontRight");
-        brDrive = hardwareMap.get(DcMotor.class, "BackRight");
-
+        flDrive = hardwareMap.get(DcMotor.class, "leftfront_drive");
+        blDrive = hardwareMap.get(DcMotor.class, "leftback_drive");
+        frDrive = hardwareMap.get(DcMotor.class, "rightfront_drive");
+        brDrive = hardwareMap.get(DcMotor.class, "rightback_drive");
+        arm.initialize(true);
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -155,7 +155,14 @@ public class OmniOpMode extends LinearOpMode {
             frDrive.setPower(rightFrontPower);
             blDrive.setPower(leftBackPower);
             brDrive.setPower(rightBackPower);
-
+//manual arm controls
+            if (gamepad1.triangle) {
+                arm.setPower(0.9);
+            } else if (gamepad1.cross) {
+                arm.setPower(-0.5);
+            } else {
+                arm.stop();
+            }
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
