@@ -5,9 +5,16 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class ArmSubsystem {
+
+    private final double SLOPE = 0.0123;
+    private final double OFFSET = 7.875;
+
     private DcMotor arm;      //motor used to control the arm
     private LinearOpMode myOpMode;
     private boolean showTelemetry     = false;
+    private double setpointInches = 0;
+    private double currentPosition = 0;
+
 
     // Arm Constructor
     public ArmSubsystem(LinearOpMode opmode) {
@@ -22,7 +29,7 @@ public class ArmSubsystem {
      */
     public void initialize(boolean showTelemetry){
         arm = myOpMode.hardwareMap.get(DcMotor.class, "arm");
-        arm.setDirection(DcMotorSimple.Direction.FORWARD);
+        arm.setDirection(DcMotorSimple.Direction.REVERSE);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset Encoders to zero
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Requires motor encoder cables to be hooked up.
@@ -31,13 +38,22 @@ public class ArmSubsystem {
         this.showTelemetry = showTelemetry;
     }
 
+    public void readSensors(){
+        int encoderValue = arm.getCurrentPosition();
+        currentPosition = (SLOPE * encoderValue) + OFFSET;
+
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Arm Position", "%.1f inches", currentPosition);
+        }
+    }
+
     /**
      * set the power of the arm
      * positive is up
      * @param power
      */
     public void setPower(double power){
-        arm.setPower(-power);
+        arm.setPower(power);
     }
 
     /**
@@ -47,6 +63,30 @@ public class ArmSubsystem {
         arm.setPower(0);
     }
 
+    public void hold(){
+        arm.setPower(0.1);
+    }
 
+    public void runArmControl() {
+        readSensors();
+        double error = setpointInches - currentPosition;
+    }
+    public double getCurrentPosition() {
+        return currentPosition;
+    }
+
+    public double getSetpointInches() {
+        return setpointInches;
+    }
+
+    public void setSetpointInches(double setpointInches) {
+        this.setpointInches = setpointInches;
+    }
+
+    public void resetEncoders(){
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        myOpMode.sleep(10);
+        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
 
 }

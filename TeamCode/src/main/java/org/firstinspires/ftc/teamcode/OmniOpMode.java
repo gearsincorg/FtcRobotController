@@ -82,6 +82,7 @@ public class OmniOpMode extends LinearOpMode {
         frDrive = hardwareMap.get(DcMotor.class, "rightfront_drive");
         brDrive = hardwareMap.get(DcMotor.class, "rightback_drive");
         arm.initialize(true);
+
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
         // ########################################################################################
@@ -101,11 +102,15 @@ public class OmniOpMode extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+        arm.hold();
         waitForStart();
         runtime.reset();
+        arm.resetEncoders();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+
+            arm.readSensors();
             double max;
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
@@ -156,12 +161,12 @@ public class OmniOpMode extends LinearOpMode {
             blDrive.setPower(leftBackPower);
             brDrive.setPower(rightBackPower);
 //manual arm controls
-            if (gamepad1.triangle) {
+            if (gamepad1.triangle && arm.getCurrentPosition() <= 44) {
                 arm.setPower(0.9);
-            } else if (gamepad1.cross) {
+            } else if (gamepad1.cross && arm.getCurrentPosition() >= 8.25) {
                 arm.setPower(-0.5);
             } else {
-                arm.stop();
+                arm.hold();
             }
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());

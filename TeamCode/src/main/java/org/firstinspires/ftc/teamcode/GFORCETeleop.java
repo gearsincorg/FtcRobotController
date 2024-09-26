@@ -50,6 +50,7 @@ public class GFORCETeleop extends LinearOpMode
         while (opModeIsActive())
         {
             robot.readSensors();
+            arm.readSensors();
 
             // Allow the driver to reset the gyro by pressing both small gamepad buttons
             if(gamepad1.options && gamepad1.share){
