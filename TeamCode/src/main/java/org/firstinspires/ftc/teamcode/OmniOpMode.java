@@ -106,11 +106,12 @@ public class OmniOpMode extends LinearOpMode {
         waitForStart();
         runtime.reset();
         arm.resetEncoders();
+        arm.setSetpointInches(arm.SPECIMIN_HEIGHT);
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            arm.readSensors();
+            arm.runArmControl();
             double max;
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
@@ -160,14 +161,25 @@ public class OmniOpMode extends LinearOpMode {
             frDrive.setPower(rightFrontPower);
             blDrive.setPower(leftBackPower);
             brDrive.setPower(rightBackPower);
-//manual arm controls
-            if (gamepad1.triangle && arm.getCurrentPosition() <= 44) {
-                arm.setPower(0.9);
-            } else if (gamepad1.cross && arm.getCurrentPosition() >= 8.25) {
-                arm.setPower(-0.5);
+
+            //manual arm controls
+            /*if (gamepad1.triangle && arm.getCurrentPosition() <= arm.MAX_HEIGHT) {
+                arm.setPower(arm.MANUAL_UP_POWER);
+            } else if (gamepad1.cross && arm.getCurrentPosition() >= arm.MIN_HEIGHT) {
+                arm.setPower(arm.MANUAL_DOWN_POWER);
             } else {
                 arm.hold();
             }
+            */
+            if (gamepad1.triangle) {
+                arm.setSetpointInches(arm.HIGH_CHAMBER);
+            } else if (gamepad1.cross) {
+                arm.setSetpointInches(arm.SPECIMIN_HEIGHT);
+            } else if (gamepad1.square){
+                arm.setSetpointInches(arm.HIGH_CHAMBER_RELEASE);
+            }
+
+
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);

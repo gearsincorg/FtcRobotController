@@ -6,15 +6,28 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class ArmSubsystem {
 
+    public final double MAX_HEIGHT = 44;
+    public final double MIN_HEIGHT = 8.25;
+    public final double SPECIMIN_HEIGHT = 9;
+    public final double HIGH_CHAMBER = 25.5;
+    public final double HIGH_CHAMBER_RELEASE = 21;
+    public final double MANUAL_UP_POWER = 1;
+    public final double MANUAL_DOWN_POWER = -0.3;
+    public final double AUTO_UP_POWER = 1;
+    public final double AUTO_DOWN_POWER = -0.8;
+    private final double HOLD_POWER = 0.1;
+    private final double HOME_POWER = -0.2;
+
     private final double SLOPE = 0.0123;
     private final double OFFSET = 7.875;
+    private final int MINIMUM_MOVEMENT = 10;
 
     private DcMotor arm;      //motor used to control the arm
     private LinearOpMode myOpMode;
     private boolean showTelemetry     = false;
     private double setpointInches = 0;
     private double currentPosition = 0;
-
+    private int lastPosition = 0;
 
     // Arm Constructor
     public ArmSubsystem(LinearOpMode opmode) {
@@ -33,6 +46,8 @@ public class ArmSubsystem {
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset Encoders to zero
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Requires motor encoder cables to be hooked up.
+
+        homeTheArm();
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -64,12 +79,24 @@ public class ArmSubsystem {
     }
 
     public void hold(){
-        arm.setPower(0.1);
+        arm.setPower(HOLD_POWER);
     }
 
     public void runArmControl() {
         readSensors();
         double error = setpointInches - currentPosition;
+        double power;
+
+        if ((error > 0.5) && (getCurrentPosition() < MAX_HEIGHT)) {
+            power = AUTO_UP_POWER;
+        } else if ((error < -0.5) && (getCurrentPosition() > MIN_HEIGHT)) {
+            power = AUTO_DOWN_POWER;
+        } else {
+            power = HOLD_POWER;
+        }
+        setPower(power);
+        myOpMode.telemetry.addData("arm error",error);
+        myOpMode.telemetry.addData("arm power", power);
     }
     public double getCurrentPosition() {
         return currentPosition;
@@ -87,6 +114,27 @@ public class ArmSubsystem {
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         myOpMode.sleep(10);
         arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    public void homeTheArm(){
+        myOpMode.telemetry.addLine("homing the arm");
+        myOpMode.telemetry.update();
+        arm.setPower(HOME_POWER);
+        myOpMode.sleep(250);
+        while(!myOpMode.isStopRequested()){
+            int position = arm.getCurrentPosition();
+            if(Math.abs(position-lastPosition) < MINIMUM_MOVEMENT){
+                arm.setPower(0);
+                resetEncoders();
+                break;
+            }
+            lastPosition = position;
+            myOpMode.sleep(100);
+        }
+        myOpMode.telemetry.addLine("homing completed ! :)");
+        readSensors();
+        setSetpointInches(currentPosition);
+
     }
 
 }
