@@ -6,8 +6,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class ArmSubsystem {
 
-    public final double MAX_HEIGHT = 44;
-    public final double MIN_HEIGHT = 8.25;
+    public final double MAX_HEIGHT = 41;
+    public final double MIN_HEIGHT = 5.5;
     public final double SPECIMIN_HEIGHT = 9;
     public final double HIGH_CHAMBER = 25.5;
     public final double HIGH_CHAMBER_RELEASE = 21;
@@ -16,10 +16,10 @@ public class ArmSubsystem {
     public final double AUTO_UP_POWER = 1;
     public final double AUTO_DOWN_POWER = -0.8;
     private final double HOLD_POWER = 0.1;
-    private final double HOME_POWER = -0.2;
+    private final double HOME_POWER = -0.3;
 
     private final double SLOPE = 0.0123;
-    private final double OFFSET = 7.875;
+    private final double OFFSET = 5.0;
     private final int MINIMUM_MOVEMENT = 10;
 
     private DcMotor arm;      //motor used to control the arm

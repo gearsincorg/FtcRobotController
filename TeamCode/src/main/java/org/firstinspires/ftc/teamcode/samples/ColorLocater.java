@@ -110,7 +110,7 @@ public class ColorLocater extends LinearOpMode
         ColorBlobLocatorProcessor colorLocator = new ColorBlobLocatorProcessor.Builder()
                 .setTargetColorRange(ColorRange.BLUE)         // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
-                .setRoi(ImageRegion.asUnityCenterCoordinates(-1.0, 0.1, 1.0, -1.0))  // search central 1/4 of camera view
+                .setRoi(ImageRegion.asUnityCenterCoordinates(-1.0, 1.0, 1.0, 0.0))  // search central 1/4 of camera view
                 .setDrawContours(true)                        // Show contours on the Stream Preview
                 .setBlurSize(5)                               // Smooth the transitions between different colors in image
                 .build();
