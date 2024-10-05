@@ -11,8 +11,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
- * This OpMode illustrates a teleop OpMode for an Omni robot.
- * An external "Robot" class is used to manage all motor/sensor interfaces, and to assist driving functions.
+ * This OpMode illustrates a teleop OpMode for an Omni robot using Essential Mecanum functions.
+ * An external "EssentialMecanumRobot" class is used to manage all motor/sensor interfaces, and to assist driving functions.
  * The IMU gyro is used to stabilize the heading when the operator is not requesting a turn.
  */
 
@@ -22,7 +22,7 @@ public class GFORCETeleop extends LinearOpMode
     final double SAFE_DRIVE_SPEED   = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_STRAFE_SPEED  = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_YAW_SPEED     = 0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double HEADING_HOLD_TIME  = 10.0 ; // How long to hold heading once all driver input stops. (This Avoids effects of Gyro Drift)
+    final double HEADING_HOLD_TIME  = 10.0 ; // How long (in seconds) to hold heading once all driver input stops. (This Avoids effects of Gyro Drift)
 
     // local parameters
     ElapsedTime stopTime   = new ElapsedTime();  // Use for timeouts.
@@ -31,12 +31,14 @@ public class GFORCETeleop extends LinearOpMode
     // get an instance of the "Robot" class.
     DriveSubsystem robot = new DriveSubsystem(this);
     ArmSubsystem arm = new ArmSubsystem(this);
+    VisionSubsystem camera = new VisionSubsystem(this);
 
     @Override public void runOpMode()
     {
         // Initialize the drive hardware & Turn on telemetry
         robot.initialize(true);
         arm.initialize(true);
+        camera.initilaize(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -45,33 +47,32 @@ public class GFORCETeleop extends LinearOpMode
             // Read and display sensor data
             robot.readSensors();
             telemetry.update();
-        };
+        }
+
+        arm.resetEncoders();
+        arm.setSetpointInches(arm.SPECIMIN_HEIGHT);
 
         while (opModeIsActive())
         {
+            // Get the latest sensor data every time around the loop.
             robot.readSensors();
-            arm.readSensors();
-
-            // Allow the driver to reset the gyro by pressing both small gamepad buttons
-            if(gamepad1.options && gamepad1.share){
-                robot.resetHeading();
-                robot.resetOdometry();
-            }
+            arm.runArmControl();
+            camera.getTargetX();
 
             // read joystick values and scale according to limits set at top of this file
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
             double strafe = -gamepad1.left_stick_x * SAFE_STRAFE_SPEED;     //  Left/Right on left stick
             double yaw    = -gamepad1.right_stick_x * SAFE_YAW_SPEED;       //  Rotate on right stick
 
-            //  OR... For special conditions, Use the DPAD to make pure orthoginal motions
+            //  OR... For special conditions, Use the DPAD to make slow-mo orthogonal motions.  Adjust the divider to your needs.
             if (gamepad1.dpad_left) {
-                strafe = SAFE_STRAFE_SPEED / 2.0;
+                strafe = SAFE_DRIVE_SPEED / 4.0;
             } else if (gamepad1.dpad_right) {
-                strafe = -SAFE_STRAFE_SPEED / 2.0;
+                strafe = -SAFE_DRIVE_SPEED / 4.0;
             } else if (gamepad1.dpad_up) {
-                drive = SAFE_DRIVE_SPEED / 2.0;
+                drive = SAFE_DRIVE_SPEED / 4.0;
             } else if (gamepad1.dpad_down) {
-                drive = -SAFE_DRIVE_SPEED / 2.0;
+                drive = -SAFE_STRAFE_SPEED / 4.0;
             }
 
             // This is where we keep the robot heading locked so it doesn't turn while driving or strafing in a straight line.
@@ -104,15 +105,13 @@ public class GFORCETeleop extends LinearOpMode
                 stopTime.reset();
             }
 
-            //-----------------------------  arm controls------------------------------------------
-
-            //manual arm controls
+            // use the gamepad to set the arms setpoint
             if (gamepad1.triangle) {
-                arm.setPower(0.3);
+                arm.setSetpointInches(arm.HIGH_CHAMBER);
             } else if (gamepad1.cross) {
-                arm.setPower(-0.2);
-            } else {
-                arm.stop();
+                arm.setSetpointInches(arm.SPECIMIN_HEIGHT);
+            } else if (gamepad1.square){
+                arm.setSetpointInches(arm.HIGH_CHAMBER_RELEASE);
             }
         }
     }

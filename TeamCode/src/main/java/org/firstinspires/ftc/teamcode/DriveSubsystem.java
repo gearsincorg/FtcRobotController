@@ -12,7 +12,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
@@ -22,9 +21,11 @@ import java.util.List;
 
 public class DriveSubsystem {
     // Adjust these numbers to suit your robot.
-    private final double ODOM_INCHES_PER_COUNT   = 0.002969;   //  GoBilda Odometry Pod (1/226.8)
-    private final boolean INVERT_DRIVE_ODOMETRY  = true;       //  When driving FORWARD, the odometry value MUST increase.  If it does not, flip the value of this constant.
-    private final boolean INVERT_STRAFE_ODOMETRY = true;       //  When strafing to the LEFT, the odometry value MUST increase.  If it does not, flip the value of this constant.
+    private final double  COUNTS_PER_REV            = 384.5;   //  GoBilda 435 RPM motor (13.7:1 gear)
+    private final double  WHEEL_DIAMETER_IN         = 3.75;    //  GoBilda 96mm Mecanum Wheel
+
+    private final double  AXIAL_INCHES_PER_COUNT    = (Math.PI * WHEEL_DIAMETER_IN) / COUNTS_PER_REV;
+    private final double  LATERAL_INCHES_PER_COUNT  = AXIAL_INCHES_PER_COUNT * 0.866;
 
     private static final double DRIVE_GAIN          = 0.03;    // Strength of axial position control
     private static final double DRIVE_ACCEL         = 2.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
@@ -62,21 +63,28 @@ public class DriveSubsystem {
     private DcMotor leftBackDrive;      //  control the left back drive wheel
     private DcMotor rightBackDrive;     //  control the right back drive wheel
 
-    private DcMotor driveEncoder;       //  the Axial (front/back) Odometry Module (may overlap with motor, or may not)
-    private DcMotor strafeEncoder;      //  the Lateral (left/right) Odometry Module (may overlap with motor, or may not)
+    private int encoderLF;              // Encoder value for front left wheel
+    private int encoderRF;              // Encoder value for front right wheel
+    private int encoderLB;              // Encoder value for back left wheel
+    private int encoderRB;              // Encoder value for back right wheel
 
     private LinearOpMode myOpMode;
     private IMU imu;
     private ElapsedTime holdTimer = new ElapsedTime();  // User for any motion requiring a hold time or timeout.
 
-    private int rawDriveOdometer    = 0; // Unmodified axial odometer count
-    private int driveOdometerOffset = 0; // Used to offset axial odometer
-    private int rawStrafeOdometer   = 0; // Unmodified lateral odometer count
-    private int strafeOdometerOffset= 0; // Used to offset lateral odometer
+    private int startLeftFront = 0;
+    private int startRightFront = 0;
+    private int startLeftBack = 0;
+    private int startRightBack = 0;
+    private int deltaLeftFront = 0;
+    private int deltaRightFront = 0;
+    private int deltaLeftBack = 0;
+    private int deltaRightBack = 0;
+
     private double rawHeading       = 0; // Unmodified heading (degrees)
     private double headingOffset    = 0; // Used to offset heading
 
-    private double turnRate           = 0; // Latest Robot Turn Rate from IMU
+    private double turnRate           = 0; // Latest Robot Turn Rate from IMU (deg / sec)
     private boolean showTelemetry     = false;
 
     // Robot Constructor
@@ -102,10 +110,6 @@ public class DriveSubsystem {
         rightBackDrive = setupDriveMotor( "rightback_drive",DcMotor.Direction.FORWARD);
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
 
-        //  Connect to the encoder channels using the name of that channel.
-        driveEncoder = myOpMode.hardwareMap.get(DcMotor.class, "axial");
-        strafeEncoder = myOpMode.hardwareMap.get(DcMotor.class, "lateral");
-
         // Set all hubs to use the AUTO Bulk Caching mode for faster encoder reads
         List<LynxModule> allHubs = myOpMode.hardwareMap.getAll(LynxModule.class);
         for (LynxModule module : allHubs) {
@@ -114,12 +118,12 @@ public class DriveSubsystem {
 
         // Tell the software how the Control Hub is mounted on the robot to align the IMU XYZ axes correctly
         RevHubOrientationOnRobot orientationOnRobot =
-                new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                                             RevHubOrientationOnRobot.UsbFacingDirection.FORWARD);
+                new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
+                                             RevHubOrientationOnRobot.UsbFacingDirection.RIGHT);
         imu.initialize(new IMU.Parameters(orientationOnRobot));
 
         // zero out all the odometry readings.
-        resetOdometry();
+        startMotion();
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -146,11 +150,15 @@ public class DriveSubsystem {
      * @return true
      */
     public boolean readSensors() {
-        rawDriveOdometer = driveEncoder.getCurrentPosition() * (INVERT_DRIVE_ODOMETRY ? -1 : 1);
-        rawStrafeOdometer = strafeEncoder.getCurrentPosition() * (INVERT_STRAFE_ODOMETRY ? -1 : 1);
-        driveDistance = (rawDriveOdometer - driveOdometerOffset) * ODOM_INCHES_PER_COUNT;
-        strafeDistance = (rawStrafeOdometer - strafeOdometerOffset) * ODOM_INCHES_PER_COUNT;
+        // Read motor encoders for each wheel
+        encoderLF =         leftFrontDrive.getCurrentPosition();
+        encoderRF =         rightFrontDrive.getCurrentPosition();
+        encoderLB =         leftBackDrive.getCurrentPosition();
+        encoderRB =         rightBackDrive.getCurrentPosition();
 
+        updateMotion();  // determine how robot has moved from most recent startMotion() call;
+
+        // read the IMU data.
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
 
@@ -159,11 +167,30 @@ public class DriveSubsystem {
         turnRate    = angularVelocity.zRotationRate;
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Odom Ax:Lat", "%6d %6d", rawDriveOdometer - driveOdometerOffset, rawStrafeOdometer - strafeOdometerOffset);
             myOpMode.telemetry.addData("Dist Ax:Lat", "%5.2f %5.2f", driveDistance, strafeDistance);
             myOpMode.telemetry.addData("Head Deg:Rate", "%5.2f %5.2f", heading, turnRate);
         }
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
+    }
+
+    // Initialize all the encoder starting values for the next motion
+    public void startMotion() {
+        readSensors();  // get the latest data
+        startLeftBack = encoderLB;  // Save the current values as the start values.
+        startLeftFront = encoderLF;
+        startRightBack = encoderRB;
+        startRightFront = encoderRF;
+        updateMotion();  // Update the derived motion data.
+    }
+
+    public void updateMotion() {
+        deltaLeftFront = encoderLF - startLeftFront;
+        deltaRightFront = encoderRF - startRightFront;
+        deltaLeftBack = encoderLB - startLeftBack;
+        deltaRightBack = encoderRB - startRightBack;
+
+        driveDistance  = ((deltaLeftFront + deltaRightFront + deltaLeftBack + deltaRightBack ) / 4) * AXIAL_INCHES_PER_COUNT;
+        strafeDistance = ((-deltaLeftFront + deltaRightFront + deltaLeftBack - deltaRightBack) / 4) * LATERAL_INCHES_PER_COUNT;
     }
 
     //  ########################  Mid level control functions.  #############################3#
@@ -175,7 +202,7 @@ public class DriveSubsystem {
      * @param holdTime Minimum time (sec) required to hold the final position.  0 = no hold.
      */
     public void drive(double distanceInches, double power, double holdTime) {
-        resetOdometry();
+        startMotion();
 
         driveController.reset(distanceInches, power);   // achieve desired drive distance
         strafeController.reset(0);              // Maintain zero strafe drift
@@ -207,7 +234,7 @@ public class DriveSubsystem {
      * @param holdTime Minimum time (sec) required to hold the final position.  0 = no hold.
      */
     public void strafe(double distanceInches, double power, double holdTime) {
-        resetOdometry();
+        startMotion();
 
         driveController.reset(0.0);             //  Maintain zero drive drift
         strafeController.reset(distanceInches, power);  // Achieve desired Strafe distance
@@ -264,9 +291,9 @@ public class DriveSubsystem {
 
     /**
      * Drive the wheel motors to obtain the requested axes motions
-     * @param drive     Fwd/Rev axis power
-     * @param strafe    Left/Right axis power
-     * @param yaw       Yaw axis power
+     * @param drive     Fwd/Rev axis power     	+ve means forward
+     * @param strafe    Left/Right axis power	+ve means left
+     * @param yaw       Yaw axis power			+ve means CCW
      */
     public void moveRobot(double drive, double strafe, double yaw){
 
@@ -275,17 +302,18 @@ public class DriveSubsystem {
         double lB = drive + strafe - yaw;
         double rB = drive - strafe + yaw;
 
-        double max = Math.max(Math.abs(lF), Math.abs(rF));
+        //normalize the motor values.  Make sure no motor values exceeds 100% power
+        double max = 1.0;
+        max = Math.max(max, Math.abs(lF));
+        max = Math.max(max, Math.abs(rF));
         max = Math.max(max, Math.abs(lB));
         max = Math.max(max, Math.abs(rB));
 
-        //normalize the motor values
-        if (max > 1.0)  {
-            lF /= max;
-            rF /= max;
-            lB /= max;
-            rB /= max;
-        }
+		// Scale by the max value (defaults to 1.0)
+        lF /= max;
+        rF /= max;
+        lB /= max;
+        rB /= max;
 
         //send power to the motors
         leftFrontDrive.setPower(lF);
@@ -308,20 +336,6 @@ public class DriveSubsystem {
     }
 
     /**
-     * Set odometry counts and distances to zero.
-     */
-    public void resetOdometry() {
-        readSensors();
-        driveOdometerOffset = rawDriveOdometer;
-        driveDistance = 0.0;
-        driveController.reset(0);
-
-        strafeOdometerOffset = rawStrafeOdometer;
-        strafeDistance = 0.0;
-        strafeController.reset(0);
-    }
-
-    /**
      * Reset the robot heading to zero degrees, and also lock that heading into heading controller.
      */
     public void resetHeading() {
@@ -341,4 +355,7 @@ public class DriveSubsystem {
         showTelemetry = show;
     }
 }
+
+//****************************************************************************************************
+//****************************************************************************************************
 

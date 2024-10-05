@@ -59,9 +59,7 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name = "+" +
-        "" +
-        "Color-Locator", group = "Concept")
+@TeleOp(name = "Color-Locator", group = "Concept")
 public class ColorLocater extends LinearOpMode
 {
     @Override
