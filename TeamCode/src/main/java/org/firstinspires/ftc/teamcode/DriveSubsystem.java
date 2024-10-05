@@ -6,6 +6,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -26,6 +27,9 @@ public class DriveSubsystem {
 
     private final double  AXIAL_INCHES_PER_COUNT    = (Math.PI * WHEEL_DIAMETER_IN) / COUNTS_PER_REV;
     private final double  LATERAL_INCHES_PER_COUNT  = AXIAL_INCHES_PER_COUNT * 0.866;
+
+    private final int FRONT_SONAR = 4;
+
 
     private static final double DRIVE_GAIN          = 0.03;    // Strength of axial position control
     private static final double DRIVE_ACCEL         = 2.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
@@ -49,6 +53,8 @@ public class DriveSubsystem {
     public double driveDistance     = 0; // scaled axial distance (+ = forward)
     public double strafeDistance    = 0; // scaled lateral distance (+ = left)
     public double heading           = 0; // Latest Robot heading from IMU
+    public double frontRange = 0;
+    public double backRange = 0;
 
     // Establish a proportional controller for each axis to calculate the required power to achieve a setpoint.
     public ProportionalControl driveController     = new ProportionalControl(DRIVE_GAIN, DRIVE_ACCEL, DRIVE_MAX_AUTO, DRIVE_TOLERANCE, DRIVE_DEADBAND, false);
@@ -67,6 +73,8 @@ public class DriveSubsystem {
     private int encoderRF;              // Encoder value for front right wheel
     private int encoderLB;              // Encoder value for back left wheel
     private int encoderRB;              // Encoder value for back right wheel
+
+    private OctoQuad octoquad;
 
     private LinearOpMode myOpMode;
     private IMU imu;
@@ -109,6 +117,15 @@ public class DriveSubsystem {
         leftBackDrive  = setupDriveMotor( "leftback_drive", DcMotor.Direction.REVERSE);
         rightBackDrive = setupDriveMotor( "rightback_drive",DcMotor.Direction.FORWARD);
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
+
+        // Connect to the OctoQuad by looking up its name in the hardwareMap.
+        octoquad = myOpMode.hardwareMap.get(OctoQuad.class, "octoquad");
+
+        // Clear out all prior settings and encoder data before setting up desired configuration
+        // Assume first 4 channels are relative encoders and the next 4 are absolute encoders
+        octoquad.resetEverything();
+        octoquad.setChannelBankConfig(OctoQuad.ChannelBankConfig.BANK1_QUADRATURE_BANK2_PULSE_WIDTH);
+
 
         // Set all hubs to use the AUTO Bulk Caching mode for faster encoder reads
         List<LynxModule> allHubs = myOpMode.hardwareMap.getAll(LynxModule.class);
@@ -166,9 +183,14 @@ public class DriveSubsystem {
         heading     = rawHeading - headingOffset;
         turnRate    = angularVelocity.zRotationRate;
 
+        OctoQuad.EncoderDataBlock encoderDataBlock = new OctoQuad.EncoderDataBlock();
+        octoquad.readAllEncoderData(encoderDataBlock);
+        frontRange = encoderDataBlock.positions[FRONT_SONAR] / 25.4;
+
         if (showTelemetry) {
             myOpMode.telemetry.addData("Dist Ax:Lat", "%5.2f %5.2f", driveDistance, strafeDistance);
             myOpMode.telemetry.addData("Head Deg:Rate", "%5.2f %5.2f", heading, turnRate);
+            myOpMode.telemetry.addData("Sonar Distance", "%.1f inches", frontRange);
         }
         return true;  // do this so this function can be included in the condition for a while loop to keep values fresh.
     }
