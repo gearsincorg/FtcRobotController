@@ -15,6 +15,10 @@ import java.util.List;
 
 public class VisionSubsystem {
 
+    private final int CAMERA_WIDTH = 320;
+    private final int CAMERA_HEIGHT = 240;
+    private final int MIDDLE_VALUE = CAMERA_WIDTH/2;
+
     private LinearOpMode myOpMode;
     private boolean showTelemetry     = false;
     ColorBlobLocatorProcessor colorLocator;
@@ -34,7 +38,7 @@ public class VisionSubsystem {
 
         VisionPortal portal = new VisionPortal.Builder()
                 .addProcessor(colorLocator)
-                .setCameraResolution(new Size(320, 240))
+                .setCameraResolution(new Size(CAMERA_WIDTH, CAMERA_HEIGHT))
                 .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .build();
 
@@ -52,10 +56,11 @@ public class VisionSubsystem {
             ColorBlobLocatorProcessor.Blob bigBlob = blobs.get(0);
             RotatedRect boxFit = bigBlob.getBoxFit();
             center = boxFit.center.x;
+            center = (center - MIDDLE_VALUE) / MIDDLE_VALUE;
 
             if (showTelemetry){
                 myOpMode.telemetry.addLine(String.format(" target: %5d  %4.2f   %5.2f  (%3d,%3d)",
-                        bigBlob.getContourArea(), bigBlob.getDensity(), bigBlob.getAspectRatio(), (int) boxFit.center.x, (int) boxFit.center.y));
+                        bigBlob.getContourArea(), bigBlob.getDensity(), center, (int) boxFit.center.x, (int) boxFit.center.y));
             }
         } else {
             if (showTelemetry){

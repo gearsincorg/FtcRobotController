@@ -8,7 +8,7 @@ public class ArmSubsystem {
 
     public final double MAX_HEIGHT = 41;
     public final double MIN_HEIGHT = 5.5;
-    public final double SPECIMIN_HEIGHT = 11; // was 9, corret height
+    public final double SPECIMIN_HEIGHT = 10; // was 9, corret height
     public final double HIGH_CHAMBER = 27;
     public final double HIGH_CHAMBER_RELEASE = 19;
     public final double MANUAL_UP_POWER = 1;
