@@ -7,8 +7,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 public class ArmSubsystem {
 
     public final double MAX_HEIGHT = 41;
-    public final double MIN_HEIGHT = 5.5;
-    public final double SPECIMIN_HEIGHT = 10; // was 9, corret height
+    public final double MIN_HEIGHT = 10;
+    public final double SPECIMIN_HEIGHT = 10; // was 9, correct height
     public final double HIGH_CHAMBER = 27;
     public final double HIGH_CHAMBER_RELEASE = 19;
     public final double MANUAL_UP_POWER = 1;
@@ -16,10 +16,10 @@ public class ArmSubsystem {
     public final double AUTO_UP_POWER = 1;
     public final double AUTO_DOWN_POWER = -0.8;
     private final double HOLD_POWER = 0.1;
-    private final double HOME_POWER = -0.3;
+    private final double HOME_POWER = -0.6;
 
     private final double SLOPE = 0.0123;
-    private final double OFFSET = 5.0;
+    private final double OFFSET = 9.5;
     private final int MINIMUM_MOVEMENT = 10;
 
     private DcMotor arm;      //motor used to control the arm
@@ -28,6 +28,7 @@ public class ArmSubsystem {
     private double setpointInches = 0;
     private double currentPosition = 0;
     private int lastPosition = 0;
+    private boolean goingHome = false;
 
     // Arm Constructor
     public ArmSubsystem(LinearOpMode opmode) {
@@ -85,19 +86,38 @@ public class ArmSubsystem {
     public void runArmControl() {
         readSensors();
         double error = setpointInches - currentPosition;
-        double power;
+        double power = 0;
 
-        if ((error > 0.5) && (getCurrentPosition() < MAX_HEIGHT)) {
-            power = AUTO_UP_POWER;
-        } else if ((error < -0.5) && (getCurrentPosition() > MIN_HEIGHT)) {
-            power = AUTO_DOWN_POWER;
+        if(goingHome){
+
+            int position = arm.getCurrentPosition();
+            if(Math.abs(position-lastPosition) < MINIMUM_MOVEMENT){
+                power = 0;
+                resetEncoders();
+                goingHome = false;
+            } else {
+                power = HOME_POWER;
+            }
+            lastPosition = position;
+            myOpMode.sleep(100);
+            setSetpointInches(currentPosition);
+
         } else {
-            power = HOLD_POWER;
+            if ((error > 0.5) && (getCurrentPosition() < MAX_HEIGHT)) {
+                power = AUTO_UP_POWER;
+            } else if ((error < -0.5) && (getCurrentPosition() > MIN_HEIGHT)) {
+                power = AUTO_DOWN_POWER;
+            } else {
+                power = HOLD_POWER;
+            }
         }
+
+
         setPower(power);
         myOpMode.telemetry.addData("arm error",error);
         myOpMode.telemetry.addData("arm power", power);
     }
+
     public double getCurrentPosition() {
         return currentPosition;
     }
@@ -117,23 +137,11 @@ public class ArmSubsystem {
     }
 
     public void homeTheArm(){
+        goingHome = true;
         myOpMode.telemetry.addLine("homing the arm");
         myOpMode.telemetry.update();
         arm.setPower(HOME_POWER);
         myOpMode.sleep(250);
-        while(!myOpMode.isStopRequested()){
-            int position = arm.getCurrentPosition();
-            if(Math.abs(position-lastPosition) < MINIMUM_MOVEMENT){
-                arm.setPower(0);
-                resetEncoders();
-                break;
-            }
-            lastPosition = position;
-            myOpMode.sleep(100);
-        }
-        myOpMode.telemetry.addLine("homing completed ! :)");
-        readSensors();
-        setSetpointInches(currentPosition);
 
     }
 

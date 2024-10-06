@@ -23,6 +23,12 @@ public class GFORCETeleop extends LinearOpMode
     final double SAFE_STRAFE_SPEED  = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_YAW_SPEED     = 0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double HEADING_HOLD_TIME  = 10.0 ; // How long (in seconds) to hold heading once all driver input stops. (This Avoids effects of Gyro Drift)
+    final double IN_FRONT_ANGLE = 0.14 ;
+    final double VERY_IN_FRONT_ANGLE = 0.05 ;
+    final double CLICK_ON_SPEED = 0.2 ;
+    final double APPROACH_SPEED = 0.3 ;
+    final double STRAFE_GAIN = 1.5 ;
+
 
     // local parameters
     ElapsedTime stopTime   = new ElapsedTime();  // Use for timeouts.
@@ -37,8 +43,9 @@ public class GFORCETeleop extends LinearOpMode
     {
         // Initialize the drive hardware & Turn on telemetry
         robot.initialize(true);
-        arm.initialize(true);
         camera.initilaize(true);
+        arm.initialize(true);
+
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -46,6 +53,7 @@ public class GFORCETeleop extends LinearOpMode
 
             // Read and display sensor data
             robot.readSensors();
+            arm.runArmControl();
             telemetry.update();
         }
 
@@ -76,8 +84,16 @@ public class GFORCETeleop extends LinearOpMode
             }
 
             if (gamepad1.right_trigger > 0.25) {
-                double error = 0 - camera.getTargetX();
-                strafe = error;
+                double xError = 0 - camera.getTargetX();
+                strafe = xError * STRAFE_GAIN;
+
+                double yError = robot.frontRange - 2;
+                if ((robot.frontRange > 5) && (Math.abs(xError) < IN_FRONT_ANGLE)) {
+                    drive =APPROACH_SPEED;
+                } else if ((robot.frontRange <= 5) && (Math.abs(xError) < VERY_IN_FRONT_ANGLE)) {
+                    drive =CLICK_ON_SPEED;
+                }
+
             }
 
             // This is where we keep the robot heading locked so it doesn't turn while driving or strafing in a straight line.
@@ -114,7 +130,7 @@ public class GFORCETeleop extends LinearOpMode
             if (gamepad1.triangle) {
                 arm.setSetpointInches(arm.HIGH_CHAMBER);
             } else if (gamepad1.cross) {
-                arm.setSetpointInches(arm.SPECIMIN_HEIGHT);
+                arm.homeTheArm();
             } else if (gamepad1.square){
                 arm.setSetpointInches(arm.HIGH_CHAMBER_RELEASE);
             }
