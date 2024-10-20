@@ -1,80 +1,78 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.ArmStates.LIFTED;
+import static org.firstinspires.ftc.teamcode.ArmStates.LIFTING;
+import static org.firstinspires.ftc.teamcode.ArmStates.LOWERING;
+import static org.firstinspires.ftc.teamcode.ArmStates.READY;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class ArmSubsystem {
 
-    public final double MAX_HEIGHT = 41;
-    public final double MIN_HEIGHT = 10;
-    public final double SPECIMIN_HEIGHT = 10; // was 9, correct height
-    public final double HIGH_CHAMBER = 27;
-    public final double HIGH_CHAMBER_RELEASE = 19;
-    public final double MANUAL_UP_POWER = 1;
-    public final double MANUAL_DOWN_POWER = -0.3;
-    public final double AUTO_UP_POWER = 1;
-    public final double AUTO_DOWN_POWER = -0.8;
-    private final double HOLD_POWER = 0.1;
-    private final double HOME_POWER = -0.6;
-
     private final double SLOPE = 0.0123;
     private final double OFFSET = 9.5;
-    private final int MINIMUM_MOVEMENT = 10;
+    private final double HOLD_POWER = 0.1;
+    private final double LIFTING_POWER = 0.5;
+    private final double LOWERING_POWER = -0.6;
 
     private DcMotor arm;      //motor used to control the arm
+    DigitalChannel upSensor;
+    DigitalChannel downSensor;
+
     private LinearOpMode myOpMode;
     private boolean showTelemetry     = false;
-    private double setpointInches = 0;
-    private double currentPosition = 0;
+    private int currentPosition = 0;
     private int lastPosition = 0;
-    private boolean goingHome = false;
+    private boolean isDown = false;
+    private boolean isUp = false;
+    private ArmStates currentState = READY;
+    private ElapsedTime stateTime = new ElapsedTime();
 
-    // Arm Constructor
-    public ArmSubsystem(LinearOpMode opmode) {
-        myOpMode = opmode;
+    public ArmSubsystem(LinearOpMode opMode){
+        myOpMode = opMode;
     }
 
-    /**
-     * Robot Initialization:
-     *  Use the hardware map to Connect to devices.
-     *  Perform any set-up all the hardware devices.
-     * @param showTelemetry  Set to true if you want telemetry to be displayed by the robot sensor/drive functions.
-     */
     public void initialize(boolean showTelemetry){
         arm = myOpMode.hardwareMap.get(DcMotor.class, "arm");
-        arm.setDirection(DcMotorSimple.Direction.REVERSE);
+        arm.setDirection(DcMotorSimple.Direction.FORWARD);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset Encoders to zero
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Requires motor encoder cables to be hooked up.
 
-        homeTheArm();
+        upSensor = myOpMode.hardwareMap.get(DigitalChannel.class, "upsensor");
+        downSensor = myOpMode.hardwareMap.get(DigitalChannel.class, "downsensor");
+
+        upSensor.setMode(DigitalChannel.Mode.INPUT);
+        downSensor.setMode(DigitalChannel.Mode.INPUT);
+        myOpMode.telemetry.addData("DigitalTouchSensorExample", "Press start to continue...");
+        myOpMode.telemetry.addData("DigitalTouchSensorExample", "Press start to continue...");
+        myOpMode.telemetry.update();
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
     }
 
     public void readSensors(){
-        int encoderValue = arm.getCurrentPosition();
-        currentPosition = (SLOPE * encoderValue) + OFFSET;
+        currentPosition = arm.getCurrentPosition();
+
+        isUp = !upSensor.getState();
+        isDown = !downSensor.getState();
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Arm Position", "%.1f inches", currentPosition);
+            myOpMode.telemetry.addData("arm encoder", "%d", currentPosition);
+            myOpMode.telemetry.addData("is up", isUp);
+            myOpMode.telemetry.addData("is down", isDown);
         }
     }
 
-    /**
-     * set the power of the arm
-     * positive is up
-     * @param power
-     */
     public void setPower(double power){
         arm.setPower(power);
     }
 
-    /**
-     * stop the arm from moving
-     */
     public void stop(){
         arm.setPower(0);
     }
@@ -83,66 +81,59 @@ public class ArmSubsystem {
         arm.setPower(HOLD_POWER);
     }
 
-    public void runArmControl() {
+    public void runStateMachine (){
+
         readSensors();
-        double error = setpointInches - currentPosition;
-        double power = 0;
 
-        if(goingHome){
-
-            int position = arm.getCurrentPosition();
-            if(Math.abs(position-lastPosition) < MINIMUM_MOVEMENT){
-                power = 0;
-                resetEncoders();
-                goingHome = false;
-            } else {
-                power = HOME_POWER;
-            }
-            lastPosition = position;
-            myOpMode.sleep(100);
-            setSetpointInches(currentPosition);
-
-        } else {
-            if ((error > 0.5) && (getCurrentPosition() < MAX_HEIGHT)) {
-                power = AUTO_UP_POWER;
-            } else if ((error < -0.5) && (getCurrentPosition() > MIN_HEIGHT)) {
-                power = AUTO_DOWN_POWER;
-            } else {
-                power = HOLD_POWER;
-            }
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Arm State", "%S", currentState);
         }
 
+        switch (currentState){
 
-        setPower(power);
-        myOpMode.telemetry.addData("arm error",error);
-        myOpMode.telemetry.addData("arm power", power);
+            case READY: {
+                if(myOpMode.gamepad1.triangle){
+                    setState(LIFTING);
+                } else {
+                    stop();
+                }
+                break;
+            }
+
+            case LIFTING: {
+                if(isUp == true){
+                    setState(LIFTED);
+                } else {
+                   arm.setPower(LIFTING_POWER);
+                }
+                break;
+            }
+
+            case LIFTED: {
+                if(myOpMode.gamepad1.cross || !isUp){
+                    setState(LOWERING);
+                } else {
+                    stop();
+                }
+                break;
+            }
+
+            case LOWERING: {
+                if(isDown){
+                    setState(READY);
+                } else {
+                    arm.setPower(LOWERING_POWER);
+                }
+            }
+        }
     }
 
-    public double getCurrentPosition() {
-        return currentPosition;
-    }
-
-    public double getSetpointInches() {
-        return setpointInches;
-    }
-
-    public void setSetpointInches(double setpointInches) {
-        this.setpointInches = setpointInches;
-    }
-
-    public void resetEncoders(){
-        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        myOpMode.sleep(10);
-        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-    }
-
-    public void homeTheArm(){
-        goingHome = true;
-        myOpMode.telemetry.addLine("homing the arm");
-        myOpMode.telemetry.update();
-        arm.setPower(HOME_POWER);
-        myOpMode.sleep(250);
+    public void setState (ArmStates newState){
+        currentState = newState;
+        stateTime.reset();
 
     }
+
+
 
 }

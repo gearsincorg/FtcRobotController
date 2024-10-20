@@ -36,16 +36,17 @@ public class GFORCETeleop extends LinearOpMode
 
     // get an instance of the "Robot" class.
     DriveSubsystem robot = new DriveSubsystem(this);
+    LiftSubsystem lift = new LiftSubsystem(this);
+    //VisionSubsystem camera = new VisionSubsystem(this);
     ArmSubsystem arm = new ArmSubsystem(this);
-    VisionSubsystem camera = new VisionSubsystem(this);
 
     @Override public void runOpMode()
     {
         // Initialize the drive hardware & Turn on telemetry
         robot.initialize(true);
-        camera.initilaize(true);
+       // camera.initilaize(true);
+        lift.initialize(true);
         arm.initialize(true);
-
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -53,19 +54,20 @@ public class GFORCETeleop extends LinearOpMode
 
             // Read and display sensor data
             robot.readSensors();
-            arm.runArmControl();
+            lift.runLiftControl();
+            arm.readSensors();
             telemetry.update();
         }
 
-        arm.resetEncoders();
-        arm.setSetpointInches(arm.SPECIMIN_HEIGHT);
+        lift.resetEncoders();
+        lift.setSetpointInches(lift.SPECIMIN_HEIGHT);
 
         while (opModeIsActive())
         {
             // Get the latest sensor data every time around the loop.
             robot.readSensors();
-            arm.runArmControl();
-
+            lift.runLiftControl();
+            arm.runStateMachine();
 
             // read joystick values and scale according to limits set at top of this file
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
@@ -83,7 +85,7 @@ public class GFORCETeleop extends LinearOpMode
                 drive = -SAFE_STRAFE_SPEED / 4.0;
             }
 
-            if (gamepad1.right_trigger > 0.25) {
+            /*if (gamepad1.right_trigger > 0.25) {
                 double xError = 0 - camera.getTargetX();
                 strafe = xError * STRAFE_GAIN;
 
@@ -95,7 +97,7 @@ public class GFORCETeleop extends LinearOpMode
                 }
 
             }
-
+                */
             // This is where we keep the robot heading locked so it doesn't turn while driving or strafing in a straight line.
             // Is the driver turning the robot, or should it hold its heading?
             if (Math.abs(yaw) > 0.05) {
@@ -128,11 +130,11 @@ public class GFORCETeleop extends LinearOpMode
 
             // use the gamepad to set the arms setpoint
             if (gamepad1.triangle) {
-                arm.setSetpointInches(arm.HIGH_CHAMBER);
+                lift.setSetpointInches(lift.HIGH_CHAMBER);
             } else if (gamepad1.cross) {
-                arm.homeTheArm();
+                lift.homeTheLift();
             } else if (gamepad1.square){
-                arm.setSetpointInches(arm.HIGH_CHAMBER_RELEASE);
+                lift.setSetpointInches(lift.HIGH_CHAMBER_RELEASE);
             }
         }
     }
