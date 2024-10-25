@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import static org.firstinspires.ftc.teamcode.ArmStates.LIFTED;
 import static org.firstinspires.ftc.teamcode.ArmStates.LIFTING;
 import static org.firstinspires.ftc.teamcode.ArmStates.LOWERING;
-import static org.firstinspires.ftc.teamcode.ArmStates.READY;
+import static org.firstinspires.ftc.teamcode.ArmStates.READY_OPEN;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -29,7 +29,7 @@ public class ArmSubsystem {
     private int lastPosition = 0;
     private boolean isDown = false;
     private boolean isUp = false;
-    private ArmStates currentState = READY;
+    private ArmStates currentState = READY_OPEN;
     private ElapsedTime stateTime = new ElapsedTime();
 
     public ArmSubsystem(LinearOpMode opMode){
@@ -91,7 +91,7 @@ public class ArmSubsystem {
 
         switch (currentState){
 
-            case READY: {
+            case READY_OPEN: {
                 if(myOpMode.gamepad1.triangle){
                     setState(LIFTING);
                 } else {
@@ -120,7 +120,7 @@ public class ArmSubsystem {
 
             case LOWERING: {
                 if(isDown){
-                    setState(READY);
+                    setState(READY_OPEN);
                 } else {
                     arm.setPower(LOWERING_POWER);
                 }

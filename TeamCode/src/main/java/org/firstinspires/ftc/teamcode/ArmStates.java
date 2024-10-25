@@ -2,9 +2,12 @@ package org.firstinspires.ftc.teamcode;
 
 public enum ArmStates {
 
-    READY,
+    READY_OPEN,
+    JAWS_CLOSING,
     LIFTING,
     LIFTED,
+    LATCHING,
+    LATCHED,
+    JAWS_OPENING,
     LOWERING
-
 }
