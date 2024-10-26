@@ -3,8 +3,12 @@ package org.firstinspires.ftc.teamcode;
 public enum ArmStates {
 
     READY,
+    GRABBING,
+    GRABBED,
     LIFTING,
-    LIFTED,
+    READY_TO_CLIP,
+    CANCEL,
+    CLIPPING,
     LOWERING
 
 }
