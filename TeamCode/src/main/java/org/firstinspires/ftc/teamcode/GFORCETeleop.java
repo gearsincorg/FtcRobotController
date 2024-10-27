@@ -54,7 +54,7 @@ public class GFORCETeleop extends LinearOpMode
 
             // Read and display sensor data
             robot.readSensors();
-            lift.runLiftControl();
+            lift.runControl();
             arm.readSensors();
             telemetry.update();
         }
@@ -66,8 +66,10 @@ public class GFORCETeleop extends LinearOpMode
         {
             // Get the latest sensor data every time around the loop.
             robot.readSensors();
-            lift.runLiftControl();
+            lift.runControl();
             arm.runStateMachine();
+            arm.runControl();
+
 
             // read joystick values and scale according to limits set at top of this file
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
@@ -83,6 +85,14 @@ public class GFORCETeleop extends LinearOpMode
                 drive = SAFE_DRIVE_SPEED / 4.0;
             } else if (gamepad1.dpad_down) {
                 drive = -SAFE_STRAFE_SPEED / 4.0;
+            }
+
+            if (gamepad1.triangle){
+                arm.setTargetPosition(900);
+            } else if (gamepad1.square){
+                arm.setTargetPosition(600);
+            } else if (gamepad1.cross){
+                arm.setTargetPosition(5);
             }
 
             /*if (gamepad1.right_trigger > 0.25) {

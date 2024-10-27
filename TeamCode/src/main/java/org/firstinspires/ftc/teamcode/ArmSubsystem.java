@@ -1,12 +1,18 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import static org.firstinspires.ftc.teamcode.ArmStates.CANCEL;
+import static org.firstinspires.ftc.teamcode.ArmStates.CLIPPING;
+import static org.firstinspires.ftc.teamcode.ArmStates.GRABBED;
+import static org.firstinspires.ftc.teamcode.ArmStates.GRABBING;
+import static org.firstinspires.ftc.teamcode.ArmStates.LIFTING;
+import static org.firstinspires.ftc.teamcode.ArmStates.LOWERING;
 import static org.firstinspires.ftc.teamcode.ArmStates.READY;
+import static org.firstinspires.ftc.teamcode.ArmStates.READY_TO_CLIP;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -17,14 +23,23 @@ public class ArmSubsystem {
     private final double HOLD_POWER = 0.1;
     private final double LIFTING_POWER = 0.5;
     private final double LOWERING_POWER = -0.6;
-    private final double CLAW_OPEN = 0;
-    private final double CLAW_CLOSED = 1;
-    private final double HOME_POWER = -0.2;
+    private final double CLAW_OPEN = 0.3;
+    private final double CLAW_CLOSED = 0.55;
+    private final double LOOSE_GRIP = 0.5;
+    private final double HOME_POWER = -0.15;
     private final int HOME_MIN_MOVEMENT = 10;
 
+    private final double GAIN = 1.0 / 200.0;
+    private final double ACCEL_LIMIT = 7.0;
+    private final double OUTPUT_LIMIT = 0.75;
+    private final double TOLERANCE = 20.0;
+    private final double DEADBAND = 10.0;
+
+    private final int CLIPPING_POSITION = 950;
+    private final int CLIPPED_POSITON = 600;
+    private final int HOME_POSITION = 0;
+
     private DcMotor arm;      //motor used to control the arm
-    DigitalChannel upSensor;
-    DigitalChannel downSensor;
     private Servo claw;
 
     private LinearOpMode myOpMode;
@@ -34,6 +49,7 @@ public class ArmSubsystem {
     private int lastPosition = 0;
     private ArmStates currentState = READY;
     private ElapsedTime stateTime = new ElapsedTime();
+    private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
 
     public ArmSubsystem(LinearOpMode opMode){
         myOpMode = opMode;
@@ -49,7 +65,8 @@ public class ArmSubsystem {
         claw = myOpMode.hardwareMap.get(Servo.class, "claw");
         claw.setPosition(CLAW_OPEN);
 
-        HomeTheArm();
+        homeTheArm();
+        setTargetPosition(currentPosition);
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -85,9 +102,76 @@ public class ArmSubsystem {
 
         switch (currentState){
 
+            case READY:{
+                if (myOpMode.gamepad2.right_bumper){
+                    claw.setPosition(CLAW_CLOSED);
+                    setState(GRABBING);
+                } else {
+                    stop();
+                }
+                break;
+            }
 
+            case GRABBING:{
+                if (stateTime.time() > 0.2){
+                    setState(GRABBED);
+                }
+                break;
+            }
+
+            case GRABBED:{
+                if(true){
+                    setTargetPosition(CLIPPING_POSITION);
+                    setState(LIFTING);
+                }
+                break;
+            }
+
+            case LIFTING:{
+                if(positionControl.inPosition()){
+                    setState(READY_TO_CLIP);
+                }
+                break;
+            }
+
+            case READY_TO_CLIP:{
+                if(myOpMode.gamepad2.square){
+                    setTargetPosition(CLIPPED_POSITON);
+                    claw.setPosition(LOOSE_GRIP);
+                    setState(CLIPPING);
+                } else if (myOpMode.gamepad2.circle){
+                    setTargetPosition(HOME_POSITION);
+                    claw.setPosition(CLAW_OPEN);
+                    setState(CANCEL);
+                }
+                break;
+            }
+
+            case CANCEL:{
+                if (positionControl.inPosition()){
+                    setState(READY);
+                }
+                break;
+            }
+
+            case CLIPPING:{
+                if(stateTime.time() > 0.5){
+                    setTargetPosition(HOME_POSITION);
+                    claw.setPosition(CLAW_OPEN);
+                    setState(LOWERING);
+                }
+                break;
+            }
+
+            case LOWERING:{
+                if(positionControl.inPosition()){
+                    setState(READY);
+                }
+            }
         }
     }
+
+
 
     public void setState (ArmStates newState){
         currentState = newState;
@@ -95,7 +179,7 @@ public class ArmSubsystem {
 
     }
 
-    public void HomeTheArm (){
+    public void homeTheArm(){
         arm.setPower(HOME_POWER);
         lastPosition = arm.getCurrentPosition();
         myOpMode.sleep(250);
@@ -115,7 +199,20 @@ public class ArmSubsystem {
 
         }
         stop();
+        readSensors();
     }
 
+    public void runControl(){
+        double motorPower = positionControl.getOutput(currentPosition);
+        arm.setPower(motorPower);
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("arm power", motorPower);
+        }
+    }
+
+    public void setTargetPosition(int setPoint){
+        armSetPoint = setPoint;
+        positionControl.reset(armSetPoint);
+    }
 
 }

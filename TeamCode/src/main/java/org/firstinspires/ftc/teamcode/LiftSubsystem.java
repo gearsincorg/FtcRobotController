@@ -83,7 +83,7 @@ public class LiftSubsystem {
         lift.setPower(HOLD_POWER);
     }
 
-    public void runLiftControl() {
+    public void runControl() {
         readSensors();
         double error = setpointInches - currentPosition;
         double power = 0;
