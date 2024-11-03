@@ -48,6 +48,7 @@ public class GFORCETeleop extends LinearOpMode
        // camera.initilaize(true);
         lift.initialize(true);
         arm.initialize(true);
+        intake.initialize(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {

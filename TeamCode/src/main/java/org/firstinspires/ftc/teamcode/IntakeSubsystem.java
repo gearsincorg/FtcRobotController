@@ -64,12 +64,12 @@ public class IntakeSubsystem {
     }
 
     public void intake(){
-        leftWheel.setPower(INTAKE);
+        leftWheel.setPower(-INTAKE);
         rightWheel.setPower(INTAKE);
     }
 
     public void eject(){
-        leftWheel.setPower(EJECT);
+        leftWheel.setPower(-EJECT);
         rightWheel.setPower(EJECT);
     }
 
