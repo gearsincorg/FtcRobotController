@@ -39,6 +39,7 @@ public class GFORCETeleop extends LinearOpMode
     LiftSubsystem lift = new LiftSubsystem(this);
     //VisionSubsystem camera = new VisionSubsystem(this);
     ArmSubsystem arm = new ArmSubsystem(this);
+    IntakeSubsystem intake = new IntakeSubsystem(this);
 
     @Override public void runOpMode()
     {
@@ -93,6 +94,15 @@ public class GFORCETeleop extends LinearOpMode
                 arm.setTargetPosition(600);
             } else if (gamepad1.cross){
                 arm.setTargetPosition(5);
+            }
+
+            //collecter test
+            if (gamepad2.dpad_up){
+                intake.intake();
+            } else if (gamepad2.dpad_down){
+                intake.eject();
+            } else{
+                intake.off();
             }
 
             /*if (gamepad1.right_trigger > 0.25) {
