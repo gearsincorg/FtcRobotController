@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 
 public class LiftSubsystem {
 
@@ -17,12 +18,16 @@ public class LiftSubsystem {
     public final double AUTO_DOWN_POWER = -0.8;
     private final double HOLD_POWER = 0.1;
     private final double HOME_POWER = -0.6;
+    private final double PITCH = 0.5;
+    private final double YAW = 0.5;
 
     private final double SLOPE = 0.0123;
     private final double OFFSET = 9.5;
     private final int MINIMUM_MOVEMENT = 10;
 
     private DcMotor lift;      //motor used to control the lift
+    private Servo pitch;
+    private Servo yaw;
     private LinearOpMode myOpMode;
     private boolean showTelemetry     = false;
     private double setpointInches = 0;
@@ -47,6 +52,8 @@ public class LiftSubsystem {
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset Encoders to zero
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Requires motor encoder cables to be hooked up.
+        pitch = myOpMode.hardwareMap.get(Servo.class, "pitch");
+        yaw = myOpMode.hardwareMap.get(Servo.class, "yaw");
 
         homeTheLift();
 
