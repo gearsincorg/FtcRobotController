@@ -69,9 +69,9 @@ public class GFORCETeleop extends LinearOpMode
             // Get the latest sensor data every time around the loop.
             robot.readSensors();
             lift.runControl();
-            arm.runStateMachine();
+            lift.runStateMachine();
             arm.runControl();
-
+            arm.runStateMachine();
 
             // read joystick values and scale according to limits set at top of this file
             double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
@@ -87,6 +87,10 @@ public class GFORCETeleop extends LinearOpMode
                 drive = SAFE_DRIVE_SPEED / 4.0;
             } else if (gamepad1.dpad_down) {
                 drive = -SAFE_STRAFE_SPEED / 4.0;
+            }
+
+            if(gamepad2.start){
+                lift.sampleInBucket();
             }
 
             if (gamepad1.triangle){
@@ -149,14 +153,6 @@ public class GFORCETeleop extends LinearOpMode
                 stopTime.reset();
             }
 
-            // use the gamepad to set the arms setpoint
-            if (gamepad1.triangle) {
-                lift.setSetpointInches(lift.HIGH_CHAMBER);
-            } else if (gamepad1.cross) {
-                lift.homeTheLift();
-            } else if (gamepad1.square){
-                lift.setSetpointInches(lift.HIGH_CHAMBER_RELEASE);
-            }
         }
     }
 }

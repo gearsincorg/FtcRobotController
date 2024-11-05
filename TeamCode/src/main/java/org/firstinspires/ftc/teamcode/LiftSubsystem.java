@@ -1,17 +1,26 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.ArmStates.READY;
+import static org.firstinspires.ftc.teamcode.LiftStates.DUMPED;
+import static org.firstinspires.ftc.teamcode.LiftStates.HOME;
+import static org.firstinspires.ftc.teamcode.LiftStates.LIFTING;
+import static org.firstinspires.ftc.teamcode.LiftStates.LOWERING;
+import static org.firstinspires.ftc.teamcode.LiftStates.READY_TO_SCORE;
+import static org.firstinspires.ftc.teamcode.LiftStates.SAMPLE_HELD;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class LiftSubsystem {
 
     public final double MAX_HEIGHT = 41;
     public final double MIN_HEIGHT = 10;
     public final double SPECIMIN_HEIGHT = 10; // was 9, correct height
-    public final double HIGH_CHAMBER = 27;
-    public final double HIGH_CHAMBER_RELEASE = 19;
+    public final double HIGH_BASKET = 25;
+    public final double LOW_BASKET = 10 ;
     public final double MANUAL_UP_POWER = 1;
     public final double MANUAL_DOWN_POWER = -0.3;
     public final double AUTO_UP_POWER = 1;
@@ -26,14 +35,19 @@ public class LiftSubsystem {
     private final int MINIMUM_MOVEMENT = 10;
 
     private DcMotor lift;      //motor used to control the lift
-    private Servo pitch;
-    private Servo yaw;
+    private Servo pitchServo;
+    private Servo yawServo;
+    private Servo holdServo;
     private LinearOpMode myOpMode;
     private boolean showTelemetry     = false;
     private double setpointInches = 0;
     private double currentPosition = 0;
     private int lastPosition = 0;
     private boolean goingHome = false;
+    private LiftStates currentState = HOME;
+    private ElapsedTime stateTime = new ElapsedTime();
+    private boolean sampleCollected = false;
+    private boolean liftInPosition = false;
 
     // Arm Constructor
     public LiftSubsystem(LinearOpMode opmode) {
@@ -52,9 +66,11 @@ public class LiftSubsystem {
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset Encoders to zero
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Requires motor encoder cables to be hooked up.
-        pitch = myOpMode.hardwareMap.get(Servo.class, "pitch");
-        yaw = myOpMode.hardwareMap.get(Servo.class, "yaw");
+        pitchServo = myOpMode.hardwareMap.get(Servo.class, "pitch");
+        yawServo = myOpMode.hardwareMap.get(Servo.class, "yaw");
+        holdServo = myOpMode.hardwareMap.get(Servo.class, "hold");
 
+        setBucketPosition(BucketPositions.HOME);
         homeTheLift();
 
         // Set the desired telemetry state
@@ -90,6 +106,10 @@ public class LiftSubsystem {
         lift.setPower(HOLD_POWER);
     }
 
+    public void sampleInBucket(){
+        sampleCollected = true;
+    }
+
     public void runControl() {
         readSensors();
         double error = setpointInches - currentPosition;
@@ -112,10 +132,13 @@ public class LiftSubsystem {
         } else {
             if ((error > 0.5) && (getCurrentPosition() < MAX_HEIGHT)) {
                 power = AUTO_UP_POWER;
+                liftInPosition = false;
             } else if ((error < -0.5) && (getCurrentPosition() > MIN_HEIGHT)) {
                 power = AUTO_DOWN_POWER;
+                liftInPosition = false;
             } else {
                 power = HOLD_POWER;
+                liftInPosition = true;
             }
         }
 
@@ -135,6 +158,7 @@ public class LiftSubsystem {
 
     public void setSetpointInches(double setpointInches) {
         this.setpointInches = setpointInches;
+        liftInPosition =false;
     }
 
     public void resetEncoders(){
@@ -149,6 +173,122 @@ public class LiftSubsystem {
         myOpMode.telemetry.update();
         lift.setPower(HOME_POWER);
         myOpMode.sleep(250);
+
+    }
+
+    public void setBucketPosition(BucketPositions position){
+        switch (position){
+
+            case HOME:{
+                pitchServo.setPosition(0.5);
+                yawServo.setPosition(0.5);
+                holdServo.setPosition(1);
+                break;
+            }
+
+            case HOME_READY:{
+                pitchServo.setPosition(0.5);
+                yawServo.setPosition(0.5);
+                holdServo.setPosition(0.5);
+                break;
+            }
+
+            case SIDE_DUMP_READY:{
+                pitchServo.setPosition(0.4);
+                yawServo.setPosition(0.7);
+                holdServo.setPosition(0.5);
+                break;
+            }
+
+            case SIDE_DUMP_RELEASE:{
+                pitchServo.setPosition(0.4);
+                yawServo.setPosition(0.7);
+                holdServo.setPosition(0);
+                break;
+            }
+
+            case BACK_DUMP_READY:{
+                pitchServo.setPosition(0.7);
+                yawServo.setPosition(0.5);
+                holdServo.setPosition(0.5);
+                break;
+            }
+
+            case BACK_DUMP_RELEASE:{
+                pitchServo.setPosition(0.7);
+                yawServo.setPosition(0.5);
+                holdServo.setPosition(1);
+                break;
+            }
+        }
+
+    }
+
+    public void runStateMachine () {
+
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Lift State", "%S", currentState);
+        }
+
+        switch (currentState) {
+
+            case HOME:{
+                if (sampleCollected){
+                    setBucketPosition(BucketPositions.HOME_READY);
+                    setState(SAMPLE_HELD);
+                }
+                break;
+            }
+
+            case SAMPLE_HELD:{
+                if(myOpMode.gamepad2.triangle){
+                    setSetpointInches(HIGH_BASKET);
+                    setState(LIFTING);
+                } else if(myOpMode.gamepad2.circle){
+                    setSetpointInches(LOW_BASKET);
+                    setState(LIFTING);
+                }
+                break;
+            }
+
+            case LIFTING:{
+                if(liftInPosition){
+                    setBucketPosition(BucketPositions.BACK_DUMP_READY);
+                    setState(READY_TO_SCORE);
+                }
+                break;
+            }
+
+            case READY_TO_SCORE:{
+                if(myOpMode.gamepad2.cross){
+                    setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
+                    setState(DUMPED);
+                }
+                break;
+            }
+
+            case DUMPED:{
+                if(stateTime.time() > 1){
+                    setSetpointInches(MIN_HEIGHT+1);
+                    setState(LOWERING);
+                }
+                break;
+            }
+
+            case LOWERING:{
+                if(liftInPosition){
+                    setBucketPosition(BucketPositions.HOME);
+                    setState(HOME);
+                }
+                break;
+            }
+
+        }
+    }
+
+    public void setState (LiftStates newState){
+        currentState = newState;
+        stateTime.reset();
 
     }
 

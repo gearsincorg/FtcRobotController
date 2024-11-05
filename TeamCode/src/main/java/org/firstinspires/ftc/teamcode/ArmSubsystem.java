@@ -94,8 +94,6 @@ public class ArmSubsystem {
 
     public void runStateMachine (){
 
-        readSensors();
-
         if (showTelemetry) {
             myOpMode.telemetry.addData("Arm State", "%S", currentState);
         }
@@ -203,6 +201,7 @@ public class ArmSubsystem {
     }
 
     public void runControl(){
+        readSensors();
         double motorPower = positionControl.getOutput(currentPosition);
         arm.setPower(motorPower);
         if (showTelemetry) {
