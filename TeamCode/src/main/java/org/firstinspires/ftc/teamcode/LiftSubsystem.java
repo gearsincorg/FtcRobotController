@@ -8,6 +8,8 @@ import static org.firstinspires.ftc.teamcode.LiftStates.LOWERING;
 import static org.firstinspires.ftc.teamcode.LiftStates.READY_TO_SCORE;
 import static org.firstinspires.ftc.teamcode.LiftStates.SAMPLE_HELD;
 
+import androidx.core.math.MathUtils;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -16,22 +18,23 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class LiftSubsystem {
 
-    public final double MAX_HEIGHT = 41;
-    public final double MIN_HEIGHT = 10;
-    public final double SPECIMIN_HEIGHT = 10; // was 9, correct height
-    public final double HIGH_BASKET = 25;
-    public final double LOW_BASKET = 10 ;
-    public final double MANUAL_UP_POWER = 1;
-    public final double MANUAL_DOWN_POWER = -0.3;
-    public final double AUTO_UP_POWER = 1;
-    public final double AUTO_DOWN_POWER = -0.8;
-    private final double HOLD_POWER = 0.1;
+    public final double MAX_HEIGHT = 45;
+    public final double MIN_HEIGHT = 8.5;
+    public final double HIGH_BASKET = 40;
+    public final double LOW_BASKET = 25 ;
+    private final double HOLD_POWER = 0.05;
     private final double HOME_POWER = -0.6;
     private final double PITCH = 0.5;
     private final double YAW = 0.5;
 
+    private final double GAIN = 1.0;
+    private final double ACCEL_LIMIT = 8.0;
+    private final double OUTPUT_LIMIT = 1;
+    private final double TOLERANCE = 0.75;
+    private final double DEADBAND = 0.25;
+
     private final double SLOPE = 0.0123;
-    private final double OFFSET = 9.5;
+    private final double OFFSET = 8.25;
     private final int MINIMUM_MOVEMENT = 10;
 
     private DcMotor lift;      //motor used to control the lift
@@ -47,7 +50,7 @@ public class LiftSubsystem {
     private LiftStates currentState = HOME;
     private ElapsedTime stateTime = new ElapsedTime();
     private boolean sampleCollected = false;
-    private boolean liftInPosition = false;
+    private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
 
     // Arm Constructor
     public LiftSubsystem(LinearOpMode opmode) {
@@ -87,15 +90,6 @@ public class LiftSubsystem {
     }
 
     /**
-     * set the power of the arm
-     * positive is up
-     * @param power
-     */
-    public void setPower(double power){
-        lift.setPower(power);
-    }
-
-    /**
      * stop the arm from moving
      */
     public void stop(){
@@ -110,13 +104,18 @@ public class LiftSubsystem {
         sampleCollected = true;
     }
 
+    /**
+     * controlling the motor and causing the lift to move to the setpoint
+     */
     public void runControl() {
         readSensors();
         double error = setpointInches - currentPosition;
         double power = 0;
 
+        // Decides if the lift should be homing, or if it is going to the correct position
         if(goingHome){
 
+            // Decides if the arm is still in the homing motion or if it has stopped and is homed
             int position = lift.getCurrentPosition();
             if(Math.abs(position-lastPosition) < MINIMUM_MOVEMENT){
                 power = 0;
@@ -130,20 +129,17 @@ public class LiftSubsystem {
             setSetpointInches(currentPosition);
 
         } else {
-            if ((error > 0.5) && (getCurrentPosition() < MAX_HEIGHT)) {
-                power = AUTO_UP_POWER;
-                liftInPosition = false;
-            } else if ((error < -0.5) && (getCurrentPosition() > MIN_HEIGHT)) {
-                power = AUTO_DOWN_POWER;
-                liftInPosition = false;
-            } else {
-                power = HOLD_POWER;
-                liftInPosition = true;
+
+            // Controls the power when moving to the set point
+            power = positionControl.getOutput(currentPosition);
+
+            if(power == 0){
+                hold();
             }
         }
 
 
-        setPower(power);
+        lift.setPower(power);
         myOpMode.telemetry.addData("lift error",error);
         myOpMode.telemetry.addData("lift power", power);
     }
@@ -157,8 +153,9 @@ public class LiftSubsystem {
     }
 
     public void setSetpointInches(double setpointInches) {
+        MathUtils.clamp(setpointInches, MIN_HEIGHT, MAX_HEIGHT);
         this.setpointInches = setpointInches;
-        liftInPosition =false;
+        positionControl.reset(setpointInches);
     }
 
     public void resetEncoders(){
@@ -235,6 +232,7 @@ public class LiftSubsystem {
             case HOME:{
                 if (sampleCollected){
                     setBucketPosition(BucketPositions.HOME_READY);
+
                     setState(SAMPLE_HELD);
                 }
                 break;
@@ -252,7 +250,7 @@ public class LiftSubsystem {
             }
 
             case LIFTING:{
-                if(liftInPosition){
+                if(positionControl.inPosition()){
                     setBucketPosition(BucketPositions.BACK_DUMP_READY);
                     setState(READY_TO_SCORE);
                 }
@@ -269,15 +267,16 @@ public class LiftSubsystem {
 
             case DUMPED:{
                 if(stateTime.time() > 1){
-                    setSetpointInches(MIN_HEIGHT+1);
+                    setSetpointInches(MIN_HEIGHT);
                     setState(LOWERING);
                 }
                 break;
             }
 
             case LOWERING:{
-                if(liftInPosition){
+                if(positionControl.inPosition()){
                     setBucketPosition(BucketPositions.HOME);
+                    sampleCollected = false;
                     setState(HOME);
                 }
                 break;

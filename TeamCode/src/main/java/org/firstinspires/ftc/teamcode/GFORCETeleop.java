@@ -62,7 +62,6 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         lift.resetEncoders();
-        lift.setSetpointInches(lift.SPECIMIN_HEIGHT);
 
         while (opModeIsActive())
         {
