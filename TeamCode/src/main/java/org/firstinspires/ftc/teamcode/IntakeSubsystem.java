@@ -13,18 +13,19 @@ public class IntakeSubsystem {
     private final double RIGHT_LEVER_IN = 0.5;
     private final double LEFT_LEVER_OUT = 1;
     private final double RIGHT_LEVER_OUT = 0;
-    private final double TILT_UP = 0.5;
-    private final double TILT_DOWN = 0;
     private final double INTAKE = -1;
     private final double EJECT = 1;
     private final double OFF = 0;
+    private final double WRIST_IN = 0;
+    private final double WRIST_OUT = 1;
 
     //declaring servos for the intake
     private Servo leftLever;
     private Servo rightLever;
     private CRServo leftWheel;
     private CRServo rightWheel;
-    private Servo tilt;
+    private Servo wristA;
+    private Servo wristB;
 
     private LinearOpMode myOpMode;
 
@@ -35,11 +36,12 @@ public class IntakeSubsystem {
         rightLever = myOpMode.hardwareMap.get(Servo.class, "rightlever");
         leftWheel = myOpMode.hardwareMap.get(CRServo.class, "leftwheel");
         rightWheel = myOpMode.hardwareMap.get(CRServo.class, "rightwheel");
-        tilt = myOpMode.hardwareMap.get(Servo.class, "tilt");
+        wristA = myOpMode.hardwareMap.get(Servo.class, "wristA");
+        wristB = myOpMode.hardwareMap.get(Servo.class, "wristB");
 
         in();
-        up();
         off();
+        wristIn();
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -55,12 +57,14 @@ public class IntakeSubsystem {
         rightLever.setPosition(RIGHT_LEVER_IN);
     }
 
-    public void up(){
-        tilt.setPosition(TILT_UP);
+    public void wristIn(){
+        wristA.setPosition(WRIST_IN);
+        wristB.setPosition(WRIST_IN);
     }
 
-    public void down(){
-        tilt.setPosition(TILT_DOWN);
+    public void wristOut(){
+        wristA.setPosition(WRIST_OUT);
+        wristB.setPosition(WRIST_OUT);
     }
 
     public void intake(){

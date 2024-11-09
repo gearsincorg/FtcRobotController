@@ -88,7 +88,13 @@ public class GFORCETeleop extends LinearOpMode
                 drive = -SAFE_STRAFE_SPEED / 4.0;
             }
 
-            if(gamepad2.start){
+            if (gamepad2.right_bumper){
+                intake.wristIn();
+            } else if (gamepad2.left_bumper){
+                intake.wristOut();
+            }
+
+            if (gamepad2.start){
                 lift.sampleInBucket();
             }
 
