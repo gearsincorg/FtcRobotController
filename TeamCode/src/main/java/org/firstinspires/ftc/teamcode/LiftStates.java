@@ -6,6 +6,6 @@ public enum LiftStates {
     LIFTING,
     READY_TO_SCORE,
     DUMPED,
-    LOWERING
-
+    LOWERING,
+    WAITING_FOR_BUCKET
 }

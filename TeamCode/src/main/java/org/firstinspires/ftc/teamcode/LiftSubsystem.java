@@ -7,6 +7,7 @@ import static org.firstinspires.ftc.teamcode.LiftStates.LIFTING;
 import static org.firstinspires.ftc.teamcode.LiftStates.LOWERING;
 import static org.firstinspires.ftc.teamcode.LiftStates.READY_TO_SCORE;
 import static org.firstinspires.ftc.teamcode.LiftStates.SAMPLE_HELD;
+import static org.firstinspires.ftc.teamcode.LiftStates.WAITING_FOR_BUCKET;
 
 import androidx.core.math.MathUtils;
 
@@ -263,16 +264,23 @@ public class LiftSubsystem {
             }
 
             case DUMPED:{
-                if(stateTime.time() > 1){
-                    setSetpointInches(MIN_HEIGHT);
-                    setState(LOWERING);
+                if(stateTime.time() > 0.75){
+                    setBucketPosition(BucketPositions.HOME);
+                    setState(WAITING_FOR_BUCKET);
                 }
                 break;
             }
 
+            case WAITING_FOR_BUCKET:{
+                if(stateTime.time() > 0.5){
+                    setSetpointInches(MIN_HEIGHT);
+                    setState(LOWERING);
+                }
+               break;
+            }
+
             case LOWERING:{
                 if(positionControl.inPosition()){
-                    setBucketPosition(BucketPositions.HOME);
                     sampleCollected = false;
                     setState(HOME);
                 }
