@@ -242,9 +242,6 @@ public class LiftSubsystem {
                 if(myOpMode.gamepad2.triangle){
                     setSetpointInches(HIGH_BASKET);
                     setState(LIFTING);
-                } else if(myOpMode.gamepad2.circle){
-                    setSetpointInches(LOW_BASKET);
-                    setState(LIFTING);
                 }
                 break;
             }

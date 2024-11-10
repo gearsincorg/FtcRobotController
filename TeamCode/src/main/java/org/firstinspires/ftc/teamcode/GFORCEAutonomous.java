@@ -16,7 +16,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
  * The IMU gyro is used to stabilize the heading during all motions
  */
 
-@Autonomous(name="GFORCE Autonomous", group = "Mr. Phil")
+@Autonomous(name="GFORCE Autonomous", group = "AA")
 public class GFORCEAutonomous extends LinearOpMode
 {
     // get an instance of the "Robot" class.

@@ -16,7 +16,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * The IMU gyro is used to stabilize the heading when the operator is not requesting a turn.
  */
 
-@TeleOp(name="GFORCE Teleop", group = "Mr. Phil")
+@TeleOp(name="GFORCE Teleop", group = "AA")
 public class GFORCETeleop extends LinearOpMode
 {
     final double SAFE_DRIVE_SPEED   = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
@@ -88,22 +88,20 @@ public class GFORCETeleop extends LinearOpMode
                 drive = -SAFE_STRAFE_SPEED / 4.0;
             }
 
-            if (gamepad2.right_bumper){
+            if (gamepad2.left_trigger > 0.5){
                 intake.wristIn();
             } else if (gamepad2.left_bumper){
                 intake.wristOut();
             }
 
-            if (gamepad2.start){
-                lift.sampleInBucket();
+            if (gamepad2.right_trigger > 0.5){
+                intake.in();
+            } else if (gamepad2.right_bumper){
+                intake.out();
             }
 
-            if (gamepad1.triangle){
-                arm.setTargetPosition(900);
-            } else if (gamepad1.square){
-                arm.setTargetPosition(600);
-            } else if (gamepad1.cross){
-                arm.setTargetPosition(5);
+            if (gamepad2.start){
+                lift.sampleInBucket();
             }
 
             //collecter test

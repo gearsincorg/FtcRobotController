@@ -64,10 +64,10 @@ public class DriveSubsystem {
     // ---  Private Members
 
     // Hardware interface Objects
-    private DcMotor leftFrontDrive;     //  control the left front drive wheel
-    private DcMotor rightFrontDrive;    //  control the right front drive wheel
-    private DcMotor leftBackDrive;      //  control the left back drive wheel
-    private DcMotor rightBackDrive;     //  control the right back drive wheel
+    private DcMotor leftFront;     //  control the left front drive wheel
+    private DcMotor rightFront;    //  control the right front drive wheel
+    private DcMotor leftBack;      //  control the left back drive wheel
+    private DcMotor rightBack;     //  control the right back drive wheel
 
     private int encoderLF;              // Encoder value for front left wheel
     private int encoderRF;              // Encoder value for front right wheel
@@ -112,10 +112,10 @@ public class DriveSubsystem {
         // motor/device must match the names assigned during the robot configuration.
 
         // !!!  Set the drive direction to ensure positive power drives each wheel forward.
-        leftFrontDrive  = setupDriveMotor("leftfront_drive", DcMotor.Direction.REVERSE);
-        rightFrontDrive = setupDriveMotor("rightfront_drive", DcMotor.Direction.FORWARD);
-        leftBackDrive  = setupDriveMotor( "leftback_drive", DcMotor.Direction.REVERSE);
-        rightBackDrive = setupDriveMotor( "rightback_drive",DcMotor.Direction.FORWARD);
+        leftFront = setupDriveMotor("frontleft", DcMotor.Direction.REVERSE);
+        rightFront = setupDriveMotor("frontright", DcMotor.Direction.FORWARD);
+        leftBack = setupDriveMotor( "backleft", DcMotor.Direction.REVERSE);
+        rightBack = setupDriveMotor( "backright ",DcMotor.Direction.FORWARD);
         imu = myOpMode.hardwareMap.get(IMU.class, "imu");
 
         // Connect to the OctoQuad by looking up its name in the hardwareMap.
@@ -168,10 +168,10 @@ public class DriveSubsystem {
      */
     public boolean readSensors() {
         // Read motor encoders for each wheel
-        encoderLF =         leftFrontDrive.getCurrentPosition();
-        encoderRF =         rightFrontDrive.getCurrentPosition();
-        encoderLB =         leftBackDrive.getCurrentPosition();
-        encoderRB =         rightBackDrive.getCurrentPosition();
+        encoderLF =         leftFront.getCurrentPosition();
+        encoderRF =         rightFront.getCurrentPosition();
+        encoderLB =         leftBack.getCurrentPosition();
+        encoderRB =         rightBack.getCurrentPosition();
 
         updateMotion();  // determine how robot has moved from most recent startMotion() call;
 
@@ -338,10 +338,10 @@ public class DriveSubsystem {
         rB /= max;
 
         //send power to the motors
-        leftFrontDrive.setPower(lF);
-        rightFrontDrive.setPower(rF);
-        leftBackDrive.setPower(lB);
-        rightBackDrive.setPower(rB);
+        leftFront.setPower(lF);
+        rightFront.setPower(rF);
+        leftBack.setPower(lB);
+        rightBack.setPower(rB);
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Axes D:S:Y", "%5.2f %5.2f %5.2f", drive, strafe, yaw);

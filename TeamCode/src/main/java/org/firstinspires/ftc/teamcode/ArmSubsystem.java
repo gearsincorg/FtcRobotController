@@ -101,7 +101,7 @@ public class ArmSubsystem {
         switch (currentState){
 
             case READY:{
-                if (myOpMode.gamepad2.right_bumper){
+                if (myOpMode.gamepad1.right_bumper){
                     claw.setPosition(CLAW_CLOSED);
                     setState(GRABBING);
                 } else {
@@ -133,11 +133,11 @@ public class ArmSubsystem {
             }
 
             case READY_TO_CLIP:{
-                if(myOpMode.gamepad2.square){
+                if(myOpMode.gamepad1.square){
                     setTargetPosition(CLIPPED_POSITON);
                     claw.setPosition(LOOSE_GRIP);
                     setState(CLIPPING);
-                } else if (myOpMode.gamepad2.circle){
+                } else if (myOpMode.gamepad1.circle){
                     setTargetPosition(HOME_POSITION);
                     claw.setPosition(CLAW_OPEN);
                     setState(CANCEL);

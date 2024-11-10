@@ -24,8 +24,8 @@ public class IntakeSubsystem {
     private Servo rightLever;
     private CRServo leftWheel;
     private CRServo rightWheel;
-    private Servo wristA;
-    private Servo wristB;
+    private Servo backwrist;
+    private Servo frontwrist;
 
     private LinearOpMode myOpMode;
 
@@ -36,8 +36,8 @@ public class IntakeSubsystem {
         rightLever = myOpMode.hardwareMap.get(Servo.class, "rightlever");
         leftWheel = myOpMode.hardwareMap.get(CRServo.class, "leftwheel");
         rightWheel = myOpMode.hardwareMap.get(CRServo.class, "rightwheel");
-        wristA = myOpMode.hardwareMap.get(Servo.class, "wristA");
-        wristB = myOpMode.hardwareMap.get(Servo.class, "wristB");
+        backwrist = myOpMode.hardwareMap.get(Servo.class, "frontwrist");
+        frontwrist = myOpMode.hardwareMap.get(Servo.class, "backwrist");
 
         in();
         off();
@@ -58,13 +58,13 @@ public class IntakeSubsystem {
     }
 
     public void wristIn(){
-        wristA.setPosition(WRIST_IN);
-        wristB.setPosition(WRIST_IN);
+        backwrist.setPosition(WRIST_IN);
+        frontwrist.setPosition(WRIST_IN);
     }
 
     public void wristOut(){
-        wristA.setPosition(WRIST_OUT);
-        wristB.setPosition(WRIST_OUT);
+        backwrist.setPosition(WRIST_OUT);
+        frontwrist.setPosition(WRIST_OUT);
     }
 
     public void intake(){
