@@ -9,10 +9,10 @@ public class IntakeSubsystem {
     private boolean showTelemetry     = false;
 
     //functions for the servos
-    private final double LEFT_LEVER_IN = 0.5;
-    private final double RIGHT_LEVER_IN = 0.5;
-    private final double LEFT_LEVER_OUT = 1;
-    private final double RIGHT_LEVER_OUT = 0;
+    private final double LEFT_LEVER_IN = 0.53;
+    private final double RIGHT_LEVER_IN = 0.47;
+    private final double LEFT_LEVER_OUT = .4;
+    private final double RIGHT_LEVER_OUT = .60;
     private final double INTAKE = -1;
     private final double EJECT = 1;
     private final double OFF = 0;
