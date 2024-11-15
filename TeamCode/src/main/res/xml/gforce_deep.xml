@@ -4,6 +4,8 @@
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Expansion Hub 2" port="2">
             <goBILDA5202SeriesMotor name="lift" port="0" />
+            <goBILDA5202SeriesMotor name="X" port="1" />
+            <goBILDA5202SeriesMotor name="Y" port="2" />
             <goBILDA5202SeriesMotor name="arm" port="3" />
             <Servo name="rightlever" port="0" />
             <Servo name="leftlever" port="1" />
