@@ -72,6 +72,12 @@ public class ArmSubsystem {
         this.showTelemetry = showTelemetry;
     }
 
+    public void update() {
+        readSensors();
+        runControl();
+        runStateMachine();
+    }
+
     public void readSensors(){
         currentPosition = arm.getCurrentPosition();
 
@@ -201,7 +207,6 @@ public class ArmSubsystem {
     }
 
     public void runControl(){
-        readSensors();
         double motorPower = positionControl.getOutput(currentPosition);
         arm.setPower(motorPower);
         if (showTelemetry) {

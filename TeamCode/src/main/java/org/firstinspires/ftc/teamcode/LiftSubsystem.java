@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.teamcode.ArmStates.READY;
 import static org.firstinspires.ftc.teamcode.LiftStates.DUMPED;
 import static org.firstinspires.ftc.teamcode.LiftStates.HOME;
 import static org.firstinspires.ftc.teamcode.LiftStates.LIFTING;
@@ -81,6 +80,12 @@ public class LiftSubsystem {
         this.showTelemetry = showTelemetry;
     }
 
+    public void update() {
+        readSensors();
+        runControl();
+        runStateMachine();
+    }
+
     public void readSensors(){
         int encoderValue = lift.getCurrentPosition();
         currentPosition = (SLOPE * encoderValue) + OFFSET;
@@ -103,46 +108,6 @@ public class LiftSubsystem {
 
     public void sampleInBucket(){
         sampleCollected = true;
-    }
-
-    /**
-     * controlling the motor and causing the lift to move to the setpoint
-     */
-    public void runControl() {
-        readSensors();
-        double error = setpointInches - currentPosition;
-        double power = 0;
-
-        // Decides if the lift should be homing, or if it is going to the correct position
-        if(goingHome){
-
-            // Decides if the arm is still in the homing motion or if it has stopped and is homed
-            int position = lift.getCurrentPosition();
-            if(Math.abs(position-lastPosition) < MINIMUM_MOVEMENT){
-                power = 0;
-                resetEncoders();
-                goingHome = false;
-            } else {
-                power = HOME_POWER;
-            }
-            lastPosition = position;
-            myOpMode.sleep(100);
-            setSetpointInches(currentPosition);
-
-        } else {
-
-            // Controls the power when moving to the set point
-            power = positionControl.getOutput(currentPosition);
-
-            if(power == 0){
-                hold();
-            }
-        }
-
-
-        lift.setPower(power);
-        myOpMode.telemetry.addData("lift error",error);
-        myOpMode.telemetry.addData("lift power", power);
     }
 
     public double getCurrentPosition() {
@@ -293,7 +258,42 @@ public class LiftSubsystem {
     public void setState (LiftStates newState){
         currentState = newState;
         stateTime.reset();
-
     }
 
+    /**
+     * controlling the motor and causing the lift to move to the setpoint
+     */
+    public void runControl() {
+        double error = setpointInches - currentPosition;
+        double power = 0;
+
+        // Decides if the lift should be homing, or if it is going to the correct position
+        if(goingHome){
+
+            // Decides if the arm is still in the homing motion or if it has stopped and is homed
+            int position = lift.getCurrentPosition();
+            if(Math.abs(position-lastPosition) < MINIMUM_MOVEMENT){
+                power = 0;
+                resetEncoders();
+                goingHome = false;
+            } else {
+                power = HOME_POWER;
+            }
+            lastPosition = position;
+            myOpMode.sleep(100);
+            setSetpointInches(currentPosition);
+
+        } else {
+            // Controls the power when moving to the set point
+            power = positionControl.getOutput(currentPosition);
+
+            if(power == 0){
+                hold();
+            }
+        }
+
+        lift.setPower(power);
+        myOpMode.telemetry.addData("lift error",error);
+        myOpMode.telemetry.addData("lift power", power);
+    }
 }
