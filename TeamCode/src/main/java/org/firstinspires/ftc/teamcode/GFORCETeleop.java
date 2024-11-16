@@ -38,7 +38,7 @@ public class GFORCETeleop extends LinearOpMode
     final double APPROACH_SPEED = 0.3 ;
     final double STRAFE_GAIN = 1.5 ;
 
-    private static final double YAW_GAIN            = 0.018;    // Strength of Yaw position control
+    private static final double YAW_GAIN            = 0.02;    // Strength of Yaw position control 0.018
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
@@ -148,7 +148,7 @@ public class GFORCETeleop extends LinearOpMode
  */
             // This is where we keep the robot heading locked so it doesn't turn while driving or strafing in a straight line.
             // Is the driver turning the robot, or should it hold its heading?
-            heading = robot.pose.heading.toDouble();
+            heading = Math.toDegrees(robot.pose.heading.toDouble());
             turnrate = robot.lazyImu.get().getRobotAngularVelocity(AngleUnit.DEGREES).zRotationRate;
             if (Math.abs(yaw) > 0.05) {
                 // driver is commanding robot to turn, so turn off auto heading.
