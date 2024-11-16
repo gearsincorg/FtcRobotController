@@ -6,6 +6,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
@@ -19,43 +21,26 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 @Autonomous(name="GFORCE Autonomous", group = "AA")
 public class GFORCEAutonomous extends LinearOpMode
 {
-    // get an instance of the "Robot" class.
-    private DriveSubsystem robot = new DriveSubsystem(this);
 
     @Override public void runOpMode()
     {
-        // Initialize the robot hardware & Turn on telemetry
-        robot.initialize(true);
+        MecanumDrive robot = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to run Auto");
         telemetry.update();
 
         waitForStart();
-        robot.resetHeading();  // Reset heading to set a baseline for Auto
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
-            // Note, this example takes more than 30 seconds to execute, so turn OFF the auto timer.
+            Actions.runBlocking(
+                    robot.actionBuilder(new Pose2d(0, 0, 0))
+                            .lineToX(32)
+                            .build());
 
-            // Drive a large rectangle, turning at each corner
-            robot.drive(  96, 0.60, 0.25);
-            robot.turnTo(90, 0.45, 0.5);
-            robot.drive(  96, 0.60, 0.25);
-            robot.turnTo(180, 0.45, 0.5);
-            robot.drive(  96, 0.60, 0.25);
-            robot.turnTo(270, 0.45, 0.5);
-            robot.drive(  96, 0.60, 0.25);
-            robot.turnTo(0, 0.45, 0.5);
 
-            sleep(500);
-
-            // Drive the path again without turning.
-            robot.drive(  96, 0.60, 0.15);
-            robot.strafe( 96, 0.60, 0.15);
-            robot.drive( -96, 0.60, 0.15);
-            robot.strafe(-96, 0.60, 0.15);
         }
     }
 }
