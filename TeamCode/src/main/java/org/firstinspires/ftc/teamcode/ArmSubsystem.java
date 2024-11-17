@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.teamcode.ArmStates.CANCEL;
 import static org.firstinspires.ftc.teamcode.ArmStates.CLIPPING;
-import static org.firstinspires.ftc.teamcode.ArmStates.GRABBED;
 import static org.firstinspires.ftc.teamcode.ArmStates.GRABBING;
 import static org.firstinspires.ftc.teamcode.ArmStates.LIFTING;
 import static org.firstinspires.ftc.teamcode.ArmStates.LOWERING;
@@ -50,6 +49,7 @@ public class ArmSubsystem {
     private ArmStates currentState = READY;
     private ElapsedTime stateTime = new ElapsedTime();
     private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
+    private boolean timeToClip = false;
 
     public ArmSubsystem(LinearOpMode opMode){
         myOpMode = opMode;
@@ -98,6 +98,30 @@ public class ArmSubsystem {
         arm.setPower(HOLD_POWER);
     }
 
+    public void clipIt(){
+        timeToClip = true;
+    }
+
+    public boolean isHome(){
+        return currentState == READY;
+    }
+
+    /**
+     * closes the claw to grab specimen
+     */
+    public void autoGrab() {
+        claw.setPosition(CLAW_CLOSED);
+    }
+
+    public void autoGoToBackPosition(){
+        setTargetPosition(CLIPPING_POSITION);
+        setState(LIFTING);
+    }
+
+    public boolean inPosition (){
+        return positionControl.inPosition;
+    }
+
     public void runStateMachine (){
 
         if (showTelemetry) {
@@ -108,7 +132,7 @@ public class ArmSubsystem {
 
             case READY:{
                 if (myOpMode.gamepad1.right_bumper){
-                    claw.setPosition(CLAW_CLOSED);
+                    autoGrab();
                     setState(GRABBING);
                 } else {
                     stop();
@@ -118,13 +142,6 @@ public class ArmSubsystem {
 
             case GRABBING:{
                 if (stateTime.time() > 0.2){
-                    setState(GRABBED);
-                }
-                break;
-            }
-
-            case GRABBED:{
-                if(true){
                     setTargetPosition(CLIPPING_POSITION);
                     setState(LIFTING);
                 }
@@ -139,9 +156,10 @@ public class ArmSubsystem {
             }
 
             case READY_TO_CLIP:{
-                if(myOpMode.gamepad1.square){
+                if(myOpMode.gamepad1.square || timeToClip){
                     setTargetPosition(CLIPPED_POSITON);
                     claw.setPosition(LOOSE_GRIP);
+                    timeToClip = false;
                     setState(CLIPPING);
                 } else if (myOpMode.gamepad1.circle){
                     setTargetPosition(HOME_POSITION);

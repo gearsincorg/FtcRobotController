@@ -21,10 +21,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 @Autonomous(name="GFORCE Autonomous", group = "AA")
 public class GFORCEAutonomous extends LinearOpMode
 {
+    ArmSubsystem arm = new ArmSubsystem(this);
 
     @Override public void runOpMode()
     {
         MecanumDrive robot = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        arm.initialize(true);
+        arm.autoGrab();
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to run Auto");
@@ -35,11 +38,27 @@ public class GFORCEAutonomous extends LinearOpMode
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
+            // swings arm back to push into submersible
+            arm.autoGoToBackPosition();
+
+            while (!arm.inPosition()){
+                arm.update();
+            }
+
+            arm.stop();
+
             Actions.runBlocking(
                     robot.actionBuilder(new Pose2d(0, 0, 0))
                             .lineToX(32)
                             .build());
 
+            arm.clipIt();
+
+            while (!arm.isHome()){
+                arm.update();
+            }
+
+            arm.stop();
 
         }
     }
