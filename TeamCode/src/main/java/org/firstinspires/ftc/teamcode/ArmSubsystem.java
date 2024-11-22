@@ -9,6 +9,10 @@ import static org.firstinspires.ftc.teamcode.ArmStates.LOWERING;
 import static org.firstinspires.ftc.teamcode.ArmStates.READY;
 import static org.firstinspires.ftc.teamcode.ArmStates.READY_TO_CLIP;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -237,4 +241,41 @@ public class ArmSubsystem {
         positionControl.reset(armSetPoint);
     }
 
+    //-------------------------------------------------------------------------
+    //ACTION  CLASSES
+    //-------------------------------------------------------------------------
+    public class ActionUpdate implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet){
+            update();
+            return true;
+        }
+    }
+
+    public Action actionUpdate(){
+        return new ActionUpdate();
+    }
+
+    public class ActionClipIt implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet){
+            clipIt();
+            return false;
+        }
+    }
+
+    public Action actionClipIt(){
+        return new ActionClipIt();
+    }
+
+    public class ActionWaitForHome implements Action {
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet){
+            return currentState != READY;
+        }
+    }
+
+    public Action actionWaitForHome(){
+        return new ActionWaitForHome();
+    }
 }

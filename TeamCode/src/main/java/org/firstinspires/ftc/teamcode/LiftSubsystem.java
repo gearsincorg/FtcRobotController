@@ -20,12 +20,21 @@ public class LiftSubsystem {
 
     public final double MAX_HEIGHT = 45;
     public final double MIN_HEIGHT = 8.5;
-    public final double HIGH_BASKET = 40;
+    public final double HIGH_BASKET = 44;
     public final double LOW_BASKET = 25 ;
     private final double HOLD_POWER = 0.05;
     private final double HOME_POWER = -0.6;
     private final double PITCH = 0.5;
     private final double YAW = 0.5;
+    private final double TILT_SIDE = 0.4;
+    private final double YAW_SIDE = 0.7;
+    private final double TILT_BUCKET_READY = 0.5;
+    private final double YAW_BUCKET_READY = 0.5;
+    private final double TILT_BACK = 0.6;
+    private final double YAW_BACK = 0.5;
+    private final double HELD = 0.5;
+    private final double OPENA = 0;
+    private final double OPENB = 1;
 
     private final double GAIN = 1.0;
     private final double ACCEL_LIMIT = 8.0;
@@ -143,44 +152,44 @@ public class LiftSubsystem {
         switch (position){
 
             case HOME:{
-                pitchServo.setPosition(0.5);
-                yawServo.setPosition(0.5);
-                holdServo.setPosition(1);
+                pitchServo.setPosition(TILT_BUCKET_READY);
+                yawServo.setPosition(YAW_BUCKET_READY);
+                holdServo.setPosition(OPENB);
                 break;
             }
 
             case HOME_READY:{
-                pitchServo.setPosition(0.5);
-                yawServo.setPosition(0.5);
-                holdServo.setPosition(0.5);
+                pitchServo.setPosition(TILT_BUCKET_READY);
+                yawServo.setPosition(YAW_BUCKET_READY);
+                holdServo.setPosition(HELD);
                 break;
             }
 
             case SIDE_DUMP_READY:{
-                pitchServo.setPosition(0.4);
-                yawServo.setPosition(0.7);
-                holdServo.setPosition(0.5);
+                pitchServo.setPosition(TILT_SIDE);
+                yawServo.setPosition(YAW_SIDE);
+                holdServo.setPosition(HELD);
                 break;
             }
 
             case SIDE_DUMP_RELEASE:{
-                pitchServo.setPosition(0.4);
-                yawServo.setPosition(0.7);
-                holdServo.setPosition(0);
+                pitchServo.setPosition(TILT_SIDE);
+                yawServo.setPosition(YAW_SIDE);
+                holdServo.setPosition(OPENA);
                 break;
             }
 
             case BACK_DUMP_READY:{
-                pitchServo.setPosition(0.7);
-                yawServo.setPosition(0.5);
-                holdServo.setPosition(0.5);
+                pitchServo.setPosition(TILT_BACK);
+                yawServo.setPosition(YAW_BACK);
+                holdServo.setPosition(HELD);
                 break;
             }
 
             case BACK_DUMP_RELEASE:{
-                pitchServo.setPosition(0.7);
-                yawServo.setPosition(0.5);
-                holdServo.setPosition(1);
+                pitchServo.setPosition(TILT_BACK);
+                yawServo.setPosition(YAW_BACK);
+                holdServo.setPosition(OPENB);
                 break;
             }
         }

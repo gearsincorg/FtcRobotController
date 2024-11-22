@@ -6,7 +6,11 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -22,12 +26,23 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 public class GFORCEAutonomous extends LinearOpMode
 {
     ArmSubsystem arm = new ArmSubsystem(this);
+    IntakeSubsystem intake = new IntakeSubsystem(this);
 
     @Override public void runOpMode()
     {
-        MecanumDrive robot = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        MecanumDrive robot = new MecanumDrive(hardwareMap, new Pose2d(4, -63, Math.PI / 2));
         arm.initialize(true);
         arm.autoGrab();
+        intake.initialize(true);
+
+
+        //build trajectories
+        TrajectoryActionBuilder wall2Sub = robot.actionBuilder(new Pose2d(4, -63, Math.PI / 2))
+                .lineToY(-29);
+
+        TrajectoryActionBuilder sub2S1 = robot.actionBuilder(new Pose2d(4, -29, Math.PI / 2))
+                .setTangent(- Math.PI / 2)
+                .splineToConstantHeading(new Vector2d(36, -24), Math.PI / 2);
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to run Auto");
@@ -41,24 +56,20 @@ public class GFORCEAutonomous extends LinearOpMode
             // swings arm back to push into submersible
             arm.autoGoToBackPosition();
 
-            while (!arm.inPosition()){
-                arm.update();
-            }
-
-            arm.stop();
-
             Actions.runBlocking(
-                    robot.actionBuilder(new Pose2d(0, 0, 0))
-                            .lineToX(32)
-                            .build());
+                    new ParallelAction(
+                            arm.actionUpdate(),
+                            new SequentialAction(
+                                    wall2Sub.build(),
+                                    arm.actionClipIt(),
+                                    arm.actionWaitForHome(),
+                                    sub2S1.build()
+                            )
+                    )
+            );
 
-            arm.clipIt();
 
-            while (!arm.isHome()){
-                arm.update();
-            }
 
-            arm.stop();
 
         }
     }

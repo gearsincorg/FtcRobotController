@@ -16,8 +16,8 @@ public class IntakeSubsystem {
     private final double INTAKE = -1;
     private final double EJECT = 1;
     private final double OFF = 0;
-    private final double WRIST_IN = 0;
-    private final double WRIST_OUT = 1;
+    private final double WRIST_IN = 0.4;
+    private final double WRIST_OUT = 0.75;
 
     //declaring servos for the intake
     private Servo leftLever;
