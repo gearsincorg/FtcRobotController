@@ -30,19 +30,37 @@ public class GFORCEAutonomous extends LinearOpMode
 
     @Override public void runOpMode()
     {
-        MecanumDrive robot = new MecanumDrive(hardwareMap, new Pose2d(4, -63, Math.PI / 2));
+        MecanumDrive robot = new MecanumDrive(hardwareMap, new Pose2d(4, -63, Math.toRadians(90)));
         arm.initialize(true);
         arm.autoGrab();
         intake.initialize(true);
 
 
         //build trajectories
-        TrajectoryActionBuilder wall2Sub = robot.actionBuilder(new Pose2d(4, -63, Math.PI / 2))
+        TrajectoryActionBuilder wallToSub = robot.actionBuilder(new Pose2d(4, -63, Math.toRadians(90)))
                 .lineToY(-29);
 
-        TrajectoryActionBuilder sub2S1 = robot.actionBuilder(new Pose2d(4, -29, Math.PI / 2))
-                .setTangent(- Math.PI / 2)
-                .splineToConstantHeading(new Vector2d(36, -24), Math.PI / 2);
+        TrajectoryActionBuilder subToS1 = robot.actionBuilder(new Pose2d(4, -29, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(35, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(40, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(46, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(46, -50), Math.toRadians(-90))
+                ;
+
+        TrajectoryActionBuilder s1ToS2 = robot.actionBuilder(new Pose2d(46, -50, Math.toRadians(90)))
+                .splineToConstantHeading(new Vector2d(46, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(52, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(58, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(58, -50), Math.toRadians(-90))
+                ;
+
+        TrajectoryActionBuilder s2ToS3 = robot.actionBuilder(new Pose2d(58, -50, Math.toRadians(90)))
+                .splineToConstantHeading(new Vector2d(58, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(62, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(68, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(68, -50), Math.toRadians(-90))
+                ;
 
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to run Auto");
@@ -60,10 +78,12 @@ public class GFORCEAutonomous extends LinearOpMode
                     new ParallelAction(
                             arm.actionUpdate(),
                             new SequentialAction(
-                                    wall2Sub.build(),
+                                    wallToSub.build(),
                                     arm.actionClipIt(),
                                     arm.actionWaitForHome(),
-                                    sub2S1.build()
+                                    subToS1.build(),
+                                    s1ToS2.build(),
+                                    s2ToS3.build()
                             )
                     )
             );

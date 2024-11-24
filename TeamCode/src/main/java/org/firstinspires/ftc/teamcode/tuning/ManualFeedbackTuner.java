@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.TwoDeadWheelLocalizer;
 
 public final class ManualFeedbackTuner extends LinearOpMode {
-    public static double DISTANCE = 12;
+    public static double DISTANCE = 48;
 
     @Override
     public void runOpMode() throws InterruptedException {
