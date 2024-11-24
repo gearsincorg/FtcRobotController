@@ -42,24 +42,34 @@ public class GFORCEAutonomous extends LinearOpMode
 
         TrajectoryActionBuilder subToS1 = robot.actionBuilder(new Pose2d(4, -29, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(35, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(40, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(36, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(41, -12), Math.toRadians(0))
                 .splineToConstantHeading(new Vector2d(46, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(46, -50), Math.toRadians(-90))
-                ;
+                .splineToConstantHeading(new Vector2d(46, -45), Math.toRadians(90))
 
-        TrajectoryActionBuilder s1ToS2 = robot.actionBuilder(new Pose2d(46, -50, Math.toRadians(90)))
                 .splineToConstantHeading(new Vector2d(46, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(52, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(58, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(58, -50), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(51, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(56, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(56, -45), Math.toRadians(90))
+
+                .splineToConstantHeading(new Vector2d(56, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(61, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(66, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(66, -45), Math.toRadians(90))
                 ;
 
-        TrajectoryActionBuilder s2ToS3 = robot.actionBuilder(new Pose2d(58, -50, Math.toRadians(90)))
-                .splineToConstantHeading(new Vector2d(58, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(62, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(68, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(68, -50), Math.toRadians(-90))
+        TrajectoryActionBuilder s1ToS2 = robot.actionBuilder(new Pose2d(45, -50, Math.toRadians(90)))
+                .splineToConstantHeading(new Vector2d(45, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(50, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(55, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(55, -50), Math.toRadians(90))
+                ;
+
+        TrajectoryActionBuilder s2ToS3 = robot.actionBuilder(new Pose2d(55, -50, Math.toRadians(90)))
+                .splineToConstantHeading(new Vector2d(55, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(60, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(65, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(65, -50), Math.toRadians(90))
                 ;
 
         // Wait for driver to press start
@@ -81,9 +91,7 @@ public class GFORCEAutonomous extends LinearOpMode
                                     wallToSub.build(),
                                     arm.actionClipIt(),
                                     arm.actionWaitForHome(),
-                                    subToS1.build(),
-                                    s1ToS2.build(),
-                                    s2ToS3.build()
+                                    subToS1.build()
                             )
                     )
             );

@@ -53,7 +53,7 @@ public class GFORCETeleop extends LinearOpMode
 
     // get an instance of the "Robot" class.
     LiftSubsystem lift = new LiftSubsystem(this);
-    //VisionSubsystem camera = new VisionSubsystem(this);
+    VisionSubsystem camera = new VisionSubsystem(this);
     ArmSubsystem arm = new ArmSubsystem(this);
     IntakeSubsystem intake = new IntakeSubsystem(this);
 
@@ -65,7 +65,7 @@ public class GFORCETeleop extends LinearOpMode
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         // Initialize the drive hardware & Turn on telemetry
-       // camera.initilaize(true);
+        camera.initilaize(true);
         lift.initialize(true);
         arm.initialize(true);
         intake.initialize(true);
@@ -133,7 +133,7 @@ public class GFORCETeleop extends LinearOpMode
 
 
 
-            /*if (gamepad1.right_trigger > 0.25) {
+            if (gamepad1.right_trigger > 0.25) {
                 double xError = 0 - camera.getTargetX();
                 strafe = xError * STRAFE_GAIN;
 

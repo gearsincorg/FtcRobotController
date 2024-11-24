@@ -46,7 +46,8 @@ public class VisionSubsystem {
         this.showTelemetry = showTelemetry;
     }
 
-    public double getTargetX (){
+    public double
+    getTargetX (){
 
         double   center = 0;
 
