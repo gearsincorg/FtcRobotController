@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import android.util.Size;
 
+import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -18,17 +19,24 @@ public class VisionSubsystem {
     private final int CAMERA_WIDTH = 320;
     private final int CAMERA_HEIGHT = 240;
     private final int MIDDLE_VALUE = CAMERA_WIDTH/2;
+    private final int BACK_SONAR_PORT = 4;
+    private final double SONAR_OFFSET = 2.0;  //  Distance from sonar to back of robot.
 
     private LinearOpMode myOpMode;
     private boolean showTelemetry     = false;
+
     ColorBlobLocatorProcessor colorLocator;
+
+    public OctoQuad octoquad;
+    private OctoQuad.EncoderDataBlock encoderDataBlock = new OctoQuad.EncoderDataBlock();
 
     // Vision Constructor
     public VisionSubsystem(LinearOpMode opmode) {myOpMode = opmode;}
 
     public void initilaize(boolean showTelemetry){
 
-       colorLocator = new ColorBlobLocatorProcessor.Builder()
+        // Create Color Blob Processor for vision system
+        colorLocator = new ColorBlobLocatorProcessor.Builder()
                 .setTargetColorRange(ColorRange.BLUE)         // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
                 .setRoi(ImageRegion.entireFrame())  // search central 1/4 of camera view
@@ -36,11 +44,20 @@ public class VisionSubsystem {
                 .setBlurSize(5)                               // Smooth the transitions between different colors in image
                 .build();
 
+        // Attach to camera and add BlobLocator
         VisionPortal portal = new VisionPortal.Builder()
                 .addProcessor(colorLocator)
                 .setCameraResolution(new Size(CAMERA_WIDTH, CAMERA_HEIGHT))
                 .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .build();
+
+        // Connect to the OctoQuad by looking up its name in the hardwareMap.
+        // Clear out all prior settings and encoder data before setting up desired configuration
+        // Assume first 4 channels are relative encoders and the next 4 are absolute encoders
+        octoquad = myOpMode.hardwareMap.get(OctoQuad.class, "octoquad");
+        octoquad.resetEverything();
+        octoquad.setChannelBankConfig(OctoQuad.ChannelBankConfig.BANK1_QUADRATURE_BANK2_PULSE_WIDTH);
+        octoquad.saveParametersToFlash();
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -68,8 +85,18 @@ public class VisionSubsystem {
                 myOpMode.telemetry.addLine("no targets found");
             }
         }
-
-
         return center;
+    }
+
+    // Determine distance from back of robot to perimeter wall, in inches.
+    public double getBackRangeInches() {
+        octoquad.readAllEncoderData(encoderDataBlock);
+
+        double range = (encoderDataBlock.positions[BACK_SONAR_PORT] / 25.4) - SONAR_OFFSET;
+
+        if (showTelemetry){
+            myOpMode.telemetry.addData("Sonar Range", "%4.2f in.", range);
+        }
+        return (range);
     }
 }
