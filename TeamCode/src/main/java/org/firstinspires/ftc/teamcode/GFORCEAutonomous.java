@@ -35,7 +35,6 @@ public class GFORCEAutonomous extends LinearOpMode
         arm.autoGrab();
         intake.initialize(true);
 
-
         //build trajectories
         TrajectoryActionBuilder wallToSub = robot.actionBuilder(new Pose2d(4, -63, Math.toRadians(90)))
                 .lineToY(-29);
@@ -58,20 +57,6 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineToConstantHeading(new Vector2d(66, -45), Math.toRadians(90))
                 ;
 
-        TrajectoryActionBuilder s1ToS2 = robot.actionBuilder(new Pose2d(45, -50, Math.toRadians(90)))
-                .splineToConstantHeading(new Vector2d(45, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(50, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(55, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(55, -50), Math.toRadians(90))
-                ;
-
-        TrajectoryActionBuilder s2ToS3 = robot.actionBuilder(new Pose2d(55, -50, Math.toRadians(90)))
-                .splineToConstantHeading(new Vector2d(55, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(60, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(65, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(65, -50), Math.toRadians(90))
-                ;
-
         // Wait for driver to press start
         telemetry.addData(">", "Touch Play to run Auto");
         telemetry.update();
@@ -81,24 +66,19 @@ public class GFORCEAutonomous extends LinearOpMode
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
-            // swings arm back to push into submersible
+            // Score on submersible and then push three samples into obs zone
             arm.autoGoToBackPosition();
-
             Actions.runBlocking(
                     new ParallelAction(
                             arm.actionUpdate(),
                             new SequentialAction(
                                     wallToSub.build(),
                                     arm.actionClipIt(),
-                                    arm.actionWaitForHome(),
+                                    arm.actionWaitForState(ArmStates.READY),
                                     subToS1.build()
                             )
                     )
             );
-
-
-
-
         }
     }
 }

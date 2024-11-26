@@ -242,8 +242,9 @@ public class ArmSubsystem {
     }
 
     //-------------------------------------------------------------------------
-    //ACTION  CLASSES
+    // ACTION  methods
     //-------------------------------------------------------------------------
+    /*
     public class ActionUpdate implements Action {
         @Override
         public boolean run(@NonNull TelemetryPacket packet){
@@ -255,27 +256,34 @@ public class ArmSubsystem {
     public Action actionUpdate(){
         return new ActionUpdate();
     }
+    */
 
-    public class ActionClipIt implements Action {
-        @Override
-        public boolean run(@NonNull TelemetryPacket packet){
-            clipIt();
-            return false;
-        }
+    public Action actionUpdate(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                update();
+                return true;
+            }
+        };
     }
 
     public Action actionClipIt(){
-        return new ActionClipIt();
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                clipIt();
+                return false;
+            }
+        };
     }
 
-    public class ActionWaitForHome implements Action {
-        @Override
-        public boolean run(@NonNull TelemetryPacket packet){
-            return currentState != READY;
-        }
-    }
-
-    public Action actionWaitForHome(){
-        return new ActionWaitForHome();
+    public Action actionWaitForState(ArmStates state){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                return currentState != state;
+            }
+        };
     }
 }

@@ -148,14 +148,17 @@ public class GFORCETeleop extends LinearOpMode
             // Implement Auto Specimen Tracking
             // Center on Specimen and approach quickly at first and then slow down.
             if (gamepad1.right_trigger > 0.25) {
-                double xError = 0 - vision.getTargetX();
-                strafe = xError * STRAFE_GAIN;
+                ColorTarget target = vision.getTarget();
+                if (target.valid) {
+                    double xError = target.x;
+                    strafe = xError * STRAFE_GAIN;
 
-                double yError = vision.getBackRangeInches();
-                if ((yError > 5) && (Math.abs(xError) < IN_FRONT_ANGLE)) {
-                    drive =APPROACH_SPEED;
-                } else if ((yError <= 5) && (Math.abs(xError) < VERY_IN_FRONT_ANGLE)) {
-                    drive =CLICK_ON_SPEED;
+                    double yError = vision.getBackRangeInches();
+                    if ((yError > 5) && (Math.abs(xError) < IN_FRONT_ANGLE)) {
+                        drive = APPROACH_SPEED;
+                    } else if ((yError <= 5) && (Math.abs(xError) < VERY_IN_FRONT_ANGLE)) {
+                        drive = CLICK_ON_SPEED;
+                    }
                 }
             }
 
@@ -213,18 +216,20 @@ public class GFORCETeleop extends LinearOpMode
     void setHeadingDeg(double heading) {
         robot.pose = new Pose2d(robot.pose.position.x, robot.pose.position.y, Math.toRadians(heading));
     }
-}
 
+    // worker class to rotate vectors
+    class RotateVector {
+        Vector2d rotated;
+        double x;
+        double y;
 
-class RotateVector {
-    Vector2d rotated;
-    double x;
-    double y;
-
-    // Constructor
-    public RotateVector(Vector2d vector, double angleR) {
-        x = vector.x * Math.cos(angleR) - vector.y * Math.sin(angleR);
-        y = vector.x * Math.sin(angleR) + vector.y * Math.cos(angleR);
-        rotated = new Vector2d(x,y);
+        // Constructor
+        public RotateVector(Vector2d vector, double angleR) {
+            x = vector.x * Math.cos(angleR) - vector.y * Math.sin(angleR);
+            y = vector.x * Math.sin(angleR) + vector.y * Math.cos(angleR);
+            rotated = new Vector2d(x,y);
+        }
     }
 }
+
+
