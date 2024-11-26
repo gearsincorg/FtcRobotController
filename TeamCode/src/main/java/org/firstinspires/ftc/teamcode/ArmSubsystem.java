@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.teamcode.ArmStates.CANCEL;
 import static org.firstinspires.ftc.teamcode.ArmStates.CLIPPING;
+import static org.firstinspires.ftc.teamcode.ArmStates.GRABBED;
 import static org.firstinspires.ftc.teamcode.ArmStates.GRABBING;
 import static org.firstinspires.ftc.teamcode.ArmStates.LIFTING;
 import static org.firstinspires.ftc.teamcode.ArmStates.LOWERING;
@@ -67,7 +68,7 @@ public class ArmSubsystem {
         arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);  // Requires motor encoder cables to be hooked up.
 
         claw = myOpMode.hardwareMap.get(Servo.class, "claw");
-        claw.setPosition(CLAW_OPEN);
+        claw.setPosition(CLAW_CLOSED);
 
         homeTheArm();
         setTargetPosition(currentPosition);
@@ -90,36 +91,12 @@ public class ArmSubsystem {
         }
     }
 
-    public void setPower(double power){
-        arm.setPower(power);
-    }
-
     public void stop(){
         arm.setPower(0);
     }
 
-    public void hold(){
-        arm.setPower(HOLD_POWER);
-    }
-
     public void clipIt(){
         timeToClip = true;
-    }
-
-    public boolean isHome(){
-        return currentState == READY;
-    }
-
-    /**
-     * closes the claw to grab specimen
-     */
-    public void autoGrab() {
-        claw.setPosition(CLAW_CLOSED);
-    }
-
-    public void autoGoToBackPosition(){
-        setTargetPosition(CLIPPING_POSITION);
-        setState(LIFTING);
     }
 
     public boolean inPosition (){
@@ -136,7 +113,7 @@ public class ArmSubsystem {
 
             case READY:{
                 if (myOpMode.gamepad1.right_bumper){
-                    autoGrab();
+                    claw.setPosition(CLAW_CLOSED);
                     setState(GRABBING);
                 } else {
                     stop();
@@ -145,12 +122,19 @@ public class ArmSubsystem {
             }
 
             case GRABBING:{
+                claw.setPosition(CLAW_CLOSED);
                 if (stateTime.time() > 0.2){
-                    setTargetPosition(CLIPPING_POSITION);
-                    setState(LIFTING);
+                    setState(GRABBED);
                 }
                 break;
             }
+
+            case GRABBED:{
+                setTargetPosition(CLIPPING_POSITION);
+                setState(LIFTING);
+                break;
+            }
+
 
             case LIFTING:{
                 if(positionControl.inPosition()){
@@ -196,8 +180,6 @@ public class ArmSubsystem {
             }
         }
     }
-
-
 
     public void setState (ArmStates newState){
         currentState = newState;
@@ -273,6 +255,16 @@ public class ArmSubsystem {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 clipIt();
+                return false;
+            }
+        };
+    }
+
+    public Action actionSetState(ArmStates state){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setState(state);
                 return false;
             }
         };

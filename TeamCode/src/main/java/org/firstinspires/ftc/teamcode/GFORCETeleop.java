@@ -54,6 +54,7 @@ public class GFORCETeleop extends LinearOpMode
 
     // get an instance of each of the subsystems
     MecanumDrive    robot   = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+    OctoQuadIF      octoQuad= new OctoQuadIF(this);
     LiftSubsystem   lift    = new LiftSubsystem(this);
     VisionSubsystem vision  = new VisionSubsystem(this);
     ArmSubsystem    arm     = new ArmSubsystem(this);
@@ -65,6 +66,7 @@ public class GFORCETeleop extends LinearOpMode
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         // Initialize the drive hardware & Turn on telemetry
+        octoQuad.initialize(true);
         vision.initilaize(true);
         lift.initialize(true);
         arm.initialize(true);
@@ -153,7 +155,7 @@ public class GFORCETeleop extends LinearOpMode
                     double xError = target.x;
                     strafe = xError * STRAFE_GAIN;
 
-                    double yError = vision.getBackRangeInches();
+                    double yError = octoQuad.getBackRangeInches();
                     if ((yError > 5) && (Math.abs(xError) < IN_FRONT_ANGLE)) {
                         drive = APPROACH_SPEED;
                     } else if ((yError <= 5) && (Math.abs(xError) < VERY_IN_FRONT_ANGLE)) {

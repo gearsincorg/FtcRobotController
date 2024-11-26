@@ -15,25 +15,21 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-/*
- * This OpMode illustrates an autonomous opmode using simple Odometry
- * All robot functions are performed by an external "Robot" class that manages all hardware interactions.
- * Pure Drive or Strafe motions are maintained using two Odometry Wheels.
- * The IMU gyro is used to stabilize the heading during all motions
- */
-
 @Autonomous(name="GFORCE Autonomous", group = "AA")
 public class GFORCEAutonomous extends LinearOpMode
 {
+    OctoQuadIF   octoQuad = new OctoQuadIF(this);
     ArmSubsystem arm = new ArmSubsystem(this);
     IntakeSubsystem intake = new IntakeSubsystem(this);
+    VisionSubsystem blob = new VisionSubsystem(this);
 
     @Override public void runOpMode()
     {
         MecanumDrive robot = new MecanumDrive(hardwareMap, new Pose2d(4, -63, Math.toRadians(90)));
+        octoQuad.initialize(true);
         arm.initialize(true);
-        arm.autoGrab();
         intake.initialize(true);
+        blob.initilaize(true);
 
         //build trajectories
         TrajectoryActionBuilder wallToSub = robot.actionBuilder(new Pose2d(4, -63, Math.toRadians(90)))
@@ -67,11 +63,11 @@ public class GFORCEAutonomous extends LinearOpMode
         if (opModeIsActive())
         {
             // Score on submersible and then push three samples into obs zone
-            arm.autoGoToBackPosition();
             Actions.runBlocking(
                     new ParallelAction(
                             arm.actionUpdate(),
                             new SequentialAction(
+                                    arm.actionSetState(ArmStates.GRABBED),
                                     wallToSub.build(),
                                     arm.actionClipIt(),
                                     arm.actionWaitForState(ArmStates.READY),
