@@ -165,7 +165,7 @@ public class ArmSubsystem {
             }
 
             case CLIPPING:{
-                if(stateTime.time() > 0.3){
+                if(stateTime.time() > 0.4){
                     setTargetPosition(HOME_POSITION);
                     claw.setPosition(CLAW_OPEN);
                     setState(LOWERING);

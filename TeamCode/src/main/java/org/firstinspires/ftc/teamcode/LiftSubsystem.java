@@ -28,7 +28,7 @@ public class LiftSubsystem {
     private final double YAW = 0.5;
     private final double TILT_SIDE = 0.4;
     private final double YAW_SIDE = 0.7;
-    private final double TILT_BUCKET_READY = 0.5;
+    private final double TILT_BUCKET_READY = 0.55;
     private final double YAW_BUCKET_READY = 0.5;
     private final double TILT_BACK = 0.6;
     private final double YAW_BACK = 0.5;

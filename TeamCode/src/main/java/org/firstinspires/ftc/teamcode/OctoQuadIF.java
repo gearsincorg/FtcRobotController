@@ -13,11 +13,13 @@ public class OctoQuadIF {
     static final float OQ_IMU_SCALAR = 1.0323f;
     static final int OQ_PORT_X = 1;
     static final int OQ_PORT_Y = 2;
+    static final int SONAR_PORT = 4;
 
     private OctoQuad            oq;
     private EncoderDataBlock    encoderDataBlock = new EncoderDataBlock();
     private LinearOpMode        myOpMode;
     private boolean             showTelemetry = false;
+    private double range = 0;
 
     // Arm Constructor
     public OctoQuadIF(LinearOpMode opmode) {
@@ -58,16 +60,17 @@ public class OctoQuadIF {
 
         // Read all the desired data
         oq.readAllEncoderData(encoderDataBlock);
+        range = (encoderDataBlock.positions[SONAR_PORT] / 25.4);
+        if (showTelemetry){
+            myOpMode.telemetry.addData("Sonar Range", "%4.2f in.", range);
+        }
 
     }
 
     // Determine the distance from the back of robot to the perimeter wall (in inches).
     public double getBackRangeInches() {
-
-        double range = (encoderDataBlock.positions[4] / 25.4) - 2;
-
-        myOpMode.telemetry.addData("Sonar Range", "%4.2f in.", range);
         return (range);
+
     }
 
 }

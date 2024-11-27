@@ -54,8 +54,8 @@ public class GFORCETeleop extends LinearOpMode
     public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, YAW_MAX_AUTO, YAW_TOLERANCE,YAW_DEADBAND, true);
 
     // get an instance of each of the subsystems
-    MecanumDrive    robot   = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
-    OctoQuadIF      octoQuad= new OctoQuadIF(this);
+    MecanumDrive    robot   ;
+    OctoQuadIF      octoQuad = new OctoQuadIF(this);
     LiftSubsystem   lift    = new LiftSubsystem(this);
     VisionSubsystem vision  = new VisionSubsystem(this);
     ArmSubsystem    arm     = new ArmSubsystem(this);
@@ -63,6 +63,7 @@ public class GFORCETeleop extends LinearOpMode
 
     @Override public void runOpMode()
     {
+        robot   = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -80,6 +81,7 @@ public class GFORCETeleop extends LinearOpMode
             // Read and display sensor data
             lift.update();
             arm.update();
+            vision.getTarget();
             telemetry.update();
         }
 
@@ -90,6 +92,7 @@ public class GFORCETeleop extends LinearOpMode
             // Get the latest sensor data every time around the loop.
             lift.update();
             arm.update();
+            octoQuad.update();
             fieldCentric = USE_FIELD_CENTRIC_MODE;
 
             // update the robot's position based on the odometry pods.
@@ -131,9 +134,9 @@ public class GFORCETeleop extends LinearOpMode
             }
 
             if (gamepad2.right_trigger > 0.5){
-                intake.in();
+                intake.leverIn();
             } else if (gamepad2.right_bumper){
-                intake.out();
+                intake.leverOut();
             }
 
             if (gamepad2.start){
@@ -142,9 +145,9 @@ public class GFORCETeleop extends LinearOpMode
 
             //  collecter test
             if (gamepad2.dpad_up){
-                intake.intake();
-            } else if (gamepad2.dpad_down){
                 intake.eject();
+                } else if (gamepad2.dpad_down){
+                intake.intake();
             } else{
                 intake.off();
             }
