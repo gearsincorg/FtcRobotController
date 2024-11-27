@@ -47,6 +47,7 @@ public class GFORCETeleop extends LinearOpMode
     // local parameters
     ElapsedTime stopTime   = new ElapsedTime();  // Use for timeouts.
     boolean autoHeading    = false; // used to indicate when heading should be locked.
+    boolean fieldCentric   = false;
     double headingDeg = 0;
     double turnrate = 0;
     Vector2d translate = new Vector2d(0,0);
@@ -89,6 +90,7 @@ public class GFORCETeleop extends LinearOpMode
             // Get the latest sensor data every time around the loop.
             lift.update();
             arm.update();
+            fieldCentric = USE_FIELD_CENTRIC_MODE;
 
             // update the robot's position based on the odometry pods.
             robot.updatePoseEstimate();
@@ -152,10 +154,13 @@ public class GFORCETeleop extends LinearOpMode
             if (gamepad1.right_trigger > 0.25) {
                 ColorTarget target = vision.getTarget();
                 if (target.valid) {
+
+                    fieldCentric = false;  // disable this mode for sample tracking
                     double xError = target.x;
+                    double yError = octoQuad.getBackRangeInches();
+
                     strafe = xError * STRAFE_GAIN;
 
-                    double yError = octoQuad.getBackRangeInches();
                     if ((yError > 5) && (Math.abs(xError) < IN_FRONT_ANGLE)) {
                         drive = APPROACH_SPEED;
                     } else if ((yError <= 5) && (Math.abs(xError) < VERY_IN_FRONT_ANGLE)) {
