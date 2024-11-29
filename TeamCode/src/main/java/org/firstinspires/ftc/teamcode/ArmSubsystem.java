@@ -119,7 +119,7 @@ public class ArmSubsystem {
 
             case GRABBING:{
                 claw.setPosition(CLAW_CLOSED);
-                if (stateTime.time() > 0.2){
+                if (stateTime.time() > 0.3){
                     setState(GRABBED);
                 }
                 break;
@@ -217,6 +217,10 @@ public class ArmSubsystem {
     public void setTargetPosition(int setPoint){
         armSetPoint = setPoint;
         positionControl.reset(armSetPoint);
+    }
+
+    public void openClaw (){
+        claw.setPosition(CLAW_OPEN);
     }
 
     //-------------------------------------------------------------------------

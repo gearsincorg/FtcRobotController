@@ -18,9 +18,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class LiftSubsystem {
 
-    public final double MAX_HEIGHT = 45;
+    public final double MAX_HEIGHT = 48;
     public final double MIN_HEIGHT = 8.5;
-    public final double HIGH_BASKET = 44;
+    public final double HIGH_BASKET = 47;
     public final double LOW_BASKET = 25 ;
     private final double HOLD_POWER = 0.05;
     private final double HOME_POWER = -0.6;
@@ -28,9 +28,9 @@ public class LiftSubsystem {
     private final double YAW = 0.5;
     private final double TILT_SIDE = 0.4;
     private final double YAW_SIDE = 0.7;
-    private final double TILT_BUCKET_READY = 0.55;
+    private final double TILT_BUCKET_READY = 0.54;
     private final double YAW_BUCKET_READY = 0.5;
-    private final double TILT_BACK = 0.6;
+    private final double TILT_BACK = 0.65;
     private final double YAW_BACK = 0.5;
     private final double HELD = 0.5;
     private final double OPENA = 0;
@@ -39,8 +39,8 @@ public class LiftSubsystem {
     private final double GAIN = 1.0;
     private final double ACCEL_LIMIT = 8.0;
     private final double OUTPUT_LIMIT = 1;
-    private final double TOLERANCE = 0.75;
-    private final double DEADBAND = 0.25;
+    private final double TOLERANCE = 1;
+    private final double DEADBAND = 0.50;
 
     private final double SLOPE = 0.0123;
     private final double OFFSET = 8.25;
@@ -154,7 +154,7 @@ public class LiftSubsystem {
             case HOME:{
                 pitchServo.setPosition(TILT_BUCKET_READY);
                 yawServo.setPosition(YAW_BUCKET_READY);
-                holdServo.setPosition(OPENB);
+                holdServo.setPosition(HELD);
                 break;
             }
 
@@ -205,11 +205,7 @@ public class LiftSubsystem {
         switch (currentState) {
 
             case HOME:{
-                if (sampleCollected){
-                    setBucketPosition(BucketPositions.HOME_READY);
-
-                    setState(SAMPLE_HELD);
-                }
+                setState(SAMPLE_HELD);
                 break;
             }
 

@@ -32,17 +32,19 @@ public class GFORCETeleop extends LinearOpMode
     final double SAFE_YAW_SPEED     = 0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double IN_FRONT_ANGLE = 0.14 ;
     final double VERY_IN_FRONT_ANGLE = 0.05 ;
-    final double CLICK_ON_SPEED = 0.2 ;
-    final double APPROACH_SPEED = 0.3 ;
+    final double CLICK_ON_SPEED = -0.2 ;
+    final double APPROACH_SPEED = -0.3 ;
     final double STRAFE_GAIN = 1.5 ;
+    final double WITHIN_RANGE   = 2.00 ;
 
-    final boolean USE_FIELD_CENTRIC_MODE = false;
+    final boolean USE_FIELD_CENTRIC_MODE = true;
 
     private static final double YAW_GAIN            = 0.02;    // Strength of Yaw position control 0.018
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
+
 
     // local parameters
     ElapsedTime stopTime   = new ElapsedTime();  // Use for timeouts.
@@ -77,6 +79,8 @@ public class GFORCETeleop extends LinearOpMode
         while(opModeInInit()) {
             telemetry.addData(">", "Touch Play to drive");
 
+            arm.openClaw();
+
             // Read and display sensor data
             robot.updatePoseEstimate();
             lift.update();
@@ -102,14 +106,14 @@ public class GFORCETeleop extends LinearOpMode
 
             // Let the driver reset the heading to one of the 4 ordinals.
             if (gamepad1.touchpad) {
-                if (gamepad1.y) {
-                    setHeadingDeg(90);
-                } else if (gamepad1.b) {
+                if (gamepad1.triangle) {
                     setHeadingDeg(0);
-                } else if (gamepad1.a) {
+                } else if (gamepad1.circle) {
                     setHeadingDeg(-90);
-                } else if (gamepad1.x) {
+                } else if (gamepad1.cross) {
                     setHeadingDeg(180);
+                } else if (gamepad1.square) {
+                    setHeadingDeg(90);
                 }
             }
 
@@ -164,12 +168,19 @@ public class GFORCETeleop extends LinearOpMode
                     double xError = target.x;
                     double yError = octoQuad.getBackRangeInches();
 
-                    strafe = xError * STRAFE_GAIN;
+                    if ((Math.abs(yError) > WITHIN_RANGE) || (yError == 0)) {
 
-                    if ((yError > 5) && (Math.abs(xError) < IN_FRONT_ANGLE)) {
-                        drive = APPROACH_SPEED;
-                    } else if ((yError <= 5) && (Math.abs(xError) < VERY_IN_FRONT_ANGLE)) {
-                        drive = CLICK_ON_SPEED;
+
+                        strafe = xError * STRAFE_GAIN;
+
+                        if ((yError > 5) && (Math.abs(xError) < IN_FRONT_ANGLE)) {
+                            drive = APPROACH_SPEED;
+                        } else if ((yError <= 5) && (Math.abs(xError) < VERY_IN_FRONT_ANGLE)) {
+                            drive = CLICK_ON_SPEED;
+                        }
+                    } else {
+                        drive = 0;
+                        strafe =0;
                     }
                 }
             }
