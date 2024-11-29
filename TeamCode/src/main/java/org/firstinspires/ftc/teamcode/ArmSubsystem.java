@@ -95,10 +95,6 @@ public class ArmSubsystem {
         arm.setPower(0);
     }
 
-    public void clipIt(){
-        timeToClip = true;
-    }
-
     public boolean inPosition (){
         return positionControl.inPosition;
     }
@@ -226,19 +222,6 @@ public class ArmSubsystem {
     //-------------------------------------------------------------------------
     // ACTION  methods
     //-------------------------------------------------------------------------
-    /*
-    public class ActionUpdate implements Action {
-        @Override
-        public boolean run(@NonNull TelemetryPacket packet){
-            update();
-            return true;
-        }
-    }
-
-    public Action actionUpdate(){
-        return new ActionUpdate();
-    }
-    */
 
     public Action actionUpdate(){
         return new Action() {
@@ -254,7 +237,7 @@ public class ArmSubsystem {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                clipIt();
+                timeToClip = true;
                 return false;
             }
         };
