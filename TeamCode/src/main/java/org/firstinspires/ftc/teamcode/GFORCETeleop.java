@@ -36,7 +36,7 @@ public class GFORCETeleop extends LinearOpMode
     final double APPROACH_SPEED = 0.3 ;
     final double STRAFE_GAIN = 1.5 ;
 
-    final boolean USE_FIELD_CENTRIC_MODE = true;
+    final boolean USE_FIELD_CENTRIC_MODE = false;
 
     private static final double YAW_GAIN            = 0.02;    // Strength of Yaw position control 0.018
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
@@ -63,8 +63,7 @@ public class GFORCETeleop extends LinearOpMode
 
     @Override public void runOpMode()
     {
-        robot   = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
-
+        robot     = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         // Initialize the drive hardware & Turn on telemetry
@@ -79,12 +78,15 @@ public class GFORCETeleop extends LinearOpMode
             telemetry.addData(">", "Touch Play to drive");
 
             // Read and display sensor data
+            robot.updatePoseEstimate();
             lift.update();
             arm.update();
             vision.getTarget();
             telemetry.update();
         }
 
+        // Reset pose and mechanisms
+        robot.pose = new Pose2d(0,0,0);
         lift.resetEncoders();
 
         while (opModeIsActive())
