@@ -92,6 +92,7 @@ public class GFORCETeleop extends LinearOpMode
             lift.update();
             arm.update();
             vision.getTarget();
+            intake.update();
             telemetry.update();
         }
 
@@ -104,6 +105,8 @@ public class GFORCETeleop extends LinearOpMode
             // Get the latest sensor data every time around the loop.
             lift.update();
             arm.update();
+            intake.update();
+
             octoQuad.update();
             fieldCentric = USE_FIELD_CENTRIC_MODE;
 
@@ -154,7 +157,7 @@ public class GFORCETeleop extends LinearOpMode
             //  collecter test
             if (gamepad2.dpad_up){
                 intake.eject();
-                } else if (gamepad2.dpad_down){
+            } else if (gamepad2.dpad_down && !intake.gotSample){
                 intake.intake();
             } else{
                 intake.off();

@@ -1,12 +1,29 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.BLUE;
+import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.NONE;
+import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.RED;
+import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.YELLOW;
+
+import android.graphics.Color;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
 public class IntakeSubsystem {
+
+    // public members
+    public boolean     gotSample   = false;
+    public SampleColor sampleColor = NONE;
+
     //declaring telemetry
     private boolean showTelemetry     = false;
 
@@ -19,7 +36,7 @@ public class IntakeSubsystem {
     private final double EJECT = -1;
     private final double OFF = 0;
     private final double WRIST_IN = 0.4;
-    private final double WRIST_OUT = 0.7;
+    private final double WRIST_OUT = 0.68;
     private final double WRIST_COLLECT = 0.87;
 
 
@@ -30,9 +47,13 @@ public class IntakeSubsystem {
     private CRServo rightWheel;
     private Servo backwrist;
     private Servo frontwrist;
+    private Servo colorLED;
     private DcMotor wheelMotor;
+    NormalizedColorSensor colorSensor;
+
 
     private boolean wristOut = false;
+    private final float[] hsvValues = new float[3];
 
     private LinearOpMode myOpMode;
 
@@ -46,7 +67,12 @@ public class IntakeSubsystem {
         wheelMotor = myOpMode.hardwareMap.get(DcMotor.class, "par");
         backwrist = myOpMode.hardwareMap.get(Servo.class, "frontwrist");
         frontwrist = myOpMode.hardwareMap.get(Servo.class, "backwrist");
+
+        colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
+        colorLED = myOpMode.hardwareMap.get(Servo.class, "led");
+
         wheelMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        colorSensor.setGain(8);
 
         leverIn();
         off();
@@ -54,6 +80,47 @@ public class IntakeSubsystem {
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
+    }
+
+    public void update() {
+
+        // process color sensor
+        double range = ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM);
+
+        int hue = -1;
+
+        if ((range > 0.5) && (range  < 6.5)) {
+
+            NormalizedRGBA colors = colorSensor.getNormalizedColors();
+            Color.colorToHSV(colors.toColor(), hsvValues);
+            hue = (int)hsvValues[0];
+
+            if (hue < 60) {
+                gotSample = true;
+                sampleColor = RED;
+                colorLED.setPosition(.3);
+            } else if (hue < 170) {
+                gotSample = true;
+                sampleColor = YELLOW;
+                colorLED.setPosition(.35);
+            }  else if (hue > 190) {
+                gotSample = true;
+                sampleColor = BLUE;
+                colorLED.setPosition(.6);
+            } else {
+                gotSample = true;
+                sampleColor = NONE;
+                colorLED.setPosition(0);
+            }
+        } else {
+            gotSample = false;
+            sampleColor = NONE;
+            colorLED.setPosition(0);
+        }
+
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Sample", "hue %d %s Color %s range %f",hue ,  gotSample ? "Found" : "Not Found", sampleColor, range);
+        }
     }
 
     public void leverOut(){
@@ -106,4 +173,5 @@ public class IntakeSubsystem {
         backwrist.setPosition(position);
         frontwrist.setPosition(position);
     }
+
 }
