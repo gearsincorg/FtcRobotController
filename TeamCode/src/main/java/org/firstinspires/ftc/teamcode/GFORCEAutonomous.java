@@ -19,25 +19,41 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
+import org.firstinspires.ftc.teamcode.subsystems.ArmStates;
+import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
+import org.firstinspires.ftc.teamcode.subsystems.ColorTarget;
+import org.firstinspires.ftc.teamcode.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.OctoQuadIF;
+import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
+
 @Autonomous(name="GFORCE Autonomous", group = "AA")
 public class GFORCEAutonomous extends LinearOpMode
 {
     MecanumDrive    robot;
-    OctoQuadIF      octoQuad = new OctoQuadIF(this);
-    ArmSubsystem    arm      = new ArmSubsystem(this);
+    OctoQuadIF octoQuad = new OctoQuadIF(this);
+    ArmSubsystem arm      = new ArmSubsystem(this);
     IntakeSubsystem intake   = new IntakeSubsystem(this);
     VisionSubsystem blob     = new VisionSubsystem(this);
+    AutoConfig autoConfig  = new AutoConfig(this);
+
 
     @Override
     public void runOpMode()
     {
-        robot = new MecanumDrive(hardwareMap, new Pose2d(4, -63, Math.toRadians(90)));
-        octoQuad.initialize(true);
-        arm.initialize(true);
-        intake.initialize(true);
-        blob.initilaize(true);
+        Globals.IS_AUTO = true;
 
-        telemetry.setMsTransmissionInterval(25);
+        robot = new MecanumDrive(hardwareMap, new Pose2d(4, -63, Math.toRadians(90)));
+        octoQuad.initialize(false);
+        arm.initialize(false);
+        intake.initialize(false);
+        blob.initilaize(false);
+        autoConfig.initialize();
+
+
+        telemetry.setMsTransmissionInterval(100);
 
         // ############################################################################
 
@@ -143,7 +159,19 @@ public class GFORCEAutonomous extends LinearOpMode
         telemetry.addData(">", "Touch Play to run Auto");
         telemetry.update();
 
-        waitForStart();
+        while(opModeInInit()) {
+            autoConfig.runMenuUI(); //Run menu system
+
+            telemetry.addLine("\n");
+
+            // Set GLOBAL flags based on menu choices.
+            if (autoConfig.autoOptions.redAlliance )
+                Globals.ALLIANCE_COLOR = AllianceColor.RED;
+            else
+                Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
+
+            telemetry.update();
+        }
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())

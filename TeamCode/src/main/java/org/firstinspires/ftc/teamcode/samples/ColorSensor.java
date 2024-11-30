@@ -54,7 +54,7 @@ import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
-
+@Disabled
 @TeleOp(name = "Color-Sensor", group = "Concept")
 public class ColorSensor extends LinearOpMode
 {

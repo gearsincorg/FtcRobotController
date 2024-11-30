@@ -17,6 +17,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ColorTarget;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.OctoQuadIF;
+import org.firstinspires.ftc.teamcode.subsystems.ProportionalControl;
+import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
 /*
  * This OpMode illustrates a teleop OpMode for an Omni robot using Essential Mecanum functions.
@@ -57,10 +64,10 @@ public class GFORCETeleop extends LinearOpMode
 
     // get an instance of each of the subsystems
     MecanumDrive    robot   ;
-    OctoQuadIF      octoQuad = new OctoQuadIF(this);
-    LiftSubsystem   lift    = new LiftSubsystem(this);
+    OctoQuadIF octoQuad = new OctoQuadIF(this);
+    LiftSubsystem lift    = new LiftSubsystem(this);
     VisionSubsystem vision  = new VisionSubsystem(this);
-    ArmSubsystem    arm     = new ArmSubsystem(this);
+    ArmSubsystem arm     = new ArmSubsystem(this);
     IntakeSubsystem intake  = new IntakeSubsystem(this);
 
     @Override public void runOpMode()
@@ -78,7 +85,6 @@ public class GFORCETeleop extends LinearOpMode
         // Wait for driver to press start
         while(opModeInInit()) {
             telemetry.addData(">", "Touch Play to drive");
-
             arm.openClaw();
 
             // Read and display sensor data
@@ -145,10 +151,6 @@ public class GFORCETeleop extends LinearOpMode
                 intake.leverOut();
             }
 
-            if (gamepad2.start){
-                lift.sampleInBucket();
-            }
-
             //  collecter test
             if (gamepad2.dpad_up){
                 intake.eject();
@@ -169,8 +171,6 @@ public class GFORCETeleop extends LinearOpMode
                     double yError = octoQuad.getBackRangeInches();
 
                     if ((Math.abs(yError) > WITHIN_RANGE) || (yError == 0)) {
-
-
                         strafe = xError * STRAFE_GAIN;
 
                         if ((yError > 5) && (Math.abs(xError) < IN_FRONT_ANGLE)) {
@@ -224,8 +224,6 @@ public class GFORCETeleop extends LinearOpMode
             telemetry.addData("x", robot.pose.position.x);
             telemetry.addData("y", robot.pose.position.y);
             telemetry.addData("heading (deg)", headingDeg);
-            //telemetry.addData("turn rate", turnrate);
-            //telemetry.addData("power","drive %.2f strafe %.2f yaw %.2f", drive, strafe, yaw);
             telemetry.update();
 
             // Update the dashboard.

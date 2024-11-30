@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.subsystems;
 
 //****************************************************************************************************
 //****************************************************************************************************
@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.util.Range;
  * to get an axis to the desired setpoint value.
  * It also implements an acceleration limit, and a max power output.
  */
-class ProportionalControl {
+public class ProportionalControl {
     double  lastOutput;
     double  gain;
     double  accelLimit;

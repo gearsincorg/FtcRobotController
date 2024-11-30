@@ -1,14 +1,14 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.subsystems;
 
 
-import static org.firstinspires.ftc.teamcode.ArmStates.CANCEL;
-import static org.firstinspires.ftc.teamcode.ArmStates.CLIPPING;
-import static org.firstinspires.ftc.teamcode.ArmStates.GRABBED;
-import static org.firstinspires.ftc.teamcode.ArmStates.GRABBING;
-import static org.firstinspires.ftc.teamcode.ArmStates.LIFTING;
-import static org.firstinspires.ftc.teamcode.ArmStates.LOWERING;
-import static org.firstinspires.ftc.teamcode.ArmStates.READY;
-import static org.firstinspires.ftc.teamcode.ArmStates.READY_TO_CLIP;
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.CANCEL;
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.CLIPPING;
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.GRABBED;
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.GRABBING;
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.LIFTING;
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.LOWERING;
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.READY;
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.READY_TO_CLIP;
 
 import androidx.annotation.NonNull;
 
@@ -19,6 +19,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
 
 public class ArmSubsystem {
 

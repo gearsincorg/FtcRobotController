@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.subsystems;
 
 import android.util.Size;
 
@@ -24,7 +24,8 @@ public class VisionSubsystem {
     private LinearOpMode myOpMode;
     private boolean showTelemetry     = false;
 
-    ColorBlobLocatorProcessor colorLocator;
+    ColorBlobLocatorProcessor colorLocatorRed;
+    ColorBlobLocatorProcessor colorLocatorBlue;
 
     // Vision Constructor
     public VisionSubsystem(LinearOpMode opmode) {myOpMode = opmode;}
@@ -32,17 +33,25 @@ public class VisionSubsystem {
     public void initilaize(boolean showTelemetry){
 
         // Create Color Blob Processor for vision system
-        colorLocator = new ColorBlobLocatorProcessor.Builder()
+        colorLocatorRed = new ColorBlobLocatorProcessor.Builder()
                 .setTargetColorRange(ColorRange.RED)         // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
                 .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 0.5, 1, -0.5))  // search central 1/4 of camera view
-                .setDrawContours(true)                        // Show contours on the Stream Preview
-                .setBlurSize(5)                               // Smooth the transitions between different colors in image
+                .setDrawContours(false)                      // Don't contours on the Stream Preview
+                .setBlurSize(5)                              // Smooth the transitions between different colors in image
+                .build();
+
+        colorLocatorBlue = new ColorBlobLocatorProcessor.Builder()
+                .setTargetColorRange(ColorRange.BLUE)         // use a predefined color match
+                .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
+                .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 0.5, 1, -0.5))  // search central 1/4 of camera view
+                .setDrawContours(false)                      // Don't contours on the Stream Preview
+                .setBlurSize(5)                              // Smooth the transitions between different colors in image
                 .build();
 
         // Attach to camera and add BlobLocator
         VisionPortal portal = new VisionPortal.Builder()
-                .addProcessor(colorLocator)
+                .addProcessor(colorLocatorRed)
                 .setCameraResolution(new Size(CAMERA_WIDTH, CAMERA_HEIGHT))
                 .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .build();
@@ -50,13 +59,14 @@ public class VisionSubsystem {
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
     }
+
     public ColorTarget getTarget (){
 
         ColorTarget target = new ColorTarget();
         double   centerX = 0;
         double   centerY = 0;
 
-        List<ColorBlobLocatorProcessor.Blob> blobs = colorLocator.getBlobs();
+        List<ColorBlobLocatorProcessor.Blob> blobs = colorLocatorRed.getBlobs();
         ColorBlobLocatorProcessor.Util.filterByArea(50, 20000, blobs);  // filter out very small blobs.
         if (!blobs.isEmpty()){
             ColorBlobLocatorProcessor.Blob bigBlob = blobs.get(0);

@@ -1,12 +1,12 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.subsystems;
 
-import static org.firstinspires.ftc.teamcode.LiftStates.DUMPED;
-import static org.firstinspires.ftc.teamcode.LiftStates.HOME;
-import static org.firstinspires.ftc.teamcode.LiftStates.LIFTING;
-import static org.firstinspires.ftc.teamcode.LiftStates.LOWERING;
-import static org.firstinspires.ftc.teamcode.LiftStates.READY_TO_SCORE;
-import static org.firstinspires.ftc.teamcode.LiftStates.SAMPLE_HELD;
-import static org.firstinspires.ftc.teamcode.LiftStates.WAITING_FOR_BUCKET;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.DUMPED;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.HOME;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.LIFTING;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.LOWERING;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.READY_TO_SCORE;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.SAMPLE_HELD;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.WAITING_FOR_BUCKET;
 
 import androidx.core.math.MathUtils;
 
@@ -58,7 +58,6 @@ public class LiftSubsystem {
     private boolean goingHome = false;
     private LiftStates currentState = HOME;
     private ElapsedTime stateTime = new ElapsedTime();
-    private boolean sampleCollected = false;
     private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
 
     // Arm Constructor
@@ -113,10 +112,6 @@ public class LiftSubsystem {
 
     public void hold(){
         lift.setPower(HOLD_POWER);
-    }
-
-    public void sampleInBucket(){
-        sampleCollected = true;
     }
 
     public double getCurrentPosition() {
@@ -205,7 +200,10 @@ public class LiftSubsystem {
         switch (currentState) {
 
             case HOME:{
-                setState(SAMPLE_HELD);
+                if(stateTime.time() > 0.5) {
+                    resetEncoders();
+                    setState(SAMPLE_HELD);
+                }
                 break;
             }
 
@@ -251,7 +249,6 @@ public class LiftSubsystem {
 
             case LOWERING:{
                 if(positionControl.inPosition()){
-                    sampleCollected = false;
                     setState(HOME);
                 }
                 break;
