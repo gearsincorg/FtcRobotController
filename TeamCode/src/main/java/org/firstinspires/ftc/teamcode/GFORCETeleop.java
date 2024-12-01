@@ -37,12 +37,12 @@ public class GFORCETeleop extends LinearOpMode
     final double SAFE_DRIVE_SPEED   = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_STRAFE_SPEED  = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_YAW_SPEED     = 0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double IN_FRONT_ANGLE = 0.14 ;
+    final double IN_FRONT_ANGLE     = 0.14 ;
     final double VERY_IN_FRONT_ANGLE = 0.05 ;
-    final double CLICK_ON_SPEED = -0.2 ;
-    final double APPROACH_SPEED = -0.3 ;
-    final double STRAFE_GAIN = 1.5 ;
-    final double WITHIN_RANGE   = 2.00 ;
+    final double CLICK_ON_SPEED     = -0.2 ;
+    final double APPROACH_SPEED     = -0.3 ;
+    final double STRAFE_GAIN        = 1.5 ;
+    final double WITHIN_RANGE       = 2.00 ;
 
     final boolean USE_FIELD_CENTRIC_MODE = true;
 
@@ -157,7 +157,9 @@ public class GFORCETeleop extends LinearOpMode
             //  collecter test
             if (gamepad2.dpad_up){
                 intake.eject();
-            } else if (gamepad2.dpad_down && !intake.gotSample){
+            } else if (gamepad2.dpad_down  && !intake.gotSample){
+                intake.intake();
+            } else if (gamepad2.dpad_left){
                 intake.intake();
             } else{
                 intake.off();
@@ -253,6 +255,10 @@ public class GFORCETeleop extends LinearOpMode
             y = vector.x * Math.sin(angleR) + vector.y * Math.cos(angleR);
             rotated = new Vector2d(x,y);
         }
+    }
+
+    public double square (double joystick) {
+        return (joystick * joystick * Math.signum(joystick));
     }
 }
 

@@ -32,12 +32,12 @@ import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 @Autonomous(name="GFORCE Autonomous", group = "AA")
 public class GFORCEAutonomous extends LinearOpMode
 {
-    MecanumDrive    robot;
-    OctoQuadIF octoQuad = new OctoQuadIF(this);
-    ArmSubsystem arm      = new ArmSubsystem(this);
-    IntakeSubsystem intake   = new IntakeSubsystem(this);
-    VisionSubsystem blob     = new VisionSubsystem(this);
-    AutoConfig autoConfig  = new AutoConfig(this);
+    MecanumDrive robot;
+    OctoQuadIF octoQuad     = new OctoQuadIF(this);
+    ArmSubsystem arm        = new ArmSubsystem(this);
+    IntakeSubsystem intake  = new IntakeSubsystem(this);
+    VisionSubsystem blob    = new VisionSubsystem(this);
+    AutoConfig autoConfig   = new AutoConfig(this);
 
 
     @Override

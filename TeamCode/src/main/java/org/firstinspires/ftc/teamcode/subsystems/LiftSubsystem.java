@@ -18,11 +18,11 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class LiftSubsystem {
 
-    public final double MAX_HEIGHT = 48;
+    public final double MAX_HEIGHT = 47;
     public final double MIN_HEIGHT = 8.5;
-    public final double HIGH_BASKET = 47;
+    public final double HIGH_BASKET = 46.5;
     public final double LOW_BASKET = 25 ;
-    private final double HOLD_POWER = 0.05;
+    private final double HOLD_POWER = 0.075;
     private final double HOME_POWER = -0.6;
     private final double PITCH = 0.5;
     private final double YAW = 0.5;
@@ -36,11 +36,11 @@ public class LiftSubsystem {
     private final double OPENA = 0;
     private final double OPENB = 1;
 
-    private final double GAIN = 1.0;
-    private final double ACCEL_LIMIT = 8.0;
+    private final double GAIN = 0.8;
+    private final double ACCEL_LIMIT = 6.0;
     private final double OUTPUT_LIMIT = 1;
-    private final double TOLERANCE = 1;
-    private final double DEADBAND = 0.50;
+    private final double TOLERANCE = 0.75;
+    private final double DEADBAND = 0.25;
 
     private final double SLOPE = 0.0123;
     private final double OFFSET = 8.25;
