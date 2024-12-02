@@ -8,8 +8,11 @@ import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.READY_TO_SCOR
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.SAMPLE_HELD;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.WAITING_FOR_BUCKET;
 
+import androidx.annotation.NonNull;
 import androidx.core.math.MathUtils;
 
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -18,6 +21,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class LiftSubsystem {
 
+    // Standard SubSystem Members:
+    private LinearOpMode myOpMode;
+    private boolean     showTelemetry   = false;
+    private LiftStates  currentState    = HOME;
+    private ElapsedTime stateTime       = new ElapsedTime();
+
+    // Constants
     public final double MAX_HEIGHT = 47;
     public final double MIN_HEIGHT = 8.5;
     public final double HIGH_BASKET = 46.5;
@@ -50,14 +60,12 @@ public class LiftSubsystem {
     private Servo pitchServo;
     private Servo yawServo;
     private Servo holdServo;
-    private LinearOpMode myOpMode;
-    private boolean showTelemetry     = false;
+
+    // Private Members
     private double setpointInches = 0;
     private double currentPosition = 0;
     private int lastPosition = 0;
     private boolean goingHome = false;
-    private LiftStates currentState = HOME;
-    private ElapsedTime stateTime = new ElapsedTime();
     private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
 
     // Arm Constructor
@@ -240,7 +248,7 @@ public class LiftSubsystem {
             }
 
             case WAITING_FOR_BUCKET:{
-                if(stateTime.time() > 0.5){
+                if(stateTime.time() > 1.5){
                     setSetpointInches(MIN_HEIGHT);
                     setState(LOWERING);
                 }
@@ -298,4 +306,39 @@ public class LiftSubsystem {
         myOpMode.telemetry.addData("lift error",error);
         myOpMode.telemetry.addData("lift power", power);
     }
+
+    //-------------------------------------------------------------------------
+    // ACTION  methods
+    //-------------------------------------------------------------------------
+
+    public Action actionUpdate(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                update();
+                return true;
+            }
+        };
+    }
+
+    public Action actionSetState(LiftStates state){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setState(state);
+                return false;
+            }
+        };
+    }
+
+    public Action actionWaitForState(LiftStates state){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                return currentState != state;
+            }
+        };
+    }
+
 }
+

@@ -14,18 +14,17 @@ import java.util.List;
 
 public class VisionSubsystem {
 
+    private LinearOpMode myOpMode;
+    private boolean showTelemetry     = false;
+
     private final int CAMERA_WIDTH = 320;
     private final int CAMERA_HEIGHT = 240;
     private final int MIDDLE_WIDTH = CAMERA_WIDTH/2;
     private final int MIDDLE_HEIGHT = CAMERA_HEIGHT/2;
-    private final int BACK_SONAR_PORT = 4;
-    private final double SONAR_OFFSET = 2.0;  //  Distance from sonar to back of robot.
-
-    private LinearOpMode myOpMode;
-    private boolean showTelemetry     = false;
 
     ColorBlobLocatorProcessor colorLocatorRed;
     ColorBlobLocatorProcessor colorLocatorBlue;
+    VisionPortal portal ;
 
     // Vision Constructor
     public VisionSubsystem(LinearOpMode opmode) {myOpMode = opmode;}
@@ -50,14 +49,28 @@ public class VisionSubsystem {
                 .build();
 
         // Attach to camera and add BlobLocator
-        VisionPortal portal = new VisionPortal.Builder()
+        portal = new VisionPortal.Builder()
                 .addProcessor(colorLocatorRed)
+                .addProcessor(colorLocatorBlue)
                 .setCameraResolution(new Size(CAMERA_WIDTH, CAMERA_HEIGHT))
                 .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .build();
 
+        portal.setProcessorEnabled(colorLocatorRed,  false);
+        portal.setProcessorEnabled(colorLocatorBlue, false);
+
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
+    }
+
+    public void locateRedSample(){
+        portal.setProcessorEnabled(colorLocatorRed,  true);
+        portal.setProcessorEnabled(colorLocatorBlue, false);
+    }
+
+    public void locateBlueSample(){
+        portal.setProcessorEnabled(colorLocatorRed,  false);
+        portal.setProcessorEnabled(colorLocatorBlue, true);
     }
 
     public ColorTarget getTarget (){
@@ -88,3 +101,5 @@ public class VisionSubsystem {
         return target;
     }
 }
+
+

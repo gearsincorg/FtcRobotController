@@ -6,13 +6,9 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -23,21 +19,19 @@ import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.ArmStates;
 import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
-import org.firstinspires.ftc.teamcode.subsystems.ColorTarget;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.OctoQuadIF;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
 @Autonomous(name="GFORCE Autonomous", group = "AA")
 public class GFORCEAutonomous extends LinearOpMode
 {
     MecanumDrive robot;
+    AutoConfig autoConfig   = new AutoConfig(this);
     OctoQuadIF octoQuad     = new OctoQuadIF(this);
     ArmSubsystem arm        = new ArmSubsystem(this);
     IntakeSubsystem intake  = new IntakeSubsystem(this);
-    VisionSubsystem blob    = new VisionSubsystem(this);
-    AutoConfig autoConfig   = new AutoConfig(this);
+//  VisionSubsystem blob    = new VisionSubsystem(this);
 
 
     @Override
@@ -48,12 +42,10 @@ public class GFORCEAutonomous extends LinearOpMode
         robot = new MecanumDrive(hardwareMap, new Pose2d(4, -63, Math.toRadians(90)));
         octoQuad.initialize(false);
         arm.initialize(false);
+        arm.closeClaw();
         intake.initialize(false);
-        blob.initilaize(false);
+//      blob.initilaize(false);
         autoConfig.initialize();
-
-
-        telemetry.setMsTransmissionInterval(100);
 
         // ############################################################################
 
@@ -68,7 +60,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineToConstantHeading(new Vector2d(35, -24), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(39, -12), Math.toRadians(0))
                 .splineToConstantHeading(new Vector2d(43, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(43, -40), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(43, -50), Math.toRadians(-90))
                 .setTangent(Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(43, -24), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(47, -12), Math.toRadians(0))
@@ -160,6 +152,7 @@ public class GFORCEAutonomous extends LinearOpMode
         telemetry.update();
 
         while(opModeInInit()) {
+
             autoConfig.runMenuUI(); //Run menu system
 
             telemetry.addLine("\n");
@@ -185,6 +178,7 @@ public class GFORCEAutonomous extends LinearOpMode
         }
     }
 
+    /*
     final double WITHIN_RANGE   = 2.00 ;
     final double APPROACH_SPEED = -0.3 ;
     final double CLICK_ON_SPEED = -0.2 ;
@@ -233,4 +227,5 @@ public class GFORCEAutonomous extends LinearOpMode
             }
         };
     }
+    */
 }

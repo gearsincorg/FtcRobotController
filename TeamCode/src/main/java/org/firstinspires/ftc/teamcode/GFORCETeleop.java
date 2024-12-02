@@ -17,8 +17,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.ColorTarget;
+import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.OctoQuadIF;
@@ -69,11 +72,15 @@ public class GFORCETeleop extends LinearOpMode
     VisionSubsystem vision  = new VisionSubsystem(this);
     ArmSubsystem arm     = new ArmSubsystem(this);
     IntakeSubsystem intake  = new IntakeSubsystem(this);
+    AutoConfig autoConfig   = new AutoConfig(this);
+
 
     @Override public void runOpMode()
     {
         robot     = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        autoConfig.initialize();
 
         // Initialize the drive hardware & Turn on telemetry
         octoQuad.initialize(true);
@@ -85,7 +92,6 @@ public class GFORCETeleop extends LinearOpMode
         // Wait for driver to press start
         while(opModeInInit()) {
             telemetry.addData(">", "Touch Play to drive");
-            arm.openClaw();
 
             // Read and display sensor data
             robot.updatePoseEstimate();
@@ -94,6 +100,15 @@ public class GFORCETeleop extends LinearOpMode
             vision.getTarget();
             intake.update();
             telemetry.update();
+        }
+
+        // Set GLOBAL flags based on menu choices.
+        if (autoConfig.autoOptions.redAlliance ){
+            Globals.ALLIANCE_COLOR = AllianceColor.RED;
+            vision.locateRedSample();
+        } else {
+            Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
+            vision.locateBlueSample();
         }
 
         // Reset pose and mechanisms
@@ -127,9 +142,9 @@ public class GFORCETeleop extends LinearOpMode
             }
 
             // read joystick values and scale according to limits set at top of this file
-            double drive  = -gamepad1.left_stick_y * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
-            double strafe = -gamepad1.left_stick_x * SAFE_STRAFE_SPEED;     //  Left/Right on left stick
-            double yaw    = -gamepad1.right_stick_x * SAFE_YAW_SPEED;       //  Rotate on right stick
+            double drive  = -square(gamepad1.left_stick_y) * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
+            double strafe = -square(gamepad1.left_stick_x) * SAFE_STRAFE_SPEED;     //  Left/Right on left stick
+            double yaw    = -square(gamepad1.right_stick_x) * SAFE_YAW_SPEED;       //  Rotate on right stick
 
             //  For special conditions, Use the DPAD to make slow-mo orthogonal motions.  Adjust the divider to your needs.
             if (gamepad1.dpad_left) {
@@ -140,29 +155,6 @@ public class GFORCETeleop extends LinearOpMode
                 drive = SAFE_DRIVE_SPEED / 4.0;
             } else if (gamepad1.dpad_down) {
                 drive = -SAFE_STRAFE_SPEED / 4.0;
-            }
-
-            if (gamepad2.left_trigger > 0.5){
-                intake.wristIn();
-            } else if (gamepad2.left_bumper){
-                intake.wristOut();
-            }
-
-            if (gamepad2.right_trigger > 0.5){
-                intake.leverIn();
-            } else if (gamepad2.right_bumper){
-                intake.leverOut();
-            }
-
-            //  collecter test
-            if (gamepad2.dpad_up){
-                intake.eject();
-            } else if (gamepad2.dpad_down  && !intake.gotSample){
-                intake.intake();
-            } else if (gamepad2.dpad_left){
-                intake.intake();
-            } else{
-                intake.off();
             }
 
             // Implement Auto Specimen Tracking

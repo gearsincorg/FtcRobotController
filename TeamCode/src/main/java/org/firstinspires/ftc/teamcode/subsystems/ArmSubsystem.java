@@ -23,6 +23,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class ArmSubsystem {
 
+    // Standard SubSystem Members:
+    private LinearOpMode myOpMode;
+    private boolean     showTelemetry   = false;
+    private ArmStates   currentState    = READY;
+    private ElapsedTime stateTime       = new ElapsedTime();
+
+    // Constants
     private final double SLOPE = 0.0123;
     private final double OFFSET = 9.5;
     private final double HOLD_POWER = 0.1;
@@ -31,8 +38,8 @@ public class ArmSubsystem {
     private final double CLAW_OPEN = 0.3;
     private final double CLAW_CLOSED = 0.55;
     private final double LOOSE_GRIP = 0.5;
-    private final double HOME_POWER = -0.15;
-    private final int HOME_MIN_MOVEMENT = 10;
+    private final double HOME_POWER = -0.2;
+    private final int    HOME_MIN_MOVEMENT = 10;
 
     private final double GAIN = 1.0 / 200.0;
     private final double ACCEL_LIMIT = 7.0;
@@ -47,15 +54,13 @@ public class ArmSubsystem {
     private DcMotor arm;      //motor used to control the arm
     private Servo claw;
 
-    private LinearOpMode myOpMode;
-    private boolean showTelemetry     = false;
+    // Private Members
     private int armSetPoint = 0;
     private int currentPosition = 0;
     private int lastPosition = 0;
-    private ArmStates currentState = READY;
-    private ElapsedTime stateTime = new ElapsedTime();
     private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
     private boolean timeToClip = false;
+    private Button grabScore = new Button();
 
     public ArmSubsystem(LinearOpMode opMode){
         myOpMode = opMode;
@@ -69,7 +74,7 @@ public class ArmSubsystem {
         arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);  // Requires motor encoder cables to be hooked up.
 
         claw = myOpMode.hardwareMap.get(Servo.class, "claw");
-        claw.setPosition(CLAW_CLOSED);
+        claw.setPosition(CLAW_OPEN);
 
         homeTheArm();
         setTargetPosition(currentPosition);
@@ -109,7 +114,7 @@ public class ArmSubsystem {
         switch (currentState){
 
             case READY:{
-                if (myOpMode.gamepad1.right_bumper){
+                if (grabScore.pressed(myOpMode.gamepad1.right_bumper)){
                     claw.setPosition(CLAW_CLOSED);
                     setState(GRABBING);
                 } else {
@@ -141,12 +146,12 @@ public class ArmSubsystem {
             }
 
             case READY_TO_CLIP:{
-                if(myOpMode.gamepad1.square || timeToClip){
+                if(grabScore.pressed(myOpMode.gamepad1.right_bumper) || timeToClip){
                     setTargetPosition(CLIPPED_POSITON);
                     claw.setPosition(LOOSE_GRIP);
                     timeToClip = false;
                     setState(CLIPPING);
-                } else if (myOpMode.gamepad1.circle){
+                } else if (myOpMode.gamepad1.right_trigger > 0.25){
                     setTargetPosition(HOME_POSITION);
                     claw.setPosition(CLAW_OPEN);
                     setState(CANCEL);
@@ -193,13 +198,13 @@ public class ArmSubsystem {
             int movement = Math.abs(currentPosition - lastPosition);
             if (movement <= HOME_MIN_MOVEMENT){
                 stop();
-                myOpMode.sleep(500);
+                myOpMode.sleep(200);
                 arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 break;
             } else {
                 lastPosition = currentPosition;
-                myOpMode.sleep(50);
+                myOpMode.sleep(100);
             }
 
         }
@@ -222,6 +227,9 @@ public class ArmSubsystem {
 
     public void openClaw (){
         claw.setPosition(CLAW_OPEN);
+    }
+    public void closeClaw(){
+        claw.setPosition(CLAW_CLOSED);
     }
 
     //-------------------------------------------------------------------------
