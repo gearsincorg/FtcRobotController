@@ -20,11 +20,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
-import org.firstinspires.ftc.teamcode.subsystems.ColorTarget;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.OctoQuadIF;
 import org.firstinspires.ftc.teamcode.subsystems.ProportionalControl;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
@@ -67,7 +65,7 @@ public class GFORCETeleop extends LinearOpMode
 
     // get an instance of each of the subsystems
     MecanumDrive    robot   ;
-    OctoQuadIF octoQuad = new OctoQuadIF(this);
+//    OctoQuadIF octoQuad = new OctoQuadIF(this);
     LiftSubsystem lift    = new LiftSubsystem(this);
     VisionSubsystem vision  = new VisionSubsystem(this);
     ArmSubsystem arm     = new ArmSubsystem(this);
@@ -83,7 +81,7 @@ public class GFORCETeleop extends LinearOpMode
         autoConfig.initialize();
 
         // Initialize the drive hardware & Turn on telemetry
-        octoQuad.initialize(true);
+//      octoQuad.initialize(true);
         vision.initilaize(true);
         lift.initialize(true);
         arm.initialize(true);
@@ -105,10 +103,8 @@ public class GFORCETeleop extends LinearOpMode
         // Set GLOBAL flags based on menu choices.
         if (autoConfig.autoOptions.redAlliance ){
             Globals.ALLIANCE_COLOR = AllianceColor.RED;
-            vision.locateRedSample();
         } else {
             Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
-            vision.locateBlueSample();
         }
 
         // Reset pose and mechanisms
@@ -122,7 +118,7 @@ public class GFORCETeleop extends LinearOpMode
             arm.update();
             intake.update();
 
-            octoQuad.update();
+//            octoQuad.update();
             fieldCentric = USE_FIELD_CENTRIC_MODE;
 
             // update the robot's position based on the odometry pods.
@@ -159,6 +155,7 @@ public class GFORCETeleop extends LinearOpMode
 
             // Implement Auto Specimen Tracking
             // Center on Specimen and approach quickly at first and then slow down.
+            /*
             if (gamepad1.right_trigger > 0.25) {
                 ColorTarget target = vision.getTarget();
                 if (target.valid) {
@@ -180,7 +177,9 @@ public class GFORCETeleop extends LinearOpMode
                         strafe =0;
                     }
                 }
+
             }
+            */
 
             // This is where we keep the robot heading locked so it doesn't turn while driving or strafing in a straight line.
             headingDeg = Math.toDegrees(robot.pose.heading.toDouble());

@@ -64,6 +64,7 @@ public class IntakeSubsystem {
     private final float[] hsvValues = new float[3];
     private Button wristInOut = new Button();
     private Button slideInOut = new Button();
+    private Button runIntake = new Button();
 
     public IntakeSubsystem(LinearOpMode opMode){myOpMode = opMode;}
 
@@ -132,7 +133,7 @@ public class IntakeSubsystem {
         }
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Sample", "%s hue %d Color %s range %f mm", gotSample ? "Found" : "Not Found", hue , sampleColor, range);
+            myOpMode.telemetry.addData("Sample", "%s h:%d %s Rng %.0f mm", gotSample ? "Full" : "Empty", hue , sampleColor, range);
         }
     }
 
@@ -157,7 +158,7 @@ public class IntakeSubsystem {
             }
 
             case HOME:
-                if (myOpMode.gamepad2.dpad_down) {
+                if (runIntake.pressed(myOpMode.gamepad2.dpad_down)) {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
@@ -169,7 +170,7 @@ public class IntakeSubsystem {
                 break;
 
             case INTAKING:
-                if (!myOpMode.gamepad2.dpad_down) {
+                if (runIntake.released(myOpMode.gamepad2.dpad_down)) {
                     wristOut();
                     collectorOff();
                     setState(IntakeStates.HOME);
@@ -186,7 +187,7 @@ public class IntakeSubsystem {
                     wristIn();
                     // slideIn() // consider bringing both items in if clear of low rung.
                     setState(IntakeStates.RAISING_WRIST);
-                } else if (myOpMode.gamepad2.dpad_down) {
+                } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down)) {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);

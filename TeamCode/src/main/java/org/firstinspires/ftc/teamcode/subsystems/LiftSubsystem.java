@@ -196,7 +196,6 @@ public class LiftSubsystem {
                 break;
             }
         }
-
     }
 
     public void runStateMachine () {
@@ -218,6 +217,7 @@ public class LiftSubsystem {
             case SAMPLE_HELD:{
                 if(myOpMode.gamepad2.triangle){
                     setSetpointInches(HIGH_BASKET);
+                    setBucketPosition(BucketPositions.BACK_DUMP_READY);
                     setState(LIFTING);
                 }
                 break;
@@ -225,7 +225,6 @@ public class LiftSubsystem {
 
             case LIFTING:{
                 if(positionControl.inPosition()){
-                    setBucketPosition(BucketPositions.BACK_DUMP_READY);
                     setState(READY_TO_SCORE);
                 }
                 break;

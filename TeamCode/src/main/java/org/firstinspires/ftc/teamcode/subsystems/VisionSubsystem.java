@@ -36,7 +36,7 @@ public class VisionSubsystem {
                 .setTargetColorRange(ColorRange.RED)         // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
                 .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 0.5, 1, -0.5))  // search central 1/4 of camera view
-                .setDrawContours(false)                      // Don't contours on the Stream Preview
+                .setDrawContours(true)                      // Don't contours on the Stream Preview
                 .setBlurSize(5)                              // Smooth the transitions between different colors in image
                 .build();
 
@@ -44,7 +44,7 @@ public class VisionSubsystem {
                 .setTargetColorRange(ColorRange.BLUE)         // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)    // exclude blobs inside blobs
                 .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 0.5, 1, -0.5))  // search central 1/4 of camera view
-                .setDrawContours(false)                      // Don't contours on the Stream Preview
+                .setDrawContours(true)                      // Don't contours on the Stream Preview
                 .setBlurSize(5)                              // Smooth the transitions between different colors in image
                 .build();
 
@@ -56,21 +56,8 @@ public class VisionSubsystem {
                 .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .build();
 
-        portal.setProcessorEnabled(colorLocatorRed,  false);
-        portal.setProcessorEnabled(colorLocatorBlue, false);
-
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
-    }
-
-    public void locateRedSample(){
-        portal.setProcessorEnabled(colorLocatorRed,  true);
-        portal.setProcessorEnabled(colorLocatorBlue, false);
-    }
-
-    public void locateBlueSample(){
-        portal.setProcessorEnabled(colorLocatorRed,  false);
-        portal.setProcessorEnabled(colorLocatorBlue, true);
     }
 
     public ColorTarget getTarget (){
@@ -78,8 +65,15 @@ public class VisionSubsystem {
         ColorTarget target = new ColorTarget();
         double   centerX = 0;
         double   centerY = 0;
+        String   colorMatch ;
 
-        List<ColorBlobLocatorProcessor.Blob> blobs = colorLocatorRed.getBlobs();
+        List<ColorBlobLocatorProcessor.Blob> blobs;
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED) {
+            blobs = colorLocatorRed.getBlobs();
+        } else {
+            blobs = colorLocatorBlue.getBlobs();
+        }
+
         ColorBlobLocatorProcessor.Util.filterByArea(50, 20000, blobs);  // filter out very small blobs.
         if (!blobs.isEmpty()){
             ColorBlobLocatorProcessor.Blob bigBlob = blobs.get(0);
@@ -90,14 +84,16 @@ public class VisionSubsystem {
             target = new ColorTarget(centerX, centerY);
 
             if (showTelemetry){
-                myOpMode.telemetry.addLine(String.format(" target: A %5d, X %4.2f, Y %4.2f",
-                        bigBlob.getContourArea(), centerX, centerY));
+                myOpMode.telemetry.addLine(String.format("%s: A:%5d, X %4.2f, Y %4.2f",
+                        Globals.ALLIANCE_COLOR, bigBlob.getContourArea(), centerX, centerY));
             }
         } else {
             if (showTelemetry){
                 myOpMode.telemetry.addLine("no targets found");
             }
         }
+
+
         return target;
     }
 }
