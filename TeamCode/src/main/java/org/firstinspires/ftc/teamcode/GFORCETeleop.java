@@ -75,8 +75,8 @@ public class GFORCETeleop extends LinearOpMode
 
     @Override public void runOpMode()
     {
+        Globals.IS_AUTO = false;
         robot     = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
-
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         autoConfig.initialize();
 

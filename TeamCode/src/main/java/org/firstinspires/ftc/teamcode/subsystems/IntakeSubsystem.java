@@ -42,6 +42,8 @@ public class IntakeSubsystem {
     private final double WRIST_IN = 0.4;
     private final double WRIST_OUT = 0.68;
     private final double WRIST_DOWN = 0.87;
+    private final double SLIDE_TRANSIT_TIME = 1.5;
+    private final double SLIDE_TRANSFER_TIME = 1.0;
 
     // public members
     public boolean     gotSample   = false;
@@ -65,6 +67,7 @@ public class IntakeSubsystem {
     private Button wristInOut = new Button();
     private Button slideInOut = new Button();
     private Button runIntake = new Button();
+    private ElapsedTime  slideTime = new ElapsedTime();
 
     public IntakeSubsystem(LinearOpMode opMode){myOpMode = opMode;}
 
@@ -149,6 +152,10 @@ public class IntakeSubsystem {
                 if (wristInOut.pressed(myOpMode.gamepad2.left_bumper)) {
                     wristOut();
                     setState(IntakeStates.HOME);
+                } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down)) {
+                    wristDown();
+                    collectorIntake();
+                    setState(IntakeStates.INTAKING);
                 } else {
                     slideIn();
                     wristIn();
@@ -191,19 +198,24 @@ public class IntakeSubsystem {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
+                } else if (myOpMode.gamepad2.dpad_up) {
+                    collectorEject();
+                } else {
+                    collectorOff();
                 }
                 break;
 
             case RAISING_WRIST:
-                if ((stateTime.time() > 1.0) && (!slideIsOut)) {
+                if ((stateTime.time() > 1.0) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
                     collectorIntake();
                     setState(IntakeStates.TRANSFERING_SAMPLE);
                 }
                 break;
 
             case TRANSFERING_SAMPLE:
-                if (stateTime.time() > 1.0){
+                if (stateTime.time() > SLIDE_TRANSFER_TIME){
                     collectorOff();
+                    wristOut();
                     setState(IntakeStates.HOME);
                 }
                 break;
@@ -231,6 +243,10 @@ public class IntakeSubsystem {
     public void slideIn(){
         leftLever.setPosition(LEFT_LEVER_IN);
         rightLever.setPosition(RIGHT_LEVER_IN);
+        // start time when we start bringing slider in so we can allow enough time for it to retract.
+        if (slideIsOut) {
+            slideTime.reset();
+        }
         slideIsOut = false;
     }
 
@@ -284,7 +300,7 @@ public class IntakeSubsystem {
         wheelMotor.setPower(speed);
     }
 
-//-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
     // ACTION  methods
     //-------------------------------------------------------------------------
 

@@ -38,7 +38,7 @@ public class LiftSubsystem {
     private final double YAW = 0.5;
     private final double TILT_SIDE = 0.4;
     private final double YAW_SIDE = 0.7;
-    private final double TILT_BUCKET_READY = 0.54;
+    private final double TILT_BUCKET_READY = 0.535;
     private final double YAW_BUCKET_READY = 0.5;
     private final double TILT_BACK = 0.65;
     private final double YAW_BACK = 0.5;
@@ -121,11 +121,9 @@ public class LiftSubsystem {
     public void hold(){
         lift.setPower(HOLD_POWER);
     }
-
     public double getCurrentPosition() {
         return currentPosition;
     }
-
     public double getSetpointInches() {
         return setpointInches;
     }
@@ -215,10 +213,13 @@ public class LiftSubsystem {
             }
 
             case SAMPLE_HELD:{
-                if(myOpMode.gamepad2.triangle){
+                if(myOpMode.gamepad2.triangle  || Globals.IS_AUTO){
                     setSetpointInches(HIGH_BASKET);
                     setBucketPosition(BucketPositions.BACK_DUMP_READY);
                     setState(LIFTING);
+                } else if(myOpMode.gamepad2.cross){
+                    setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
+                    setState(DUMPED);
                 }
                 break;
             }
@@ -231,7 +232,7 @@ public class LiftSubsystem {
             }
 
             case READY_TO_SCORE:{
-                if(myOpMode.gamepad2.cross){
+                if(myOpMode.gamepad2.cross || Globals.IS_AUTO){
                     setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
                     setState(DUMPED);
                 }
@@ -260,7 +261,6 @@ public class LiftSubsystem {
                 }
                 break;
             }
-
         }
     }
 
@@ -338,6 +338,5 @@ public class LiftSubsystem {
             }
         };
     }
-
 }
 
