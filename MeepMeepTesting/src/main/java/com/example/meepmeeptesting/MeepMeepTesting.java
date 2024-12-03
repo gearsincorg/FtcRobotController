@@ -13,16 +13,20 @@ public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(640);
 
-        RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
+        RoadRunnerBotEntity specimenBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(40, 50, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
 
-        DriveShim robot = myBot.getDrive();
+        DriveShim robot = specimenBot.getDrive();
+
+        RoadRunnerBotEntity basketBot = new DefaultBotBuilder(meepMeep)
+                // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
+                .setConstraints(40, 50, Math.toRadians(180), Math.toRadians(180), 15)
+                .build();
 
         // ===============================================================================================
-
-        //build trajectories
+        //  build Specimen trajectories
         Action wallToSubPath = robot.actionBuilder(new Pose2d(4, -63, Math.toRadians(90)))
                 .lineToY(-31)
                 .build()
@@ -30,19 +34,19 @@ public class MeepMeepTesting {
 
         Action subToAllSamplesPath = robot.actionBuilder(new Pose2d(4, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-60))
-                .splineToConstantHeading(new Vector2d(35, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(39, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(43, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(43, -50), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(36, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(40, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -50), Math.toRadians(-90))
                 .setTangent(Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(43, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(47, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(52, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(52, -50), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(48, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(54, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(54, -50), Math.toRadians(-90))
                 .build()
                 ;
 
-        Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(52, -50, Math.toRadians(90)))
+        Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(54, -50, Math.toRadians(90)))
                 .setTangent(Math.toRadians(180))
                 .splineToConstantHeading(new Vector2d(30, -50), Math.toRadians(180))
                 .setTangent(Math.toRadians(-90))
@@ -87,8 +91,18 @@ public class MeepMeepTesting {
                 ;
 
         // ===============================================================================================
+        // Build Basket Trajectories
 
-        myBot.runAction(new SequentialAction(
+        Action wallToBasket = robot.actionBuilder(new Pose2d(-36, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(135))
+                .splineToLinearHeading(new Pose2d(-56, -56, Math.toRadians(45)), Math.toRadians(-135))
+                .build()
+                ;
+
+
+        // ===============================================================================================
+
+        specimenBot.runAction(new SequentialAction(
                 // Score Specimen 1 then sweep 2 more
                 wallToSubPath,
                 subToAllSamplesPath,
@@ -103,13 +117,17 @@ public class MeepMeepTesting {
                 specimenToSub4Path,
                 // Go to park
                 sub4ToObservationPath
-
         ));
+
+        basketBot.runAction(new SequentialAction(
+                   wallToBasket
+                ));
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(myBot)
+//                .addEntity(specimenBot)
+                .addEntity(basketBot)
                 .start();
     }
 }
