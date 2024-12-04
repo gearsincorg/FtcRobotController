@@ -49,7 +49,7 @@ public class LiftSubsystem {
     private final double GAIN = 0.8;
     private final double ACCEL_LIMIT = 6.0;
     private final double OUTPUT_LIMIT = 1;
-    private final double TOLERANCE = 0.75;
+    private final double TOLERANCE = 1.5;
     private final double DEADBAND = 0.25;
 
     private final double SLOPE = 0.0123;
@@ -248,7 +248,7 @@ public class LiftSubsystem {
             }
 
             case WAITING_FOR_BUCKET:{
-                if(stateTime.time() > 1.5){
+                if(stateTime.time() > 0.75){
                     setSetpointInches(MIN_HEIGHT);
                     setState(LOWERING);
                 }
@@ -289,7 +289,7 @@ public class LiftSubsystem {
                 power = HOME_POWER;
             }
             lastPosition = position;
-            myOpMode.sleep(100);
+            myOpMode.sleep(50);
             setSetpointInches(currentPosition);
 
         } else {

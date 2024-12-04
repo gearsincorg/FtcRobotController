@@ -99,6 +99,31 @@ public class MeepMeepTesting {
                 .build()
                 ;
 
+        Action basketToSamples = robot.actionBuilder(new Pose2d(-56, -56, Math.toRadians(45)))
+                .setTangent(Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(-36, -48, Math.toRadians(90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-36, -24, Math.toRadians(90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-40, -12, Math.toRadians(90)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-44, -24, Math.toRadians(90)), Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-56, -56, Math.toRadians(45)), Math.toRadians(-135))
+                .setTangent(Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(-44, -24, Math.toRadians(90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-49, -12, Math.toRadians(90)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-53, -24, Math.toRadians(90)), Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-53, -56, Math.toRadians(90)), Math.toRadians(-90))
+
+                //.splineToConstantHeading(new Vector2d(-44, -12), Math.toRadians(0))
+                //.splineToConstantHeading(new Vector2d(-48, -24), Math.toRadians(-90))
+                //.splineToConstantHeading(new Vector2d(-44, -50), Math.toRadians(-90))
+                //.splineToConstantHeading(new Vector2d(-46, -12), Math.toRadians(-90))
+                //.splineToConstantHeading(new Vector2d(-56, -12), Math.toRadians(-90))
+                //.lineToY(-56)
+                //.splineToConstantHeading(new Vector2d(-56, -12), Math.toRadians(-90))
+                //.splineToConstantHeading(new Vector2d(-66, -12), Math.toRadians(-90))
+                //.lineToY(-56)
+                .build()
+                ;
+
 
         // ===============================================================================================
 
@@ -120,13 +145,14 @@ public class MeepMeepTesting {
         ));
 
         basketBot.runAction(new SequentialAction(
-                   wallToBasket
+                   wallToBasket,
+                   basketToSamples
                 ));
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-//                .addEntity(specimenBot)
+                .addEntity(specimenBot)
                 .addEntity(basketBot)
                 .start();
     }

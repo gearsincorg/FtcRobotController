@@ -23,7 +23,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.OctoQuadIF;
 
-@Autonomous(name="GFORCE Autonomous", group = "AA")
+@Autonomous(name="GFORCE Autonomous", group = "AA" ,  preselectTeleOp="GFORCE Teleop")
 public class GFORCEAutonomous extends LinearOpMode
 {
     MecanumDrive robot;

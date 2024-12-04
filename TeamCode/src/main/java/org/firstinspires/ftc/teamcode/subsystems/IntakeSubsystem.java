@@ -34,8 +34,8 @@ public class IntakeSubsystem {
     // Constants
     private final double LEFT_LEVER_IN = 0.50;
     private final double RIGHT_LEVER_IN = 0.50;
-    private final double LEFT_LEVER_OUT = 0.62;
-    private final double RIGHT_LEVER_OUT = 0.42;
+    private final double LEFT_LEVER_OUT = 0.75;
+    private final double RIGHT_LEVER_OUT = 0.25;
     private final double INTAKE = 1;
     private final double EJECT = -1;
     private final double OFF = 0;
@@ -112,7 +112,7 @@ public class IntakeSubsystem {
             Color.colorToHSV(colors.toColor(), hsvValues);
             hue = (int)hsvValues[0];
 
-            if (hue < 60) {
+            if (hue < 68) {
                 gotSample = true;
                 sampleColor = RED;
                 colorLED.setPosition(.3);
