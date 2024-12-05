@@ -104,7 +104,7 @@ public class ArmSubsystem {
     }
 
     public boolean inPosition (){
-        return positionControl.inPosition;
+        return positionControl.inPosition();
     }
 
     public void runStateMachine (){

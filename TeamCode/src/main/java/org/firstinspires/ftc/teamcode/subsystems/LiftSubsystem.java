@@ -33,11 +33,8 @@ public class LiftSubsystem {
     public final double MIN_HEIGHT = 8.5;
     public final double HIGH_BASKET = 46.5;
     public final double LOW_BASKET = 25 ;
-//    private final double HOLD_POWER = 0.075;
-    private final double HOLD_POWER = 0.0;
+    private final double HOLD_POWER = 0.075;
     private final double HOME_POWER = -0.6;
-    private final double PITCH = 0.5;
-    private final double YAW = 0.5;
     private final double TILT_SIDE = 0.4;
     private final double YAW_SIDE = 0.7;
     private final double TILT_BUCKET_READY = 0.535;
@@ -110,18 +107,8 @@ public class LiftSubsystem {
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Lift Position", "%.1f inches", currentPosition);
-            myOpMode.telemetry.addData("lift target  ", "%.1f inches", positionControl.setPoint);
+            myOpMode.telemetry.addData("lift target  ", "%.1f inches", positionControl.getSetPoint());
         }
-    }
-
-    /**
-     * stop the arm from moving
-     */
-    public void stop(){
-        lift.setPower(0);
-    }
-    public void hold(){
-        lift.setPower(HOLD_POWER);
     }
 
     public void setSetpointInches(double setpointInches) {
@@ -206,6 +193,10 @@ public class LiftSubsystem {
                     setSetpointInches(HIGH_BASKET);
                     setBucketPosition(BucketPositions.BACK_DUMP_READY);
                     setState(LIFTING);
+                } else if(myOpMode.gamepad2.circle){
+                    setSetpointInches(LOW_BASKET);
+                    setBucketPosition(BucketPositions.BACK_DUMP_READY);
+                    setState(LIFTING);
                 } else if(myOpMode.gamepad2.cross){
                     setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
                     setState(DUMPED);
@@ -279,9 +270,9 @@ public class LiftSubsystem {
         double power = 0;
 
         // do sanity check on setpoint
-        if (positionControl.setPoint < MIN_HEIGHT){
+        if (positionControl.getSetPoint() < MIN_HEIGHT){
             setSetpointInches(MIN_HEIGHT);
-        } else if (positionControl.setPoint > HIGH_BASKET){
+        } else if (positionControl.getSetPoint() > HIGH_BASKET){
             setSetpointInches(HIGH_BASKET);
         }
 
@@ -295,7 +286,7 @@ public class LiftSubsystem {
                 resetEncoders();
                 goingHome = false;
                 setBucketPosition(BucketPositions.HOME_READY);
-                setState(SAMPLE_HELD);
+                setState(HOME);
             } else {
                 power = HOME_POWER;
             }
@@ -307,8 +298,8 @@ public class LiftSubsystem {
             // Controls the power when moving to the set point
             power = positionControl.getOutput(currentPosition);
 
-            if(power == 0){
-                hold();
+            if (power == 0){
+                power = HOLD_POWER;
             }
         }
 

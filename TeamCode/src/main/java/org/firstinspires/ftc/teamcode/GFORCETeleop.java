@@ -24,7 +24,6 @@ import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ProportionalControl;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
 /*
  * This OpMode illustrates a teleop OpMode for an Omni robot using Essential Mecanum functions.
@@ -114,8 +113,8 @@ public class GFORCETeleop extends LinearOpMode
         while (opModeIsActive())
         {
             // Get the latest sensor data every time around the loop.
-            lift.update();
             arm.update();
+            lift.update();
             intake.update();
 
 //          octoQuad.update();

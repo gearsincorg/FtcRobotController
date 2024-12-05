@@ -12,16 +12,17 @@ import com.qualcomm.robotcore.util.Range;
  * It also implements an acceleration limit, and a max power output.
  */
 public class ProportionalControl {
-    double  lastOutput;
-    double  gain;
-    double  accelLimit;
-    double  defaultOutputLimit;
-    double  liveOutputLimit;
-    double  setPoint;
-    double  tolerance;
-    double deadband;
-    boolean circular;
-    boolean inPosition;
+    private double  lastOutput;
+    private double  gain;
+    private double  accelLimit;
+    private double  defaultOutputLimit;
+    private double  liveOutputLimit;
+    private double  setPoint;
+    private double  tolerance;
+    private double  deadband;
+    private boolean circular;
+    private boolean inPosition;
+
     ElapsedTime cycleTime = new ElapsedTime();
 
     public ProportionalControl(double gain, double accelLimit, double outputLimit, double tolerance, double deadband, boolean circular) {
@@ -75,22 +76,10 @@ public class ProportionalControl {
         return output;
     }
 
-    public boolean inPosition(){
+    public boolean  inPosition(){
         return inPosition;
     }
-    public double getSetpoint() {return setPoint;}
-
-    /**
-     * Saves a new setpoint and resets the output power history.
-     * This call allows a temporary power limit to be set to override the default.
-     * @param setPoint
-     * @param powerLimit
-     */
-    public void reset(double setPoint, double powerLimit) {
-        liveOutputLimit = Math.abs(powerLimit);
-        this.setPoint = setPoint;
-        reset();
-    }
+    public double   getSetPoint() {return setPoint;}
 
     /**
      * Saves a new setpoint and resets the output power history.
