@@ -51,8 +51,8 @@ public class ArmSubsystem {
     private final int CLIPPED_POSITON = 600;
     private final int HOME_POSITION = 0;
 
-    private DcMotor arm;      //motor used to control the arm
-    private Servo claw;
+    private DcMotor arm;      // motor used to control the arm
+    private Servo claw;       // Specimen Claw
 
     // Private Members
     private int armSetPoint = 0;

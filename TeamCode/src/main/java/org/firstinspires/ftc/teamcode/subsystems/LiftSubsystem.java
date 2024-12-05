@@ -120,14 +120,8 @@ public class LiftSubsystem {
     public void setBucketPosition(BucketPositions position){
         switch (position){
 
+            default:
             case HOME:{
-                pitchServo.setPosition(TILT_BUCKET_READY);
-                yawServo.setPosition(YAW_BUCKET_READY);
-                holdServo.setPosition(HELD);
-                break;
-            }
-
-            case HOME_READY:{
                 pitchServo.setPosition(TILT_BUCKET_READY);
                 yawServo.setPosition(YAW_BUCKET_READY);
                 holdServo.setPosition(HELD);
@@ -285,7 +279,7 @@ public class LiftSubsystem {
                 power = 0;
                 resetEncoders();
                 goingHome = false;
-                setBucketPosition(BucketPositions.HOME_READY);
+                setBucketPosition(BucketPositions.HOME);
                 setState(HOME);
             } else {
                 power = HOME_POWER;

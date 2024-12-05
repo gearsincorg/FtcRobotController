@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 
 public class AutoConfig
 {
@@ -24,9 +23,9 @@ public class AutoConfig
     OpMode myOpMode;
 
     // these names MUST match the order found in Autonomous OpMode
-    public String[] autoArray = new String[] {"Specimen 4-Sub ",            // 0
-                                              "Sample 1-Basket",            // 1
-                                              "Sample 1-Basket 3-Net"};     // 2
+    public String[] autoArray = new String[] {"SPECIMEN 4-Sub",            // 0
+                                              "SAMPLE 1-Basket",            // 1
+                                              "SAMPLE 1-Basket 3-Net"};     // 2
     int autoModes = autoArray.length;
     public static int MENU_ITEMS = 3;
 
