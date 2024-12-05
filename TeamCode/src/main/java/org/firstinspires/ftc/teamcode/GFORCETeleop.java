@@ -107,7 +107,7 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         // Reset pose and mechanisms
-        robot.pose = new Pose2d(0,0,0);
+        robot.pose = Globals.LAST_POSE;  // Will be 0,0,0 if auto not run.
         lift.resetEncoders();
 
         while (opModeIsActive())
@@ -128,6 +128,7 @@ public class GFORCETeleop extends LinearOpMode
 
             // update the robot's position based on the odometry pods.
             robot.updatePoseEstimate();
+            Globals.LAST_POSE = robot.pose;
 
             // Let the driver reset the heading to one of the 4 ordinals.
             if (gamepad1.touchpad) {
@@ -233,6 +234,10 @@ public class GFORCETeleop extends LinearOpMode
             Drawing.drawRobot(packet.fieldOverlay(), robot.pose);
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
         }
+
+        // tell AUTO to home next time
+        Globals.ARM_HOMED = false;
+        Globals.LIFT_HOMED = false;
     }
 
     void setHeadingDeg(double heading) {

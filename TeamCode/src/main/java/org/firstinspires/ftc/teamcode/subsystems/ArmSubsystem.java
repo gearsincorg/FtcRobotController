@@ -78,7 +78,10 @@ public class ArmSubsystem {
         claw = myOpMode.hardwareMap.get(Servo.class, "claw");
         claw.setPosition(CLAW_OPEN);
 
-        homeTheArm();
+        if (!Globals.ARM_HOMED) {
+            homeTheArm();
+        }
+
         setTargetPosition(currentPosition);
 
         // Set the desired telemetry state
@@ -215,6 +218,7 @@ public class ArmSubsystem {
                 power = 0;
                 resetEncoders();
                 goingHome = false;
+                Globals.ARM_HOMED = true;
                 setState(READY);
             } else {
                 power = HOME_POWER;

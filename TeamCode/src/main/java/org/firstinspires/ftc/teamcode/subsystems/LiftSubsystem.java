@@ -89,7 +89,12 @@ public class LiftSubsystem {
         holdServo = myOpMode.hardwareMap.get(Servo.class, "hold");
 
         setBucketPosition(BucketPositions.HOME);
-        homeTheLift();
+
+        if (!Globals.LIFT_HOMED) {
+            homeTheLift();
+        }
+
+        readSensors();
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -279,6 +284,7 @@ public class LiftSubsystem {
                 power = 0;
                 resetEncoders();
                 goingHome = false;
+                Globals.LIFT_HOMED = true;
                 setBucketPosition(BucketPositions.HOME);
                 setState(HOME);
             } else {
