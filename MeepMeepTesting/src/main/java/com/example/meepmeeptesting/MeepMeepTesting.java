@@ -97,28 +97,15 @@ public class MeepMeepTesting {
         Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
                 .splineToLinearHeading(new Pose2d(-54, -58, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
-                .build()
-                ;
-        Action basketToSamples = robot.actionBuilder(new Pose2d(-54, -58, Math.toRadians(45)))
-                .setTangent(Math.toRadians(45))
-                .splineToLinearHeading(new Pose2d(-36, -24, Math.toRadians(90)), Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-40, -12, Math.toRadians(90)), Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(-44, -24, Math.toRadians(90)), Math.toRadians(-90))
-                .splineToLinearHeading(new Pose2d(-54, -58, Math.toRadians(45)), Math.toRadians(-135))
-                .setTangent(Math.toRadians(45))
-                .splineToLinearHeading(new Pose2d(-44, -24, Math.toRadians(90)), Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-49, -12, Math.toRadians(90)), Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(-53, -24, Math.toRadians(90)), Math.toRadians(-90))
-                .splineToLinearHeading(new Pose2d(-53, -56, Math.toRadians(90)), Math.toRadians(-90))
-                .build();
+                .build()  ;
 
-        Action basketToSub = robot.actionBuilder(new Pose2d(-53, -56, Math.toRadians(90)))
-                .splineTo(new Vector2d(-36, -10), Math.toRadians(0))
-                .splineTo(new Vector2d(-24, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
+        Action basketToSub = robot.actionBuilder(new Pose2d(-53, -57, Math.toRadians(45)))
+                .splineTo(new Vector2d(-43, -47), Math.toRadians(45))
+                .splineTo(new Vector2d(-28, -10), Math.toRadians(0))
+                .splineTo(new Vector2d(-23, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
                 .build();
 
         // ===============================================================================================
-
         specimenBot.runAction(new SequentialAction(
                 // Score Sample 1 then sweep 2 more
                 wallToSubPath,
@@ -137,15 +124,14 @@ public class MeepMeepTesting {
         ));
 
         basketBot.runAction(new SequentialAction(
-                   wallToBasket ,
-                   basketToSamples,
+                   wallToBasket,
                    basketToSub
                 ));
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(specimenBot)
+                // .addEntity(specimenBot)
                 .addEntity(basketBot)
                 .start();
     }

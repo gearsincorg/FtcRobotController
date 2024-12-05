@@ -139,6 +139,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         return  new ParallelAction(
                 arm.actionUpdate(),
+                lift.actionUpdate(),
                 autoSequence
         );
     }
@@ -149,14 +150,15 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
-                .splineToLinearHeading(new Pose2d(-54, -58, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
 
-        Action basketToSamples = robot.actionBuilder(new Pose2d(-54, -58, Math.toRadians(45)))
+        Action basketToSamples = robot.actionBuilder(new Pose2d(-53, -57, Math.toRadians(45)))
                 .turnTo(Math.toRadians(90))
                 .build();
 
         Action autoSequence = new SequentialAction(
+                arm.actionClaw(true),
                 wallToBasket ,
                 lift.actionSetState(SAMPLE_HELD),
                 lift.actionWaitForState(LOWERING),
@@ -164,21 +166,53 @@ public class GFORCEAutonomous extends LinearOpMode
         );
 
         return  new ParallelAction(
+                arm.actionUpdate(),
                 lift.actionUpdate(),
                 autoSequence
         );
     }
 
     //================================================================================================================
-    private Action buildSample_1Bas_3Net() {
+    private Action buildSample_1Bas_Sub() {
         robot = new MecanumDrive(hardwareMap, new Pose2d(-32, -63, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
-                .splineToLinearHeading(new Pose2d(-54, -58, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
 
-        Action basketToSamples = robot.actionBuilder(new Pose2d(-54, -58, Math.toRadians(45)))
+        Action basketToSub = robot.actionBuilder(new Pose2d(-53, -57, Math.toRadians(45)))
+                .splineTo(new Vector2d(-43, -47), Math.toRadians(45))
+                .splineTo(new Vector2d(-28, -10), Math.toRadians(0))
+                .splineTo(new Vector2d(-23, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
+                .build();
+
+        Action autoSequence = new SequentialAction(
+                arm.actionClaw(true),
+                wallToBasket ,
+                lift.actionSetState(SAMPLE_HELD),
+                lift.actionWaitForState(LOWERING),
+                arm.actionSetState(ArmStates.GRABBED),
+                basketToSub
+        );
+
+        return  new ParallelAction(
+                arm.actionUpdate(),
+                lift.actionUpdate(),
+                autoSequence
+        );
+    }
+
+    //================================================================================================================
+    private Action buildSample_1Bas_2Net_Sub() {
+        robot = new MecanumDrive(hardwareMap, new Pose2d(-32, -63, Math.toRadians(90)));
+
+        Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(135))
+                .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .build();
+
+        Action basketToSamples = robot.actionBuilder(new Pose2d(-53, -57, Math.toRadians(45)))
                 .setTangent(Math.toRadians(45))
                 .splineToLinearHeading(new Pose2d(-36, -24, Math.toRadians(90)), Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-40, -12, Math.toRadians(90)), Math.toRadians(180))
@@ -198,6 +232,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
 
         Action autoSequence = new SequentialAction(
+                arm.actionClaw(true),
                 wallToBasket ,
                 lift.actionSetState(SAMPLE_HELD),
                 lift.actionWaitForState(LOWERING),
@@ -207,6 +242,7 @@ public class GFORCEAutonomous extends LinearOpMode
         );
 
         return  new ParallelAction(
+                arm.actionUpdate(),
                 lift.actionUpdate(),
                 autoSequence
         );
@@ -230,6 +266,8 @@ public class GFORCEAutonomous extends LinearOpMode
 
         // Wait for driver to press start
         while(opModeInInit()) {
+            arm.update();
+            lift.update();
 
             autoConfig.runMenuUI(); //Run menu system
 
@@ -246,7 +284,11 @@ public class GFORCEAutonomous extends LinearOpMode
                         break;
 
                     case 2:
-                        selectedAuto = buildSample_1Bas_3Net();
+                        selectedAuto = buildSample_1Bas_Sub();
+                        break;
+
+                    case 3:
+                        selectedAuto = buildSample_1Bas_2Net_Sub();
                         break;
                 }
             }
@@ -281,7 +323,7 @@ public class GFORCEAutonomous extends LinearOpMode
             }
         }
 
-        Globals.LAST_POSE = robot.pose;
+        Globals.LAST_POSE = new Pose2d(0,0, robot.pose.heading.toDouble()-(Math.PI/2)) ;
     }
 
     /*

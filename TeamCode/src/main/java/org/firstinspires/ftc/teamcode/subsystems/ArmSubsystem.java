@@ -123,7 +123,7 @@ public class ArmSubsystem {
                     claw.setPosition(CLAW_CLOSED);
                     setState(GRABBING);
                 } else {
-                    stop();
+                    //stop();
                 }
                 break;
             }
@@ -219,6 +219,7 @@ public class ArmSubsystem {
                 resetEncoders();
                 goingHome = false;
                 Globals.ARM_HOMED = true;
+                positionControl.reset(HOME_POSITION);
                 setState(READY);
             } else {
                 power = HOME_POWER;
@@ -290,4 +291,19 @@ public class ArmSubsystem {
             }
         };
     }
+
+    public Action actionClaw(boolean openClaw){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+               if(openClaw){
+                   claw.setPosition(CLAW_OPEN);
+               } else {
+                   claw.setPosition(CLAW_CLOSED);
+               }
+                return false;
+            }
+        };
+    }
+
 }

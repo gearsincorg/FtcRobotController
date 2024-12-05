@@ -32,7 +32,7 @@ public class LiftSubsystem {
     public final double MAX_HEIGHT = 47;
     public final double MIN_HEIGHT = 8.5;
     public final double HIGH_BASKET = 46.5;
-    public final double LOW_BASKET = 25 ;
+    public final double LOW_BASKET = 31 ;
     private final double HOLD_POWER = 0.075;
     private final double HOME_POWER = -0.6;
     private final double TILT_SIDE = 0.4;
@@ -192,7 +192,7 @@ public class LiftSubsystem {
                     setSetpointInches(HIGH_BASKET);
                     setBucketPosition(BucketPositions.BACK_DUMP_READY);
                     setState(LIFTING);
-                } else if(myOpMode.gamepad2.circle){
+                } else if(myOpMode.gamepad2.square){
                     setSetpointInches(LOW_BASKET);
                     setBucketPosition(BucketPositions.BACK_DUMP_READY);
                     setState(LIFTING);
@@ -214,6 +214,14 @@ public class LiftSubsystem {
                 if(myOpMode.gamepad2.cross || Globals.IS_AUTO){
                     setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
                     setState(DUMPED);
+                } else if(myOpMode.gamepad2.triangle){
+                    setSetpointInches(HIGH_BASKET);
+                    setBucketPosition(BucketPositions.BACK_DUMP_READY);
+                    setState(LIFTING);
+                } else if(myOpMode.gamepad2.square){
+                    setSetpointInches(LOW_BASKET);
+                    setBucketPosition(BucketPositions.BACK_DUMP_READY);
+                    setState(LIFTING);
                 }
                 break;
             }

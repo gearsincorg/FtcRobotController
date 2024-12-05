@@ -23,9 +23,10 @@ public class AutoConfig
     OpMode myOpMode;
 
     // these names MUST match the order found in Autonomous OpMode
-    public String[] autoArray = new String[] {"SPECIMEN 4-Sub",            // 0
+    public String[] autoArray = new String[] {"SPECIMEN 4-Sub",             // 0
                                               "SAMPLE 1-Basket",            // 1
-                                              "SAMPLE 1-Basket 3-Net"};     // 2
+                                              "SAMPLE 1-Basket Sub",        // 2
+                                              "SAMPLE 1-Basket 2-Net Sub"}; // 3
     int autoModes = autoArray.length;
     public static int MENU_ITEMS = 3;
 
@@ -89,9 +90,9 @@ public class AutoConfig
         inputStream.close();
       }
     } catch (Exception e)
-    {
-      myOpMode.telemetry.addData("Config", "Blank Config.");
-    }
+        {
+          myOpMode.telemetry.addData("Config", "Blank Config.");
+        }
     }
 
     public void updateMenu ()

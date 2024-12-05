@@ -144,9 +144,9 @@ public class GFORCETeleop extends LinearOpMode
             }
 
             // read joystick values and scale according to limits set at top of this file
-            double drive  = -square(gamepad1.left_stick_y) * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
-            double strafe = -square(gamepad1.left_stick_x) * SAFE_STRAFE_SPEED;     //  Left/Right on left stick
-            double yaw    = -square(gamepad1.right_stick_x) * SAFE_YAW_SPEED;       //  Rotate on right stick
+            double drive  = -cubed(gamepad1.left_stick_y) * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
+            double strafe = -cubed(gamepad1.left_stick_x) * SAFE_STRAFE_SPEED;     //  Left/Right on left stick
+            double yaw    = -cubed(gamepad1.right_stick_x) * SAFE_YAW_SPEED;       //  Rotate on right stick
 
             //  For special conditions, Use the DPAD to make slow-mo orthogonal motions.  Adjust the divider to your needs.
             if (gamepad1.dpad_left) {
@@ -210,12 +210,16 @@ public class GFORCETeleop extends LinearOpMode
 
             translate = new Vector2d(drive, strafe);
 
+            telemetry.addData("original", translate.toString());
+
             // rotate the driving commands if field centric is engaged
             if (USE_FIELD_CENTRIC_MODE) {
                 // Create a vector from the gamepad x/y inputs
                 // Then, rotate that vector by the inverse of that heading
                 translate = new RotateVector(translate, -robot.pose.heading.toDouble()).rotated;
             }
+
+            telemetry.addData("rotated", translate.toString());
 
             //  Drive the wheels based on the desired axis motions
             robot.setDrivePowers(new PoseVelocity2d(
@@ -258,8 +262,8 @@ public class GFORCETeleop extends LinearOpMode
         }
     }
 
-    public double square (double joystick) {
-        return (joystick * joystick * Math.signum(joystick));
+    public double cubed(double joystick) {
+        return (joystick * joystick * joystick);
     }
 }
 
