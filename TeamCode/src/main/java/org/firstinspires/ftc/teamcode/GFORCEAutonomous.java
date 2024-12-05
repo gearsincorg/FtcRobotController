@@ -6,48 +6,46 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.HOME;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.LOWERING;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.SAMPLE_HELD;
+
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.ArmStates;
 import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.OctoQuadIF;
+import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
 
 @Autonomous(name="GFORCE Autonomous", group = "AA" ,  preselectTeleOp="GFORCE Teleop")
 public class GFORCEAutonomous extends LinearOpMode
 {
     MecanumDrive robot;
     AutoConfig autoConfig   = new AutoConfig(this);
-//    OctoQuadIF octoQuad     = new OctoQuadIF(this);
     ArmSubsystem arm        = new ArmSubsystem(this);
     IntakeSubsystem intake  = new IntakeSubsystem(this);
+    LiftSubsystem lift      = new LiftSubsystem(this);
+//  OctoQuadIF octoQuad     = new OctoQuadIF(this);
 //  VisionSubsystem blob    = new VisionSubsystem(this);
 
+    private Action selectedAuto  = null;
+    private int lastSelectedAuto = -1;
 
-    @Override
-    public void runOpMode()
-    {
-        Globals.IS_AUTO = true;
+    // Place all auto builders here!
 
+    //================================================================================================================
+    private Action buildSpecimen_4Sub() {
         robot = new MecanumDrive(hardwareMap, new Pose2d(4, -63, Math.toRadians(90)));
-//      octoQuad.initialize(false);
-        arm.initialize(false);
-        arm.closeClaw();
-        intake.initialize(false);
-//      blob.initilaize(false);
-        autoConfig.initialize();
-
-        // ############################################################################
 
         //build trajectories
         Action wallToSubPath = robot.actionBuilder(new Pose2d(4, -63, Math.toRadians(90)))
@@ -74,48 +72,41 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineToConstantHeading(new Vector2d(30, -50), Math.toRadians(180))
                 .setTangent(Math.toRadians(-90))
                 .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90))
-                .build()
-                ;
+                .build() ;
 
         Action specimenToSub2Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(145))
                 .splineToConstantHeading(new Vector2d(0, -31), Math.toRadians(90))
-                .build()
-                ;
+                .build();
 
         Action sub2ToSpecimenPath = robot.actionBuilder(new Pose2d(0, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-35))
                 .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90))
-                .build()
-                ;
+                .build();
 
         Action specimenToSub3Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(150))
                 .splineToConstantHeading(new Vector2d(-4, -31), Math.toRadians(90))
-                .build()
-                ;
+                .build();
 
         Action sub3ToSpecimenPath = robot.actionBuilder(new Pose2d(-4, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-30))
                 .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90))
-                .build()
-                ;
+                .build();
 
         Action specimenToSub4Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(155))
                 .splineToConstantHeading(new Vector2d(-8, -31), Math.toRadians(90))
-                .build()
-                ;
+                .build();
 
         Action sub4ToObservationPath = robot.actionBuilder(new Pose2d(-8, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-30))
                 .splineToConstantHeading(new Vector2d(50, -56), Math.toRadians(0))
-                .build()
-                ;
+                .build();
 
         //  ######################################################################
 
-        Action fourSpecimenAuto = new SequentialAction(
+        Action autoSequence = new SequentialAction(
                 // Score Specimen 1 then sweep 2 more
                 arm.actionSetState(ArmStates.GRABBED),
                 wallToSubPath,
@@ -147,34 +138,147 @@ public class GFORCEAutonomous extends LinearOpMode
                 sub4ToObservationPath
         );
 
-        // Wait for driver to press start
-        telemetry.addData(">", "Touch Play to run Auto");
-        telemetry.update();
+        return  new ParallelAction(
+                arm.actionUpdate(),
+                autoSequence
+        );
+    }
 
+    //================================================================================================================
+    private Action buildSample_1Bas() {
+        robot = new MecanumDrive(hardwareMap, new Pose2d(-32, -63, Math.toRadians(90)));
+
+        Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(135))
+                .splineToLinearHeading(new Pose2d(-54, -58, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .build()
+                ;
+
+        Action basketToSamples = robot.actionBuilder(new Pose2d(-54, -58, Math.toRadians(45)))
+                .turnTo(Math.toRadians(90))
+                .build();
+
+        Action autoSequence = new SequentialAction(
+                wallToBasket ,
+                lift.actionSetState(SAMPLE_HELD),
+                lift.actionWaitForState(LOWERING),
+                basketToSamples
+        );
+
+        return  new ParallelAction(
+                lift.actionUpdate(),
+                autoSequence
+        );
+    }
+
+    //================================================================================================================
+    private Action buildSample_1Bas_3Net() {
+        robot = new MecanumDrive(hardwareMap, new Pose2d(-32, -63, Math.toRadians(90)));
+
+        Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(135))
+                .splineToLinearHeading(new Pose2d(-54, -58, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .build()
+                ;
+
+        Action basketToSamples = robot.actionBuilder(new Pose2d(-54, -58, Math.toRadians(45)))
+                .setTangent(Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(-36, -48, Math.toRadians(90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-36, -24, Math.toRadians(90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-40, -12, Math.toRadians(90)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-44, -24, Math.toRadians(90)), Math.toRadians(-90))
+                /*
+                .splineToLinearHeading(new Pose2d(-56, -56, Math.toRadians(45)), Math.toRadians(-135))
+                .setTangent(Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(-44, -24, Math.toRadians(90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-49, -12, Math.toRadians(90)), Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-53, -24, Math.toRadians(90)), Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-53, -56, Math.toRadians(90)), Math.toRadians(-90))
+                */
+
+                .build();
+
+        Action autoSequence = new SequentialAction(
+                wallToBasket ,
+                lift.actionSetState(SAMPLE_HELD),
+                lift.actionWaitForState(LOWERING),
+                basketToSamples
+        );
+
+        return  new ParallelAction(
+                lift.actionUpdate(),
+                autoSequence
+        );
+    }
+
+    @Override
+    public void runOpMode()
+    {
+        Globals.IS_AUTO = true;
+
+        arm.initialize(false);
+        arm.closeClaw();
+        lift.initialize(false);
+        intake.initialize(false);
+        autoConfig.initialize();
+//      octoQuad.initialize(false);
+//      blob.initilaize(false);
+
+        // ############################################################################
+
+
+        // Wait for driver to press start
         while(opModeInInit()) {
 
             autoConfig.runMenuUI(); //Run menu system
 
-            telemetry.addLine("\n");
+            // Note:  The cases below MUST match the order of auto options in the AutoConfi.java file.
+            if (autoConfig.autoOptions.autoMode != lastSelectedAuto) {
+                lastSelectedAuto = autoConfig.autoOptions.autoMode;
+                switch (lastSelectedAuto) {
+                    case 0:
+                        selectedAuto = buildSpecimen_4Sub();
+                        break;
 
-            // Set GLOBAL flags based on menu choices.
+                    case 1:
+                        selectedAuto = buildSample_1Bas();
+                        break;
+
+                    case 2:
+                        selectedAuto = buildSample_1Bas_3Net();
+                        break;
+                }
+            }
+
+            /* Set GLOBAL flags based on menu choices.
             if (autoConfig.autoOptions.redAlliance )
                 Globals.ALLIANCE_COLOR = AllianceColor.RED;
             else
                 Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
+            */
 
+            telemetry.addLine("\n Touch Play to run Auto");
             telemetry.update();
         }
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
-            Actions.runBlocking(
-                new ParallelAction(
-                    arm.actionUpdate(),
-                        fourSpecimenAuto
-                )
-            );
+            // Do a count down if these is a delayed start,
+            for (int sec = autoConfig.autoOptions.delayStart; sec > 0; sec--) {
+                telemetry.addData("AUTO MODE",  "%s", autoConfig.autoArray[autoConfig.autoOptions.autoMode]);
+                telemetry.addData("COUNTDOWN",  "%d  %d  %d  %d", sec, sec, sec, sec);
+                telemetry.update();
+                sleep(1000);
+            }
+            if (selectedAuto != null) {
+                Actions.runBlocking(selectedAuto);
+            } else {
+                telemetry.addData("AUTO MODE",  "No valid mode selected (%d)", autoConfig.autoOptions.autoMode);
+                telemetry.update();
+                sleep(5000);
+            }
+
         }
     }
 

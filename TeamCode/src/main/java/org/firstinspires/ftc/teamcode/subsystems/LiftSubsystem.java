@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.AUTO_WAITING;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.DUMPED;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.HOME;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.LIFTING;
@@ -32,7 +33,8 @@ public class LiftSubsystem {
     public final double MIN_HEIGHT = 8.5;
     public final double HIGH_BASKET = 46.5;
     public final double LOW_BASKET = 25 ;
-    private final double HOLD_POWER = 0.075;
+//    private final double HOLD_POWER = 0.075;
+    private final double HOLD_POWER = 0.0;
     private final double HOME_POWER = -0.6;
     private final double PITCH = 0.5;
     private final double YAW = 0.5;
@@ -82,9 +84,9 @@ public class LiftSubsystem {
     public void initialize(boolean showTelemetry){
         lift = myOpMode.hardwareMap.get(DcMotor.class, "lift");
         lift.setDirection(DcMotorSimple.Direction.REVERSE);
-        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset Encoders to zero
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); // Reset Encoders to zero
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);  // Requires motor encoder cables to be hooked up.
+        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);    // Still Requires motor encoder cables to be hooked up.
         pitchServo = myOpMode.hardwareMap.get(Servo.class, "pitch");
         yawServo = myOpMode.hardwareMap.get(Servo.class, "yaw");
         holdServo = myOpMode.hardwareMap.get(Servo.class, "hold");
@@ -108,6 +110,7 @@ public class LiftSubsystem {
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Lift Position", "%.1f inches", currentPosition);
+            myOpMode.telemetry.addData("lift target  ", "%.1f inches", positionControl.setPoint);
         }
     }
 
@@ -117,36 +120,14 @@ public class LiftSubsystem {
     public void stop(){
         lift.setPower(0);
     }
-
     public void hold(){
         lift.setPower(HOLD_POWER);
-    }
-    public double getCurrentPosition() {
-        return currentPosition;
-    }
-    public double getSetpointInches() {
-        return setpointInches;
     }
 
     public void setSetpointInches(double setpointInches) {
         MathUtils.clamp(setpointInches, MIN_HEIGHT, MAX_HEIGHT);
         this.setpointInches = setpointInches;
         positionControl.reset(setpointInches);
-    }
-
-    public void resetEncoders(){
-        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        myOpMode.sleep(10);
-        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-    }
-
-    public void homeTheLift(){
-        goingHome = true;
-        myOpMode.telemetry.addLine("homing the lift");
-        myOpMode.telemetry.update();
-        lift.setPower(HOME_POWER);
-        myOpMode.sleep(250);
-
     }
 
     public void setBucketPosition(BucketPositions position){
@@ -205,15 +186,23 @@ public class LiftSubsystem {
         switch (currentState) {
 
             case HOME:{
-                if(stateTime.time() > 0.5) {
+                if((stateTime.time() > 0.5)) {
                     resetEncoders();
-                    setState(SAMPLE_HELD);
+                    if (Globals.IS_AUTO) {
+                        setState(AUTO_WAITING);
+                    } else {
+                        setState(SAMPLE_HELD);
+                    }
                 }
                 break;
             }
 
+            case AUTO_WAITING:{
+                break;
+            }
+
             case SAMPLE_HELD:{
-                if(myOpMode.gamepad2.triangle  || Globals.IS_AUTO){
+                if(myOpMode.gamepad2.triangle || Globals.IS_AUTO){
                     setSetpointInches(HIGH_BASKET);
                     setBucketPosition(BucketPositions.BACK_DUMP_READY);
                     setState(LIFTING);
@@ -269,22 +258,44 @@ public class LiftSubsystem {
         stateTime.reset();
     }
 
+    public void homeTheLift(){
+        goingHome = true;
+        myOpMode.telemetry.addLine("homing the lift");
+        myOpMode.telemetry.update();
+        lift.setPower(HOME_POWER);
+        myOpMode.sleep(100);
+    }
+
+    public void resetEncoders(){
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        myOpMode.sleep(10);
+        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
     /**
      * controlling the motor and causing the lift to move to the setpoint
      */
     public void runControl() {
-        double error = setpointInches - currentPosition;
         double power = 0;
+
+        // do sanity check on setpoint
+        if (positionControl.setPoint < MIN_HEIGHT){
+            setSetpointInches(MIN_HEIGHT);
+        } else if (positionControl.setPoint > HIGH_BASKET){
+            setSetpointInches(HIGH_BASKET);
+        }
 
         // Decides if the lift should be homing, or if it is going to the correct position
         if(goingHome){
 
-            // Decides if the arm is still in the homing motion or if it has stopped and is homed
+            // Decides if the lift is still in the homing motion or if it has stopped and is homed
             int position = lift.getCurrentPosition();
             if(Math.abs(position-lastPosition) < MINIMUM_MOVEMENT){
                 power = 0;
                 resetEncoders();
                 goingHome = false;
+                setBucketPosition(BucketPositions.HOME_READY);
+                setState(SAMPLE_HELD);
             } else {
                 power = HOME_POWER;
             }
@@ -302,8 +313,9 @@ public class LiftSubsystem {
         }
 
         lift.setPower(power);
-        myOpMode.telemetry.addData("lift error",error);
-        myOpMode.telemetry.addData("lift power", power);
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("lift power", power);
+        }
     }
 
     //-------------------------------------------------------------------------

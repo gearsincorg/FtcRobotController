@@ -136,7 +136,7 @@ public class IntakeSubsystem {
         }
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Sample", "%s h:%d %s Rng %.0f mm", gotSample ? "Full" : "Empty", hue , sampleColor, range);
+            myOpMode.telemetry.addData("Sample", "%s h:%d %s Rng %.0f cm", gotSample ? "Full" : "Empty", hue , sampleColor, range);
         }
     }
 

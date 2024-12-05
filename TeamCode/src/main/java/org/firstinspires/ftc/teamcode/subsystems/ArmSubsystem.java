@@ -43,7 +43,7 @@ public class ArmSubsystem {
 
     private final double GAIN = 1.0 / 200.0;
     private final double ACCEL_LIMIT = 7.0;
-    private final double OUTPUT_LIMIT = 0.75;
+    private final double OUTPUT_LIMIT = 0.85;
     private final double TOLERANCE = 20.0;
     private final double DEADBAND = 10.0;
 
@@ -58,9 +58,11 @@ public class ArmSubsystem {
     private int armSetPoint = 0;
     private int currentPosition = 0;
     private int lastPosition = 0;
-    private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
     private boolean timeToClip = false;
+    private boolean goingHome = false;
+
     private Button grabScore = new Button();
+    private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
 
     public ArmSubsystem(LinearOpMode opMode){
         myOpMode = opMode;
@@ -190,33 +192,43 @@ public class ArmSubsystem {
     }
 
     public void homeTheArm(){
+        goingHome = true;
+        myOpMode.telemetry.addLine("homing the arm");
+        myOpMode.telemetry.update();
         arm.setPower(HOME_POWER);
-        lastPosition = arm.getCurrentPosition();
-        myOpMode.sleep(250);
-        while (myOpMode.opModeInInit()) {
-            readSensors();
-            int movement = Math.abs(currentPosition - lastPosition);
-            if (movement <= HOME_MIN_MOVEMENT){
-                stop();
-                myOpMode.sleep(200);
-                arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                break;
-            } else {
-                lastPosition = currentPosition;
-                myOpMode.sleep(100);
-            }
+        myOpMode.sleep(100);
+    }
 
-        }
-        stop();
-        readSensors();
+    public void resetEncoders(){
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        myOpMode.sleep(10);
+        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void runControl(){
-        double motorPower = positionControl.getOutput(currentPosition);
-        arm.setPower(motorPower);
+        double power = 0;
+
+        if (goingHome) {
+            // Decides if the lift is still in the homing motion or if it has stopped and is homed
+            int position = arm.getCurrentPosition();
+            if(Math.abs(position-lastPosition) < HOME_MIN_MOVEMENT){
+                power = 0;
+                resetEncoders();
+                goingHome = false;
+                setState(READY);
+            } else {
+                power = HOME_POWER;
+            }
+            lastPosition = position;
+            myOpMode.sleep(50);
+
+        } else {
+            power = positionControl.getOutput(currentPosition);
+        }
+
+        arm.setPower(power);
         if (showTelemetry) {
-            myOpMode.telemetry.addData("arm power", motorPower);
+            myOpMode.telemetry.addData("arm power", power);
         }
     }
 

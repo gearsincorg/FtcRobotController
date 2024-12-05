@@ -65,12 +65,12 @@ public class GFORCETeleop extends LinearOpMode
 
     // get an instance of each of the subsystems
     MecanumDrive    robot   ;
-//    OctoQuadIF octoQuad = new OctoQuadIF(this);
     LiftSubsystem lift    = new LiftSubsystem(this);
-    VisionSubsystem vision  = new VisionSubsystem(this);
     ArmSubsystem arm     = new ArmSubsystem(this);
     IntakeSubsystem intake  = new IntakeSubsystem(this);
     AutoConfig autoConfig   = new AutoConfig(this);
+//  VisionSubsystem vision  = new VisionSubsystem(this);
+//  OctoQuadIF octoQuad = new OctoQuadIF(this);
 
 
     @Override public void runOpMode()
@@ -81,11 +81,11 @@ public class GFORCETeleop extends LinearOpMode
         autoConfig.initialize();
 
         // Initialize the drive hardware & Turn on telemetry
-//      octoQuad.initialize(true);
-        vision.initilaize(true);
         lift.initialize(true);
         arm.initialize(true);
         intake.initialize(true);
+//      octoQuad.initialize(true);
+//      vision.initilaize(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -95,9 +95,9 @@ public class GFORCETeleop extends LinearOpMode
             robot.updatePoseEstimate();
             lift.update();
             arm.update();
-            vision.getTarget();
             intake.update();
             telemetry.update();
+//          vision.getTarget();
         }
 
         // Set GLOBAL flags based on menu choices.
@@ -118,8 +118,14 @@ public class GFORCETeleop extends LinearOpMode
             arm.update();
             intake.update();
 
-//            octoQuad.update();
+//          octoQuad.update();
             fieldCentric = USE_FIELD_CENTRIC_MODE;
+
+            // Check to see if we need to home the Lift
+            if (gamepad2.touchpad) {
+                lift.homeTheLift();
+                arm.homeTheArm();
+            }
 
             // update the robot's position based on the odometry pods.
             robot.updatePoseEstimate();

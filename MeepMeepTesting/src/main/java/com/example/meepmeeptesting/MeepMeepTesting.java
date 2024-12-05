@@ -3,6 +3,7 @@ package com.example.meepmeeptesting;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
@@ -93,9 +94,10 @@ public class MeepMeepTesting {
         // ===============================================================================================
         // Build Basket Trajectories
 
-        Action wallToBasket = robot.actionBuilder(new Pose2d(-36, -63, Math.toRadians(90)))
+        Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
                 .splineToLinearHeading(new Pose2d(-56, -56, Math.toRadians(45)), Math.toRadians(-135))
+
                 .build()
                 ;
 
@@ -111,24 +113,13 @@ public class MeepMeepTesting {
                 .splineToLinearHeading(new Pose2d(-49, -12, Math.toRadians(90)), Math.toRadians(180))
                 .splineToLinearHeading(new Pose2d(-53, -24, Math.toRadians(90)), Math.toRadians(-90))
                 .splineToLinearHeading(new Pose2d(-53, -56, Math.toRadians(90)), Math.toRadians(-90))
-
-                //.splineToConstantHeading(new Vector2d(-44, -12), Math.toRadians(0))
-                //.splineToConstantHeading(new Vector2d(-48, -24), Math.toRadians(-90))
-                //.splineToConstantHeading(new Vector2d(-44, -50), Math.toRadians(-90))
-                //.splineToConstantHeading(new Vector2d(-46, -12), Math.toRadians(-90))
-                //.splineToConstantHeading(new Vector2d(-56, -12), Math.toRadians(-90))
-                //.lineToY(-56)
-                //.splineToConstantHeading(new Vector2d(-56, -12), Math.toRadians(-90))
-                //.splineToConstantHeading(new Vector2d(-66, -12), Math.toRadians(-90))
-                //.lineToY(-56)
-                .build()
-                ;
+                .build();
 
 
         // ===============================================================================================
 
         specimenBot.runAction(new SequentialAction(
-                // Score Specimen 1 then sweep 2 more
+                // Score Sample 1 then sweep 2 more
                 wallToSubPath,
                 subToAllSamplesPath,
                 // Pickup and score Specimen 2
@@ -145,14 +136,14 @@ public class MeepMeepTesting {
         ));
 
         basketBot.runAction(new SequentialAction(
-                   wallToBasket,
-                   basketToSamples
+                   wallToBasket //,
+                   // basketToSamples
                 ));
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(specimenBot)
+                //.addEntity(specimenBot)
                 .addEntity(basketBot)
                 .start();
     }
