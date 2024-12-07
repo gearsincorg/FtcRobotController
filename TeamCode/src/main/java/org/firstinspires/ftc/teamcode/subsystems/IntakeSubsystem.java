@@ -41,7 +41,7 @@ public class IntakeSubsystem {
     private final double OFF = 0;
     private final double WRIST_IN = 0.4;
     private final double WRIST_OUT = 0.68;
-    private final double WRIST_DOWN = 0.87;
+    private final double WRIST_DOWN = 0.9;
     private final double SLIDE_TRANSIT_TIME = 1.5;
     private final double SLIDE_TRANSFER_TIME = 1.0;
 

@@ -263,7 +263,7 @@ public class GFORCETeleop extends LinearOpMode
     }
 
     public double cubed(double joystick) {
-        return (joystick * joystick * joystick);
+        return (joystick * joystick * Math.signum(joystick));
     }
 }
 
