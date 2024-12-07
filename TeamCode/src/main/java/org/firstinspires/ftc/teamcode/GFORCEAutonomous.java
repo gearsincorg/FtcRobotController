@@ -68,9 +68,9 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(56, -50, Math.toRadians(90)))
                 .setTangent(Math.toRadians(180))
-                .splineToConstantHeading(new Vector2d(30, -50), Math.toRadians(180))
+                .splineToConstantHeading(new Vector2d(30, -50), Math.toRadians(180), new TranslationalVelConstraint(20.0))
                 .setTangent(Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90), new TranslationalVelConstraint(15.0))
                 .build() ;
 
         Action specimenToSub2Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
