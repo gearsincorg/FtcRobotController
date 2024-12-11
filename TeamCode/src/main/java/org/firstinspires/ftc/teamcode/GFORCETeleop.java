@@ -109,6 +109,7 @@ public class GFORCETeleop extends LinearOpMode
         robot.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
         lift.resetEncoders();
 
+
         while (opModeIsActive())
         {
             // Get the latest sensor data every time around the loop.
@@ -116,7 +117,6 @@ public class GFORCETeleop extends LinearOpMode
             lift.update();
             intake.update();
 
-//          octoQuad.update();
             fieldCentric = USE_FIELD_CENTRIC_MODE;
 
             // Check to see if we need to home the Lift
@@ -207,18 +207,13 @@ public class GFORCETeleop extends LinearOpMode
                 yaw = yawController.getOutput(headingDeg);
             }
 
-            translate = new Vector2d(drive, strafe);
-
-            telemetry.addData("original", translate.toString());
-
             // rotate the driving commands if field centric is engaged
+            translate = new Vector2d(drive, strafe);
             if (USE_FIELD_CENTRIC_MODE) {
                 // Create a vector from the gamepad x/y inputs
                 // Then, rotate that vector by the inverse of that heading
                 translate = new RotateVector(translate, -robot.getPose().heading.toDouble()).rotated;
             }
-
-            telemetry.addData("rotated", translate.toString());
 
             //  Drive the wheels based on the desired axis motions
             robot.setDrivePowers(new PoseVelocity2d(

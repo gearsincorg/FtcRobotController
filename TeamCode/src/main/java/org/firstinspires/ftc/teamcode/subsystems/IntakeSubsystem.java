@@ -48,6 +48,7 @@ public class IntakeSubsystem {
     // public members
     public boolean     gotSample   = false;
     public SampleColor sampleColor = NONE;
+    public int         sampleHue = -1;
 
     //declaring servos for the intake
     private Servo leftLever;
@@ -98,6 +99,10 @@ public class IntakeSubsystem {
         readSensors();
         runSlideControl();
         runStateMachine();
+
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Intake Hold Color Hue", "%s %s %s %d", currentState, gotSample, sampleColor, sampleHue);
+        }
     }
 
     public void readSensors() {
@@ -105,22 +110,22 @@ public class IntakeSubsystem {
         // process color/Range sensor
         double range = ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM);
 
-        int hue = -1;
+        sampleHue = -1;
         if ((range > 0.5) && (range  < 6.5)) {
 
             NormalizedRGBA colors = colorSensor.getNormalizedColors();
             Color.colorToHSV(colors.toColor(), hsvValues);
-            hue = (int)hsvValues[0];
+            sampleHue = (int)hsvValues[0];
 
-            if (hue < 68) {
+            if (sampleHue < 68) {
                 gotSample = true;
                 sampleColor = RED;
                 colorLED.setPosition(.3);
-            } else if (hue < 170) {
+            } else if (sampleHue < 170) {
                 gotSample = true;
                 sampleColor = YELLOW;
                 colorLED.setPosition(.35);
-            }  else if (hue > 190) {
+            }  else if (sampleHue > 190) {
                 gotSample = true;
                 sampleColor = BLUE;
                 colorLED.setPosition(.6);
@@ -134,19 +139,9 @@ public class IntakeSubsystem {
             sampleColor = NONE;
             colorLED.setPosition(0);
         }
-
-        if (showTelemetry) {
-            myOpMode.telemetry.addData("Sample", "%s h:%d %s Rng %.0f cm", gotSample ? "Full" : "Empty", hue , sampleColor, range);
-        }
     }
 
     public void runStateMachine() {
-
-        if (showTelemetry) {
-            myOpMode.telemetry.addData("Intake State", "%S", currentState);
-        }
-
-
         switch (currentState) {
             case INIT: {
                 if (wristInOut.pressed(myOpMode.gamepad2.left_bumper)) {
@@ -169,7 +164,11 @@ public class IntakeSubsystem {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
-                }  else if (myOpMode.gamepad2.dpad_up) {
+                } else if (wristInOut.pressed(myOpMode.gamepad2.left_bumper)) {
+                    wristIn();
+                    // slideIn() // consider bringing both items in if clear of low rung.
+                    setState(IntakeStates.TILT_WRIST);
+                }else if (myOpMode.gamepad2.dpad_up) {
                     collectorEject();
                 } else {
                     collectorOff();
@@ -185,15 +184,15 @@ public class IntakeSubsystem {
                 else if (gotSample) {
                     wristOut();
                     collectorOff();
-                    setState(IntakeStates.HOLDING_SAMPLE);
+                    setState(IntakeStates.GOT_SAMPLE);
                 }
                 break;
 
-            case HOLDING_SAMPLE:
+            case GOT_SAMPLE:
                 if (wristInOut.pressed(myOpMode.gamepad2.left_bumper)) {
                     wristIn();
                     // slideIn() // consider bringing both items in if clear of low rung.
-                    setState(IntakeStates.RAISING_WRIST);
+                    setState(IntakeStates.TILT_WRIST);
                 } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down)) {
                     wristDown();
                     collectorIntake();
@@ -205,14 +204,14 @@ public class IntakeSubsystem {
                 }
                 break;
 
-            case RAISING_WRIST:
+            case TILT_WRIST:
                 if ((stateTime.time() > 1.0) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
                     collectorIntake();
-                    setState(IntakeStates.TRANSFERING_SAMPLE);
+                    setState(IntakeStates.TRANSFER);
                 }
                 break;
 
-            case TRANSFERING_SAMPLE:
+            case TRANSFER:
                 if (stateTime.time() > SLIDE_TRANSFER_TIME){
                     collectorOff();
                     wristOut();

@@ -39,10 +39,12 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.PoseMessage;
+import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.OctoQuadBase_v3;
 import org.firstinspires.ftc.teamcode.subsystems.OctoQuad_v3;
 
@@ -55,6 +57,7 @@ public final class MecanumDrive {
 
     LinearOpMode myOpMode;
     OctoQuad_v3.LocalizerDataBlock OQlocalizer = new OctoQuad_v3.LocalizerDataBlock();
+    ElapsedTime cycleTime = new ElapsedTime();
 
     public static class Params {
         // IMU orientation
@@ -153,6 +156,7 @@ public final class MecanumDrive {
         oq = hardwareMap.get(OctoQuad_v3.class, "octoquad");
         intializeOctoQuad(oq);
         setPose(pose);
+        cycleTime.reset();
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -359,15 +363,19 @@ public final class MecanumDrive {
 
     public PoseVelocity2d updatePoseEstimate() {
 
+        myOpMode.telemetry.addData("Cycle mSec", (int)cycleTime.milliseconds() );
+        cycleTime.reset();
+
         oq.readLocalizerData(OQlocalizer);
 
         myOpMode.telemetry.addData("Localizer status", OQlocalizer.localizerStatus);
-        myOpMode.telemetry.addData("Heading deg", Math.toDegrees(OQlocalizer.heading_rad));
-        myOpMode.telemetry.addData("Heading dps", Math.toDegrees(OQlocalizer.velHeading_radS));
-        myOpMode.telemetry.addData("X mm", OQlocalizer.posX_mm);
-        myOpMode.telemetry.addData("Y mm", OQlocalizer.posY_mm);
-        myOpMode.telemetry.addData("VX mm/s", OQlocalizer.velX_mmS);
-        myOpMode.telemetry.addData("VY mm/s", OQlocalizer.velY_mmS);
+        myOpMode.telemetry.addData("Heading", "%4.0f D, %5.0f D/s",  Math.toDegrees(OQlocalizer.heading_rad), Math.toDegrees(OQlocalizer.velHeading_radS));
+        myOpMode.telemetry.addData("Pos X:Y mm", "%4d : %4d", OQlocalizer.posX_mm, OQlocalizer.posY_mm);
+        myOpMode.telemetry.addData("Vel X:Y mm/s", "%5d : %5d", OQlocalizer.velX_mmS, OQlocalizer.velY_mmS);
+
+        if (Globals.IS_AUTO) {
+            myOpMode.telemetry.update();
+        }
 
         pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
 

@@ -6,7 +6,7 @@ public enum ArmStates {
     GRABBING,
     GRABBED,
     LIFTING,
-    READY_TO_CLIP,
+    READY_CLIP,
     CANCEL,
     CLIPPING,
     LOWERING

@@ -94,7 +94,7 @@ public class OctoQuadImpl_v3 extends I2cDeviceSynchDevice<I2cDeviceSynchSimple> 
     @Override
     protected boolean doInitialize()
     {
-        ((LynxI2cDeviceSynch)(deviceClient)).setBusSpeed(LynxI2cDeviceSynch.BusSpeed.FAST_400K);
+        // ((LynxI2cDeviceSynch)(deviceClient)).setBusSpeed(LynxI2cDeviceSynch.BusSpeed.FAST_400K);
         isInitialized = false;
         verifyInitialization();
         return true;

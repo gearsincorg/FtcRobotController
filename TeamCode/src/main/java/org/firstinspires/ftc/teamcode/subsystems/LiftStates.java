@@ -2,11 +2,11 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 public enum LiftStates {
     HOME,
-    AUTO_WAITING,
+    AUTO_WAIT,
     SAMPLE_HELD,
     LIFTING,
-    READY_TO_SCORE,
+    RDY_TO_DUMP,
     DUMPED,
     LOWERING,
-    WAITING_FOR_BUCKET
+    WAIT_BUCKET
 }

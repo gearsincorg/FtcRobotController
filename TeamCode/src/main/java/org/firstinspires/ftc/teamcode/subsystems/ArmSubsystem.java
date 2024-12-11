@@ -8,7 +8,7 @@ import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.GRABBING;
 import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.LIFTING;
 import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.LOWERING;
 import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.READY;
-import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.READY_TO_CLIP;
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.READY_CLIP;
 
 import androidx.annotation.NonNull;
 
@@ -27,28 +27,24 @@ public class ArmSubsystem {
     private LinearOpMode myOpMode;
     private boolean     showTelemetry   = false;
     private ArmStates   currentState    = READY;
+    private double      outputPower     = 0;
     private ElapsedTime stateTime       = new ElapsedTime();
 
     // Constants
-    private final double SLOPE = 0.0123;
-    private final double OFFSET = 9.5;
-    private final double HOLD_POWER = 0.1;
-    private final double LIFTING_POWER = 0.5;
-    private final double LOWERING_POWER = -0.6;
     private final double CLAW_OPEN = 0.3;
     private final double CLAW_CLOSED = 0.55;
     private final double LOOSE_GRIP = 0.5;
     private final double HOME_POWER = -0.2;
     private final int    HOME_MIN_MOVEMENT = 10;
 
-    private final double GAIN = 1.0 / 200.0;
-    private final double ACCEL_LIMIT = 7.0;
-    private final double OUTPUT_LIMIT = 0.85;
-    private final double TOLERANCE = 20.0;
-    private final double DEADBAND = 10.0;
+    private final double GAIN = 0.005;
+    private final double ACCEL_LIMIT = 2.0;
+    private final double OUTPUT_LIMIT = 1.0;
+    private final double TOLERANCE = 30.0;
+    private final double DEADBAND = 20.0;
 
-    private final int CLIPPING_POSITION = 950;
-    private final int CLIPPED_POSITON = 600;
+    private final int CLIPPING_POSITION = 1000;
+    private final int CLIPPED_POSITON = 700;
     private final int HOME_POSITION = 0;
 
     private DcMotor arm;      // motor used to control the arm
@@ -92,14 +88,14 @@ public class ArmSubsystem {
         readSensors();
         runControl();
         runStateMachine();
+
+        if (showTelemetry) {
+            myOpMode.telemetry.addData("Arm Pos, SP, Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+        }
     }
 
     public void readSensors(){
         currentPosition = arm.getCurrentPosition();
-
-        if (showTelemetry) {
-            myOpMode.telemetry.addData("arm encoder", "%d", currentPosition);
-        }
     }
 
     public void stop(){
@@ -111,11 +107,6 @@ public class ArmSubsystem {
     }
 
     public void runStateMachine (){
-
-        if (showTelemetry) {
-            myOpMode.telemetry.addData("Arm State", "%S", currentState);
-        }
-
         switch (currentState){
 
             case READY:{
@@ -145,12 +136,12 @@ public class ArmSubsystem {
 
             case LIFTING:{
                 if(positionControl.inPosition()){
-                    setState(READY_TO_CLIP);
+                    setState(READY_CLIP);
                 }
                 break;
             }
 
-            case READY_TO_CLIP:{
+            case READY_CLIP:{
                 if(grabScore.pressed(myOpMode.gamepad1.right_bumper) || timeToClip){
                     setTargetPosition(CLIPPED_POSITON);
                     claw.setPosition(LOOSE_GRIP);
@@ -196,7 +187,7 @@ public class ArmSubsystem {
 
     public void homeTheArm(){
         goingHome = true;
-        myOpMode.telemetry.addLine("homing the arm");
+        myOpMode.telemetry.addLine("Homing the arm");
         myOpMode.telemetry.update();
         arm.setPower(HOME_POWER);
         myOpMode.sleep(100);
@@ -209,32 +200,29 @@ public class ArmSubsystem {
     }
 
     public void runControl(){
-        double power = 0;
+        outputPower = 0;
 
         if (goingHome) {
             // Decides if the lift is still in the homing motion or if it has stopped and is homed
             int position = arm.getCurrentPosition();
             if(Math.abs(position-lastPosition) < HOME_MIN_MOVEMENT){
-                power = 0;
+                outputPower = 0;
                 resetEncoders();
                 goingHome = false;
                 Globals.ARM_HOMED = true;
                 positionControl.reset(HOME_POSITION);
                 setState(READY);
             } else {
-                power = HOME_POWER;
+                outputPower = HOME_POWER;
             }
             lastPosition = position;
             myOpMode.sleep(50);
 
         } else {
-            power = positionControl.getOutput(currentPosition);
+            outputPower = positionControl.getOutput(currentPosition);
         }
 
-        arm.setPower(power);
-        if (showTelemetry) {
-            myOpMode.telemetry.addData("arm power", power);
-        }
+        arm.setPower(outputPower);
     }
 
     public void setTargetPosition(int setPoint){

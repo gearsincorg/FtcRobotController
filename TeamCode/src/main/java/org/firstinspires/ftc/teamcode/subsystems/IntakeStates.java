@@ -4,7 +4,7 @@ public enum IntakeStates {
     INIT,
     HOME,
     INTAKING,
-    HOLDING_SAMPLE,
-    RAISING_WRIST,
-    TRANSFERING_SAMPLE
+    GOT_SAMPLE,
+    TILT_WRIST,
+    TRANSFER
 }
