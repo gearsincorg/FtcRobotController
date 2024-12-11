@@ -34,17 +34,15 @@ public class GFORCEAutonomous extends LinearOpMode
     ArmSubsystem arm        = new ArmSubsystem(this);
     IntakeSubsystem intake  = new IntakeSubsystem(this);
     LiftSubsystem lift      = new LiftSubsystem(this);
-//  OctoQuadIF octoQuad     = new OctoQuadIF(this);
 //  VisionSubsystem blob    = new VisionSubsystem(this);
 
     private Action selectedAuto  = null;
     private int lastSelectedAuto = -1;
 
     // Place all auto builders here!
-
     //================================================================================================================
     private Action buildSpecimen_4Sub() {
-        robot = new MecanumDrive(hardwareMap, new Pose2d(4, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(4, -63, Math.toRadians(90)));
 
         //build trajectories
         Action wallToSubPath = robot.actionBuilder(new Pose2d(4, -63, Math.toRadians(90)))
@@ -146,7 +144,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
     //================================================================================================================
     private Action buildSample_1Bas() {
-        robot = new MecanumDrive(hardwareMap, new Pose2d(-32, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
@@ -174,7 +172,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
     //================================================================================================================
     private Action buildSample_1Bas_Sub() {
-        robot = new MecanumDrive(hardwareMap, new Pose2d(-32, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
@@ -205,7 +203,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
     //================================================================================================================
     private Action buildSample_1Bas_2Net_Sub() {
-        robot = new MecanumDrive(hardwareMap, new Pose2d(-32, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
@@ -252,7 +250,7 @@ public class GFORCEAutonomous extends LinearOpMode
     public void runOpMode()
     {
         Globals.IS_AUTO = true;
-
+        robot = new MecanumDrive(hardwareMap, new Pose2d(0,0,0), this);
         arm.initialize(false);
         arm.closeClaw();
         lift.initialize(false);
@@ -323,7 +321,7 @@ public class GFORCEAutonomous extends LinearOpMode
             }
         }
 
-        Globals.LAST_POSE = new Pose2d(0,0, robot.pose.heading.toDouble()-(Math.PI/2)) ;
+        Globals.LAST_POSE = new Pose2d(0,0, robot.getPose().heading.toDouble()-(Math.PI/2)) ;
     }
 
     /*

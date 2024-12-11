@@ -24,9 +24,9 @@
             <Servo name="pitch" port="2" />
             <Servo name="hold" port="3" />
             <Servo name="led" port="5" />
-            <OctoQuadFTC name="octoquad" port="0" bus="1" />
-            <RevColorSensorV3 name="sample_color" port="0" bus="2" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
-        </LynxModule>
+            <OctoQuadFTC_FW_v3 name="octoquad" port="0" bus="1" />
+            <RevColorSensorV3 name="sample_color" port="0" bus="2" />
+            </LynxModule>
     </LynxUsbDevice>
 </Robot>

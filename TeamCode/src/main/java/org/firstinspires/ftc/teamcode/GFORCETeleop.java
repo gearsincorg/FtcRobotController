@@ -16,7 +16,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
@@ -75,7 +74,7 @@ public class GFORCETeleop extends LinearOpMode
     @Override public void runOpMode()
     {
         Globals.IS_AUTO = false;
-        robot     = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        robot     = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0), this);
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         autoConfig.initialize();
 
@@ -107,7 +106,7 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         // Reset pose and mechanisms
-        robot.pose = Globals.LAST_POSE;  // Will be 0,0,0 if auto not run.
+        robot.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
         lift.resetEncoders();
 
         while (opModeIsActive())
@@ -128,7 +127,7 @@ public class GFORCETeleop extends LinearOpMode
 
             // update the robot's position based on the odometry pods.
             robot.updatePoseEstimate();
-            Globals.LAST_POSE = robot.pose;
+            Globals.LAST_POSE = robot.getPose();
 
             // Let the driver reset the heading to one of the 4 ordinals.
             if (gamepad1.touchpad) {
@@ -188,8 +187,8 @@ public class GFORCETeleop extends LinearOpMode
             */
 
             // This is where we keep the robot heading locked so it doesn't turn while driving or strafing in a straight line.
-            headingDeg = Math.toDegrees(robot.pose.heading.toDouble());
-            turnrate = robot.lazyImu.get().getRobotAngularVelocity(AngleUnit.DEGREES).zRotationRate;
+            headingDeg = Math.toDegrees(robot.getPose().heading.toDouble());
+            turnrate = robot.getTurnRateDPS();
 
             // Is the driver turning the robot, or should it hold its heading?
             if (Math.abs(yaw) > 0.05) {
@@ -216,7 +215,7 @@ public class GFORCETeleop extends LinearOpMode
             if (USE_FIELD_CENTRIC_MODE) {
                 // Create a vector from the gamepad x/y inputs
                 // Then, rotate that vector by the inverse of that heading
-                translate = new RotateVector(translate, -robot.pose.heading.toDouble()).rotated;
+                translate = new RotateVector(translate, -robot.getPose().heading.toDouble()).rotated;
             }
 
             telemetry.addData("rotated", translate.toString());
@@ -227,15 +226,15 @@ public class GFORCETeleop extends LinearOpMode
                     yaw
             ));
 
-            telemetry.addData("x", robot.pose.position.x);
-            telemetry.addData("y", robot.pose.position.y);
+            telemetry.addData("x", robot.getPose().position.x);
+            telemetry.addData("y", robot.getPose().position.y);
             telemetry.addData("heading (deg)", headingDeg);
             telemetry.update();
 
             // Update the dashboard.
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
-            Drawing.drawRobot(packet.fieldOverlay(), robot.pose);
+            Drawing.drawRobot(packet.fieldOverlay(), robot.getPose());
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
         }
 
@@ -245,7 +244,7 @@ public class GFORCETeleop extends LinearOpMode
     }
 
     void setHeadingDeg(double heading) {
-        robot.pose = new Pose2d(robot.pose.position.x, robot.pose.position.y, Math.toRadians(heading));
+        robot.setPose(new Pose2d(robot.getPose().position.x, robot.getPose().position.y, Math.toRadians(heading)));
     }
 
     // worker class to rotate vectors

@@ -26,14 +26,14 @@ import com.acmerobotics.roadrunner.TimeTurn;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TrajectoryBuilderParams;
 import com.acmerobotics.roadrunner.TurnConstraints;
-import com.acmerobotics.roadrunner.Twist2dDual;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.DownsampledWriter;
 import com.acmerobotics.roadrunner.ftc.FlightRecorder;
-import com.acmerobotics.roadrunner.ftc.LazyImu;
 import com.acmerobotics.roadrunner.ftc.LynxFirmware;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -43,6 +43,8 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.PoseMessage;
+import org.firstinspires.ftc.teamcode.subsystems.OctoQuadBase_v3;
+import org.firstinspires.ftc.teamcode.subsystems.OctoQuad_v3;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -50,6 +52,10 @@ import java.util.List;
 
 @Config
 public final class MecanumDrive {
+
+    LinearOpMode myOpMode;
+    OctoQuad_v3.LocalizerDataBlock OQlocalizer = new OctoQuad_v3.LocalizerDataBlock();
+
     public static class Params {
         // IMU orientation
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
@@ -58,11 +64,11 @@ public final class MecanumDrive {
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
         // drive model parameters
-        public double inPerTick = 0.001979;
+        public double inPerTick = 0.03937 ;  // Was 0.001979
         public double lateralInPerTick = inPerTick;
-        public double trackWidthTicks = 7575;
+        public double trackWidthTicks = 380;  // Was 7575
 
-        // feedforward parameters (in tick units)
+        // feedforward parameters (in tick units)  !!!! fix this for mm
         public double kS = 0.30760;
         public double kV = 0.0003014;
         public double kA = 0.00005;
@@ -102,13 +108,9 @@ public final class MecanumDrive {
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
 
     public final DcMotorEx leftFront, leftBack, rightBack, rightFront;
-
     public final VoltageSensor voltageSensor;
-
-    public final LazyImu lazyImu;
-
-    public final Localizer localizer;
-    public Pose2d pose;
+    public final OctoQuad_v3 oq;
+    private Pose2d pose;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -117,8 +119,8 @@ public final class MecanumDrive {
     private final DownsampledWriter driveCommandWriter = new DownsampledWriter("DRIVE_COMMAND", 50_000_000);
     private final DownsampledWriter mecanumCommandWriter = new DownsampledWriter("MECANUM_COMMAND", 50_000_000);
 
-    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
-        this.pose = pose;
+    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose, LinearOpMode opMode) {
+        this.myOpMode = opMode;
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
@@ -146,12 +148,13 @@ public final class MecanumDrive {
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        lazyImu = new LazyImu(hardwareMap, "imu", new RevHubOrientationOnRobot(
-               RevHubOrientationOnRobot.LogoFacingDirection.UP, RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+        // Connect to the OctoQuad by looking up its name in the hardwareMap.
+        // Clear out all prior settings and encoder data before setting up desired configuration
+        oq = hardwareMap.get(OctoQuad_v3.class, "octoquad");
+        intializeOctoQuad(oq);
+        setPose(pose);
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
-
-        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), PARAMS.inPerTick);
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
@@ -355,8 +358,18 @@ public final class MecanumDrive {
     }
 
     public PoseVelocity2d updatePoseEstimate() {
-        Twist2dDual<Time> twist = localizer.update();
-        pose = pose.plus(twist.value());
+
+        oq.readLocalizerData(OQlocalizer);
+
+        myOpMode.telemetry.addData("Localizer status", OQlocalizer.localizerStatus);
+        myOpMode.telemetry.addData("Heading deg", Math.toDegrees(OQlocalizer.heading_rad));
+        myOpMode.telemetry.addData("Heading dps", Math.toDegrees(OQlocalizer.velHeading_radS));
+        myOpMode.telemetry.addData("X mm", OQlocalizer.posX_mm);
+        myOpMode.telemetry.addData("Y mm", OQlocalizer.posY_mm);
+        myOpMode.telemetry.addData("VX mm/s", OQlocalizer.velX_mmS);
+        myOpMode.telemetry.addData("VY mm/s", OQlocalizer.velY_mmS);
+
+        pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
 
         poseHistory.add(pose);
         while (poseHistory.size() > 100) {
@@ -364,8 +377,7 @@ public final class MecanumDrive {
         }
 
         estimatedPoseWriter.write(new PoseMessage(pose));
-
-        return twist.velocity().value();
+        return new PoseVelocity2d(new Vector2d(OQlocalizer.velX_mmS, OQlocalizer.velY_mmS), OQlocalizer.velHeading_radS);
     }
 
     private void drawPoseHistory(Canvas c) {
@@ -399,5 +411,54 @@ public final class MecanumDrive {
                 defaultTurnConstraints,
                 defaultVelConstraint, defaultAccelConstraint
         );
+    }
+
+    private void intializeOctoQuad(OctoQuad_v3 oq) {
+
+        // X_OFFSET_FROM_CENTER_MM is how sideways from the center of the robot is the X (forward) pod? Left increases
+        // Y_OFFSET_FROM_CENTER_MM is how far forward from the center of the robot is the Y (Strafe) pod? forward increases
+        final float TICKS_PER_MM = 19.89f;
+        final float X_OFFSET_FROM_CENTER_MM = -27.0f;
+        final float Y_OFFSET_FROM_CENTER_MM =  25.8f;
+        final float OQ_IMU_SCALAR = 1.0f;
+        final int OQ_PORT_X = 0;
+        final int OQ_PORT_Y = 1;
+
+        oq.resetEverything();
+
+        // Configure the localizer
+        oq.setSingleEncoderDirection(OQ_PORT_X, OctoQuadBase_v3.EncoderDirection.FORWARD);
+        oq.setSingleEncoderDirection(OQ_PORT_Y, OctoQuadBase_v3.EncoderDirection.FORWARD);
+
+        oq.setLocalizerPortX(OQ_PORT_X);
+        oq.setLocalizerPortY(OQ_PORT_Y);
+        oq.setLocalizerCountsPerMM_X(TICKS_PER_MM);
+        oq.setLocalizerCountsPerMM_Y(TICKS_PER_MM);
+        oq.setLocalizerTcpOffsetMM_X(X_OFFSET_FROM_CENTER_MM);
+        oq.setLocalizerTcpOffsetMM_Y(Y_OFFSET_FROM_CENTER_MM);
+        oq.setLocalizerImuHeadingScalar(OQ_IMU_SCALAR);
+        oq.setLocalizerVelocityIntervalMS(25);
+        oq.resetLocalizer();
+    }
+
+    public double getTurnRateDPS() {
+            return Math.toDegrees(OQlocalizer.velHeading_radS);
+    }
+
+    public void setPose (Pose2d newPose) {
+        oq.setLocalizerPose(inchToMm(newPose.position.x), inchToMm(newPose.position.y), (float)newPose.heading.toDouble());
+        pose = newPose;
+    }
+
+    public Pose2d getPose () {
+        return pose;
+    }
+
+    private double mmToInch(double mm) {
+        return mm / 25.4;
+    }
+
+    private int inchToMm(double inches) {
+        return (int)(inches * 25.4);
     }
 }
