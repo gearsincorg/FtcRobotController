@@ -97,11 +97,6 @@ public class ArmSubsystem {
     public void readSensors(){
         currentPosition = arm.getCurrentPosition();
     }
-
-    public void stop(){
-        arm.setPower(0);
-    }
-
     public boolean inPosition (){
         return positionControl.inPosition();
     }

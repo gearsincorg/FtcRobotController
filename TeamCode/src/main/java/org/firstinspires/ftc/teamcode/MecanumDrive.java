@@ -72,9 +72,10 @@ public final class MecanumDrive {
         public double trackWidthTicks = 380;  // Was 7575
 
         // feedforward parameters (in tick units)  !!!! fix this for mm
-        public double kS = 0.30760;
-        public double kV = 0.0003014;
-        public double kA = 0.00005;
+        private double OLD_CLICKS_TO_NEW_CLICKS = 5 ;  // 19.881 ;
+        public double kS = 0.30760 * OLD_CLICKS_TO_NEW_CLICKS;
+        public double kV = 0.0003014 * OLD_CLICKS_TO_NEW_CLICKS;
+        public double kA = 0; // 0.00005 ;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 40; //50
@@ -86,9 +87,9 @@ public final class MecanumDrive {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain   = 4 ; // 2;
-        public double lateralGain = 4 ; // 10;
-        public double headingGain = 6 ; //8 ;
+        public double axialGain   =  4;
+        public double lateralGain =  4;
+        public double headingGain =  6;
 
         public double axialVelGain = 0.0;
         public double lateralVelGain = 0.0;
@@ -428,7 +429,7 @@ public final class MecanumDrive {
         final float TICKS_PER_MM = 19.89f;
         final float X_OFFSET_FROM_CENTER_MM = -27.0f;
         final float Y_OFFSET_FROM_CENTER_MM =  25.8f;
-        final float OQ_IMU_SCALAR = 1.0f;
+        final float OQ_IMU_SCALAR = (float)(360.0/343.4);
         final int OQ_PORT_X = 0;
         final int OQ_PORT_Y = 1;
 

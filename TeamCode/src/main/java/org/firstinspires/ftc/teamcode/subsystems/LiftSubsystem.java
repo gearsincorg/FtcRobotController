@@ -306,6 +306,8 @@ public class LiftSubsystem {
                 outputPower = HOLD_POWER;
             }
         }
+
+        lift.setPower(outputPower);
     }
 
     //-------------------------------------------------------------------------
