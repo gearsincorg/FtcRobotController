@@ -215,6 +215,8 @@ public class GFORCETeleop extends LinearOpMode
                 translate = new RotateVector(translate, -robot.getPose().heading.toDouble()).rotated;
             }
 
+            //  try Rotation2d.fromDouble(angle you want to rotate).times(some Vector2d)
+
             //  Drive the wheels based on the desired axis motions
             robot.setDrivePowers(new PoseVelocity2d(
                     translate,
@@ -240,6 +242,7 @@ public class GFORCETeleop extends LinearOpMode
 
     void setHeadingDeg(double heading) {
         robot.setPose(new Pose2d(robot.getPose().position.x, robot.getPose().position.y, Math.toRadians(heading)));
+        yawController.reset(heading);
     }
 
     // worker class to rotate vectors

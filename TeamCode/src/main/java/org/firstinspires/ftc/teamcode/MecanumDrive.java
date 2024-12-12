@@ -72,10 +72,10 @@ public final class MecanumDrive {
         public double trackWidthTicks = 380;  // Was 7575
 
         // feedforward parameters (in tick units)  !!!! fix this for mm
-        private double OLD_CLICKS_TO_NEW_CLICKS = 5 ;  // 19.881 ;
-        public double kS = 0.30760 * OLD_CLICKS_TO_NEW_CLICKS;
+        private double OLD_CLICKS_TO_NEW_CLICKS = 19.881 ;
+        public double kS = 0.30760;
         public double kV = 0.0003014 * OLD_CLICKS_TO_NEW_CLICKS;
-        public double kA = 0; // 0.00005 ;
+        public double kA = 0.00005  * OLD_CLICKS_TO_NEW_CLICKS;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 40; //50
@@ -86,9 +86,9 @@ public final class MecanumDrive {
         public double maxAngVel = Math.PI; // shared with path
         public double maxAngAccel = Math.PI;
 
-        // path controller gains
-        public double axialGain   =  4;
-        public double lateralGain =  4;
+        // path controller gains (in tick units)
+        public double axialGain   =  4 / OLD_CLICKS_TO_NEW_CLICKS;
+        public double lateralGain =  4 / OLD_CLICKS_TO_NEW_CLICKS;
         public double headingGain =  6;
 
         public double axialVelGain = 0.0;
@@ -447,6 +447,7 @@ public final class MecanumDrive {
         oq.setLocalizerTcpOffsetMM_Y(Y_OFFSET_FROM_CENTER_MM);
         oq.setLocalizerImuHeadingScalar(OQ_IMU_SCALAR);
         oq.setLocalizerVelocityIntervalMS(25);
+        oq.setI2cRecoveryMode(OctoQuadBase_v3.I2cRecoveryMode.NONE);
         oq.resetLocalizer();
     }
 
