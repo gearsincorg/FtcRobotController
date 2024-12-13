@@ -30,11 +30,11 @@ public class LiftSubsystem {
     private ElapsedTime stateTime       = new ElapsedTime();
 
     // Constants
-    public final double MAX_HEIGHT = 47;
+    public final double MAX_HEIGHT = 46;
     public final double MIN_HEIGHT = 8.5;
     public final double HIGH_BASKET = 46.5;
     public final double LOW_BASKET = 31 ;
-    private final double HOLD_POWER = 0.075;
+    private final double HOLD_POWER = 0.2; // 0.075
     private final double HOME_POWER = -0.6;
     private final double TILT_SIDE = 0.4;
     private final double YAW_SIDE = 0.7;
@@ -108,6 +108,9 @@ public class LiftSubsystem {
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Lift Pos, SP, Pwr", "%s %.1f %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            //  myOpMode.telemetry.addData("Lift Pos", currentPosition);
+            //  myOpMode.telemetry.addData("Lift Pwr", outputPower * 1000);
+            //  myOpMode.telemetry.addData("Lift SP",  positionControl.getSetPoint());
         }
     }
 
@@ -302,7 +305,7 @@ public class LiftSubsystem {
             // Controls the outputPower when moving to the set point
             outputPower = positionControl.getOutput(currentPosition);
 
-            if (outputPower == 0){
+            if ((outputPower == 0) && (positionControl.getSetPoint() > MIN_HEIGHT)){
                 outputPower = HOLD_POWER;
             }
         }

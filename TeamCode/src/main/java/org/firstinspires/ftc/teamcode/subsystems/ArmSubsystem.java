@@ -37,8 +37,8 @@ public class ArmSubsystem {
     private final double HOME_POWER = -0.2;
     private final int    HOME_MIN_MOVEMENT = 10;
 
-    private final double GAIN = 0.005;
-    private final double ACCEL_LIMIT = 2.0;
+    private final double GAIN = 0.0025;
+    private final double ACCEL_LIMIT = 10.0;
     private final double OUTPUT_LIMIT = 1.0;
     private final double TOLERANCE = 30.0;
     private final double DEADBAND = 20.0;
@@ -91,6 +91,9 @@ public class ArmSubsystem {
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Arm Pos, SP, Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            //  myOpMode.telemetry.addData("Arm Pos", currentPosition);
+            //  myOpMode.telemetry.addData("Arm Pwr", outputPower * 1000);
+            //  myOpMode.telemetry.addData("Arm SP",  positionControl.getSetPoint());
         }
     }
 
