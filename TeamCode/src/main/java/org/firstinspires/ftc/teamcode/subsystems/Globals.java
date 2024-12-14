@@ -17,4 +17,5 @@ public class Globals {
     public static boolean ARM_HOMED = false;
     public static boolean LIFT_HOMED = false;
     public static boolean SLIDE_HOMED = false;
+    public static int     OCTO_ERRORS = 0;
 }

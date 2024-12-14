@@ -368,24 +368,32 @@ public final class MecanumDrive {
 
         oq.readLocalizerData(OQlocalizer);
 
-        myOpMode.telemetry.addData("Localizer status", OQlocalizer.localizerStatus);
-        myOpMode.telemetry.addData("Heading", "%4.0f D, %5.0f D/s",  Math.toDegrees(OQlocalizer.heading_rad), Math.toDegrees(OQlocalizer.velHeading_radS));
-        myOpMode.telemetry.addData("Pos X:Y mm", "%4d : %4d", OQlocalizer.posX_mm, OQlocalizer.posY_mm);
-        myOpMode.telemetry.addData("Vel X:Y mm/s", "%5d : %5d", OQlocalizer.velX_mmS, OQlocalizer.velY_mmS);
+        if (OQlocalizer.isDataValid()) {
 
-        if (Globals.IS_AUTO) {
-            myOpMode.telemetry.update();
+            myOpMode.telemetry.addData("Localizer status", OQlocalizer.localizerStatus);
+            myOpMode.telemetry.addData("Heading", "%4.0f D, %5.0f D/s", Math.toDegrees(OQlocalizer.heading_rad), Math.toDegrees(OQlocalizer.velHeading_radS));
+            myOpMode.telemetry.addData("Pos X:Y mm", "%4d : %4d", OQlocalizer.posX_mm, OQlocalizer.posY_mm);
+            myOpMode.telemetry.addData("Vel X:Y mm/s", "%5d : %5d", OQlocalizer.velX_mmS, OQlocalizer.velY_mmS);
+
+            myOpMode.telemetry.addData("OctoErrors", Globals.OCTO_ERRORS);
+
+            if (Globals.IS_AUTO) {
+                myOpMode.telemetry.update();
+            }
+
+            pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
+
+            poseHistory.add(pose);
+            while (poseHistory.size() > 100) {
+                poseHistory.removeFirst();
+            }
+
+            estimatedPoseWriter.write(new PoseMessage(pose));
+            return new PoseVelocity2d(new Vector2d(OQlocalizer.velX_mmS, OQlocalizer.velY_mmS), OQlocalizer.velHeading_radS);
+        } else {
+            Globals.OCTO_ERRORS++;
+            return new PoseVelocity2d(new Vector2d(0, 0), 0);
         }
-
-        pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
-
-        poseHistory.add(pose);
-        while (poseHistory.size() > 100) {
-            poseHistory.removeFirst();
-        }
-
-        estimatedPoseWriter.write(new PoseMessage(pose));
-        return new PoseVelocity2d(new Vector2d(OQlocalizer.velX_mmS, OQlocalizer.velY_mmS), OQlocalizer.velHeading_radS);
     }
 
     private void drawPoseHistory(Canvas c) {
@@ -446,7 +454,6 @@ public final class MecanumDrive {
         oq.setLocalizerTcpOffsetMM_Y(Y_OFFSET_FROM_CENTER_MM);
         oq.setLocalizerImuHeadingScalar(OQ_IMU_SCALAR);
         oq.setLocalizerVelocityIntervalMS(25);
-        oq.setI2cRecoveryMode(OctoQuadBase_v3.I2cRecoveryMode.NONE);
         oq.resetLocalizer();
     }
 

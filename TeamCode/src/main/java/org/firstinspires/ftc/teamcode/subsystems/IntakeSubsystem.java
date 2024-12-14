@@ -47,7 +47,7 @@ public class IntakeSubsystem {
     private final int    SLIDE_OUT  = 230;
 
     private final double HOME_POWER = -0.3;
-    private final double HOLD_POWER = -0.3;
+    private final double HOLD_POWER = -0.25;
     private final int    HOME_MIN_MOVEMENT = 10;
 
     private final double GAIN = 0.02;
@@ -298,7 +298,7 @@ public class IntakeSubsystem {
             myOpMode.sleep(50);
         } else {
             outputPower = positionControl.getOutput(currentPosition);
-            if ((positionControl.getSetPoint() == SLIDE_HOME ) && (Math.abs(outputPower) > HOLD_POWER)) {
+            if ((positionControl.getSetPoint() == SLIDE_HOME ) && (outputPower > HOLD_POWER)) {
                 outputPower = HOLD_POWER;
             }
         }

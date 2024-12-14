@@ -109,6 +109,7 @@ public class GFORCETeleop extends LinearOpMode
         robot.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
         lift.resetEncoders();
 
+        Globals.OCTO_ERRORS = 0;
 
         while (opModeIsActive())
         {
