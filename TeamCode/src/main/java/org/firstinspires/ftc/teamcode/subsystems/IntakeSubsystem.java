@@ -44,9 +44,10 @@ public class IntakeSubsystem {
     private final double SLIDE_TRANSFER_TIME = 1.0;
 
     private final int    SLIDE_HOME = 0;
-    private final int    SLIDE_OUT  = 100;
+    private final int    SLIDE_OUT  = 230;
 
     private final double HOME_POWER = -0.3;
+    private final double HOLD_POWER = -0.3;
     private final int    HOME_MIN_MOVEMENT = 10;
 
     private final double GAIN = 0.02;
@@ -295,9 +296,11 @@ public class IntakeSubsystem {
             }
             lastPosition = currentPosition;
             myOpMode.sleep(50);
-
         } else {
             outputPower = positionControl.getOutput(currentPosition);
+            if ((positionControl.getSetPoint() == SLIDE_HOME ) && (Math.abs(outputPower) > HOLD_POWER)) {
+                outputPower = HOLD_POWER;
+            }
         }
         leverMotor.setPower(outputPower);
     }

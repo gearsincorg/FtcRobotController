@@ -53,53 +53,60 @@ public class GFORCEAutonomous extends LinearOpMode
         Action subToAllSamplesPath = robot.actionBuilder(new Pose2d(4, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-60))
                 .splineToConstantHeading(new Vector2d(36, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(41, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(46, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(46, -50), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(40, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -50), Math.toRadians(-90))
                 .setTangent(Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(46, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(50, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(56, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(56, -50), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(48, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(54, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(54, -50), Math.toRadians(-90))
                 .build()
                 ;
 
-        Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(56, -50, Math.toRadians(90)))
-                .setTangent(Math.toRadians(180))
-                .splineToConstantHeading(new Vector2d(30, -50), Math.toRadians(180), new TranslationalVelConstraint(20.0))
+        Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(54, -50, Math.toRadians(90)))
+                .setTangent(Math.toRadians(135))
+                .splineToConstantHeading(new Vector2d(41, -44), Math.toRadians(180))
                 .setTangent(Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90), new TranslationalVelConstraint(15.0))
-                .build() ;
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
+                .build()
+                ;
 
-        Action specimenToSub2Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
-                .setTangent(Math.toRadians(145))
-                .splineToConstantHeading(new Vector2d(0, -31), Math.toRadians(90))
-                .build();
+        Action specimenToSub2Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(130))
+                .splineToConstantHeading(new Vector2d(1, -31), Math.toRadians(90))
+                .build()
+                ;
 
-        Action sub2ToSpecimenPath = robot.actionBuilder(new Pose2d(0, -31, Math.toRadians(90)))
-                .setTangent(Math.toRadians(-35))
-                .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90))
-                .build();
+        Action sub2ToSpecimenPath = robot.actionBuilder(new Pose2d(1, -31, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-50))
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
+                .build()
+                ;
 
-        Action specimenToSub3Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
-                .setTangent(Math.toRadians(150))
-                .splineToConstantHeading(new Vector2d(-4, -31), Math.toRadians(90))
-                .build();
+        Action specimenToSub3Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(135))
+                .splineToConstantHeading(new Vector2d(-2, -31), Math.toRadians(90))
+                .build()
+                ;
 
-        Action sub3ToSpecimenPath = robot.actionBuilder(new Pose2d(-4, -31, Math.toRadians(90)))
-                .setTangent(Math.toRadians(-30))
-                .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90))
-                .build();
+        Action sub3ToSpecimenPath = robot.actionBuilder(new Pose2d(-2, -31, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-45))
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
+                .build()
+                ;
 
-        Action specimenToSub4Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
-                .setTangent(Math.toRadians(155))
-                .splineToConstantHeading(new Vector2d(-8, -31), Math.toRadians(90))
-                .build();
+        Action specimenToSub4Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(140))
+                .splineToConstantHeading(new Vector2d(-5, -31), Math.toRadians(90))
+                .build()
+                ;
 
-        Action sub4ToObservationPath = robot.actionBuilder(new Pose2d(-8, -31, Math.toRadians(90)))
-                .setTangent(Math.toRadians(-30))
+        Action sub4ToObservationPath = robot.actionBuilder(new Pose2d(-5, -31, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-40))
                 .splineToConstantHeading(new Vector2d(50, -56), Math.toRadians(0))
-                .build();
+                .build()
+                ;
 
         //  ######################################################################
 
@@ -138,6 +145,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return  new ParallelAction(
                 arm.actionUpdate(),
                 lift.actionUpdate(),
+                intake.actionUpdate(),
                 autoSequence
         );
     }
@@ -166,6 +174,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return  new ParallelAction(
                 arm.actionUpdate(),
                 lift.actionUpdate(),
+                intake.actionUpdate(),
                 autoSequence
         );
     }
@@ -242,6 +251,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return  new ParallelAction(
                 arm.actionUpdate(),
                 lift.actionUpdate(),
+                intake.actionUpdate(),
                 autoSequence
         );
     }
