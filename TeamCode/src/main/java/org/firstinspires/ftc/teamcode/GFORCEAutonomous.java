@@ -42,11 +42,11 @@ public class GFORCEAutonomous extends LinearOpMode
     // Place all auto builders here!
     //================================================================================================================
     private Action buildSpecimen_4Sub() {
-        robot.setPose(new Pose2d(4, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(15, -63, Math.toRadians(90)));
 
         //build trajectories
-        Action wallToSubPath = robot.actionBuilder(new Pose2d(4, -63, Math.toRadians(90)))
-                .lineToY(-31)
+        Action wallToSubPath = robot.actionBuilder(new Pose2d(15, -63, Math.toRadians(90)))
+                .splineTo(new Vector2d(4, -31), Math.toRadians(90))
                 .build()
                 ;
 

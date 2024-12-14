@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.READY;
 import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.BLUE;
 import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.NONE;
 import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.RED;
@@ -27,15 +28,12 @@ public class IntakeSubsystem {
 
     // Standard SubSystem Members:
     private LinearOpMode myOpMode;
-    private boolean      showTelemetry     = false;
-    private ElapsedTime  stateTime = new ElapsedTime();
+    private boolean      showTelemetry  = false;
+    private ElapsedTime  stateTime      = new ElapsedTime();
+    private double       outputPower    = 0;
     private IntakeStates currentState = IntakeStates.INIT;
 
     // Constants
-    private final double LEFT_LEVER_IN = 0.50;
-    private final double RIGHT_LEVER_IN = 0.50;
-    private final double LEFT_LEVER_OUT = 0.75;
-    private final double RIGHT_LEVER_OUT = 0.25;
     private final double INTAKE = 1;
     private final double EJECT = -1;
     private final double OFF = 0;
@@ -45,19 +43,29 @@ public class IntakeSubsystem {
     private final double SLIDE_TRANSIT_TIME = 1.5;
     private final double SLIDE_TRANSFER_TIME = 1.0;
 
+    private final int    SLIDE_HOME = 0;
+    private final int    SLIDE_OUT  = 100;
+
+    private final double HOME_POWER = -0.3;
+    private final int    HOME_MIN_MOVEMENT = 10;
+
+    private final double GAIN = 0.02;
+    private final double ACCEL_LIMIT = 10.0;
+    private final double OUTPUT_LIMIT = 1.0;
+    private final double TOLERANCE = 10.0;
+    private final double DEADBAND = 2.0;
+
+
     // public members
     public boolean     gotSample   = false;
     public SampleColor sampleColor = NONE;
     public int         sampleHue = -1;
 
     //declaring servos for the intake
-    private Servo leftLever;
-    private Servo rightLever;
-    private CRServo leftWheel;
-    private CRServo rightWheel;
     private Servo backwrist;
     private Servo frontwrist;
     private Servo colorLED;
+    private DcMotor leverMotor;
     private DcMotor wheelMotor;
     NormalizedColorSensor colorSensor;
 
@@ -65,19 +73,26 @@ public class IntakeSubsystem {
     private boolean wristOut = false;
     private boolean slideIsOut = false;
     private final float[] hsvValues = new float[3];
+
+    private int leverSetPoint = 0;
+    private int currentPosition = 0;
+    private int lastPosition = 0;
+    private boolean goingHome = false;
+
+
     private Button wristInOut = new Button();
     private Button slideInOut = new Button();
     private Button runIntake = new Button();
     private ElapsedTime  slideTime = new ElapsedTime();
+    private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
 
     public IntakeSubsystem(LinearOpMode opMode){myOpMode = opMode;}
 
     public void initialize(boolean showTelemetry){
-        leftLever = myOpMode.hardwareMap.get(Servo.class, "leftlever");
-        rightLever = myOpMode.hardwareMap.get(Servo.class, "rightlever");
-        leftWheel = myOpMode.hardwareMap.get(CRServo.class, "leftwheel");
-        rightWheel = myOpMode.hardwareMap.get(CRServo.class, "rightwheel");
-        wheelMotor = myOpMode.hardwareMap.get(DcMotor.class, "par");
+        wheelMotor = myOpMode.hardwareMap.get(DcMotor.class, "wheel");
+        leverMotor = myOpMode.hardwareMap.get(DcMotor.class, "lever");
+        leverMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         backwrist = myOpMode.hardwareMap.get(Servo.class, "frontwrist");
         frontwrist = myOpMode.hardwareMap.get(Servo.class, "backwrist");
 
@@ -86,6 +101,10 @@ public class IntakeSubsystem {
 
         wheelMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         colorSensor.setGain(8);
+
+        if (!Globals.SLIDE_HOMED) {
+            homeTheSlide();
+        }
 
         slideIn();
         collectorOff();
@@ -98,10 +117,12 @@ public class IntakeSubsystem {
     public void update() {
         readSensors();
         runSlideControl();
+        runControl();
         runStateMachine();
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Intake Hold Color Hue", "%s %s %s %d", currentState, gotSample, sampleColor, sampleHue);
+            myOpMode.telemetry.addData("Slide Pos, SP, Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
         }
     }
 
@@ -109,6 +130,8 @@ public class IntakeSubsystem {
 
         // process color/Range sensor
         double range = ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM);
+
+        currentPosition = leverMotor.getCurrentPosition();
 
         sampleHue = -1;
         if ((range > 0.5) && (range  < 6.5)) {
@@ -221,6 +244,10 @@ public class IntakeSubsystem {
         }
     }
 
+    public void setTargetPosition(int setPoint){
+        leverSetPoint = setPoint;
+        positionControl.reset(leverSetPoint);
+    }
 
     public void setState (IntakeStates newState){
         currentState = newState;
@@ -239,19 +266,54 @@ public class IntakeSubsystem {
         }
     }
 
+    public void resetEncoders(){
+        leverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        myOpMode.sleep(10);
+        leverMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    public void homeTheSlide(){
+        goingHome = true;
+        myOpMode.telemetry.addLine("Homing the slide");
+        myOpMode.telemetry.update();
+        leverMotor.setPower(HOME_POWER);
+        myOpMode.sleep(100);
+    }
+
+    public void runControl(){
+        outputPower = 0;
+
+        if (goingHome) {
+            // Decides if the slide is still in the homing motion or if it has stopped and is homed
+            if(Math.abs(currentPosition-lastPosition) < HOME_MIN_MOVEMENT){
+                outputPower = 0;
+                resetEncoders();
+                goingHome = false;
+                Globals.SLIDE_HOMED = true;
+            } else {
+                outputPower = HOME_POWER;
+            }
+            lastPosition = currentPosition;
+            myOpMode.sleep(50);
+
+        } else {
+            outputPower = positionControl.getOutput(currentPosition);
+        }
+        leverMotor.setPower(outputPower);
+    }
+
+
     public void slideIn(){
-        leftLever.setPosition(LEFT_LEVER_IN);
-        rightLever.setPosition(RIGHT_LEVER_IN);
-        // start time when we start bringing slider in so we can allow enough time for it to retract.
+        // start time when we start bringing slides in so we can allow enough time for it to retract.
         if (slideIsOut) {
             slideTime.reset();
         }
+        setTargetPosition(SLIDE_HOME);
         slideIsOut = false;
     }
 
     public void slideOut(){
-        leftLever.setPosition(LEFT_LEVER_OUT);
-        rightLever.setPosition(RIGHT_LEVER_OUT);
+        setTargetPosition(SLIDE_OUT);
         slideIsOut = true;
     }
 
@@ -294,8 +356,6 @@ public class IntakeSubsystem {
     }
 
     public void setCollector(double speed) {
-        leftWheel.setPower(-speed);
-        rightWheel.setPower(speed);
         wheelMotor.setPower(speed);
     }
 

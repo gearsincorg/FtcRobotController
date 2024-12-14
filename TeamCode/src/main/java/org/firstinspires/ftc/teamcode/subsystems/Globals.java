@@ -16,4 +16,5 @@ public class Globals {
     public static boolean IS_AUTO = false;
     public static boolean ARM_HOMED = false;
     public static boolean LIFT_HOMED = false;
+    public static boolean SLIDE_HOMED = false;
 }

@@ -28,8 +28,10 @@ public class MeepMeepTesting {
 
         // ===============================================================================================
         //  build Specimen trajectories
-        Action wallToSubPath = robot.actionBuilder(new Pose2d(4, -63, Math.toRadians(90)))
-                .lineToY(-31)
+
+        //build trajectories
+        Action wallToSubPath = robot.actionBuilder(new Pose2d(15, -63, Math.toRadians(90)))
+                .splineTo(new Vector2d(4, -31), Math.toRadians(90))
                 .build()
                 ;
 
@@ -48,45 +50,45 @@ public class MeepMeepTesting {
                 ;
 
         Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(54, -50, Math.toRadians(90)))
-                .setTangent(Math.toRadians(180))
-                .splineToConstantHeading(new Vector2d(30, -50), Math.toRadians(180))
+                .setTangent(Math.toRadians(135))
+                .splineToConstantHeading(new Vector2d(41, -44), Math.toRadians(180))
                 .setTangent(Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
                 .build()
                 ;
 
-        Action specimenToSub2Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
-                .setTangent(Math.toRadians(145))
-                .splineToConstantHeading(new Vector2d(0, -31), Math.toRadians(90))
+        Action specimenToSub2Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(130))
+                .splineToConstantHeading(new Vector2d(1, -31), Math.toRadians(90))
                 .build()
                 ;
 
-        Action sub2ToSpecimenPath = robot.actionBuilder(new Pose2d(0, -31, Math.toRadians(90)))
-                .setTangent(Math.toRadians(-35))
-                .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90))
+        Action sub2ToSpecimenPath = robot.actionBuilder(new Pose2d(1, -31, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-50))
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
                 .build()
                 ;
 
-        Action specimenToSub3Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
-                .setTangent(Math.toRadians(150))
-                .splineToConstantHeading(new Vector2d(-4, -31), Math.toRadians(90))
+        Action specimenToSub3Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(135))
+                .splineToConstantHeading(new Vector2d(-2, -31), Math.toRadians(90))
                 .build()
                 ;
 
-        Action sub3ToSpecimenPath = robot.actionBuilder(new Pose2d(-4, -31, Math.toRadians(90)))
-                .setTangent(Math.toRadians(-30))
-                .splineToConstantHeading(new Vector2d(30, -63), Math.toRadians(-90))
+        Action sub3ToSpecimenPath = robot.actionBuilder(new Pose2d(-2, -31, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-45))
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
                 .build()
                 ;
 
-        Action specimenToSub4Path = robot.actionBuilder(new Pose2d(30, -63, Math.toRadians(90)))
-                .setTangent(Math.toRadians(155))
-                .splineToConstantHeading(new Vector2d(-8, -31), Math.toRadians(90))
+        Action specimenToSub4Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(140))
+                .splineToConstantHeading(new Vector2d(-5, -31), Math.toRadians(90))
                 .build()
                 ;
 
-        Action sub4ToObservationPath = robot.actionBuilder(new Pose2d(-8, -31, Math.toRadians(90)))
-                .setTangent(Math.toRadians(-30))
+        Action sub4ToObservationPath = robot.actionBuilder(new Pose2d(-5, -31, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-40))
                 .splineToConstantHeading(new Vector2d(50, -56), Math.toRadians(0))
                 .build()
                 ;
@@ -131,8 +133,8 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                // .addEntity(specimenBot)
-                .addEntity(basketBot)
+                .addEntity(specimenBot)
+                //.addEntity(basketBot)
                 .start();
     }
 }

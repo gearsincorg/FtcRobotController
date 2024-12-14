@@ -123,6 +123,7 @@ public class GFORCETeleop extends LinearOpMode
             if (gamepad2.touchpad) {
                 lift.homeTheLift();
                 arm.homeTheArm();
+                intake.homeTheSlide();
             }
 
             // update the robot's position based on the odometry pods.

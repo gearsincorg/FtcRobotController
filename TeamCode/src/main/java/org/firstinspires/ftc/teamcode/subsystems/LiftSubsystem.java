@@ -32,7 +32,7 @@ public class LiftSubsystem {
     // Constants
     public final double MAX_HEIGHT = 46;
     public final double MIN_HEIGHT = 8.5;
-    public final double HIGH_BASKET = 46.5;
+    public final double HIGH_BASKET = 46.0;
     public final double LOW_BASKET = 31 ;
     private final double HOLD_POWER = 0.2; // 0.075
     private final double HOME_POWER = -0.6;
