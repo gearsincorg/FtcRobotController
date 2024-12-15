@@ -26,7 +26,8 @@ public class AutoConfig
     public String[] autoArray = new String[] {"SPECIMEN 4-Sub",             // 0
                                               "SAMPLE 1-Basket",            // 1
                                               "SAMPLE 1-Basket Sub",        // 2
-                                              "SAMPLE 1-Basket 2-Net Sub"}; // 3
+                                              "SAMPLE 1-Basket 2-Net Sub" ,  // 3
+                                              "SPECIMEN 1-Sub SAMPLE 1-Basket"}; // 4
     int autoModes = autoArray.length;
     public static int MENU_ITEMS = 3;
 

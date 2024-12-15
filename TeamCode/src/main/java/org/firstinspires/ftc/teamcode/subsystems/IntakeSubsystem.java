@@ -44,17 +44,17 @@ public class IntakeSubsystem {
     private final double SLIDE_TRANSFER_TIME = 1.0;
 
     private final int    SLIDE_HOME = 0;
-    private final int    SLIDE_OUT  = 230;
+    private final int    SLIDE_OUT  = 500;
 
-    private final double HOME_POWER = -0.3;
-    private final double HOLD_POWER = -0.25;
+    private final double HOME_POWER = -0.1;
+    private final double HOLD_POWER = -0.1;
     private final int    HOME_MIN_MOVEMENT = 10;
 
-    private final double GAIN = 0.02;
-    private final double ACCEL_LIMIT = 10.0;
-    private final double OUTPUT_LIMIT = 1.0;
+    private final double GAIN = 0.01;
+    private final double ACCEL_LIMIT = 4.0;
+    private final double OUTPUT_LIMIT = 0.5;
     private final double TOLERANCE = 10.0;
-    private final double DEADBAND = 2.0;
+    private final double DEADBAND = 5.0;
 
 
     // public members
@@ -123,7 +123,10 @@ public class IntakeSubsystem {
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("Intake Hold Color Hue", "%s %s %s %d", currentState, gotSample, sampleColor, sampleHue);
-            myOpMode.telemetry.addData("Slide Pos, SP, Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            // myOpMode.telemetry.addData("Slide Pos, SP, Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            myOpMode.telemetry.addData("Slide Pos", currentPosition);
+            myOpMode.telemetry.addData("Slide Pwr", outputPower * 1000);
+            myOpMode.telemetry.addData("Slide SP",  positionControl.getSetPoint());
         }
     }
 

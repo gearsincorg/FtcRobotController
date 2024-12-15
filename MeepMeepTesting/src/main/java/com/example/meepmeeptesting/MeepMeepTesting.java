@@ -1,6 +1,7 @@
 package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
@@ -15,6 +16,11 @@ public class MeepMeepTesting {
         MeepMeep meepMeep = new MeepMeep(640);
 
         RoadRunnerBotEntity specimenBot = new DefaultBotBuilder(meepMeep)
+                // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
+                .setConstraints(40, 50, Math.toRadians(180), Math.toRadians(180), 15)
+                .build();
+
+        RoadRunnerBotEntity specimenToSubBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(40, 50, Math.toRadians(180), Math.toRadians(180), 15)
                 .build();
@@ -125,15 +131,41 @@ public class MeepMeepTesting {
                 sub4ToObservationPath
         ));
 
+        //====================================================================================
+
+            Action wallToSub = robot.actionBuilder(new Pose2d(-15, -63, Math.toRadians(90)))
+                    .splineToConstantHeading(new Vector2d(-15, -31), Math.toRadians(90))
+                    .build();
+
+            Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -31, Math.toRadians(90)))
+                    .setTangent(Math.toRadians(-90))
+                    .splineToConstantHeading(new Vector2d(-49, -36.5), Math.toRadians(90))
+                    .build();
+
+            Action basketToSample2 = robot.actionBuilder(new Pose2d(-53, -56, Math.toRadians(90)))
+                    .splineTo(new Vector2d(-36, -10), Math.toRadians(0))
+                    .splineTo(new Vector2d(-24, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
+                    .build();
+
+
+
+        specimenToSubBot.runAction(new SequentialAction(
+                wallToSub,
+                subToSample1
+        ));
+
         basketBot.runAction(new SequentialAction(
                    wallToBasket,
                    basketToSub
                 ));
 
-        meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_LIGHT)
+
+
+        meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(specimenBot)
+                .addEntity(specimenToSubBot)
+                //.addEntity(specimenBot)
                 //.addEntity(basketBot)
                 .start();
     }

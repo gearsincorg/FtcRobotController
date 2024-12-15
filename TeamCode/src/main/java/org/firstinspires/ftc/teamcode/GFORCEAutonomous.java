@@ -255,6 +255,42 @@ public class GFORCEAutonomous extends LinearOpMode
                 autoSequence
         );
     }
+    //==============================================================================================
+    private Action buildSpecimen_1sub_Sample_1bas() {
+        robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
+
+        Action wallToSub = robot.actionBuilder(new Pose2d(-15, -63, Math.toRadians(90)))
+                .splineToConstantHeading(new Vector2d(-15, -31), Math.toRadians(90))
+                .build();
+
+        Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -31, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(-49, -36.5), Math.toRadians(90))
+                .build();
+
+        Action basketToSample2 = robot.actionBuilder(new Pose2d(-53, -56, Math.toRadians(90)))
+                .splineTo(new Vector2d(-36, -10), Math.toRadians(0))
+                .splineTo(new Vector2d(-24, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
+                .build();
+
+
+        Action autoSequence = new SequentialAction(
+                arm.actionSetState(ArmStates.GRABBED),
+                wallToSub ,
+                arm.actionClipIt(),
+                arm.actionWaitForState(ArmStates.LOWERING),
+                subToSample1
+
+        );
+
+        return  new ParallelAction(
+                arm.actionUpdate(),
+                lift.actionUpdate(),
+                intake.actionUpdate(),
+                autoSequence
+        );
+    }
+
 
     @Override
     public void runOpMode()
@@ -297,6 +333,10 @@ public class GFORCEAutonomous extends LinearOpMode
 
                     case 3:
                         selectedAuto = buildSample_1Bas_2Net_Sub();
+                        break;
+
+                    case 4:
+                        selectedAuto = buildSpecimen_1sub_Sample_1bas();
                         break;
                 }
             }
