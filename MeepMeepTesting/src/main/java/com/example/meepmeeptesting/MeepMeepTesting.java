@@ -12,7 +12,13 @@ import com.noahbres.meepmeep.roadrunner.DriveShim;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 public class MeepMeepTesting {
+
     public static void main(String[] args) {
+
+        final double START_Y = -62;
+        final double START_X_SPEC = 15;
+        final double START_X_SAMP = -15;
+
         MeepMeep meepMeep = new MeepMeep(640);
 
         RoadRunnerBotEntity specimenBot = new DefaultBotBuilder(meepMeep)
@@ -133,13 +139,13 @@ public class MeepMeepTesting {
 
         //====================================================================================
 
-            Action wallToSub = robot.actionBuilder(new Pose2d(-15, -63, Math.toRadians(90)))
+            Action wallToSub = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
                     .splineToConstantHeading(new Vector2d(-15, -31), Math.toRadians(90))
                     .build();
 
             Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -31, Math.toRadians(90)))
                     .setTangent(Math.toRadians(-90))
-                    .splineToConstantHeading(new Vector2d(-49, -36.5), Math.toRadians(90))
+                    .splineToConstantHeading(new Vector2d(-49, -39), Math.toRadians(90))
                     .build();
 
             Action basketToSample2 = robot.actionBuilder(new Pose2d(-53, -56, Math.toRadians(90)))

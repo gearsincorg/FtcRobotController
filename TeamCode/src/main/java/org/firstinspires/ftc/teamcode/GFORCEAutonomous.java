@@ -23,6 +23,7 @@ import org.firstinspires.ftc.teamcode.subsystems.ArmStates;
 import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeStates;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LiftSubsystem;
 
@@ -38,6 +39,10 @@ public class GFORCEAutonomous extends LinearOpMode
 
     private Action selectedAuto  = null;
     private int lastSelectedAuto = -1;
+
+    private final double START_Y = -62;
+    private final double START_X_SPEC = 15;
+    private final double START_X_SAMP = -15;
 
     // Place all auto builders here!
     //================================================================================================================
@@ -257,20 +262,20 @@ public class GFORCEAutonomous extends LinearOpMode
     }
     //==============================================================================================
     private Action buildSpecimen_1sub_Sample_1bas() {
-        robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
-        Action wallToSub = robot.actionBuilder(new Pose2d(-15, -63, Math.toRadians(90)))
+        Action wallToSub = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
                 .splineToConstantHeading(new Vector2d(-15, -31), Math.toRadians(90))
                 .build();
 
         Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(-49, -36.5), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(-49, -40), Math.toRadians(90))
                 .build();
 
-        Action basketToSample2 = robot.actionBuilder(new Pose2d(-53, -56, Math.toRadians(90)))
-                .splineTo(new Vector2d(-36, -10), Math.toRadians(0))
-                .splineTo(new Vector2d(-24, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
+        Action sample1ToBasket = robot.actionBuilder(new Pose2d(-49, -40, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
 
 
@@ -279,8 +284,12 @@ public class GFORCEAutonomous extends LinearOpMode
                 wallToSub ,
                 arm.actionClipIt(),
                 arm.actionWaitForState(ArmStates.LOWERING),
-                subToSample1
-
+                subToSample1,
+                intake.actionIntakeIt(),
+                intake.actionWaitForState(IntakeStates.HOME),
+                sample1ToBasket,
+                lift.actionSetState(SAMPLE_HELD),
+                lift.actionWaitForState(LOWERING)
         );
 
         return  new ParallelAction(
@@ -364,11 +373,13 @@ public class GFORCEAutonomous extends LinearOpMode
             }
             if (selectedAuto != null) {
                 Actions.runBlocking(selectedAuto);
+                sleep(30000);
             } else {
                 telemetry.addData("AUTO MODE",  "No valid mode selected (%d)", autoConfig.autoOptions.autoMode);
                 telemetry.update();
                 sleep(2000);
             }
+
         }
 
         Globals.LAST_POSE = new Pose2d(0,0, robot.getPose().heading.toDouble()-(Math.PI/2)) ;
