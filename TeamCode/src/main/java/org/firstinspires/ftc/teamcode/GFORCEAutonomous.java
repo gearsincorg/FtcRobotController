@@ -19,6 +19,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.ArmStates;
 import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
@@ -46,7 +47,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
     // Place all auto builders here!
     //================================================================================================================
-    private Action buildSpecimen_4Sub() {
+    private Action build_Spec_4Sub() {
         robot.setPose(new Pose2d(15, -63, Math.toRadians(90)));
 
         //build trajectories
@@ -156,7 +157,7 @@ public class GFORCEAutonomous extends LinearOpMode
     }
 
     //================================================================================================================
-    private Action buildSample_1Bas() {
+    private Action build_Samp_1Bas() {
         robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
@@ -185,7 +186,7 @@ public class GFORCEAutonomous extends LinearOpMode
     }
 
     //================================================================================================================
-    private Action buildSample_1Bas_Sub() {
+    private Action build_Samp_1Bas_Sub() {
         robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
@@ -216,7 +217,7 @@ public class GFORCEAutonomous extends LinearOpMode
     }
 
     //================================================================================================================
-    private Action buildSample_1Bas_2Net_Sub() {
+    private Action build_Samp_1Bas_2Net_Sub() {
         robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
@@ -261,7 +262,7 @@ public class GFORCEAutonomous extends LinearOpMode
         );
     }
     //==============================================================================================
-    private Action buildSpecimen_1sub_Sample_1bas() {
+    private Action build_Spec_1sub_Sample_1bas() {
         robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
         Action wallToSub = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
@@ -286,8 +287,9 @@ public class GFORCEAutonomous extends LinearOpMode
                 arm.actionWaitForState(ArmStates.LOWERING),
                 subToSample1,
                 intake.actionIntakeIt(),
-                intake.actionWaitForState(IntakeStates.HOME),
+                intake.actionWaitForState(IntakeStates.GOT_SAMPLE),
                 sample1ToBasket,
+                intake.actionWaitForState(IntakeStates.HOME),
                 lift.actionSetState(SAMPLE_HELD),
                 lift.actionWaitForState(LOWERING)
         );
@@ -311,8 +313,6 @@ public class GFORCEAutonomous extends LinearOpMode
         lift.initialize(false);
         intake.initialize(false);
         autoConfig.initialize();
-//      octoQuad.initialize(false);
-//      blob.initilaize(false);
 
         // ############################################################################
 
@@ -329,37 +329,36 @@ public class GFORCEAutonomous extends LinearOpMode
                 lastSelectedAuto = autoConfig.autoOptions.autoMode;
                 switch (lastSelectedAuto) {
                     case 0:
-                        selectedAuto = buildSpecimen_4Sub();
+                        selectedAuto = build_Spec_4Sub();
                         break;
 
                     case 1:
-                        selectedAuto = buildSample_1Bas();
+                        selectedAuto = build_Samp_1Bas();
                         break;
 
                     case 2:
-                        selectedAuto = buildSample_1Bas_Sub();
+                        selectedAuto = build_Samp_1Bas_Sub();
                         break;
 
                     case 3:
-                        selectedAuto = buildSample_1Bas_2Net_Sub();
+                        selectedAuto = build_Samp_1Bas_2Net_Sub();
                         break;
 
                     case 4:
-                        selectedAuto = buildSpecimen_1sub_Sample_1bas();
+                        selectedAuto = build_Spec_1sub_Sample_1bas();
                         break;
                 }
             }
 
-            /* Set GLOBAL flags based on menu choices.
-            if (autoConfig.autoOptions.redAlliance )
-                Globals.ALLIANCE_COLOR = AllianceColor.RED;
-            else
-                Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
-            */
-
             telemetry.addLine("\n Touch Play to run Auto");
             telemetry.update();
         }
+
+        // Set GLOBAL flags based on menu choices.
+        if (autoConfig.autoOptions.redAlliance )
+            Globals.ALLIANCE_COLOR = AllianceColor.RED;
+        else
+            Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
@@ -369,70 +368,18 @@ public class GFORCEAutonomous extends LinearOpMode
                 telemetry.addData("AUTO MODE",  "%s", autoConfig.autoArray[autoConfig.autoOptions.autoMode]);
                 telemetry.addData("COUNTDOWN",  "%d  %d  %d  %d", sec, sec, sec, sec);
                 telemetry.update();
-                sleep(1000);
             }
+
             if (selectedAuto != null) {
                 Actions.runBlocking(selectedAuto);
-                sleep(30000);
             } else {
-                telemetry.addData("AUTO MODE",  "No valid mode selected (%d)", autoConfig.autoOptions.autoMode);
+                telemetry.addData("AUTO MODE",  "No valid mode selected");
                 telemetry.update();
-                sleep(2000);
             }
+            sleep(1000);
 
         }
 
         Globals.LAST_POSE = new Pose2d(0,0, robot.getPose().heading.toDouble()-(Math.PI/2)) ;
     }
-
-    /*
-    final double WITHIN_RANGE   = 2.00 ;
-    final double APPROACH_SPEED = -0.3 ;
-    final double CLICK_ON_SPEED = -0.2 ;
-    final double STRAFE_GAIN    = 0.7 ;
-
-    public Action actionDriveToSpecimen(){
-        return new Action() {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-
-                boolean keepGoing = true;
-                octoQuad.update();
-                double yError = octoQuad.getBackRangeInches();
-                robot.updatePoseEstimate();
-
-                // try to get within range of specimen
-                if ((Math.abs(yError) > WITHIN_RANGE) || (yError == 0)) {
-                    double strafe = 0;
-                    double drive = 0;
-                    double xError = 0;
-
-                    // strafe to be in front of specimen
-                    ColorTarget target = blob.getTarget();
-                    if (target.valid) {
-                        xError = target.x;
-                        strafe = xError * STRAFE_GAIN;
-                    }
-
-                    // slow down when you get close to wall.
-                    if (yError >= 5) {
-                        drive = APPROACH_SPEED;
-                    } else {
-                        drive = CLICK_ON_SPEED;
-                    }
-
-                    // send drive power to wheels, and continue action
-                    robot.setDrivePowers(new PoseVelocity2d(new Vector2d(drive, strafe), 0));
-                } else {
-                    // stop moving and exit action.
-                    robot.setDrivePowers(new PoseVelocity2d(new Vector2d(0,0), 0));
-                    keepGoing = false;
-                }
-
-                telemetry.update();
-                return keepGoing;
-            }
-        };
-    }
-    */
 }
