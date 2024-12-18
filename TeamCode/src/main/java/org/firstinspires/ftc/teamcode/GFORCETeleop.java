@@ -240,6 +240,7 @@ public class GFORCETeleop extends LinearOpMode
         // tell AUTO to home next time
         Globals.ARM_HOMED = false;
         Globals.LIFT_HOMED = false;
+        Globals.SLIDE_HOMED = false;
     }
 
     void setHeadingDeg(double heading) {
