@@ -36,7 +36,6 @@ public class GFORCEAutonomous extends LinearOpMode
     ArmSubsystem arm        = new ArmSubsystem(this);
     IntakeSubsystem intake  = new IntakeSubsystem(this);
     LiftSubsystem lift      = new LiftSubsystem(this);
-//  VisionSubsystem blob    = new VisionSubsystem(this);
 
     private Action selectedAuto  = null;
     private int lastSelectedAuto = -1;
@@ -48,13 +47,12 @@ public class GFORCEAutonomous extends LinearOpMode
     // Place all auto builders here!
     //================================================================================================================
     private Action build_Spec_4Sub() {
-        robot.setPose(new Pose2d(15, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(START_X_SPEC, START_Y, Math.toRadians(90)));
 
         //build trajectories
-        Action wallToSubPath = robot.actionBuilder(new Pose2d(15, -63, Math.toRadians(90)))
-                .splineTo(new Vector2d(4, -31), Math.toRadians(90))
-                .build()
-                ;
+        Action wallToSubPath = robot.actionBuilder(new Pose2d(START_X_SPEC, START_Y, Math.toRadians(90)))
+                .splineToConstantHeading(new Vector2d(4, -31), Math.toRadians(90))
+                .build();
 
         Action subToAllSamplesPath = robot.actionBuilder(new Pose2d(4, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-60))
@@ -67,52 +65,44 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineToConstantHeading(new Vector2d(48, -12), Math.toRadians(0))
                 .splineToConstantHeading(new Vector2d(54, -24), Math.toRadians(-90))
                 .splineToConstantHeading(new Vector2d(54, -50), Math.toRadians(-90))
-                .build()
-                ;
+                .build();
 
         Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(54, -50, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
                 .splineToConstantHeading(new Vector2d(41, -44), Math.toRadians(180))
                 .setTangent(Math.toRadians(-90))
                 .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
-                .build()
-                ;
+                .build();
 
         Action specimenToSub2Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(130))
                 .splineToConstantHeading(new Vector2d(1, -31), Math.toRadians(90))
-                .build()
-                ;
+                .build();
 
         Action sub2ToSpecimenPath = robot.actionBuilder(new Pose2d(1, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-50))
                 .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
-                .build()
-                ;
+                .build();
 
         Action specimenToSub3Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
                 .splineToConstantHeading(new Vector2d(-2, -31), Math.toRadians(90))
-                .build()
-                ;
+                .build();
 
         Action sub3ToSpecimenPath = robot.actionBuilder(new Pose2d(-2, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-45))
                 .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
-                .build()
-                ;
+                .build();
 
         Action specimenToSub4Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
                 .setTangent(Math.toRadians(140))
                 .splineToConstantHeading(new Vector2d(-5, -31), Math.toRadians(90))
-                .build()
-                ;
+                .build();
 
         Action sub4ToObservationPath = robot.actionBuilder(new Pose2d(-5, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-40))
                 .splineToConstantHeading(new Vector2d(50, -56), Math.toRadians(0))
-                .build()
-                ;
+                .build() ;
 
         //  ######################################################################
 
@@ -146,21 +136,21 @@ public class GFORCEAutonomous extends LinearOpMode
                 arm.actionWaitForState(ArmStates.LOWERING),
                 // Go Park
                 sub4ToObservationPath
-        );
+                );
 
         return  new ParallelAction(
                 arm.actionUpdate(),
                 lift.actionUpdate(),
                 intake.actionUpdate(),
                 autoSequence
-        );
+                );
     }
 
     //================================================================================================================
     private Action build_Samp_1Bas() {
-        robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
-        Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
+        Action wallToBasket = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
                 .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
@@ -187,9 +177,9 @@ public class GFORCEAutonomous extends LinearOpMode
 
     //================================================================================================================
     private Action build_Samp_1Bas_Sub() {
-        robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
-        Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
+        Action wallToBasket = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
                 .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
@@ -207,20 +197,20 @@ public class GFORCEAutonomous extends LinearOpMode
                 lift.actionWaitForState(LOWERING),
                 arm.actionSetState(ArmStates.GRABBED),
                 basketToSub
-        );
+                );
 
         return  new ParallelAction(
                 arm.actionUpdate(),
                 lift.actionUpdate(),
                 autoSequence
-        );
+                );
     }
 
     //================================================================================================================
     private Action build_Samp_1Bas_2Net_Sub() {
-        robot.setPose(new Pose2d(-32, -63, Math.toRadians(90)));
+        robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
-        Action wallToBasket = robot.actionBuilder(new Pose2d(-32, -63, Math.toRadians(90)))
+        Action wallToBasket = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
                 .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
@@ -243,7 +233,6 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineTo(new Vector2d(-24, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
                 .build();
 
-
         Action autoSequence = new SequentialAction(
                 arm.actionClaw(true),
                 wallToBasket ,
@@ -252,15 +241,16 @@ public class GFORCEAutonomous extends LinearOpMode
                 basketToSamples,
                 arm.actionSetState(ArmStates.GRABBED),
                 basketToSub
-        );
+                );
 
         return  new ParallelAction(
                 arm.actionUpdate(),
                 lift.actionUpdate(),
                 intake.actionUpdate(),
                 autoSequence
-        );
+                );
     }
+
     //==============================================================================================
     private Action build_Spec_1sub_Sample_1bas() {
         robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
@@ -279,29 +269,29 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
 
-
         Action autoSequence = new SequentialAction(
-                arm.actionSetState(ArmStates.GRABBED),
-                wallToSub ,
-                arm.actionClipIt(),
-                arm.actionWaitForState(ArmStates.LOWERING),
-                subToSample1,
-                intake.actionIntakeIt(),
-                intake.actionWaitForState(IntakeStates.GOT_SAMPLE),
-                sample1ToBasket,
-                intake.actionWaitForState(IntakeStates.HOME),
-                lift.actionSetState(SAMPLE_HELD),
-                lift.actionWaitForState(LOWERING)
-        );
+                arm.actionSetState(ArmStates.GRABBED),          // Move the Arm to scoring Position
+                wallToSub ,                                     // Drive to the Sub
+                arm.actionClipIt(),                             // Start the clipping action
+                arm.actionWaitForState(ArmStates.LOWERING),     // Wait for the the clip to be done
+                subToSample1,                                   // Drive to the 1st Sample
+                intake.actionIntakeIt(),                        // Start collector to intake sample
+                intake.actionWaitForState(IntakeStates.GOT_SAMPLE),  // Start the sample transfer
+                sample1ToBasket,                                // Drive to the basket
+                intake.actionWaitForState(IntakeStates.HOME),   // Wait for the transfer to complete
+                lift.actionSetState(SAMPLE_HELD),               // Start lift operation
+                lift.actionWaitForState(LOWERING)               // Wait til the lift is coming down
+                );
 
         return  new ParallelAction(
                 arm.actionUpdate(),
                 lift.actionUpdate(),
                 intake.actionUpdate(),
                 autoSequence
-        );
+                );
     }
 
+    // ############################################################################
 
     @Override
     public void runOpMode()
@@ -309,13 +299,10 @@ public class GFORCEAutonomous extends LinearOpMode
         Globals.IS_AUTO = true;
         robot = new MecanumDrive(hardwareMap, new Pose2d(0,0,0), this);
         arm.initialize(false);
-        arm.closeClaw();
         lift.initialize(false);
         intake.initialize(false);
+        arm.closeClaw();
         autoConfig.initialize();
-
-        // ############################################################################
-
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -348,6 +335,8 @@ public class GFORCEAutonomous extends LinearOpMode
                         selectedAuto = build_Spec_1sub_Sample_1bas();
                         break;
                 }
+
+
             }
 
             telemetry.addLine("\n Touch Play to run Auto");
