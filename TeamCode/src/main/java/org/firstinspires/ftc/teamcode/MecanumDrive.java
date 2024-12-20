@@ -247,7 +247,7 @@ public final class MecanumDrive {
             leftBack.setPower(leftBackPower);
             rightBack.setPower(rightBackPower);
             rightFront.setPower(rightFrontPower);
-
+             
             p.put("x", pose.position.x);
             p.put("y", pose.position.y);
             p.put("heading (deg)", Math.toDegrees(pose.heading.toDouble()));
@@ -270,7 +270,6 @@ public final class MecanumDrive {
             c.setStroke("#4CAF50FF");
             c.setStrokeWidth(1);
             c.strokePolyline(xPoints, yPoints);
-
             return true;
         }
 
@@ -359,6 +358,23 @@ public final class MecanumDrive {
             c.setStroke("#7C4DFF7A");
             c.fillCircle(turn.beginPose.position.x, turn.beginPose.position.y, 2);
         }
+    }
+
+    public Action RCAction() {
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                if (Globals.RC_RUN) {
+                    myOpMode.telemetry.addData("RC go", Globals.RC_ROTATE);
+                    setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), Globals.RC_ROTATE));
+                    return true;
+                } else {
+                    myOpMode.telemetry.addData("RC stop", Globals.RC_ROTATE);
+                    setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    return false;
+                }
+            }
+        };
     }
 
     public PoseVelocity2d updatePoseEstimate() {

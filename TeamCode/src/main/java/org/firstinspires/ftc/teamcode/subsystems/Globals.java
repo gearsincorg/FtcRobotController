@@ -13,9 +13,11 @@ public class Globals {
      * Robot state constants.
      */
     public static Pose2d LAST_POSE = new Pose2d(0,0,0);
-    public static boolean IS_AUTO = false;
-    public static boolean ARM_HOMED = false;
-    public static boolean LIFT_HOMED = false;
-    public static boolean SLIDE_HOMED = false;
-    public static int     OCTO_ERRORS = 0;
+    public static boolean IS_AUTO       = false;
+    public static boolean ARM_HOMED     = false;
+    public static boolean LIFT_HOMED    = false;
+    public static boolean SLIDE_HOMED   = false;
+    public static int     OCTO_ERRORS   = 0;
+    public static boolean RC_RUN        = false;
+    public static double  RC_ROTATE     = 0;
 }

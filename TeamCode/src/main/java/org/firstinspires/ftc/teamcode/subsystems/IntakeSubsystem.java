@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import static org.firstinspires.ftc.teamcode.subsystems.ArmStates.READY;
 import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.BLUE;
 import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.NONE;
 import static org.firstinspires.ftc.teamcode.subsystems.SampleColor.RED;
@@ -13,7 +12,6 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
@@ -37,14 +35,18 @@ public class IntakeSubsystem {
     private final double INTAKE = 1;
     private final double EJECT = -1;
     private final double OFF = 0;
-    private final double WRIST_IN = 0.4;
+    private final double WRIST_IN = 0.42;
     private final double WRIST_OUT = 0.68;
     private final double WRIST_DOWN = 0.9;
     private final double SLIDE_TRANSIT_TIME = 1.5;
     private final double SLIDE_TRANSFER_TIME = 1.0;
-    private final double SAMP_TIME = 0.1;
+    private final double SAMP_TIME = 0.15;
+    private final double SWEEP_SPEED = 0.25;
+    private final double SWEEP_TIME = 0.25;
+    private final double SAMP_NOT_COLLECTED_IN_TIME = 1;
 
     private final int    SLIDE_HOME = 0;
+    private final int    ALMOST_HOME = 20;
     private final int    SLIDE_OUT  = 500;
 
     private final double HOME_POWER = -0.1;
@@ -208,9 +210,21 @@ public class IntakeSubsystem {
                     wristOut();
                     collectorOff();
                     setState(IntakeStates.HOME);
-                }
-                else if (gotSample) {
+                } else if (gotSample) {
                     setState(IntakeStates.CHECKING_SAMPLE);
+                } else if (stateTime.time() > SAMP_NOT_COLLECTED_IN_TIME){
+                    setState(IntakeStates.SWEEPING);
+                }
+                break;
+
+            case SWEEPING:
+                if (gotSample) {
+                    Globals.RC_RUN = false;
+                    Globals.RC_ROTATE = 0;
+                    setState(IntakeStates.CHECKING_SAMPLE);
+                } else {
+                    Globals.RC_RUN = true;
+                    Globals.RC_ROTATE = SWEEP_SPEED;
                 }
                 break;
 
@@ -312,7 +326,7 @@ public class IntakeSubsystem {
             myOpMode.sleep(50);
         } else {
             outputPower = positionControl.getOutput(currentPosition);
-            if ((positionControl.getSetPoint() == SLIDE_HOME ) && (outputPower > HOLD_POWER)) {
+            if ((positionControl.getSetPoint() == SLIDE_HOME ) && (currentPosition < ALMOST_HOME)) {
                 outputPower = HOLD_POWER;
             }
         }
@@ -385,6 +399,7 @@ public class IntakeSubsystem {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 update();
+                myOpMode.telemetry.update();
                 return true;
             }
         };
@@ -414,6 +429,15 @@ public class IntakeSubsystem {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 timeToIntake = true;
+                return false;
+            }
+        };
+    }
+
+    public Action actionIntakeJammed(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
                 return false;
             }
         };

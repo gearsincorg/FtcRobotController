@@ -266,8 +266,29 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action sample1ToBasket = robot.actionBuilder(new Pose2d(-49, -40, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-90))
-                .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .splineToLinearHeading(new Pose2d(-56, -54, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
+
+        Action basToSample2 = robot.actionBuilder(new Pose2d(-53, -57, Math.toRadians(45)))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-58.5, -40, Math.toRadians(90)), Math.toRadians(90))
+                .build();
+
+        Action sample2ToBasket = robot.actionBuilder(new Pose2d(-60, -40, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-56, -54, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .build();
+
+        Action basToSample3 = robot.actionBuilder(new Pose2d(-56, -54, Math.toRadians(45)))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-56, -35, Math.toRadians(150)), Math.toRadians(90))
+                .build();
+
+        Action sample3ToBasket = robot.actionBuilder(new Pose2d(-56, -35, Math.toRadians(150)))
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-56, -54, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .build();
+
 
         Action autoSequence = new SequentialAction(
                 arm.actionSetState(ArmStates.GRABBED),          // Move the Arm to scoring Position
@@ -276,11 +297,28 @@ public class GFORCEAutonomous extends LinearOpMode
                 arm.actionWaitForState(ArmStates.LOWERING),     // Wait for the the clip to be done
                 subToSample1,                                   // Drive to the 1st Sample
                 intake.actionIntakeIt(),                        // Start collector to intake sample
-                intake.actionWaitForState(IntakeStates.GOT_SAMPLE),  // Start the sample transfer
+                new ParallelAction(// Start the sample transfer
+                        intake.actionWaitForState(IntakeStates.GOT_SAMPLE),
+                        robot.RCAction()
+                ),
                 sample1ToBasket,                                // Drive to the basket
-                intake.actionWaitForState(IntakeStates.HOME),   // Wait for the transfer to complete
+                intake.actionWaitForState(IntakeStates.TRANSFER),   // Wait for the transfer to complete
                 lift.actionSetState(SAMPLE_HELD),               // Start lift operation
-                lift.actionWaitForState(LOWERING)               // Wait til the lift is coming down
+                lift.actionWaitForState(LOWERING),              // Wait til the lift is coming down
+                basToSample2,
+                intake.actionIntakeIt(),                        // Start collector to intake sample
+                intake.actionWaitForState(IntakeStates.GOT_SAMPLE),
+                sample2ToBasket,
+                intake.actionWaitForState(IntakeStates.TRANSFER),   // Wait for the transfer to complete
+                lift.actionSetState(SAMPLE_HELD),               // Start lift operation
+                lift.actionWaitForState(LOWERING),
+                basToSample3,
+                intake.actionIntakeIt(),                        // Start collector to intake sample
+                intake.actionWaitForState(IntakeStates.GOT_SAMPLE),
+                sample3ToBasket,
+                intake.actionWaitForState(IntakeStates.TRANSFER),   // Wait for the transfer to complete
+                lift.actionSetState(SAMPLE_HELD),               // Start lift operation
+                lift.actionWaitForState(LOWERING)
                 );
 
         return  new ParallelAction(
@@ -300,7 +338,7 @@ public class GFORCEAutonomous extends LinearOpMode
         robot = new MecanumDrive(hardwareMap, new Pose2d(0,0,0), this);
         arm.initialize(false);
         lift.initialize(false);
-        intake.initialize(false);
+        intake.initialize(true);
         arm.closeClaw();
         autoConfig.initialize();
 

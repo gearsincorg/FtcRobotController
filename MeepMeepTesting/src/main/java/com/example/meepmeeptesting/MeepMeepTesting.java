@@ -139,25 +139,49 @@ public class MeepMeepTesting {
 
         //====================================================================================
 
-            Action wallToSub = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
-                    .splineToConstantHeading(new Vector2d(-15, -31), Math.toRadians(90))
-                    .build();
+        Action wallToSub = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
+                .splineToConstantHeading(new Vector2d(-15, -31), Math.toRadians(90))
+                .build();
 
-            Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -31, Math.toRadians(90)))
-                    .setTangent(Math.toRadians(-90))
-                    .splineToConstantHeading(new Vector2d(-49, -39), Math.toRadians(90))
-                    .build();
+        Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -31, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(-49, -40), Math.toRadians(90))
+                .build();
 
-            Action basketToSample2 = robot.actionBuilder(new Pose2d(-53, -56, Math.toRadians(90)))
-                    .splineTo(new Vector2d(-36, -10), Math.toRadians(0))
-                    .splineTo(new Vector2d(-24, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
-                    .build();
+        Action sample1ToBasket = robot.actionBuilder(new Pose2d(-49, -40, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-56, -54, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .build();
 
+        Action basToSample2 = robot.actionBuilder(new Pose2d(-56, -54, Math.toRadians(45)))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-60, -40, Math.toRadians(90)), Math.toRadians(90))
+                .build();
+
+        Action sample2ToBasket = robot.actionBuilder(new Pose2d(-60, -40, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-56, -54, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .build();
+
+        Action basToSample3 = robot.actionBuilder(new Pose2d(-56, -54, Math.toRadians(45)))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-56, -32, Math.toRadians(150)), Math.toRadians(90))
+                .build();
+
+        Action sample3ToBasket = robot.actionBuilder(new Pose2d(-56, -32, Math.toRadians(150)))
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-56, -54, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+                .build();
 
 
         specimenToSubBot.runAction(new SequentialAction(
                 wallToSub,
-                subToSample1
+                subToSample1,
+                sample1ToBasket,
+                basToSample2,
+                sample2ToBasket,
+                basToSample3,
+                sample3ToBasket
         ));
 
         basketBot.runAction(new SequentialAction(
