@@ -360,18 +360,46 @@ public final class MecanumDrive {
         }
     }
 
-    public Action RCAction() {
+    public Action actionSweep() {
+        final double SWEEP_SPEED = 0.1;
+        final double SWEEP_EDGE  = Math.toRadians(5);
+
         return new Action() {
+            boolean needInit   = true;
+            double sweepSpeed  = SWEEP_SPEED;
+            double sweepCenter = 0;
             @Override
             public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                if (Globals.RC_RUN) {
-                    myOpMode.telemetry.addData("RC go", Globals.RC_ROTATE);
-                    setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), Globals.RC_ROTATE));
-                    return true;
-                } else {
-                    myOpMode.telemetry.addData("RC stop", Globals.RC_ROTATE);
+                updatePoseEstimate();
+
+                if (needInit) {
+                    sweepCenter = getHeadingRad();
+                    needInit = false;
+                }
+
+                if (Globals.RC_END) {
+                    // stop sweeping and end the action safely
                     setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    Globals.RC_SWEEP  = false;
+                    Globals.RC_END    = false;
+                    myOpMode.telemetry.addLine("Sweep stop");
                     return false;
+                } else {
+                    if (Globals.RC_SWEEP) {
+                        // sweep between the two edge angles
+                        double sweepOffset = getHeadingRad() - sweepCenter;
+                        if (sweepOffset > SWEEP_EDGE) {
+                            sweepSpeed = -SWEEP_SPEED;
+                        } else if (sweepOffset < -SWEEP_EDGE) {
+                            sweepSpeed = SWEEP_SPEED;
+                        }
+
+                        setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), sweepSpeed));
+                        myOpMode.telemetry.addData("Sweeping", sweepSpeed);
+                    } else {
+                        setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                    }
+                    return true;
                 }
             }
         };
@@ -479,6 +507,14 @@ public final class MecanumDrive {
 
     public Pose2d getPose () {
         return pose;
+    }
+
+    public double getHeadingRad() {
+        return pose.heading.toDouble();
+    }
+
+    public double getHeadingDeg() {
+        return Math.toDegrees(pose.heading.toDouble());
     }
 
     private double mmToInch(double mm) {

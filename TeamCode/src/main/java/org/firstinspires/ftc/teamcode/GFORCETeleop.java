@@ -36,12 +36,6 @@ public class GFORCETeleop extends LinearOpMode
     final double SAFE_DRIVE_SPEED   = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_STRAFE_SPEED  = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_YAW_SPEED     = 0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double IN_FRONT_ANGLE     = 0.14 ;
-    final double VERY_IN_FRONT_ANGLE = 0.05 ;
-    final double CLICK_ON_SPEED     = -0.2 ;
-    final double APPROACH_SPEED     = -0.3 ;
-    final double STRAFE_GAIN        = 1.5 ;
-    final double WITHIN_RANGE       = 2.00 ;
 
     final boolean USE_FIELD_CENTRIC_MODE = true;
 
@@ -58,7 +52,7 @@ public class GFORCETeleop extends LinearOpMode
     boolean fieldCentric   = false;
     double headingDeg = 0;
     double turnrate = 0;
-    Vector2d translate = new Vector2d(0,0);
+    Vector2d robotOrFieldCentric = new Vector2d(0,0);
     public ProportionalControl yawController       = new ProportionalControl(YAW_GAIN, YAW_ACCEL, YAW_MAX_AUTO, YAW_TOLERANCE,YAW_DEADBAND, true);
 
     // get an instance of each of the subsystems
@@ -67,9 +61,6 @@ public class GFORCETeleop extends LinearOpMode
     ArmSubsystem arm     = new ArmSubsystem(this);
     IntakeSubsystem intake  = new IntakeSubsystem(this);
     AutoConfig autoConfig   = new AutoConfig(this);
-//  VisionSubsystem vision  = new VisionSubsystem(this);
-//  OctoQuadIF octoQuad = new OctoQuadIF(this);
-
 
     @Override public void runOpMode()
     {
@@ -142,9 +133,9 @@ public class GFORCETeleop extends LinearOpMode
             }
 
             // read joystick values and scale according to limits set at top of this file
-            double drive  = -cubed(gamepad1.left_stick_y) * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
-            double strafe = -cubed(gamepad1.left_stick_x) * SAFE_STRAFE_SPEED;     //  Left/Right on left stick
-            double yaw    = -cubed(gamepad1.right_stick_x) * SAFE_YAW_SPEED;       //  Rotate on right stick
+            double drive  = -lessSensitive(gamepad1.left_stick_y) * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
+            double strafe = -lessSensitive(gamepad1.left_stick_x) * SAFE_STRAFE_SPEED;     //  Left/Right on left stick
+            double yaw    = -lessSensitive(gamepad1.right_stick_x) * SAFE_YAW_SPEED;       //  Rotate on right stick
 
             //  For special conditions, Use the DPAD to make slow-mo orthogonal motions.  Adjust the divider to your needs.
             if (gamepad1.dpad_left) {
@@ -179,18 +170,18 @@ public class GFORCETeleop extends LinearOpMode
             }
 
             // rotate the driving commands if field centric is engaged
-            translate = new Vector2d(drive, strafe);
+            robotOrFieldCentric = new Vector2d(drive, strafe);
             if (USE_FIELD_CENTRIC_MODE) {
                 // Create a vector from the gamepad x/y inputs
                 // Then, rotate that vector by the inverse of that heading
-                translate = new RotateVector(translate, -robot.getPose().heading.toDouble()).rotated;
+                robotOrFieldCentric = new RotateVector(robotOrFieldCentric, -robot.getPose().heading.toDouble()).rotated;
             }
 
             //  try Rotation2d.fromDouble(angle you want to rotate).times(some Vector2d)
 
             //  Drive the wheels based on the desired axis motions
             robot.setDrivePowers(new PoseVelocity2d(
-                    translate,
+                    robotOrFieldCentric,
                     yaw
             ));
 
@@ -231,7 +222,7 @@ public class GFORCETeleop extends LinearOpMode
         }
     }
 
-    public double cubed(double joystick) {
+    public double lessSensitive(double joystick) {
         return (joystick * joystick * Math.signum(joystick));
     }
 }

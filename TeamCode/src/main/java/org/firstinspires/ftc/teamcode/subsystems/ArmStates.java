@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 public enum ArmStates {
-
     READY,
     GRABBING,
     GRABBED,
@@ -10,5 +9,4 @@ public enum ArmStates {
     CANCEL,
     CLIPPING,
     LOWERING
-
 }

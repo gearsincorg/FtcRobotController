@@ -18,6 +18,7 @@ public class Globals {
     public static boolean LIFT_HOMED    = false;
     public static boolean SLIDE_HOMED   = false;
     public static int     OCTO_ERRORS   = 0;
-    public static boolean RC_RUN        = false;
-    public static double  RC_ROTATE     = 0;
+    public static boolean RC_END        = false;
+    public static boolean RC_SWEEP      = false;
+    public static boolean DID_NOT_SWEEP_SAMPLE = false;
 }

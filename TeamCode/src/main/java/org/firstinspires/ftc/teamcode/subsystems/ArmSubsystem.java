@@ -90,7 +90,7 @@ public class ArmSubsystem {
         runStateMachine();
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Arm Pos, SP, Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            myOpMode.telemetry.addData("ARM Pos SP Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
             //  myOpMode.telemetry.addData("Arm Pos", currentPosition);
             //  myOpMode.telemetry.addData("Arm Pwr", outputPower * 1000);
             //  myOpMode.telemetry.addData("Arm SP",  positionControl.getSetPoint());
@@ -142,7 +142,7 @@ public class ArmSubsystem {
             case READY_CLIP:{
                 if(grabScore.pressed(myOpMode.gamepad1.right_bumper) || timeToClip){
                     setTargetPosition(CLIPPED_POSITON);
-                    claw.setPosition(LOOSE_GRIP);
+                    // claw.setPosition(LOOSE_GRIP);
                     timeToClip = false;
                     setState(CLIPPING);
                 } else if (myOpMode.gamepad1.right_trigger > 0.25){
@@ -243,7 +243,6 @@ public class ArmSubsystem {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                myOpMode.telemetry.update();  // send off last telemetry packet
                 update();
                 return true;
             }
@@ -274,7 +273,7 @@ public class ArmSubsystem {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                return currentState != state;
+                return (currentState != state);
             }
         };
     }
@@ -292,4 +291,15 @@ public class ArmSubsystem {
             }
         };
     }
+
+    public Action actionUpdateTelemetry(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                myOpMode.telemetry.update();
+                return true;
+            }
+        };
+    }
+
 }

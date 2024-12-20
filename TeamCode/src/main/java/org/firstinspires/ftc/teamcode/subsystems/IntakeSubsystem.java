@@ -40,10 +40,10 @@ public class IntakeSubsystem {
     private final double WRIST_DOWN = 0.9;
     private final double SLIDE_TRANSIT_TIME = 1.5;
     private final double SLIDE_TRANSFER_TIME = 1.0;
-    private final double SAMP_TIME = 0.15;
-    private final double SWEEP_SPEED = 0.25;
-    private final double SWEEP_TIME = 0.25;
-    private final double SAMP_NOT_COLLECTED_IN_TIME = 1;
+    private final double SAMP_TIME = 0.12;
+    private final double SAMP_NOT_COLLECTED_IN_TIME = 2;
+    private final double SWEEP_TIMEOUT = 2;
+
 
     private final int    SLIDE_HOME = 0;
     private final int    ALMOST_HOME = 20;
@@ -82,6 +82,8 @@ public class IntakeSubsystem {
     private int currentPosition = 0;
     private int lastPosition = 0;
     private boolean goingHome = false;
+
+    // flags used in auto
     private boolean timeToIntake = false;
 
     private Button wristInOut = new Button();
@@ -125,11 +127,11 @@ public class IntakeSubsystem {
         runStateMachine();
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Intake Hold Color Hue", "%s %s %s %d", currentState, gotSample, sampleColor, sampleHue);
-            // myOpMode.telemetry.addData("Slide Pos, SP, Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
-            myOpMode.telemetry.addData("Slide Pos", currentPosition);
-            myOpMode.telemetry.addData("Slide Pwr", outputPower * 1000);
-            myOpMode.telemetry.addData("Slide SP",  positionControl.getSetPoint());
+            myOpMode.telemetry.addData("INTAKE Got Color Hue", "%s %s %s %d", currentState, gotSample, sampleColor, sampleHue);
+            myOpMode.telemetry.addData("SLIDE Pos SP Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            // myOpMode.telemetry.addData("Slide Pos", currentPosition);
+            // myOpMode.telemetry.addData("Slide Pwr", outputPower * 1000);
+            // myOpMode.telemetry.addData("Slide SP",  positionControl.getSetPoint());
         }
     }
 
@@ -212,19 +214,23 @@ public class IntakeSubsystem {
                     setState(IntakeStates.HOME);
                 } else if (gotSample) {
                     setState(IntakeStates.CHECKING_SAMPLE);
-                } else if (stateTime.time() > SAMP_NOT_COLLECTED_IN_TIME){
+                } else if (Globals.IS_AUTO && (stateTime.time() > SAMP_NOT_COLLECTED_IN_TIME)){
                     setState(IntakeStates.SWEEPING);
                 }
                 break;
 
-            case SWEEPING:
+            case SWEEPING:  // only used in auto
                 if (gotSample) {
-                    Globals.RC_RUN = false;
-                    Globals.RC_ROTATE = 0;
+                    Globals.RC_SWEEP  = false;
+                    Globals.RC_END    = true;
                     setState(IntakeStates.CHECKING_SAMPLE);
+                } else if (stateTime.time() > SWEEP_TIMEOUT) {  // terminate sweep and move on.
+                    Globals.RC_SWEEP  = false;
+                    Globals.RC_END    = true;
+                    Globals.DID_NOT_SWEEP_SAMPLE = true; // Set flag to bypass dumping
+                    setState(IntakeStates.GOT_SAMPLE);
                 } else {
-                    Globals.RC_RUN = true;
-                    Globals.RC_ROTATE = SWEEP_SPEED;
+                    Globals.RC_SWEEP  = true; // Sweep back and forward.
                 }
                 break;
 
@@ -418,8 +424,9 @@ public class IntakeSubsystem {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                return currentState != state;
+                return (currentState != state);
             }
+
         };
     }
 

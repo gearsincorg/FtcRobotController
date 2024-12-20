@@ -107,7 +107,7 @@ public class LiftSubsystem {
         runStateMachine();
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("Lift Pos, SP, Pwr", "%s %.1f %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            myOpMode.telemetry.addData("LIFT Pos SP Pwr", "%s %.1f %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
             //  myOpMode.telemetry.addData("Lift Pos", currentPosition);
             //  myOpMode.telemetry.addData("Lift Pwr", outputPower * 1000);
             //  myOpMode.telemetry.addData("Lift SP",  positionControl.getSetPoint());
@@ -187,7 +187,11 @@ public class LiftSubsystem {
             }
 
             case SAMPLE_HELD:{
-                if(myOpMode.gamepad2.triangle || Globals.IS_AUTO){
+                if (Globals.IS_AUTO && Globals.DID_NOT_SWEEP_SAMPLE) {
+                    // bypass the scoring process as we don't have a sample
+                    Globals.DID_NOT_SWEEP_SAMPLE = false;
+                    setState(LOWERING);
+                } else if(myOpMode.gamepad2.triangle || Globals.IS_AUTO){
                     setSetpointInches(HIGH_BASKET);
                     setBucketPosition(BucketPositions.BACK_DUMP_READY);
                     setState(LIFTING);
@@ -337,11 +341,11 @@ public class LiftSubsystem {
         };
     }
 
-    public Action actionWaitForState(LiftStates state){
+    public Action actionWaitForHomeOrState(LiftStates state){
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                return currentState != state;
+                return ((currentState != state) && (currentState != HOME));
             }
         };
     }
