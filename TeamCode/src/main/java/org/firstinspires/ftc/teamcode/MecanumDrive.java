@@ -392,11 +392,6 @@ public final class MecanumDrive {
             myOpMode.telemetry.addData("Vel X:Y mm/s", "%5d : %5d", OQlocalizer.velX_mmS, OQlocalizer.velY_mmS);
 
             myOpMode.telemetry.addData("OctoErrors", Globals.OCTO_ERRORS);
-
-            if (Globals.IS_AUTO) {
-                myOpMode.telemetry.update();
-            }
-
             pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
 
             poseHistory.add(pose);

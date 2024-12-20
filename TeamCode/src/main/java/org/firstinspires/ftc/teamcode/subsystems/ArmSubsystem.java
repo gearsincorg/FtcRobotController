@@ -243,6 +243,7 @@ public class ArmSubsystem {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
+                myOpMode.telemetry.update();  // send off last telemetry packet
                 update();
                 return true;
             }
@@ -291,5 +292,4 @@ public class ArmSubsystem {
             }
         };
     }
-
 }

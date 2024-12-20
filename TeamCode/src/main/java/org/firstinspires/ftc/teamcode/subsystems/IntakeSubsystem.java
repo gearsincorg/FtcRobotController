@@ -399,7 +399,6 @@ public class IntakeSubsystem {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 update();
-                myOpMode.telemetry.update();
                 return true;
             }
         };

@@ -106,7 +106,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         //  ######################################################################
 
-        Action autoSequence = new SequentialAction(
+        return new SequentialAction(
                 // Score Specimen 1 then sweep 2 more
                 arm.actionSetState(ArmStates.GRABBED),
                 wallToSubPath,
@@ -137,13 +137,6 @@ public class GFORCEAutonomous extends LinearOpMode
                 // Go Park
                 sub4ToObservationPath
                 );
-
-        return  new ParallelAction(
-                arm.actionUpdate(),
-                lift.actionUpdate(),
-                intake.actionUpdate(),
-                autoSequence
-                );
     }
 
     //================================================================================================================
@@ -159,19 +152,12 @@ public class GFORCEAutonomous extends LinearOpMode
                 .turnTo(Math.toRadians(90))
                 .build();
 
-        Action autoSequence = new SequentialAction(
+        return new SequentialAction(
                 arm.actionClaw(true),
                 wallToBasket ,
                 lift.actionSetState(SAMPLE_HELD),
                 lift.actionWaitForState(LOWERING),
                 basketToSamples
-        );
-
-        return  new ParallelAction(
-                arm.actionUpdate(),
-                lift.actionUpdate(),
-                intake.actionUpdate(),
-                autoSequence
         );
     }
 
@@ -190,19 +176,13 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineTo(new Vector2d(-23, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
                 .build();
 
-        Action autoSequence = new SequentialAction(
+        return new SequentialAction(
                 arm.actionClaw(true),
                 wallToBasket ,
                 lift.actionSetState(SAMPLE_HELD),
                 lift.actionWaitForState(LOWERING),
                 arm.actionSetState(ArmStates.GRABBED),
                 basketToSub
-                );
-
-        return  new ParallelAction(
-                arm.actionUpdate(),
-                lift.actionUpdate(),
-                autoSequence
                 );
     }
 
@@ -233,7 +213,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineTo(new Vector2d(-24, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
                 .build();
 
-        Action autoSequence = new SequentialAction(
+        return new SequentialAction(
                 arm.actionClaw(true),
                 wallToBasket ,
                 lift.actionSetState(SAMPLE_HELD),
@@ -241,13 +221,6 @@ public class GFORCEAutonomous extends LinearOpMode
                 basketToSamples,
                 arm.actionSetState(ArmStates.GRABBED),
                 basketToSub
-                );
-
-        return  new ParallelAction(
-                arm.actionUpdate(),
-                lift.actionUpdate(),
-                intake.actionUpdate(),
-                autoSequence
                 );
     }
 
@@ -290,7 +263,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
 
-        Action autoSequence = new SequentialAction(
+        return new SequentialAction(
                 arm.actionSetState(ArmStates.GRABBED),          // Move the Arm to scoring Position
                 wallToSub ,                                     // Drive to the Sub
                 arm.actionClipIt(),                             // Start the clipping action
@@ -298,8 +271,8 @@ public class GFORCEAutonomous extends LinearOpMode
                 subToSample1,                                   // Drive to the 1st Sample
                 intake.actionIntakeIt(),                        // Start collector to intake sample
                 new ParallelAction(// Start the sample transfer
-                        intake.actionWaitForState(IntakeStates.GOT_SAMPLE),
-                        robot.RCAction()
+                        robot.RCAction(),
+                        intake.actionWaitForState(IntakeStates.GOT_SAMPLE)
                 ),
                 sample1ToBasket,                                // Drive to the basket
                 intake.actionWaitForState(IntakeStates.TRANSFER),   // Wait for the transfer to complete
@@ -320,13 +293,6 @@ public class GFORCEAutonomous extends LinearOpMode
                 lift.actionSetState(SAMPLE_HELD),               // Start lift operation
                 lift.actionWaitForState(LOWERING)
                 );
-
-        return  new ParallelAction(
-                arm.actionUpdate(),
-                lift.actionUpdate(),
-                intake.actionUpdate(),
-                autoSequence
-                );
     }
 
     // ############################################################################
@@ -342,39 +308,17 @@ public class GFORCEAutonomous extends LinearOpMode
         arm.closeClaw();
         autoConfig.initialize();
 
+        selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);  // build the current auto sequence
+
         // Wait for driver to press start
         while(opModeInInit()) {
             arm.update();
             lift.update();
 
             autoConfig.runMenuUI(); //Run menu system
-
-            // Note:  The cases below MUST match the order of auto options in the AutoConfi.java file.
             if (autoConfig.autoOptions.autoMode != lastSelectedAuto) {
                 lastSelectedAuto = autoConfig.autoOptions.autoMode;
-                switch (lastSelectedAuto) {
-                    case 0:
-                        selectedAuto = build_Spec_4Sub();
-                        break;
-
-                    case 1:
-                        selectedAuto = build_Samp_1Bas();
-                        break;
-
-                    case 2:
-                        selectedAuto = build_Samp_1Bas_Sub();
-                        break;
-
-                    case 3:
-                        selectedAuto = build_Samp_1Bas_2Net_Sub();
-                        break;
-
-                    case 4:
-                        selectedAuto = build_Spec_1sub_Sample_1bas();
-                        break;
-                }
-
-
+                selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);
             }
 
             telemetry.addLine("\n Touch Play to run Auto");
@@ -404,9 +348,51 @@ public class GFORCEAutonomous extends LinearOpMode
                 telemetry.update();
             }
             sleep(1000);
-
         }
 
         Globals.LAST_POSE = new Pose2d(0,0, robot.getPose().heading.toDouble()-(Math.PI/2)) ;
+    }
+
+    /**
+     * Take the current auto mode and build the matching RadRunner sequence.
+     * Save the last auto value for outside comparison.
+     * @param autoMode
+     * @return
+     */
+    private Action loadSelectedAuto(int autoMode) {
+
+        Action sequentialAction = new SequentialAction();
+        lastSelectedAuto = autoMode;
+
+        // Note:  The cases below MUST match the order of auto options in the AutoConfig.java file.
+        switch (autoMode) {
+            case 0:
+                sequentialAction = build_Spec_4Sub();
+                break;
+
+            case 1:
+                sequentialAction = build_Samp_1Bas();
+                break;
+
+            case 2:
+                sequentialAction = build_Samp_1Bas_Sub();
+                break;
+
+            case 3:
+                sequentialAction = build_Samp_1Bas_2Net_Sub();
+                break;
+
+            case 4:
+                sequentialAction = build_Spec_1sub_Sample_1bas();
+                break;
+        }
+
+        // Run 4 actions simultaniously
+        return  new ParallelAction(
+                arm.actionUpdate(),
+                lift.actionUpdate(),
+                intake.actionUpdate(),
+                sequentialAction
+        );
     }
 }

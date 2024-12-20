@@ -82,8 +82,6 @@ public class GFORCETeleop extends LinearOpMode
         lift.initialize(true);
         arm.initialize(true);
         intake.initialize(true);
-//      octoQuad.initialize(true);
-//      vision.initilaize(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -95,7 +93,6 @@ public class GFORCETeleop extends LinearOpMode
             arm.update();
             intake.update();
             telemetry.update();
-//          vision.getTarget();
         }
 
         // Set GLOBAL flags based on menu choices.
@@ -159,34 +156,6 @@ public class GFORCETeleop extends LinearOpMode
             } else if (gamepad1.dpad_down) {
                 drive = -SAFE_STRAFE_SPEED / 4.0;
             }
-
-            // Implement Auto Specimen Tracking
-            // Center on Specimen and approach quickly at first and then slow down.
-            /*
-            if (gamepad1.right_trigger > 0.25) {
-                ColorTarget target = vision.getTarget();
-                if (target.valid) {
-
-                    fieldCentric = false;  // disable this mode for sample tracking
-                    double xError = target.x;
-                    double yError = octoQuad.getBackRangeInches();
-
-                    if ((Math.abs(yError) > WITHIN_RANGE) || (yError == 0)) {
-                        strafe = xError * STRAFE_GAIN;
-
-                        if ((yError > 5) && (Math.abs(xError) < IN_FRONT_ANGLE)) {
-                            drive = APPROACH_SPEED;
-                        } else if ((yError <= 5) && (Math.abs(xError) < VERY_IN_FRONT_ANGLE)) {
-                            drive = CLICK_ON_SPEED;
-                        }
-                    } else {
-                        drive = 0;
-                        strafe =0;
-                    }
-                }
-
-            }
-            */
 
             // This is where we keep the robot heading locked so it doesn't turn while driving or strafing in a straight line.
             headingDeg = Math.toDegrees(robot.getPose().heading.toDouble());
