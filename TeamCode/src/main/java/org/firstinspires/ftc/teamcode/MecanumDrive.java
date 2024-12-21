@@ -77,7 +77,7 @@ public final class MecanumDrive {
         public double kA = 0.001;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 40;
+        public double maxWheelVel     =  40;  // theoretical MAX = 68 ips
         public double minProfileAccel = -50;
         public double maxProfileAccel =  50;
 
@@ -362,7 +362,7 @@ public final class MecanumDrive {
 
     public Action actionSweep() {
         final double SWEEP_SPEED = 0.1;
-        final double SWEEP_EDGE  = Math.toRadians(5);
+        final double SWEEP_EDGE  = Math.toRadians(4);
 
         return new Action() {
             boolean needInit   = true;

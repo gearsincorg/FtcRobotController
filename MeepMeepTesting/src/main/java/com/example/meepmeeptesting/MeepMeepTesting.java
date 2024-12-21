@@ -43,7 +43,7 @@ public class MeepMeepTesting {
 
         //build trajectories
         Action wallToSubPath = robot.actionBuilder(new Pose2d(15, -63, Math.toRadians(90)))
-                .splineTo(new Vector2d(4, -31), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(4, -31), Math.toRadians(90))
                 .build()
                 ;
 
@@ -194,8 +194,8 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(specimenToSubBot)
-                //.addEntity(specimenBot)
+                //.addEntity(specimenToSubBot)
+                .addEntity(specimenBot)
                 //.addEntity(basketBot)
                 .start();
     }

@@ -33,9 +33,9 @@ import org.firstinspires.ftc.teamcode.subsystems.ProportionalControl;
 @TeleOp(name="GFORCE Teleop", group = "AA")
 public class GFORCETeleop extends LinearOpMode
 {
-    final double SAFE_DRIVE_SPEED   = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_STRAFE_SPEED  = 0.8 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_YAW_SPEED     = 0.5 ; // Adjust this to your robot and your driver.  Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_DRIVE_SPEED   = 0.8 ; // Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_STRAFE_SPEED  = 0.8 ; // Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_YAW_SPEED     = 0.5 ; // Slower usually means more accuracy.  Max value = 1.0
 
     final boolean USE_FIELD_CENTRIC_MODE = true;
 
@@ -44,7 +44,6 @@ public class GFORCETeleop extends LinearOpMode
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
-
 
     // local parameters
     ElapsedTime stopTime   = new ElapsedTime();  // Use for timeouts.
@@ -119,8 +118,8 @@ public class GFORCETeleop extends LinearOpMode
             robot.updatePoseEstimate();
             Globals.LAST_POSE = robot.getPose();
 
-            // Let the driver reset the heading to one of the 4 ordinals.
-            if (gamepad1.touchpad) {
+
+            if (gamepad1.touchpad) {  // Let the driver reset the heading to one of the 4 ordinals.
                 if (gamepad1.triangle) {
                     setHeadingDeg(0);
                 } else if (gamepad1.circle) {
@@ -129,6 +128,16 @@ public class GFORCETeleop extends LinearOpMode
                     setHeadingDeg(180);
                 } else if (gamepad1.square) {
                     setHeadingDeg(90);
+                }
+            } else {
+                if (gamepad1.triangle) { // Let the driver change the setpoint
+                    yawController.reset(0);
+                } else if (gamepad1.circle) {
+                    yawController.reset(-90);
+                } else if (gamepad1.cross) {
+                    yawController.reset(180);
+                } else if (gamepad1.square) {
+                    yawController.reset(45);   /// NON STANDARD... for Basket.
                 }
             }
 
@@ -147,6 +156,11 @@ public class GFORCETeleop extends LinearOpMode
             } else if (gamepad1.dpad_down) {
                 drive = -SAFE_STRAFE_SPEED / 4.0;
             }
+
+            // Save the current values in globals to share with other subsystems.
+            Globals.DRIVE_AXIAL   = drive;
+            Globals.DRIVE_LATERAL = strafe;
+            Globals.DRIVE_YAW     = yaw;
 
             // This is where we keep the robot heading locked so it doesn't turn while driving or strafing in a straight line.
             headingDeg = Math.toDegrees(robot.getPose().heading.toDouble());

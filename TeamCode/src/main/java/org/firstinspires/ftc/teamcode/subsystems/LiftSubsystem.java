@@ -36,6 +36,7 @@ public class LiftSubsystem {
     public final double LOW_BASKET = 31 ;
     private final double HOLD_POWER = 0.2; // 0.075
     private final double HOME_POWER = -0.6;
+
     private final double TILT_SIDE = 0.4;
     private final double YAW_SIDE = 0.7;
     private final double TILT_BUCKET_READY = 0.535;
@@ -238,7 +239,9 @@ public class LiftSubsystem {
             }
 
             case WAIT_BUCKET:{
-                if(stateTime.time() > 0.75){
+                // Wait till bucket returned OR In Auto, OR driver starts moving away
+                if((stateTime.time() > 0.75) || Globals.IS_AUTO ||
+                   ((Math.abs(Globals.DRIVE_AXIAL) + Math.abs(Globals.DRIVE_LATERAL)) > 0.25)){
                     setSetpointInches(MIN_HEIGHT);
                     setState(LOWERING);
                 }

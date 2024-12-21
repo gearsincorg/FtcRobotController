@@ -40,8 +40,9 @@ public class IntakeSubsystem {
     private final double WRIST_DOWN = 0.9;
     private final double SLIDE_TRANSIT_TIME = 1.5;
     private final double SLIDE_TRANSFER_TIME = 1.0;
-    private final double SAMP_TIME = 0.12;
-    private final double SAMP_NOT_COLLECTED_IN_TIME = 2;
+    private final double SAMP_CHECKING_TIME = 0.12;
+
+    private final double SAMP_NOT_COLLECTED_IN_TIME = 1;
     private final double SWEEP_TIMEOUT = 2;
 
 
@@ -225,17 +226,19 @@ public class IntakeSubsystem {
                     Globals.RC_END    = true;
                     setState(IntakeStates.CHECKING_SAMPLE);
                 } else if (stateTime.time() > SWEEP_TIMEOUT) {  // terminate sweep and move on.
+                    collectorOff();
+                    wristOut();
                     Globals.RC_SWEEP  = false;
                     Globals.RC_END    = true;
                     Globals.DID_NOT_SWEEP_SAMPLE = true; // Set flag to bypass dumping
                     setState(IntakeStates.GOT_SAMPLE);
                 } else {
-                    Globals.RC_SWEEP  = true; // Sweep back and forward.
+                    Globals.RC_SWEEP  = true; // Tell Drive Subsystem to Sweep back and forward.
                 }
                 break;
 
             case CHECKING_SAMPLE:
-                if (stateTime.time() > SAMP_TIME) {
+                if (stateTime.time() > SAMP_CHECKING_TIME) {
                     if (gotSample){
                         wristOut();
                         collectorOff();
