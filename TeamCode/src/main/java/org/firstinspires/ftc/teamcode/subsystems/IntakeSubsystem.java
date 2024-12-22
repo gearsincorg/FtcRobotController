@@ -33,9 +33,11 @@ public class IntakeSubsystem {
 
     // Constants
     private final double INTAKE = 1;
+    private final double TRANSFER = 0.8;
     private final double EJECT = -1;
+
     private final double OFF = 0;
-    private final double WRIST_IN = 0.42;
+    private final double WRIST_IN = 0.43;
     private final double WRIST_OUT = 0.68;
     private final double WRIST_DOWN = 0.9;
     private final double SLIDE_TRANSIT_TIME = 1.0;
@@ -219,6 +221,8 @@ public class IntakeSubsystem {
                     collectorOff();
                     setState(IntakeStates.HOME);
                 } else if (gotSample) {
+                    Globals.RC_SWEEP  = false;
+                    Globals.RC_END    = true;
                     setState(IntakeStates.CHECKING_SAMPLE);
                 } else if (Globals.IS_AUTO && (stateTime.time() > SAMP_NOT_COLLECTED_IN_TIME)){
                     setState(IntakeStates.SWEEPING);
@@ -227,13 +231,11 @@ public class IntakeSubsystem {
 
             case SWEEPING:  // only used in auto
                 if (gotSample) {
-                    Globals.RC_SWEEP  = false;
-                    Globals.RC_END    = true;
+                    Globals.RC_END    = true; // disable the sweep action
                     setState(IntakeStates.CHECKING_SAMPLE);
                 } else if (stateTime.time() > SWEEP_TIMEOUT) {  // terminate sweep and move on.
                     collectorOff();
                     wristOut();
-                    Globals.RC_SWEEP  = false;
                     Globals.RC_END    = true;
                     Globals.DID_NOT_SWEEP_SAMPLE = true; // Set flag to bypass dumping
                     setState(IntakeStates.GOT_SAMPLE);
@@ -255,6 +257,7 @@ public class IntakeSubsystem {
                 break;
 
             case GOT_SAMPLE:
+                Globals.RC_END    = true;  // disable the sweep action (again :)
                 if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoIntake) {
                     wristIn();
                     autoIntake = false;
@@ -271,8 +274,8 @@ public class IntakeSubsystem {
                 break;
 
             case TILT_WRIST_IN:
-                if ((stateTime.time() > 0.5) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
-                    collectorIntake();
+                if ((stateTime.time() > 0.75) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
+                    collectorTransfer();
                     setState(IntakeStates.TRANSFER);
                 }
                 break;
@@ -378,12 +381,15 @@ public class IntakeSubsystem {
     }
 
     public void collectorIntake(){
-        setCollector(INTAKE);
         if (wristOut){
             setWristPosition(WRIST_DOWN);
         }
+        setCollector(INTAKE);
     }
 
+    public void collectorTransfer(){
+        setCollector(TRANSFER);
+    }
     public void collectorEject(){
         setCollector(EJECT);
     }

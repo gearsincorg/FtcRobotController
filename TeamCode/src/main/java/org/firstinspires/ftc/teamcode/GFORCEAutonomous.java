@@ -265,6 +265,11 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineToLinearHeading(new Pose2d(-56, -54, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
 
+        Action basketToSub = robot.actionBuilder(new Pose2d(-56, -54, Math.toRadians(45)))
+                .splineTo(new Vector2d(-46, -44), Math.toRadians(45))
+                .splineTo(new Vector2d(-28, -10), Math.toRadians(0))
+                .splineTo(new Vector2d(-23, -10), Math.toRadians(0), new TranslationalVelConstraint(5.0))
+                .build();
 
         return new SequentialAction(
                 arm.actionSetState(ArmStates.GRABBING),
@@ -302,8 +307,11 @@ public class GFORCEAutonomous extends LinearOpMode
                 sample3ToBasket,
                 intake.actionWaitForState(IntakeStates.HOME),   // Wait for the transfer to complete
                 lift.actionSetState(SAMPLE_HELD),               // Start lift operation
-                lift.actionWaitForHomeOrState(LOWERING)
-                );
+                lift.actionWaitForHomeOrState(LOWERING),
+
+                arm.actionSetState(ArmStates.GRABBED),
+                basketToSub
+        );
     }
 
     // ############################################################################
