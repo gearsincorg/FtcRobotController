@@ -63,9 +63,8 @@ public class LiftSubsystem {
     private Servo holdServo;
 
     // Private Members
-    private double setpointInches = 0;
-    private double currentPosition = 0;
-    private int lastPosition = 0;
+    private double  currentPosition = 0;
+    private int     lastPosition = 0;
     private boolean goingHome = false;
     private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
 
@@ -123,7 +122,6 @@ public class LiftSubsystem {
 
     public void setSetpointInches(double setpointInches) {
         MathUtils.clamp(setpointInches, MIN_HEIGHT, MAX_HEIGHT);
-        this.setpointInches = setpointInches;
         positionControl.reset(setpointInches);
     }
 

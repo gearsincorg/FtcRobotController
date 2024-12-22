@@ -108,7 +108,8 @@ public class GFORCEAutonomous extends LinearOpMode
 
         return new SequentialAction(
                 // Score Specimen 1 then sweep 2 more
-                arm.actionSetState(ArmStates.GRABBED),
+                arm.actionSetState(ArmStates.GRABBING),
+                arm.actionWaitForState(ArmStates.GRABBED),
                 wallToSubPath,
                 arm.actionClipIt(),
                 arm.actionWaitForState(ArmStates.LOWERING),
@@ -234,6 +235,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -33, Math.toRadians(90)))
+                .afterTime(0.5, intake.actionLowerIt())
                 .setTangent(Math.toRadians(-90))
                 .splineToConstantHeading(new Vector2d(-49, -40), Math.toRadians(90))
                 .build();
@@ -265,10 +267,12 @@ public class GFORCEAutonomous extends LinearOpMode
 
 
         return new SequentialAction(
-                arm.actionSetState(ArmStates.GRABBED),          // Move the Arm to scoring Position
+                arm.actionSetState(ArmStates.GRABBING),
+                arm.actionWaitForState(ArmStates.GRABBED),
                 wallToSub ,                                     // Drive to the Sub
                 arm.actionClipIt(),                             // Start the clipping action
                 arm.actionWaitForState(ArmStates.LOWERING),     // Wait for the the clip to be done
+
                 subToSample1,                                   // Drive to the 1st Sample
                 intake.actionIntakeIt(),                        // Start collector to intake sample. sweep if need be
                 new ParallelAction(// Start the sample transfer

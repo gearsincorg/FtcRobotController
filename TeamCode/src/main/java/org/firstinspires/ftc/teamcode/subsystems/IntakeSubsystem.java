@@ -43,8 +43,7 @@ public class IntakeSubsystem {
     private final double SAMP_CHECKING_TIME = 0.12;
 
     private final double SAMP_NOT_COLLECTED_IN_TIME = 1;
-    private final double SWEEP_TIMEOUT = 2;
-
+    private final double SWEEP_TIMEOUT = 1.5;
 
     private final int    SLIDE_HOME = 0;
     private final int    ALMOST_HOME = 20;
@@ -85,7 +84,8 @@ public class IntakeSubsystem {
     private boolean goingHome = false;
 
     // flags used in auto
-    private boolean timeToIntake = false;
+    private boolean autoIntake = false;
+    private boolean autoLower  = false;
 
     private Button wristInOut = new Button();
     private Button slideInOut = new Button();
@@ -177,10 +177,11 @@ public class IntakeSubsystem {
     public void runStateMachine() {
         switch (currentState) {
             case INIT: {
-                if (wristInOut.pressed(myOpMode.gamepad2.left_bumper)) {
+                if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoLower) {
+                    autoLower = false;
                     wristOut();
                     setState(IntakeStates.HOME);
-                } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || timeToIntake) {
+                } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoIntake) {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
@@ -193,14 +194,18 @@ public class IntakeSubsystem {
             }
 
             case HOME:
-                if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || timeToIntake) {
+                if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoIntake) {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
                 } else if (wristInOut.pressed(myOpMode.gamepad2.left_bumper)) {
                     wristIn();
-                    // slideIn() // consider bringing both items in if clear of low rung.
-                    setState(IntakeStates.TILT_WRIST);
+                    if (gotSample) {
+                        setState(IntakeStates.TILT_WRIST);
+                    } else {
+                        slideIn();
+                        setState(IntakeStates.INIT);
+                    }
                 }else if (myOpMode.gamepad2.dpad_up) {
                     collectorEject();
                 } else {
@@ -250,9 +255,9 @@ public class IntakeSubsystem {
                 break;
 
             case GOT_SAMPLE:
-                if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || timeToIntake) {
+                if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoIntake) {
                     wristIn();
-                    timeToIntake = false;
+                    autoIntake = false;
                     setState(IntakeStates.TILT_WRIST);
                 } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down)) {
                     wristDown();
@@ -437,19 +442,19 @@ public class IntakeSubsystem {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                timeToIntake = true;
+                autoIntake = true;
                 return false;
             }
         };
     }
 
-    public Action actionIntakeJammed(){
+    public Action actionLowerIt(){
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
+                autoLower = true;
                 return false;
             }
         };
     }
-
 }

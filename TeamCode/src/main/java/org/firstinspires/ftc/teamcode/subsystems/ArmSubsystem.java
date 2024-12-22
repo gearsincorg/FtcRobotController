@@ -54,11 +54,12 @@ public class ArmSubsystem {
     private int armSetPoint = 0;
     private int currentPosition = 0;
     private int lastPosition = 0;
-    private boolean timeToClip = false;
     private boolean goingHome = false;
-
     private Button grabScore = new Button();
     private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
+
+    // Members used byt AUTO mode
+    private boolean autoClip = false;
 
     public ArmSubsystem(LinearOpMode opMode){
         myOpMode = opMode;
@@ -140,10 +141,10 @@ public class ArmSubsystem {
             }
 
             case READY_CLIP:{
-                if(grabScore.pressed(myOpMode.gamepad1.right_bumper) || timeToClip){
+                if(grabScore.pressed(myOpMode.gamepad1.right_bumper) || autoClip){
                     setTargetPosition(CLIPPED_POSITON);
                     // claw.setPosition(LOOSE_GRIP);
-                    timeToClip = false;
+                    autoClip = false;
                     setState(CLIPPING);
                 } else if (myOpMode.gamepad1.right_trigger > 0.25){
                     setTargetPosition(HOME_POSITION);
@@ -253,7 +254,7 @@ public class ArmSubsystem {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                timeToClip = true;
+                autoClip = true;
                 return false;
             }
         };
