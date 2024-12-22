@@ -51,7 +51,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         //build trajectories
         Action wallToSubPath = robot.actionBuilder(new Pose2d(START_X_SPEC, START_Y, Math.toRadians(90)))
-                .splineToConstantHeading(new Vector2d(4, -31), Math.toRadians(90))
+                .splineTo(new Vector2d(4, -31), Math.toRadians(90))
                 .build();
 
         Action subToAllSamplesPath = robot.actionBuilder(new Pose2d(4, -31, Math.toRadians(90)))
@@ -316,7 +316,7 @@ public class GFORCEAutonomous extends LinearOpMode
         arm.initialize(false);
         lift.initialize(false);
         intake.initialize(true);
-        arm.closeClaw();
+        // arm.closeClaw();
         autoConfig.initialize();
 
         selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);  // build the current auto sequence

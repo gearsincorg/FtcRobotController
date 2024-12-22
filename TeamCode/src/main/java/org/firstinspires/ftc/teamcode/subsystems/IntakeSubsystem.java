@@ -38,9 +38,9 @@ public class IntakeSubsystem {
     private final double WRIST_IN = 0.42;
     private final double WRIST_OUT = 0.68;
     private final double WRIST_DOWN = 0.9;
-    private final double SLIDE_TRANSIT_TIME = 1.5;
-    private final double SLIDE_TRANSFER_TIME = 1.0;
-    private final double SAMP_CHECKING_TIME = 0.12;
+    private final double SLIDE_TRANSIT_TIME = 1.0;
+    private final double SLIDE_TRANSFER_TIME = 0.8;
+    private final double SAMP_CHECKING_TIME = 0.11;
 
     private final double SAMP_NOT_COLLECTED_IN_TIME = 1;
     private final double SWEEP_TIMEOUT = 1.5;
@@ -201,7 +201,7 @@ public class IntakeSubsystem {
                 } else if (wristInOut.pressed(myOpMode.gamepad2.left_bumper)) {
                     wristIn();
                     if (gotSample) {
-                        setState(IntakeStates.TILT_WRIST);
+                        setState(IntakeStates.TILT_WRIST_IN);
                     } else {
                         slideIn();
                         setState(IntakeStates.INIT);
@@ -258,7 +258,7 @@ public class IntakeSubsystem {
                 if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoIntake) {
                     wristIn();
                     autoIntake = false;
-                    setState(IntakeStates.TILT_WRIST);
+                    setState(IntakeStates.TILT_WRIST_IN);
                 } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down)) {
                     wristDown();
                     collectorIntake();
@@ -270,8 +270,8 @@ public class IntakeSubsystem {
                 }
                 break;
 
-            case TILT_WRIST:
-                if ((stateTime.time() > 1.0) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
+            case TILT_WRIST_IN:
+                if ((stateTime.time() > 0.5) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
                     collectorIntake();
                     setState(IntakeStates.TRANSFER);
                 }

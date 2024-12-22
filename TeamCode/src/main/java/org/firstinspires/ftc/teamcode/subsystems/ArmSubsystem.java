@@ -31,9 +31,9 @@ public class ArmSubsystem {
     private ElapsedTime stateTime       = new ElapsedTime();
 
     // Constants
-    private final double CLAW_OPEN = 0.3;
+    private final double CLAW_OPEN = 0.35;  // was 0.3
+    private final double CLAW_LOOSE_GRIP = 0.5;
     private final double CLAW_CLOSED = 0.55;
-    private final double LOOSE_GRIP = 0.5;
     private final double HOME_POWER = -0.2;
     private final int    HOME_MIN_MOVEMENT = 10;
 
@@ -44,7 +44,7 @@ public class ArmSubsystem {
     private final double DEADBAND = 20.0;
 
     private final int CLIPPING_POSITION = 1000;
-    private final int CLIPPED_POSITON = 700;
+    private final int CLIPPED_POSITON = 100;  //  was 600
     private final int HOME_POSITION = 0;
 
     private DcMotor arm;      // motor used to control the arm
@@ -120,7 +120,7 @@ public class ArmSubsystem {
 
             case GRABBING:{
                 claw.setPosition(CLAW_CLOSED);
-                if (stateTime.time() > 0.3){
+                if (stateTime.time() > 0.4){
                     setState(GRABBED);
                 }
                 break;
@@ -143,7 +143,6 @@ public class ArmSubsystem {
             case READY_CLIP:{
                 if(grabScore.pressed(myOpMode.gamepad1.right_bumper) || autoClip){
                     setTargetPosition(CLIPPED_POSITON);
-                    // claw.setPosition(LOOSE_GRIP);
                     autoClip = false;
                     setState(CLIPPING);
                 } else if (myOpMode.gamepad1.right_trigger > 0.25){
@@ -162,7 +161,7 @@ public class ArmSubsystem {
             }
 
             case CLIPPING:{
-                if(stateTime.time() > 0.4){
+                if(stateTime.time() > 0.3){
                     setTargetPosition(HOME_POSITION);
                     claw.setPosition(CLAW_OPEN);
                     setState(LOWERING);
@@ -171,7 +170,13 @@ public class ArmSubsystem {
             }
 
             case LOWERING:{
+                //if(stateTime.time() > 0.2){
+                //    setTargetPosition(HOME_POSITION);
+                //    claw.setPosition(CLAW_OPEN);
+                //    setState(LOWERING);
+                //}
                 if(positionControl.inPosition()){
+                    claw.setPosition(CLAW_OPEN);  // redundant
                     setState(READY);
                 }
             }

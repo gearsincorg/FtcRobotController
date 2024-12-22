@@ -7,6 +7,6 @@ public enum IntakeStates {
     SWEEPING,
     CHECKING_SAMPLE,
     GOT_SAMPLE,
-    TILT_WRIST,
+    TILT_WRIST_IN,
     TRANSFER
 }
