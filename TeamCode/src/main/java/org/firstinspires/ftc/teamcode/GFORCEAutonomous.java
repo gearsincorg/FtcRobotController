@@ -139,26 +139,98 @@ public class GFORCEAutonomous extends LinearOpMode
                 sub4ToObservationPath
                 );
     }
-
     //================================================================================================================
-    private Action build_Samp_1Bas() {
-        robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
-        Action wallToBasket = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
-                .setTangent(Math.toRadians(135))
-                .splineToLinearHeading(new Pose2d(-53, -57, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
+    private Action build_Spec_5Sub() {
+        robot.setPose(new Pose2d(START_X_SPEC, START_Y, Math.toRadians(90)));
+
+        Action wallToSubPath = robot.actionBuilder(new Pose2d(START_X_SPEC, START_Y, Math.toRadians(90)))
+                .splineToConstantHeading(new Vector2d(4, -31), Math.toRadians(90))
                 .build();
 
-        Action basketToSamples = robot.actionBuilder(new Pose2d(-53, -57, Math.toRadians(45)))
-                .turnTo(Math.toRadians(90))
+        Action subToAllSamplesPath = robot.actionBuilder(new Pose2d(4, -31, Math.toRadians(90)))
+                .setTangent(Math.toRadians(-60))
+                .splineToConstantHeading(new Vector2d(36, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(40, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -52), Math.toRadians(-90))
+                .setTangent(Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(48, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(53, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(53, -52), Math.toRadians(-90))
+                .setTangent(Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(53, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(58, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(62, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(62, -52), Math.toRadians(-90))
                 .build();
+
+        Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(62, -52, Math.toRadians(90)))
+                .setTangent(Math.toRadians(180))
+                .splineToConstantHeading(new Vector2d(53, -52), Math.toRadians(180))
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90), new TranslationalVelConstraint(20.0))
+                .build();
+
+        Action specimenToSubPath = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(140))
+                .splineToLinearHeading(new Pose2d(0, -36, Math.toRadians(140)), Math.toRadians(135))
+                .build();
+
+        Action subToSpecimenPath = robot.actionBuilder(new Pose2d(0, -36, Math.toRadians(140)))
+                .setTangent(Math.toRadians(-40))
+                .splineToLinearHeading(new Pose2d(41, -63, Math.toRadians(90)), Math.toRadians(-45))
+                .build();
+
+        Action subToInspection = robot.actionBuilder(new Pose2d(0, -36, Math.toRadians(140)))
+                .setTangent(Math.toRadians(-40))
+                .splineToLinearHeading(new Pose2d(50, -53, Math.toRadians(90)), 0.0)
+                .build();
+
 
         return new SequentialAction(
-                arm.actionClaw(true),
-                wallToBasket ,
-                lift.actionSetState(SAMPLE_HELD),
-                lift.actionWaitForHomeOrState(LOWERING),
-                basketToSamples
+                // Score Specimen 1 then sweep 3 more, score 4
+                arm.actionSetState(ArmStates.GRABBING),
+                arm.actionWaitForState(ArmStates.GRABBED),
+                wallToSubPath,
+                arm.actionClipIt(),
+                arm.actionWaitForState(ArmStates.LOWERING),
+                subToAllSamplesPath,
+
+                // Pickup and score Specimen 2
+                samplesToSpecimenPath,
+                arm.actionSetState(ArmStates.GRABBING),
+                arm.actionWaitForState(ArmStates.GRABBED),
+                specimenToSubPath,
+                arm.actionClipIt(),
+                arm.actionWaitForState(ArmStates.LOWERING),
+
+                // Pickup and score Specimen 3
+                subToSpecimenPath,
+                arm.actionSetState(ArmStates.GRABBING),
+                arm.actionWaitForState(ArmStates.GRABBED),
+                specimenToSubPath,
+                arm.actionClipIt(),
+                arm.actionWaitForState(ArmStates.LOWERING),
+
+                // Pickup and score Specimen 4
+                subToSpecimenPath,
+                arm.actionSetState(ArmStates.GRABBING),
+                arm.actionWaitForState(ArmStates.GRABBED),
+                specimenToSubPath,
+                arm.actionClipIt(),
+                arm.actionWaitForState(ArmStates.LOWERING),
+
+                // Pickup and score Specimen 5
+                subToSpecimenPath,
+                arm.actionSetState(ArmStates.GRABBING),
+                arm.actionWaitForState(ArmStates.GRABBED),
+                specimenToSubPath,
+                arm.actionClipIt(),
+                arm.actionWaitForState(ArmStates.LOWERING),
+
+                // Go Home
+                subToInspection
         );
     }
 
@@ -390,7 +462,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 break;
 
             case 1:
-                sequentialAction = build_Samp_1Bas();
+                sequentialAction = build_Spec_5Sub();
                 break;
 
             case 2:

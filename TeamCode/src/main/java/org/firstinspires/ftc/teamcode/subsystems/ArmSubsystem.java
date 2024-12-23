@@ -170,11 +170,6 @@ public class ArmSubsystem {
             }
 
             case LOWERING:{
-                //if(stateTime.time() > 0.2){
-                //    setTargetPosition(HOME_POSITION);
-                //    claw.setPosition(CLAW_OPEN);
-                //    setState(LOWERING);
-                //}
                 if(positionControl.inPosition()){
                     claw.setPosition(CLAW_OPEN);  // redundant
                     setState(READY);

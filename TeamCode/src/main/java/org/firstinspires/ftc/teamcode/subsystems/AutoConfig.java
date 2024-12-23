@@ -23,11 +23,11 @@ public class AutoConfig
     OpMode myOpMode;
 
     // these names MUST match the order found in Autonomous OpMode
-    public String[] autoArray = new String[] {"SPEC 4-Sub",             // 0
-                                              "SAMP 1-Basket",            // 1
-                                              "SAMP 1-Basket Sub",        // 2
+    public String[] autoArray = new String[] {"SPEC 4-Sub",                // 0
+                                              "SPEC 5-Sub",                // 1
+                                              "SAMP 1-Basket Sub",         // 2
                                               "SAMP 1-Basket 2-Net Sub" ,  // 3
-                                              "SPEC 1-Sub SAMP 1-Basket"}; // 4
+                                              "SPEC 1-Sub SAMP 3-Basket"}; // 4
     int autoModes = autoArray.length;
     public static int MENU_ITEMS = 3;
 
