@@ -43,6 +43,7 @@ public class MeepMeepTesting {
 
         //build trajectories
         Action wallToSubPath = robot.actionBuilder(new Pose2d(15, -63, Math.toRadians(90)))
+                .setTangent(Math.toRadians(135))
                 .splineToConstantHeading(new Vector2d(4, -31), Math.toRadians(90))
                 .waitSeconds(0.5)
                 .build();
@@ -74,12 +75,12 @@ public class MeepMeepTesting {
                 ;
 
         Action specimenToSubPath = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
-                .setTangent(Math.toRadians(140))
-                .splineToLinearHeading(new Pose2d(0, -36,  Math.toRadians(140)), Math.toRadians(135))
+                // .setTangent(Math.toRadians(140))
+                .splineTo(new Vector2d(4, -34), Math.toRadians(145))
                 .waitSeconds(0.4)
                 .build();
 
-        Action subToSpecimenPath = robot.actionBuilder(new Pose2d(0, -36, Math.toRadians(140)))
+        Action subToSpecimenPath = robot.actionBuilder(new Pose2d(4, -34, Math.toRadians(145)))
                 .setTangent(Math.toRadians(-40))
                 .splineToLinearHeading(new Pose2d(41, -63, Math.toRadians(90)), Math.toRadians(-45))
                 .waitSeconds(0.4)

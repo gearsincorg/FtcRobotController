@@ -37,7 +37,7 @@ public class ArmSubsystem {
     private final double HOME_POWER = -0.2;
     private final int    HOME_MIN_MOVEMENT = 10;
 
-    private final double GAIN = 0.0025;
+    private final double GAIN = 0.005; // was 0.0025
     private final double ACCEL_LIMIT = 10.0;
     private final double OUTPUT_LIMIT = 1.0;
     private final double TOLERANCE = 30.0;

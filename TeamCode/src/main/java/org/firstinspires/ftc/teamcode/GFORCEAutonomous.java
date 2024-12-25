@@ -145,6 +145,7 @@ public class GFORCEAutonomous extends LinearOpMode
         robot.setPose(new Pose2d(START_X_SPEC, START_Y, Math.toRadians(90)));
 
         Action wallToSubPath = robot.actionBuilder(new Pose2d(START_X_SPEC, START_Y, Math.toRadians(90)))
+                .setTangent(Math.toRadians(135))
                 .splineToConstantHeading(new Vector2d(4, -31), Math.toRadians(90))
                 .build();
 
@@ -172,17 +173,51 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90), new TranslationalVelConstraint(20.0))
                 .build();
 
-        Action specimenToSubPath = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
-                .setTangent(Math.toRadians(140))
-                .splineToLinearHeading(new Pose2d(0, -36, Math.toRadians(140)), Math.toRadians(135))
+        Action specimenToSubPath2 = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                //.setTangent(Math.toRadians(140))
+                //.splineToLinearHeading(new Pose2d(0, -34, Math.toRadians(140)), Math.toRadians(135))
+                .splineTo(new Vector2d(4, -34), Math.toRadians(145))
+
                 .build();
 
-        Action subToSpecimenPath = robot.actionBuilder(new Pose2d(0, -36, Math.toRadians(140)))
+        Action subToSpecimenPath2 = robot.actionBuilder(new Pose2d(4, -34, Math.toRadians(140)))
+                .setTangent(Math.toRadians(-40))
+                .splineToLinearHeading(new Pose2d(41, -63, Math.toRadians(90)), Math.toRadians(-45))
+
+                .build();
+
+        Action specimenToSubPath3 = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                //.setTangent(Math.toRadians(140))
+                //.splineToLinearHeading(new Pose2d(0, -34, Math.toRadians(140)), Math.toRadians(135))
+                .splineTo(new Vector2d(3, -34), Math.toRadians(145))
+
+                .build();
+
+        Action subToSpecimenPath3 = robot.actionBuilder(new Pose2d(3, -34, Math.toRadians(140)))
                 .setTangent(Math.toRadians(-40))
                 .splineToLinearHeading(new Pose2d(41, -63, Math.toRadians(90)), Math.toRadians(-45))
                 .build();
 
-        Action subToInspection = robot.actionBuilder(new Pose2d(0, -36, Math.toRadians(140)))
+        Action specimenToSubPath4 = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                //.setTangent(Math.toRadians(140))
+                //.splineToLinearHeading(new Pose2d(0, -34, Math.toRadians(140)), Math.toRadians(135))
+                .splineTo(new Vector2d(2, -34), Math.toRadians(145))
+
+                .build();
+
+        Action subToSpecimenPath4 = robot.actionBuilder(new Pose2d(2, -34, Math.toRadians(140)))
+                .setTangent(Math.toRadians(-40))
+                .splineToLinearHeading(new Pose2d(41, -63, Math.toRadians(90)), Math.toRadians(-45))
+                .build();
+
+        Action specimenToSubPath5 = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
+                //.setTangent(Math.toRadians(140))
+                //.splineToLinearHeading(new Pose2d(0, -34, Math.toRadians(140)), Math.toRadians(135))
+                .splineTo(new Vector2d(1, -34), Math.toRadians(145))
+
+                .build();
+
+        Action subToInspection = robot.actionBuilder(new Pose2d(1, -34, Math.toRadians(140)))
                 .setTangent(Math.toRadians(-40))
                 .splineToLinearHeading(new Pose2d(50, -53, Math.toRadians(90)), 0.0)
                 .build();
@@ -201,31 +236,31 @@ public class GFORCEAutonomous extends LinearOpMode
                 samplesToSpecimenPath,
                 arm.actionSetState(ArmStates.GRABBING),
                 arm.actionWaitForState(ArmStates.GRABBED),
-                specimenToSubPath,
+                specimenToSubPath2,
                 arm.actionClipIt(),
                 arm.actionWaitForState(ArmStates.LOWERING),
 
                 // Pickup and score Specimen 3
-                subToSpecimenPath,
+                subToSpecimenPath2,
                 arm.actionSetState(ArmStates.GRABBING),
                 arm.actionWaitForState(ArmStates.GRABBED),
-                specimenToSubPath,
+                specimenToSubPath3,
                 arm.actionClipIt(),
                 arm.actionWaitForState(ArmStates.LOWERING),
 
                 // Pickup and score Specimen 4
-                subToSpecimenPath,
+                subToSpecimenPath3,
                 arm.actionSetState(ArmStates.GRABBING),
                 arm.actionWaitForState(ArmStates.GRABBED),
-                specimenToSubPath,
+                specimenToSubPath4,
                 arm.actionClipIt(),
                 arm.actionWaitForState(ArmStates.LOWERING),
 
                 // Pickup and score Specimen 5
-                subToSpecimenPath,
+                subToSpecimenPath4,
                 arm.actionSetState(ArmStates.GRABBING),
                 arm.actionWaitForState(ArmStates.GRABBED),
-                specimenToSubPath,
+                specimenToSubPath5,
                 arm.actionClipIt(),
                 arm.actionWaitForState(ArmStates.LOWERING),
 

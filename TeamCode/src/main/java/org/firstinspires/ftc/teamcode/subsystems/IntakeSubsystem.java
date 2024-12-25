@@ -222,7 +222,6 @@ public class IntakeSubsystem {
                     setState(IntakeStates.HOME);
                 } else if (gotSample) {
                     Globals.RC_SWEEP  = false;
-                    Globals.RC_END    = true;
                     setState(IntakeStates.CHECKING_SAMPLE);
                 } else if (Globals.IS_AUTO && (stateTime.time() > SAMP_NOT_COLLECTED_IN_TIME)){
                     Globals.RC_SWEEP  = true; // Tell Drive Subsystem to Sweep back and forward.
@@ -232,12 +231,11 @@ public class IntakeSubsystem {
 
             case SWEEPING:  // only used in auto
                 if (gotSample) {
-                    Globals.RC_END    = true; // disable the sweep action
+                    Globals.RC_SWEEP   = false; // disable the sweep action
                     setState(IntakeStates.CHECKING_SAMPLE);
                 } else if (stateTime.time() > SWEEP_TIMEOUT) {  // terminate sweep and move on.
                     collectorOff();
                     wristOut();
-                    Globals.RC_END    = true;
                     Globals.DID_NOT_SWEEP_SAMPLE = true; // Set flag to bypass dumping
                     setState(IntakeStates.GOT_SAMPLE);
                 } else {
@@ -258,7 +256,7 @@ public class IntakeSubsystem {
                 break;
 
             case GOT_SAMPLE:
-                Globals.RC_END    = true;  // disable the sweep action (again :)
+                Globals.RC_END    = true;  // disable the sweep action
                 if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoIntake) {
                     wristIn();
                     autoIntake = false;

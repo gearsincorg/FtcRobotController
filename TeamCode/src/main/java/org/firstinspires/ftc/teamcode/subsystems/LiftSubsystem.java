@@ -16,6 +16,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -57,7 +58,7 @@ public class LiftSubsystem {
     private final double OFFSET = 8.25;
     private final int MINIMUM_MOVEMENT = 10;
 
-    private DcMotor lift;      //motor used to control the lift
+    private DcMotorEx lift;      //motor used to control the lift
     private Servo pitchServo;
     private Servo yawServo;
     private Servo holdServo;
@@ -80,7 +81,7 @@ public class LiftSubsystem {
      * @param showTelemetry  Set to true if you want telemetry to be displayed by the robot sensor/drive functions.
      */
     public void initialize(boolean showTelemetry){
-        lift = myOpMode.hardwareMap.get(DcMotor.class, "lift");
+        lift = myOpMode.hardwareMap.get(DcMotorEx.class, "lift");
         lift.setDirection(DcMotorSimple.Direction.REVERSE);
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); // Reset Encoders to zero
         lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -108,6 +109,7 @@ public class LiftSubsystem {
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("LIFT Pos SP Pwr", "%s %.1f %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            myOpMode.telemetry.addData("Lift VEL", "%.0f", lift.getVelocity());
             //  myOpMode.telemetry.addData("Lift Pos", currentPosition);
             //  myOpMode.telemetry.addData("Lift Pwr", outputPower * 1000);
             //  myOpMode.telemetry.addData("Lift SP",  positionControl.getSetPoint());

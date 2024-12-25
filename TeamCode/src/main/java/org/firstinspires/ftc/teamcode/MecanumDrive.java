@@ -77,13 +77,13 @@ public final class MecanumDrive {
         public double kA = 0.001;
 
         // path profile parameters (in inches)
-        public double maxWheelVel     =  40;  // theoretical MAX = 68 ips
+        public double maxWheelVel     =  50;  // theoretical MAX = 68 ips
         public double minProfileAccel = -50;
-        public double maxProfileAccel =  50;
+        public double maxProfileAccel =  150;
 
         // turn profile parameters (in radians)
         public double maxAngVel = Math.PI; // shared with path
-        public double maxAngAccel = Math.PI;
+        public double maxAngAccel = 2 * Math.PI;
 
         // path controller gains (in Inch units)
         public double axialGain   =  3;
@@ -383,7 +383,8 @@ public final class MecanumDrive {
                     Globals.RC_SWEEP  = false;
                     Globals.RC_END    = false;
                     myOpMode.telemetry.addLine("Sweep stop");
-                    return false;
+                    myOpMode.telemetry.update();  // force it
+                    return false;  //  false;
                 } else {
                     if (Globals.RC_SWEEP) {
                         // sweep between the two edge angles
