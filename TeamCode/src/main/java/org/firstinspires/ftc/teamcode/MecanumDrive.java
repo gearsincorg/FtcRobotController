@@ -398,6 +398,7 @@ public final class MecanumDrive {
                         myOpMode.telemetry.addData("Sweeping", sweepSpeed);
                     } else {
                         setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+                        myOpMode.telemetry.addLine("No Sweeping");
                     }
                     return true;
                 }

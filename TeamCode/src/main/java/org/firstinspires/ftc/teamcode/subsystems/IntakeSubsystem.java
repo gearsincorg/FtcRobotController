@@ -225,6 +225,7 @@ public class IntakeSubsystem {
                     Globals.RC_END    = true;
                     setState(IntakeStates.CHECKING_SAMPLE);
                 } else if (Globals.IS_AUTO && (stateTime.time() > SAMP_NOT_COLLECTED_IN_TIME)){
+                    Globals.RC_SWEEP  = true; // Tell Drive Subsystem to Sweep back and forward.
                     setState(IntakeStates.SWEEPING);
                 }
                 break;
@@ -240,7 +241,7 @@ public class IntakeSubsystem {
                     Globals.DID_NOT_SWEEP_SAMPLE = true; // Set flag to bypass dumping
                     setState(IntakeStates.GOT_SAMPLE);
                 } else {
-                    Globals.RC_SWEEP  = true; // Tell Drive Subsystem to Sweep back and forward.
+                    Globals.RC_SWEEP  = true; // Keep Sweeping back and forward.
                 }
                 break;
 
