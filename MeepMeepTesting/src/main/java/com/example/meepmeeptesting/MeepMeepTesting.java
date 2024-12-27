@@ -3,6 +3,7 @@ package com.example.meepmeeptesting;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -23,7 +24,7 @@ public class MeepMeepTesting {
 
         RoadRunnerBotEntity specimenBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
-                .setConstraints(60, 70, Math.toRadians(180), Math.toRadians(360), 15)
+                .setConstraints(50, 150, Math.toRadians(180), Math.toRadians(360), 15)
                 .build();
 
         RoadRunnerBotEntity specimenToSubBot = new DefaultBotBuilder(meepMeep)
@@ -43,52 +44,54 @@ public class MeepMeepTesting {
 
         //build trajectories
         Action wallToSubPath = robot.actionBuilder(new Pose2d(15, -63, Math.toRadians(90)))
-                .setTangent(Math.toRadians(135))
-                .splineToConstantHeading(new Vector2d(4, -31), Math.toRadians(90))
+                .splineTo(new Vector2d(4, -32), Math.toRadians(90))
                 .waitSeconds(0.5)
                 .build();
 
         Action subToAllSamplesPath = robot.actionBuilder(new Pose2d(4, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-60))
                 .splineToConstantHeading(new Vector2d(36, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(40, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -12), Math.toRadians(0))
+                //.splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(-90), new TranslationalVelConstraint(30.0))
+                .setTangent(Math.toRadians(-90))
                 .splineToConstantHeading(new Vector2d(44, -52), Math.toRadians(-90))
                 .setTangent(Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(48, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(53, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(53, -52), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(54, -12), Math.toRadians(0))
+                //.splineToConstantHeading(new Vector2d(54, -24), Math.toRadians(-90), new TranslationalVelConstraint(30.0))
+                .setTangent(Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(54, -52), Math.toRadians(-90))
                 .setTangent(Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(53, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(58, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(62, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(62, -52), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(54, -24), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(63, -12), Math.toRadians(0))
+                .setTangent(Math.toRadians(-90))
+                //.splineToConstantHeading(new Vector2d(63, -24), Math.toRadians(-90), new TranslationalVelConstraint(30.0))
+                .splineToConstantHeading(new Vector2d(63, -52), Math.toRadians(-90))
                 .build();
 
-        Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(62, -52, Math.toRadians(90)))
+        Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(63, -52, Math.toRadians(90)))
                 .setTangent(Math.toRadians(180))
                 .splineToConstantHeading(new Vector2d(53, -52), Math.toRadians(180))
-                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90), new TranslationalVelConstraint(20.0))
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90), new TranslationalVelConstraint(30.0))
                 .waitSeconds(0.4)
                 .build()
                 ;
 
         Action specimenToSubPath = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
-                // .setTangent(Math.toRadians(140))
-                .splineTo(new Vector2d(4, -34), Math.toRadians(145))
+                .splineTo(new Vector2d(4, -36), Math.toRadians(135), new TranslationalVelConstraint(50.0), new ProfileAccelConstraint(-40,180))
                 .waitSeconds(0.4)
                 .build();
 
-        Action subToSpecimenPath = robot.actionBuilder(new Pose2d(4, -34, Math.toRadians(145)))
+        Action subToSpecimenPath = robot.actionBuilder(new Pose2d(4, -36, Math.toRadians(135)))
                 .setTangent(Math.toRadians(-40))
-                .splineToLinearHeading(new Pose2d(41, -63, Math.toRadians(90)), Math.toRadians(-45))
+                .splineToLinearHeading(new Pose2d(41, -63, Math.toRadians(90)), Math.toRadians(-55), new TranslationalVelConstraint(55.0), new ProfileAccelConstraint(-40,180))
+
                 .waitSeconds(0.4)
                 .build();
 
         Action subToInspection = robot.actionBuilder(new Pose2d(0, -36, Math.toRadians(140)))
                 .setTangent(Math.toRadians(-40))
-                .splineToLinearHeading(new Pose2d(50, -53, Math.toRadians(90)), 0.0)
+                .splineToLinearHeading(new Pose2d(50, -60, Math.toRadians(90)), 0.0, new TranslationalVelConstraint(65.0), new ProfileAccelConstraint(-100,200))
                 .build();
 
 
