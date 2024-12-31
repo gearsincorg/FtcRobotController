@@ -57,7 +57,6 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action build_2_SpecPreloads_4Sub() {
         robot.setPose(new Pose2d(START_X_SPEC, START_Y, Math.toRadians(90)));
 
-        //build trajectories
         Action wallToSubPath = robot.actionBuilder(new Pose2d(START_X_SPEC, START_Y, Math.toRadians(90)))
                 .splineTo(new Vector2d(4, -32), Math.toRadians(90))
                 .build();
@@ -65,17 +64,25 @@ public class GFORCEAutonomous extends LinearOpMode
         Action subToAllSamplesPath = robot.actionBuilder(new Pose2d(4, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-60))
                 .splineToConstantHeading(new Vector2d(36, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(40, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(44, -50), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -12), Math.toRadians(0))
+
+                .setTangent(Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -52), Math.toRadians(-90))
                 .setTangent(Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(48, -12), Math.toRadians(0))
-                .splineToConstantHeading(new Vector2d(54, -24), Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(54, -50), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(90), new TranslationalVelConstraint(65.0))
+                .splineToConstantHeading(new Vector2d(54, -12), Math.toRadians(0))
+
+                .setTangent(Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(54, -52), Math.toRadians(-90))
+                .setTangent(Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(54, -24), Math.toRadians(90), new TranslationalVelConstraint(65.0))
+                .splineToConstantHeading(new Vector2d(63, -12), Math.toRadians(0))
+
+                .setTangent(Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(63, -52), Math.toRadians(-90))
                 .build();
 
-        Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(54, -50, Math.toRadians(90)))
+        Action samplesToSpecimenPath = robot.actionBuilder(new Pose2d(63, -53, Math.toRadians(90)))
                 .setTangent(Math.toRadians(135))
                 .splineToConstantHeading(new Vector2d(41, -44), Math.toRadians(180))
                 .setTangent(Math.toRadians(-90))
@@ -89,7 +96,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action sub2ToSpecimenPath = robot.actionBuilder(new Pose2d(1, -32, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-50))
-                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90), new TranslationalVelConstraint(55.0), new ProfileAccelConstraint(-40,180))
                 .build();
 
         Action specimenToSub3Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
@@ -99,7 +106,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action sub3ToSpecimenPath = robot.actionBuilder(new Pose2d(-2, -32, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-45))
-                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(41, -63), Math.toRadians(-90), new TranslationalVelConstraint(55.0), new ProfileAccelConstraint(-40,180))
                 .build();
 
         Action specimenToSub4Path = robot.actionBuilder(new Pose2d(41, -63, Math.toRadians(90)))
@@ -159,12 +166,12 @@ public class GFORCEAutonomous extends LinearOpMode
         Action subToAllSamplesPath = robot.actionBuilder(new Pose2d(4, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-60))
                 .splineToConstantHeading(new Vector2d(36, -24), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(43, -12), Math.toRadians(0))
+                .splineToConstantHeading(new Vector2d(44, -12), Math.toRadians(0))
 
                 .setTangent(Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(43, -52), Math.toRadians(-90))
+                .splineToConstantHeading(new Vector2d(44, -52), Math.toRadians(-90))
                 .setTangent(Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(43, -24), Math.toRadians(90), new TranslationalVelConstraint(65.0))
+                .splineToConstantHeading(new Vector2d(44, -24), Math.toRadians(90), new TranslationalVelConstraint(65.0))
                 .splineToConstantHeading(new Vector2d(54, -12), Math.toRadians(0))
 
                 .setTangent(Math.toRadians(-90))
