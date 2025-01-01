@@ -38,7 +38,7 @@ public class IntakeSubsystem {
 
     private final double OFF = 0;
     private final double WRIST_IN = 0.43;
-    private final double WRIST_OUT = 0.68;
+    private final double WRIST_OUT = 0.67;
     private final double WRIST_DOWN = 0.9;
     private final double SLIDE_TRANSIT_TIME = 1.0;
     private final double SLIDE_TRANSFER_TIME = 0.8;
@@ -132,6 +132,7 @@ public class IntakeSubsystem {
         if (showTelemetry) {
             myOpMode.telemetry.addData("INTAKE Got Color Hue", "%s %s %s %d", currentState, gotSample, sampleColor, sampleHue);
             myOpMode.telemetry.addData("SLIDE Pos SP Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            myOpMode.telemetry.addData("GLOBALS", "%s %s", Globals.RC_SWEEP ? "SWEEP" : "NoSWEEP", Globals.RC_END ? "END" : "RUN");
             // myOpMode.telemetry.addData("Slide Pos", currentPosition);
             // myOpMode.telemetry.addData("Slide Pwr", outputPower * 1000);
             // myOpMode.telemetry.addData("Slide SP",  positionControl.getSetPoint());
