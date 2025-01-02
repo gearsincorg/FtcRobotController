@@ -413,8 +413,10 @@ public final class MecanumDrive {
         cycleTime.reset();
 
         oq.readLocalizerData(OQlocalizer);
-
         if (OQlocalizer.isDataValid()) {
+
+            // Read the Firmware Revision number from the OctoQuad and display it as telemetry.
+            // myOpMode.telemetry.addData("OctoQuad Firmware Version ", oq.getFirmwareVersion());  // debug
 
             myOpMode.telemetry.addData("Localizer status", OQlocalizer.localizerStatus);
             myOpMode.telemetry.addData("Heading", "%4.0f D, %5.0f D/s", Math.toDegrees(OQlocalizer.heading_rad), Math.toDegrees(OQlocalizer.velHeading_radS));

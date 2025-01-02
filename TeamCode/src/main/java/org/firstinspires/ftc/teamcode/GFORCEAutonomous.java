@@ -499,6 +499,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 telemetry.addData("AUTO MODE",  "%s", autoConfig.autoArray[autoConfig.autoOptions.autoMode]);
                 telemetry.addData("COUNTDOWN",  "%d  %d  %d  %d", sec, sec, sec, sec);
                 telemetry.update();
+                sleep(1000);
             }
 
             if (selectedAuto != null) {
@@ -507,7 +508,6 @@ public class GFORCEAutonomous extends LinearOpMode
                 telemetry.addData("AUTO MODE",  "No valid mode selected");
                 telemetry.update();
             }
-            sleep(1000);
         }
 
         Globals.LAST_POSE = new Pose2d(0,0, robot.getPose().heading.toDouble()-(Math.PI/2)) ;
