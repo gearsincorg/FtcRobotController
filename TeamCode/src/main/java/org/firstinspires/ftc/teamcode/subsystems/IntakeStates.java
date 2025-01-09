@@ -5,7 +5,7 @@ public enum IntakeStates {
     HOME,
     INTAKING,
     SWEEPING,
-    CHECKING_SAMPLE,
+    EJECTING_SAMPLE,
     GOT_SAMPLE,
     TILT_WRIST_IN,
     TRANSFER

@@ -24,6 +24,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class IntakeSubsystem {
 
+    private final boolean IMMEDIATE_TRANSFER = true;
+
     // Standard SubSystem Members:
     private LinearOpMode myOpMode;
     private boolean      showTelemetry  = false;
@@ -39,20 +41,20 @@ public class IntakeSubsystem {
     private final double OFF = 0;
     private final double WRIST_IN = 0.43;
     private final double WRIST_OUT = 0.67;
-    private final double WRIST_DOWN = 0.9;
+    private final double WRIST_DOWN = 0.8;
     private final double SLIDE_TRANSIT_TIME = 1.0;
     private final double SLIDE_TRANSFER_TIME = 0.8;
-    private final double SAMP_CHECKING_TIME = 0.11;
 
     private final double SAMP_NOT_COLLECTED_IN_TIME = 1;
     private final double SWEEP_TIMEOUT = 1.5;
+    private final double EJECT_TIMEOUT = 0.5;
 
     private final int    SLIDE_HOME = 0;
     private final int    ALMOST_HOME = 20;
     private final int    SLIDE_OUT  = 500;
 
-    private final double HOME_POWER = -0.1;
-    private final double HOLD_POWER = -0.1;
+    private final double HOME_POWER = -0.15;
+    private final double HOLD_POWER = -0.15;
     private final int    HOME_MIN_MOVEMENT = 10;
 
     private final double GAIN = 0.01;
@@ -64,8 +66,10 @@ public class IntakeSubsystem {
 
     // public members
     public boolean     gotSample   = false;
+    public boolean     gotWrongSample   = false;
     public SampleColor sampleColor = NONE;
-    public int         sampleHue = -1;
+    public int         sampleHue   = -1;
+    public int         sampleRange = 100;
 
     //declaring servos for the intake
     private Servo backwrist;
@@ -86,7 +90,7 @@ public class IntakeSubsystem {
     private boolean goingHome = false;
 
     // flags used in auto
-    private boolean autoIntake = false;
+    private boolean autoTranser = false;
     private boolean autoLower  = false;
 
     private Button wristInOut = new Button();
@@ -99,6 +103,7 @@ public class IntakeSubsystem {
 
     public void initialize(boolean showTelemetry){
         wheelMotor = myOpMode.hardwareMap.get(DcMotor.class, "wheel");
+        wheelMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leverMotor = myOpMode.hardwareMap.get(DcMotor.class, "lever");
         leverMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -108,7 +113,7 @@ public class IntakeSubsystem {
         colorSensor = myOpMode.hardwareMap.get(NormalizedColorSensor.class, "sample_color");
         colorLED = myOpMode.hardwareMap.get(Servo.class, "led");
 
-        wheelMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        wheelMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         colorSensor.setGain(8);
 
         if (!Globals.SLIDE_HOMED) {
@@ -130,7 +135,7 @@ public class IntakeSubsystem {
         runStateMachine();
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("INTAKE Got Color Hue", "%s %s %s %d", currentState, gotSample, sampleColor, sampleHue);
+            myOpMode.telemetry.addData("INTAKE Got Color Hue Rng", "%s %s %s %d %d", currentState, gotSample, sampleColor, sampleHue, sampleRange);
             myOpMode.telemetry.addData("SLIDE Pos SP Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
             myOpMode.telemetry.addData("GLOBALS", "%s %s", Globals.RC_SWEEP ? "SWEEP" : "NoSWEEP", Globals.RC_END ? "END" : "RUN");
             // myOpMode.telemetry.addData("Slide Pos", currentPosition);
@@ -142,12 +147,12 @@ public class IntakeSubsystem {
     public void readSensors() {
 
         // process color/Range sensor
-        double range = ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM);
+        sampleRange = (int)(((DistanceSensor) colorSensor).getDistance(DistanceUnit.MM));
 
         currentPosition = leverMotor.getCurrentPosition();
 
         sampleHue = -1;
-        if ((range > 0.5) && (range  < 6.5)) {
+        if ((sampleRange > 1) && (sampleRange < 24)) {
 
             NormalizedRGBA colors = colorSensor.getNormalizedColors();
             Color.colorToHSV(colors.toColor(), hsvValues);
@@ -156,17 +161,21 @@ public class IntakeSubsystem {
             if (sampleHue < 68) {
                 gotSample = true;
                 sampleColor = RED;
+                gotWrongSample = (Globals.ALLIANCE_COLOR == AllianceColor.BLUE);
                 colorLED.setPosition(.3);
             } else if (sampleHue < 170) {
                 gotSample = true;
                 sampleColor = YELLOW;
+                gotWrongSample = false;
                 colorLED.setPosition(.35);
             }  else if (sampleHue > 190) {
                 gotSample = true;
                 sampleColor = BLUE;
+                gotWrongSample = (Globals.ALLIANCE_COLOR == AllianceColor.RED);
                 colorLED.setPosition(.6);
             } else {
                 gotSample = true;
+                gotWrongSample = false;
                 sampleColor = NONE;
                 colorLED.setPosition(0);
             }
@@ -184,7 +193,7 @@ public class IntakeSubsystem {
                     autoLower = false;
                     wristOut();
                     setState(IntakeStates.HOME);
-                } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoIntake) {
+                } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoTranser) {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
@@ -197,7 +206,7 @@ public class IntakeSubsystem {
             }
 
             case HOME:
-                if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoIntake) {
+                if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoTranser) {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
@@ -222,8 +231,10 @@ public class IntakeSubsystem {
                     collectorOff();
                     setState(IntakeStates.HOME);
                 } else if (gotSample) {
-                    Globals.RC_SWEEP  = false;
-                    setState(IntakeStates.CHECKING_SAMPLE);
+                    Globals.RC_SWEEP   = false; // disable the sweep action
+                    collectorOff();
+                    wristIn();
+                    setState(IntakeStates.GOT_SAMPLE);
                 } else if (Globals.IS_AUTO && (stateTime.time() > SAMP_NOT_COLLECTED_IN_TIME)){
                     Globals.RC_SWEEP  = true; // Tell Drive Subsystem to Sweep back and forward.
                     setState(IntakeStates.SWEEPING);
@@ -233,7 +244,9 @@ public class IntakeSubsystem {
             case SWEEPING:  // only used in auto
                 if (gotSample) {
                     Globals.RC_SWEEP   = false; // disable the sweep action
-                    setState(IntakeStates.CHECKING_SAMPLE);
+                    collectorOff();
+                    wristIn();
+                    setState(IntakeStates.GOT_SAMPLE);
                 } else if (stateTime.time() > SWEEP_TIMEOUT) {  // terminate sweep and move on.
                     collectorOff();
                     wristOut();
@@ -244,24 +257,16 @@ public class IntakeSubsystem {
                 }
                 break;
 
-            case CHECKING_SAMPLE:
-                if (stateTime.time() > SAMP_CHECKING_TIME) {
-                    if (gotSample){
-                        wristOut();
-                        collectorOff();
-                        setState(IntakeStates.GOT_SAMPLE);
-                    } else {
-                        setState(IntakeStates.INTAKING);
-                    }
-                }
-                break;
-
             case GOT_SAMPLE:
                 Globals.RC_END    = true;  // disable the sweep action
-                if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoIntake) {
-                    wristIn();
-                    autoIntake = false;
+                if (gotWrongSample) {
+                    collectorEject();
+                    setState(IntakeStates.EJECTING_SAMPLE);
+                } else if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoTranser || IMMEDIATE_TRANSFER) {
+                    autoTranser = false;
+                    slideIn();  /// NEW !!!!!!
                     setState(IntakeStates.TILT_WRIST_IN);
+
                 } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down)) {
                     wristDown();
                     collectorIntake();
@@ -273,8 +278,19 @@ public class IntakeSubsystem {
                 }
                 break;
 
+            case EJECTING_SAMPLE:
+                if (stateTime.time() > EJECT_TIMEOUT) {  // Run eject for short time then go back to intake
+                    wristDown();
+                    collectorIntake();
+                    setState(IntakeStates.INTAKING);
+                }
+                break;
+
             case TILT_WRIST_IN:
-                if ((stateTime.time() > 0.75) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
+                if (myOpMode.gamepad2.dpad_up) {
+                    collectorEject();
+                    setState(IntakeStates.HOME);
+                } else if ((stateTime.time() > 0.65) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
                     collectorTransfer();
                     setState(IntakeStates.TRANSFER);
                 }
@@ -448,7 +464,7 @@ public class IntakeSubsystem {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                autoIntake = true;
+                autoTranser = true;
                 return false;
             }
         };

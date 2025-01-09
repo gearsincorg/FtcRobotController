@@ -183,12 +183,12 @@ public class MeepMeepTesting {
                    basketToSub
                 ));
 
-        meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_DARK)
+        meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                //.addEntity(specimenToSubBot)
+                .addEntity(specimenToSubBot)
                 .addEntity(specimenBot)
-                //.addEntity(basketBot)
+                .addEntity(basketBot)
                 .start();
     }
 }

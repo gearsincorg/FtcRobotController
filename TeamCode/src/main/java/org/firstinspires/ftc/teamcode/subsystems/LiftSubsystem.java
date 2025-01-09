@@ -7,6 +7,7 @@ import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.LIFTING;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.LOWERING;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.RDY_TO_DUMP;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.SAMPLE_HELD;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.SLOW_DUMP;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.WAIT_BUCKET;
 
 import androidx.annotation.NonNull;
@@ -38,15 +39,9 @@ public class LiftSubsystem {
     private final double HOLD_POWER = 0.2; // 0.075
     private final double HOME_POWER = -0.6;
 
-    private final double TILT_SIDE = 0.4;
-    private final double YAW_SIDE = 0.7;
-    private final double TILT_BUCKET_READY = 0.535;
-    private final double YAW_BUCKET_READY = 0.5;
-    private final double TILT_BACK = 0.65;
-    private final double YAW_BACK = 0.5;
-    private final double HELD = 0.5;
-    private final double OPENA = 0;
-    private final double OPENB = 1;
+    private final double TILT_BUCKET_READY = 0.525;
+    private final double TILT_BACK = 0.48;
+    private final double TILT_DUMP = 0.33;
 
     private final double GAIN = 0.8;
     private final double ACCEL_LIMIT = 6.0;
@@ -127,42 +122,26 @@ public class LiftSubsystem {
         positionControl.reset(setpointInches);
     }
 
+    public double getSetpointInches() {
+        return positionControl.getSetPoint();
+    }
+
     public void setBucketPosition(BucketPositions position){
         switch (position){
 
             default:
             case HOME:{
                 pitchServo.setPosition(TILT_BUCKET_READY);
-                yawServo.setPosition(YAW_BUCKET_READY);
-                holdServo.setPosition(HELD);
-                break;
-            }
-
-            case SIDE_DUMP_READY:{
-                pitchServo.setPosition(TILT_SIDE);
-                yawServo.setPosition(YAW_SIDE);
-                holdServo.setPosition(HELD);
-                break;
-            }
-
-            case SIDE_DUMP_RELEASE:{
-                pitchServo.setPosition(TILT_SIDE);
-                yawServo.setPosition(YAW_SIDE);
-                holdServo.setPosition(OPENA);
                 break;
             }
 
             case BACK_DUMP_READY:{
                 pitchServo.setPosition(TILT_BACK);
-                yawServo.setPosition(YAW_BACK);
-                holdServo.setPosition(HELD);
                 break;
             }
 
             case BACK_DUMP_RELEASE:{
-                pitchServo.setPosition(TILT_BACK);
-                yawServo.setPosition(YAW_BACK);
-                holdServo.setPosition(OPENB);
+                pitchServo.setPosition(TILT_DUMP);
                 break;
             }
         }
@@ -217,7 +196,11 @@ public class LiftSubsystem {
             case RDY_TO_DUMP:{
                 if(myOpMode.gamepad2.cross || Globals.IS_AUTO){
                     setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
-                    setState(DUMPED);
+                    if (getSetpointInches() == MIN_HEIGHT){
+                        setState(SLOW_DUMP);
+                    } else {
+                        setState(DUMPED);
+                    }
                 } else if(myOpMode.gamepad2.triangle){
                     setSetpointInches(HIGH_BASKET);
                     setBucketPosition(BucketPositions.BACK_DUMP_READY);
@@ -230,8 +213,14 @@ public class LiftSubsystem {
                 break;
             }
 
+            case SLOW_DUMP:
+                if(stateTime.time() > 0.2){
+                    setState(DUMPED);
+                }
+                break;
+
             case DUMPED:{
-                if(stateTime.time() > 0.75){
+                if(stateTime.time() > 0.5) {  // was .75
                     setBucketPosition(BucketPositions.HOME);
                     setState(WAIT_BUCKET);
                 }

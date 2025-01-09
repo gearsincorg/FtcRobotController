@@ -32,8 +32,7 @@ public class ArmSubsystem {
 
     // Constants
     private final double CLAW_OPEN = 0.35;  // was 0.3
-    private final double CLAW_LOOSE_GRIP = 0.5;
-    private final double CLAW_CLOSED = 0.56;
+    private final double CLAW_CLOSED = 0.5;
     private final double HOME_POWER = -0.2;
     private final int    HOME_MIN_MOVEMENT = 10;
 

@@ -134,8 +134,6 @@ public class GFORCETeleop extends LinearOpMode
                     yawController.reset(0);     // Facing away from driver
                 } else if (gamepad1.circle) {
                     yawController.reset(-90);   // facing to the Right
-                } else if (gamepad1.cross) {
-                    yawController.reset(180);   // facing towards the driver
                 } else if (gamepad1.square) {
                     yawController.reset(-45);   /// NON STANDARD... Facing away from Basket.
                 }
