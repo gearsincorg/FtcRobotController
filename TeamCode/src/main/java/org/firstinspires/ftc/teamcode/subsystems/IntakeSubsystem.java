@@ -43,10 +43,11 @@ public class IntakeSubsystem {
     private final double WRIST_OUT = 0.67;
     private final double WRIST_DOWN = 0.8;
     private final double SLIDE_TRANSIT_TIME = 1.0;
-    private final double SLIDE_TRANSFER_TIME = 0.8;
+    private final double SLIDE_TRANSFER_TIME = 1.0;
+    private final double SERVO_TILT_TIME = 0.65;
 
-    private final double SAMP_NOT_COLLECTED_IN_TIME = 1;
-    private final double SWEEP_TIMEOUT = 1.5;
+    private final double SAMP_NOT_COLLECTED_IN_TIME = 1.25;
+    private final double SWEEP_TIMEOUT = 2;
     private final double EJECT_TIMEOUT = 0.5;
 
     private final int    SLIDE_HOME = 0;
@@ -189,8 +190,12 @@ public class IntakeSubsystem {
     public void runStateMachine() {
         switch (currentState) {
             case INIT: {
-                if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoLower) {
+                if (autoLower){
                     autoLower = false;
+                    wristDown();
+                    collectorIntake();
+                    setState(IntakeStates.INTAKING);
+                } else if (wristInOut.pressed(myOpMode.gamepad2.left_bumper)) {
                     wristOut();
                     setState(IntakeStates.HOME);
                 } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoTranser) {
@@ -206,7 +211,12 @@ public class IntakeSubsystem {
             }
 
             case HOME:
-                if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoTranser) {
+                if (autoLower){
+                    autoLower = false;
+                    wristDown();
+                    collectorIntake();
+                    setState(IntakeStates.INTAKING);
+                } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoTranser) {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
@@ -249,7 +259,7 @@ public class IntakeSubsystem {
                     setState(IntakeStates.GOT_SAMPLE);
                 } else if (stateTime.time() > SWEEP_TIMEOUT) {  // terminate sweep and move on.
                     collectorOff();
-                    wristOut();
+                    wristIn();
                     Globals.DID_NOT_SWEEP_SAMPLE = true; // Set flag to bypass dumping
                     setState(IntakeStates.GOT_SAMPLE);
                 } else {
@@ -290,9 +300,14 @@ public class IntakeSubsystem {
                 if (myOpMode.gamepad2.dpad_up) {
                     collectorEject();
                     setState(IntakeStates.HOME);
-                } else if ((stateTime.time() > 0.65) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
+                } else if ((stateTime.time() > SERVO_TILT_TIME) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
                     collectorTransfer();
                     setState(IntakeStates.TRANSFER);
+                } else {
+                    if (gotSample){
+                        // check to see if sample turned up late
+                        Globals.DID_NOT_SWEEP_SAMPLE = false;
+                    }
                 }
                 break;
 

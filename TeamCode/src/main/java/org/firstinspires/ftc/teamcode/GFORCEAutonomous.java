@@ -9,16 +9,9 @@ package org.firstinspires.ftc.teamcode;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.LOWERING;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.SAMPLE_HELD;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.roadrunner.AccelConstraint;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Arclength;
-import com.acmerobotics.roadrunner.MinMax;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Pose2dDual;
-import com.acmerobotics.roadrunner.PosePath;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
@@ -344,6 +337,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         Action basToSample2 = robot.actionBuilder(new Pose2d(-53, -57, Math.toRadians(45)))
+                .afterTime(0.4, intake.actionLowerIt())
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-58.5, -40, Math.toRadians(90)), Math.toRadians(90))
                 .build();
@@ -354,11 +348,12 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         Action basToSample3 = robot.actionBuilder(new Pose2d(-56, -54, Math.toRadians(45)))
+                .afterTime(0.4, intake.actionLowerIt())
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-56, -35, Math.toRadians(150)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-56, -33, Math.toRadians(145)), Math.toRadians(90))
                 .build();
 
-        Action sample3ToBasket = robot.actionBuilder(new Pose2d(-56, -35, Math.toRadians(150)))
+        Action sample3ToBasket = robot.actionBuilder(new Pose2d(-56, -33, Math.toRadians(150)))
                 .setTangent(Math.toRadians(-90))
                 .splineToLinearHeading(new Pose2d(-56, -54, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
@@ -415,9 +410,9 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -33, Math.toRadians(90)))
-                .afterTime(0.5, intake.actionLowerIt())
+                .afterTime(0.8, intake.actionLowerIt())
                 .setTangent(Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(-49, -40), Math.toRadians(90))
+                .splineToConstantHeading(new Vector2d(-49, -40), Math.toRadians(90), new TranslationalVelConstraint(40.0), new ProfileAccelConstraint(-40,60))
                 .build();
 
         return new SequentialAction(
@@ -432,7 +427,7 @@ public class GFORCEAutonomous extends LinearOpMode
     }
 
     //==============================================================================================
-    private Action build_1_SampPreload_3_Bas() {
+    private Action build_1_SampPreload_4_Bas() {
         robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
@@ -441,6 +436,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         Action basketToSamples = robot.actionBuilder(new Pose2d(-53, -57, Math.toRadians(45)))
+                .afterTime(0.4, intake.actionLowerIt())
                 .setTangent(Math.toRadians(45))
                 .splineToLinearHeading(new Pose2d(-49, -40, Math.toRadians(90)), Math.toRadians(90))
                 .build();
@@ -547,7 +543,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 break;
 
             case 5:
-                sequentialAction = build_1_SampPreload_3_Bas();
+                sequentialAction = build_1_SampPreload_4_Bas();
                 break;
         }
 
