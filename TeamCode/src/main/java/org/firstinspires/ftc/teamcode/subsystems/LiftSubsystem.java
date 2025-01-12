@@ -77,10 +77,10 @@ public class LiftSubsystem {
      */
     public void initialize(boolean showTelemetry){
         lift = myOpMode.hardwareMap.get(DcMotorEx.class, "lift");
-        lift.setDirection(DcMotorSimple.Direction.REVERSE);
-        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); // Reset Encoders to zero
-        lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);    // Still Requires motor encoder cables to be hooked up.
+        lift.setDirection(DcMotorEx.Direction.REVERSE);
+        lift.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER); // Reset Encoders to zero
+        lift.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        lift.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);    // Still Requires motor encoder cables to be hooked up.
         pitchServo = myOpMode.hardwareMap.get(Servo.class, "pitch");
         yawServo = myOpMode.hardwareMap.get(Servo.class, "yaw");
         holdServo = myOpMode.hardwareMap.get(Servo.class, "hold");

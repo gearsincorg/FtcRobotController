@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
@@ -76,8 +76,8 @@ public class IntakeSubsystem {
     private Servo backwrist;
     private Servo frontwrist;
     private Servo colorLED;
-    private DcMotor leverMotor;
-    private DcMotor wheelMotor;
+    private DcMotorEx leverMotor;
+    private DcMotorEx wheelMotor;
     NormalizedColorSensor colorSensor;
 
     // Private Members
@@ -103,10 +103,10 @@ public class IntakeSubsystem {
     public IntakeSubsystem(LinearOpMode opMode){myOpMode = opMode;}
 
     public void initialize(boolean showTelemetry){
-        wheelMotor = myOpMode.hardwareMap.get(DcMotor.class, "wheel");
-        wheelMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leverMotor = myOpMode.hardwareMap.get(DcMotor.class, "lever");
-        leverMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        wheelMotor = myOpMode.hardwareMap.get(DcMotorEx.class, "wheel");
+        wheelMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        leverMotor = myOpMode.hardwareMap.get(DcMotorEx.class, "lever");
+        leverMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
         backwrist = myOpMode.hardwareMap.get(Servo.class, "frontwrist");
         frontwrist = myOpMode.hardwareMap.get(Servo.class, "backwrist");
@@ -344,9 +344,9 @@ public class IntakeSubsystem {
     }
 
     public void resetEncoders(){
-        leverMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leverMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         myOpMode.sleep(10);
-        leverMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leverMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void homeTheSlide(){

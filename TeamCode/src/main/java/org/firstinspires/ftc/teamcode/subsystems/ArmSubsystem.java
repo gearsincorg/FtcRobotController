@@ -16,6 +16,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -46,7 +47,7 @@ public class ArmSubsystem {
     private final int CLIPPED_POSITON = 100;  //  was 600
     private final int HOME_POSITION = 0;
 
-    private DcMotor arm;      // motor used to control the arm
+    private DcMotorEx arm;      // motor used to control the arm
     private Servo claw;       // Specimen Claw
 
     // Private Members
@@ -65,7 +66,7 @@ public class ArmSubsystem {
     }
 
     public void initialize(boolean showTelemetry){
-        arm = myOpMode.hardwareMap.get(DcMotor.class, "arm");
+        arm = myOpMode.hardwareMap.get(DcMotorEx.class, "arm");
         arm.setDirection(DcMotorSimple.Direction.FORWARD);
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset Encoders to zero
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
