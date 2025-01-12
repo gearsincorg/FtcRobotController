@@ -434,6 +434,7 @@ public class GFORCEAutonomous extends LinearOpMode
         robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
+                .afterTime(0.5, lift.actionSetState(SAMPLE_HELD))  // start lifting on the way to the basket.
                 .setTangent(Math.toRadians(135))
                 .splineToLinearHeading(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
@@ -447,7 +448,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return new SequentialAction(
                 arm.actionClaw(true),
                 wallToBasket ,
-                lift.actionSetState(SAMPLE_HELD),               // Start lift operation
+                // lift.actionSetState(SAMPLE_HELD),            // Start lift operation
                 lift.actionWaitForHomeOrState(LOWERING),        // Wait til the lift is coming down
                 basketToSamples,
                 collectAndScore_3_Bas_Level1()                  // Pickup and score the remaining 3 samples
