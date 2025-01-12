@@ -54,7 +54,7 @@ public class IntakeSubsystem {
     private final int    ALMOST_HOME = 20;
     private final int    SLIDE_OUT  = 500;
 
-    private final double HOME_POWER = -0.15;
+    private final double HOME_POWER = -0.25;
     private final double HOLD_POWER = -0.15;
     private final int    HOME_MIN_MOVEMENT = 10;
 
@@ -64,6 +64,11 @@ public class IntakeSubsystem {
     private final double TOLERANCE = 10.0;
     private final double DEADBAND = 5.0;
 
+    private final double LED_RED_VALUE = 0.3;
+    private final double LED_YELLOW_VALUE = 0.35;
+    private final double LED_GREEN_VALUE = 0.5;
+    private final double LED_BLUE_VALUE = 0.6;
+    private final double LED_OFF_VALUE = 0.0;
 
     // public members
     public boolean     gotSample   = false;
@@ -117,7 +122,8 @@ public class IntakeSubsystem {
         wheelMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         colorSensor.setGain(8);
 
-        if (!Globals.SLIDE_HOMED) {
+        // Always home in Auto, and sometimes in teleop, if running from a fresh restart
+        if (Globals.IS_AUTO || !Globals.SLIDE_HOMED) {
             homeTheSlide();
         }
 
@@ -137,12 +143,13 @@ public class IntakeSubsystem {
 
         if (showTelemetry) {
             myOpMode.telemetry.addData("INTAKE Got Color Hue Rng", "%s %s %s %d %d", currentState, gotSample, sampleColor, sampleHue, sampleRange);
-            myOpMode.telemetry.addData("SLIDE Pos SP Pwr", "%s %d %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            myOpMode.telemetry.addData("SLIDE Pos SP Pwr", "%s %d %d %.2f", currentState, currentPosition, (int)positionControl.getSetPoint(), outputPower);
             myOpMode.telemetry.addData("GLOBALS", "%s %s", Globals.RC_SWEEP ? "SWEEP" : "NoSWEEP", Globals.RC_END ? "END" : "RUN");
             // myOpMode.telemetry.addData("Slide Pos", currentPosition);
             // myOpMode.telemetry.addData("Slide Pwr", outputPower * 1000);
             // myOpMode.telemetry.addData("Slide SP",  positionControl.getSetPoint());
         }
+        myOpMode.telemetry.addData("GLOBALS", "%s %s", Globals.RC_SWEEP ? "SWEEP" : "NoSWEEP", Globals.RC_END ? "END" : "RUN");
     }
 
     public void readSensors() {
@@ -163,34 +170,36 @@ public class IntakeSubsystem {
                 gotSample = true;
                 sampleColor = RED;
                 gotWrongSample = (Globals.ALLIANCE_COLOR == AllianceColor.BLUE);
-                colorLED.setPosition(.3);
+                colorLED.setPosition(LED_RED_VALUE);
             } else if (sampleHue < 170) {
                 gotSample = true;
                 sampleColor = YELLOW;
                 gotWrongSample = false;
-                colorLED.setPosition(.35);
+                colorLED.setPosition(LED_YELLOW_VALUE);
             }  else if (sampleHue > 190) {
                 gotSample = true;
                 sampleColor = BLUE;
                 gotWrongSample = (Globals.ALLIANCE_COLOR == AllianceColor.RED);
-                colorLED.setPosition(.6);
+                colorLED.setPosition(LED_BLUE_VALUE);
             } else {
                 gotSample = true;
                 gotWrongSample = false;
                 sampleColor = NONE;
-                colorLED.setPosition(0);
+                colorLED.setPosition(LED_OFF_VALUE);
             }
         } else {
             gotSample = false;
             sampleColor = NONE;
-            colorLED.setPosition(0);
+            if (!myOpMode.opModeInInit()) {
+                colorLED.setPosition(LED_OFF_VALUE);
+            }
         }
     }
 
     public void runStateMachine() {
         switch (currentState) {
             case INIT: {
-                if (autoLower){
+                if (autoLower) {
                     autoLower = false;
                     wristDown();
                     collectorIntake();
@@ -202,6 +211,10 @@ public class IntakeSubsystem {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
+                } else if (myOpMode.gamepad2.right_bumper) {
+                    slideOut();
+                    wristOut();
+                    setState(IntakeStates.HOME);
                 } else {
                     slideIn();
                     wristIn();
@@ -292,6 +305,7 @@ public class IntakeSubsystem {
                 if (stateTime.time() > EJECT_TIMEOUT) {  // Run eject for short time then go back to intake
                     wristDown();
                     collectorIntake();
+                    setLEDoff();
                     setState(IntakeStates.INTAKING);
                 }
                 break;
@@ -312,6 +326,7 @@ public class IntakeSubsystem {
                 break;
 
             case TRANSFER:
+                setLEDoff();
                 if (stateTime.time() > SLIDE_TRANSFER_TIME){
                     collectorOff();
                     wristOut();
@@ -329,6 +344,18 @@ public class IntakeSubsystem {
     public void setState (IntakeStates newState){
         currentState = newState;
         stateTime.reset();
+    }
+
+    public void setLEDtoAllianceColor() {
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED) {
+            colorLED.setPosition(LED_RED_VALUE);
+        } else {
+            colorLED.setPosition(LED_BLUE_VALUE);
+        }
+    }
+
+    public void setLEDoff() {
+        colorLED.setPosition(LED_OFF_VALUE);
     }
 
     // ========================================================================================================
@@ -362,6 +389,7 @@ public class IntakeSubsystem {
 
         if (goingHome) {
             // Decides if the slide is still in the homing motion or if it has stopped and is homed
+            myOpMode.telemetry.addLine("Homing the slide now");
             if(Math.abs(currentPosition-lastPosition) < HOME_MIN_MOVEMENT){
                 outputPower = 0;
                 resetEncoders();

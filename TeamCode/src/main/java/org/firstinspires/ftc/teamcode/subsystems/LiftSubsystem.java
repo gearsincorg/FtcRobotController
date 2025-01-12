@@ -87,7 +87,7 @@ public class LiftSubsystem {
 
         setBucketPosition(BucketPositions.HOME);
 
-        if (!Globals.LIFT_HOMED) {
+        if (Globals.IS_AUTO || !Globals.LIFT_HOMED) {
             homeTheLift();
         }
 

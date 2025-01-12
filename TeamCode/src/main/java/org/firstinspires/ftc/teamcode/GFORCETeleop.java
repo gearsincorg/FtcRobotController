@@ -68,10 +68,19 @@ public class GFORCETeleop extends LinearOpMode
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         autoConfig.initialize();
 
+        // Set GLOBAL flags based on menu choices.
+        if (autoConfig.autoOptions.redAlliance ){
+            Globals.ALLIANCE_COLOR = AllianceColor.RED;
+        } else {
+            Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
+        }
+
         // Initialize the drive hardware & Turn on telemetry
         lift.initialize(true);
         arm.initialize(true);
         intake.initialize(true);
+
+        intake.setLEDtoAllianceColor();
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -85,16 +94,10 @@ public class GFORCETeleop extends LinearOpMode
             telemetry.update();
         }
 
-        // Set GLOBAL flags based on menu choices.
-        if (autoConfig.autoOptions.redAlliance ){
-            Globals.ALLIANCE_COLOR = AllianceColor.RED;
-        } else {
-            Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
-        }
-
         // Reset pose and mechanisms
         robot.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
         lift.resetEncoders();
+        intake.setLEDoff();
 
         Globals.OCTO_ERRORS = 0;
 
@@ -117,7 +120,6 @@ public class GFORCETeleop extends LinearOpMode
             // update the robot's position based on the odometry pods.
             robot.updatePoseEstimate();
             Globals.LAST_POSE = robot.getPose();
-
 
             if (gamepad1.touchpad) {  // Let the driver reset the heading to one of the 4 ordinals.
                 if (gamepad1.triangle) {

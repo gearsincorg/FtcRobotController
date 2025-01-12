@@ -45,8 +45,8 @@ public class GFORCEAutonomous extends LinearOpMode
     private final double START_X_SPEC = 14.25;
     private final double START_X_SAMP = -33;
 
-    private final double BASKET_X = -54;
-    private final double BASKET_Y = -54;
+    private final double BASKET_X = -55;
+    private final double BASKET_Y = -55;
 
     // Place all auto builders here!
     //================================================================================================================
@@ -434,7 +434,7 @@ public class GFORCEAutonomous extends LinearOpMode
         robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
-                .afterTime(0.5, lift.actionSetState(SAMPLE_HELD))  // start lifting on the way to the basket.
+                .afterTime(0.4, lift.actionSetState(SAMPLE_HELD))  // start lifting on the way to the basket.
                 .setTangent(Math.toRadians(135))
                 .splineToLinearHeading(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
@@ -464,7 +464,7 @@ public class GFORCEAutonomous extends LinearOpMode
         robot = new MecanumDrive(hardwareMap, new Pose2d(0,0,0), this);
         arm.initialize(false);
         lift.initialize(false);
-        intake.initialize(true);
+        intake.initialize(false);
         // arm.closeClaw();
         autoConfig.initialize();
 
@@ -474,6 +474,7 @@ public class GFORCEAutonomous extends LinearOpMode
         while(opModeInInit()) {
             arm.update();
             lift.update();
+            intake.update();   //  should this be in here ?
 
             autoConfig.runMenuUI(); //Run menu system
             if (autoConfig.autoOptions.autoMode != lastSelectedAuto) {
@@ -481,15 +482,19 @@ public class GFORCEAutonomous extends LinearOpMode
                 selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);
             }
 
+            // Set GLOBAL flags based on menu choices.
+            if (autoConfig.autoOptions.redAlliance )
+                Globals.ALLIANCE_COLOR = AllianceColor.RED;
+            else
+                Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
+
+            intake.setLEDtoAllianceColor();
             telemetry.addLine("\n Touch Play to run Auto");
+            telemetry.addData("GLOBALS", "%s %s", Globals.RC_SWEEP ? "SWEEP" : "NoSWEEP", Globals.RC_END ? "END" : "RUN");
+
             telemetry.update();
         }
 
-        // Set GLOBAL flags based on menu choices.
-        if (autoConfig.autoOptions.redAlliance )
-            Globals.ALLIANCE_COLOR = AllianceColor.RED;
-        else
-            Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
@@ -499,7 +504,10 @@ public class GFORCEAutonomous extends LinearOpMode
                 telemetry.addData("AUTO MODE",  "%s", autoConfig.autoArray[autoConfig.autoOptions.autoMode]);
                 telemetry.addData("COUNTDOWN",  "%d  %d  %d  %d", sec, sec, sec, sec);
                 telemetry.update();
-                sleep(1000);
+                intake.setLEDtoAllianceColor();
+                sleep(500);
+                intake.setLEDoff();
+                sleep(500);
             }
 
             if (selectedAuto != null) {

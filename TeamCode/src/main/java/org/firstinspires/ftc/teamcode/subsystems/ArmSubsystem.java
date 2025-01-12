@@ -75,7 +75,7 @@ public class ArmSubsystem {
         claw = myOpMode.hardwareMap.get(Servo.class, "claw");
         claw.setPosition(CLAW_OPEN);
 
-        if (!Globals.ARM_HOMED) {
+        if (Globals.IS_AUTO || !Globals.ARM_HOMED) {
             homeTheArm();
         }
 
