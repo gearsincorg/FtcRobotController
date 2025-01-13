@@ -92,6 +92,7 @@ public class LiftSubsystem {
         }
 
         readSensors();
+        Globals.DID_NOT_SWEEP_SAMPLE = false;
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;

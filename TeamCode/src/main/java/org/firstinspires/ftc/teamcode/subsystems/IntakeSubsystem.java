@@ -45,6 +45,8 @@ public class IntakeSubsystem {
     private final double SLIDE_TRANSIT_TIME = 1.0;
     private final double SLIDE_TRANSFER_TIME = 1.0;
     private final double SERVO_TILT_TIME = 0.65;
+    private final double UNJAM_IN = 0.4;
+    private final double UNJAM_OUT = -0.4;
 
     private final double SAMP_NOT_COLLECTED_IN_TIME = 1.25;
     private final double SWEEP_TIMEOUT = 2;
@@ -130,6 +132,8 @@ public class IntakeSubsystem {
         slideIn();
         collectorOff();
         wristIn();
+        Globals.RC_END = false;
+        Globals.DID_NOT_SWEEP_SAMPLE = false;
 
         // Set the desired telemetry state
         this.showTelemetry = showTelemetry;
@@ -321,6 +325,9 @@ public class IntakeSubsystem {
                     if (gotSample){
                         // check to see if sample turned up late
                         Globals.DID_NOT_SWEEP_SAMPLE = false;
+                        setCollector(UNJAM_OUT);
+                    } else {
+                        setCollector(UNJAM_IN);
                     }
                 }
                 break;
