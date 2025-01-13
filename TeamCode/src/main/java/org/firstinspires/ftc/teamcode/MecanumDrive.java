@@ -52,8 +52,11 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+
 @Config
 public final class MecanumDrive {
+
+    private final boolean SEND_DASHBOARD_PATH = true;
 
     LinearOpMode myOpMode;
     OctoQuad_v3.LocalizerDataBlock OQlocalizer = new OctoQuad_v3.LocalizerDataBlock();
@@ -417,21 +420,26 @@ public final class MecanumDrive {
 
             // Read the Firmware Revision number from the OctoQuad and display it as telemetry.
             // myOpMode.telemetry.addData("OctoQuad Firmware Version ", oq.getFirmwareVersion());  // debug
+            // myOpMode.telemetry.addData("Heading", "%4.0f D, %5.0f D/s", Math.toDegrees(OQlocalizer.heading_rad), Math.toDegrees(OQlocalizer.velHeading_radS));
+            // myOpMode.telemetry.addData("Pos X:Y mm", "%4d : %4d", OQlocalizer.posX_mm, OQlocalizer.posY_mm);
+            // myOpMode.telemetry.addData("Vel X:Y mm/s", "%5d : %5d", OQlocalizer.velX_mmS, OQlocalizer.velY_mmS);
 
-            myOpMode.telemetry.addData("Localizer status", OQlocalizer.localizerStatus);
-            myOpMode.telemetry.addData("Heading", "%4.0f D, %5.0f D/s", Math.toDegrees(OQlocalizer.heading_rad), Math.toDegrees(OQlocalizer.velHeading_radS));
-            myOpMode.telemetry.addData("Pos X:Y mm", "%4d : %4d", OQlocalizer.posX_mm, OQlocalizer.posY_mm);
-            myOpMode.telemetry.addData("Vel X:Y mm/s", "%5d : %5d", OQlocalizer.velX_mmS, OQlocalizer.velY_mmS);
+            myOpMode.telemetry.addData("OCTO", "%s Errs($d)", OQlocalizer.localizerStatus, Globals.OCTO_ERRORS);
+            myOpMode.telemetry.addData("X:Y:H in,Deg", "%4d %4d %.1f",
+                    mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), Math.toDegrees(OQlocalizer.heading_rad));
 
-            myOpMode.telemetry.addData("OctoErrors", Globals.OCTO_ERRORS);
             pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
 
-            poseHistory.add(pose);
-            while (poseHistory.size() > 100) {
-                poseHistory.removeFirst();
+            // Do we really need this ???  is it just for display.....
+            if (SEND_DASHBOARD_PATH) {
+                poseHistory.add(pose);
+                while (poseHistory.size() > 100) {
+                    poseHistory.removeFirst();
+                }
+                estimatedPoseWriter.write(new PoseMessage(pose));
             }
+            // Do we really need this ???  is it just for display.....
 
-            estimatedPoseWriter.write(new PoseMessage(pose));
             return new PoseVelocity2d(new Vector2d(OQlocalizer.velX_mmS, OQlocalizer.velY_mmS), OQlocalizer.velHeading_radS);
         } else {
             Globals.OCTO_ERRORS++;
@@ -440,20 +448,22 @@ public final class MecanumDrive {
     }
 
     private void drawPoseHistory(Canvas c) {
-        double[] xPoints = new double[poseHistory.size()];
-        double[] yPoints = new double[poseHistory.size()];
+        if (SEND_DASHBOARD_PATH) {
+            double[] xPoints = new double[poseHistory.size()];
+            double[] yPoints = new double[poseHistory.size()];
 
-        int i = 0;
-        for (Pose2d t : poseHistory) {
-            xPoints[i] = t.position.x;
-            yPoints[i] = t.position.y;
+            int i = 0;
+            for (Pose2d t : poseHistory) {
+                xPoints[i] = t.position.x;
+                yPoints[i] = t.position.y;
 
-            i++;
+                i++;
+            }
+
+            c.setStrokeWidth(1);
+            c.setStroke("#3F51B5");
+            c.strokePolyline(xPoints, yPoints);
         }
-
-        c.setStrokeWidth(1);
-        c.setStroke("#3F51B5");
-        c.strokePolyline(xPoints, yPoints);
     }
 
     public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {

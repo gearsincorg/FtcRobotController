@@ -148,7 +148,6 @@ public class IntakeSubsystem {
         if (showTelemetry) {
             myOpMode.telemetry.addData("INTAKE Got Color Hue Rng", "%s %s %s %d %d", currentState, gotSample, sampleColor, sampleHue, sampleRange);
             myOpMode.telemetry.addData("SLIDE Pos SP Pwr", "%s %d %d %.2f", currentState, currentPosition, (int)positionControl.getSetPoint(), outputPower);
-            myOpMode.telemetry.addData("GLOBALS", "%s %s", Globals.RC_SWEEP ? "SWEEP" : "NoSWEEP", Globals.RC_END ? "END" : "RUN");
             // myOpMode.telemetry.addData("Slide Pos", currentPosition);
             // myOpMode.telemetry.addData("Slide Pwr", outputPower * 1000);
             // myOpMode.telemetry.addData("Slide SP",  positionControl.getSetPoint());
