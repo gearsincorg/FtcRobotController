@@ -45,7 +45,6 @@ import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
-import org.firstinspires.ftc.teamcode.subsystems.OctoQuadBase_v3;
 import org.firstinspires.ftc.teamcode.subsystems.OctoQuad_v3;
 
 import java.util.Arrays;
@@ -497,8 +496,8 @@ public final class MecanumDrive {
         oq.resetEverything();
 
         // Configure the localizer
-        oq.setSingleEncoderDirection(OQ_PORT_X, OctoQuadBase_v3.EncoderDirection.FORWARD);
-        oq.setSingleEncoderDirection(OQ_PORT_Y, OctoQuadBase_v3.EncoderDirection.FORWARD);
+        oq.setSingleEncoderDirection(OQ_PORT_X, OctoQuad_v3.EncoderDirection.FORWARD);
+        oq.setSingleEncoderDirection(OQ_PORT_Y, OctoQuad_v3.EncoderDirection.FORWARD);
 
         oq.setLocalizerPortX(OQ_PORT_X);
         oq.setLocalizerPortY(OQ_PORT_Y);
