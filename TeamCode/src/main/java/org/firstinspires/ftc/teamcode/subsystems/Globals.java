@@ -21,6 +21,8 @@ public class Globals {
     public static boolean RC_END        = false;
     public static boolean RC_SWEEP      = false;
     public static boolean DID_NOT_SWEEP_SAMPLE = false;
+    public static boolean SAFE_TO_TRANSFER = false;
+
 
     public static double  DRIVE_AXIAL   = 0;    // used by the Lift subsystem to monitor the motor drive.
     public static double  DRIVE_LATERAL = 0;    // used by the Lift subsystem to monitor the motor drive.

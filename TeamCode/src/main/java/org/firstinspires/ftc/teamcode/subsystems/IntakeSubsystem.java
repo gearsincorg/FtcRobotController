@@ -35,18 +35,19 @@ public class IntakeSubsystem {
 
     // Constants
     private final double INTAKE = 1;
-    private final double TRANSFER = 0.8;
+    private final double TRANSFER = 1.0;  // was .8
     private final double EJECT = -1;
+    private final double UNJAM_IN = 0.6;
+    private final double UNJAM_OUT = -0.35;
 
     private final double OFF = 0;
-    private final double WRIST_IN = 0.43;
+    private final double WRIST_IN = 0.39 ; // was 4.3
     private final double WRIST_OUT = 0.67;
     private final double WRIST_DOWN = 0.8;
     private final double SLIDE_TRANSIT_TIME = 1.0;
     private final double SLIDE_TRANSFER_TIME = 1.0;
     private final double SERVO_TILT_TIME = 0.65;
-    private final double UNJAM_IN = 0.4;
-    private final double UNJAM_OUT = -0.4;
+
 
     private final double SAMP_NOT_COLLECTED_IN_TIME = 1.25;
     private final double SWEEP_TIMEOUT = 2;
@@ -317,7 +318,9 @@ public class IntakeSubsystem {
                 if (myOpMode.gamepad2.dpad_up) {
                     collectorEject();
                     setState(IntakeStates.HOME);
-                } else if ((stateTime.time() > SERVO_TILT_TIME) && (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME))) {
+                } else if ((stateTime.time() > SERVO_TILT_TIME) &&
+                           (!slideIsOut && (slideTime.time() > SLIDE_TRANSIT_TIME)) &&
+                            Globals.SAFE_TO_TRANSFER) {
                     collectorTransfer();
                     setState(IntakeStates.TRANSFER);
                 } else {

@@ -419,12 +419,9 @@ public final class MecanumDrive {
 
             // Read the Firmware Revision number from the OctoQuad and display it as telemetry.
             // myOpMode.telemetry.addData("OctoQuad Firmware Version ", oq.getFirmwareVersion());  // debug
-            // myOpMode.telemetry.addData("Heading", "%4.0f D, %5.0f D/s", Math.toDegrees(OQlocalizer.heading_rad), Math.toDegrees(OQlocalizer.velHeading_radS));
-            // myOpMode.telemetry.addData("Pos X:Y mm", "%4d : %4d", OQlocalizer.posX_mm, OQlocalizer.posY_mm);
-            // myOpMode.telemetry.addData("Vel X:Y mm/s", "%5d : %5d", OQlocalizer.velX_mmS, OQlocalizer.velY_mmS);
 
-            myOpMode.telemetry.addData("OCTO", "%s Errs($d)", OQlocalizer.localizerStatus, Globals.OCTO_ERRORS);
-            myOpMode.telemetry.addData("X:Y:H in,Deg", "%4d %4d %.1f",
+            myOpMode.telemetry.addData("OCTO", "%s Errs(%d)", OQlocalizer.localizerStatus, Globals.OCTO_ERRORS);
+            myOpMode.telemetry.addData("X:Y:H in,Deg", "%4.1f %4.1f %4.0f",
                     mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), Math.toDegrees(OQlocalizer.heading_rad));
 
             pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);

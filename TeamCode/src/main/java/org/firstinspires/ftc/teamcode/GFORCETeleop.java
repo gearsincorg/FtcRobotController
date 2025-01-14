@@ -111,7 +111,7 @@ public class GFORCETeleop extends LinearOpMode
             fieldCentric = USE_FIELD_CENTRIC_MODE;
 
             // Check to see if we need to home the Lift
-            if (gamepad2.touchpad) {
+            if (gamepad2.touchpad  || gamepad2.back) {
                 lift.homeTheLift();
                 arm.homeTheArm();
                 intake.homeTheSlide();
@@ -121,7 +121,7 @@ public class GFORCETeleop extends LinearOpMode
             robot.updatePoseEstimate();
             Globals.LAST_POSE = robot.getPose();
 
-            if (gamepad1.touchpad) {  // Let the driver reset the heading to one of the 4 ordinals.
+            if (gamepad1.touchpad || gamepad1.back ) {  // Let the driver reset the heading to one of the 4 ordinals.
                 if (gamepad1.triangle) {
                     setHeadingDeg(0);
                 } else if (gamepad1.circle) {
@@ -199,9 +199,6 @@ public class GFORCETeleop extends LinearOpMode
                     yaw
             ));
 
-            telemetry.addData("x", robot.getPose().position.x);
-            telemetry.addData("y", robot.getPose().position.y);
-            telemetry.addData("heading (deg)", headingDeg);
             telemetry.update();
 
             // Update the dashboard.

@@ -104,7 +104,7 @@ public class LiftSubsystem {
         runStateMachine();
 
         if (showTelemetry) {
-            myOpMode.telemetry.addData("LIFT Pos SP Pwr", "%s %.1f %.1f %.2f", currentState, currentPosition, positionControl.getSetPoint(), outputPower);
+            myOpMode.telemetry.addData("LIFT Pos SP Pwr Safe", "%s %.1f %.1f %.2f %s", currentState, currentPosition, positionControl.getSetPoint(), outputPower, Globals.SAFE_TO_TRANSFER);
             myOpMode.telemetry.addData("Lift VEL", "%.0f", lift.getVelocity());
             //  myOpMode.telemetry.addData("Lift Pos", currentPosition);
             //  myOpMode.telemetry.addData("Lift Pwr", outputPower * 1000);
@@ -152,6 +152,7 @@ public class LiftSubsystem {
 
         switch (currentState) {
             case HOME:{
+                Globals.SAFE_TO_TRANSFER = true;
                 if((stateTime.time() > 0.5)) {
                     resetEncoders();
                     if (Globals.IS_AUTO) {
@@ -164,10 +165,12 @@ public class LiftSubsystem {
             }
 
             case AUTO_WAIT:{
+                Globals.SAFE_TO_TRANSFER = true;
                 break;
             }
 
             case SAMPLE_HELD:{
+                Globals.SAFE_TO_TRANSFER = true;
                 if (Globals.IS_AUTO && Globals.DID_NOT_SWEEP_SAMPLE) {
                     // bypass the scoring process as we don't have a sample
                     Globals.DID_NOT_SWEEP_SAMPLE = false;
@@ -188,6 +191,7 @@ public class LiftSubsystem {
             }
 
             case LIFTING:{
+                Globals.SAFE_TO_TRANSFER = false;
                 if(positionControl.inPosition()){
                     setState(RDY_TO_DUMP);
                 }
@@ -196,6 +200,7 @@ public class LiftSubsystem {
 
             case RDY_TO_DUMP:{
                 if(myOpMode.gamepad2.cross || Globals.IS_AUTO){
+                    Globals.SAFE_TO_TRANSFER = false;
                     setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
                     if (getSetpointInches() == MIN_HEIGHT){
                         setState(SLOW_DUMP);
@@ -215,12 +220,14 @@ public class LiftSubsystem {
             }
 
             case SLOW_DUMP:
+                Globals.SAFE_TO_TRANSFER = false;
                 if(stateTime.time() > 0.2){
                     setState(DUMPED);
                 }
                 break;
 
             case DUMPED:{
+                Globals.SAFE_TO_TRANSFER = false;
                 if(stateTime.time() > 0.5) {  // was .75
                     setBucketPosition(BucketPositions.HOME);
                     setState(WAIT_BUCKET);
@@ -229,6 +236,7 @@ public class LiftSubsystem {
             }
 
             case WAIT_BUCKET:{
+                Globals.SAFE_TO_TRANSFER = false;
                 // Wait till bucket returned OR In Auto, OR driver starts moving away
                 if((stateTime.time() > 0.75) || Globals.IS_AUTO ||
                    ((Math.abs(Globals.DRIVE_AXIAL) + Math.abs(Globals.DRIVE_LATERAL)) > 0.25)){
@@ -239,6 +247,7 @@ public class LiftSubsystem {
             }
 
             case LOWERING:{
+                Globals.SAFE_TO_TRANSFER = false;
                 if(positionControl.inPosition()){
                     setState(HOME);
                 }

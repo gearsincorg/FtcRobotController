@@ -15,7 +15,7 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 
 @I2cDeviceType
-@DeviceProperties(xmlTag = "OctoQuadPhil", name = "OctoQuad Phil")
+@DeviceProperties(xmlTag = "OctoQuad_v3", name = "OctoQuad v3")
 public class OctoQuad_v3 extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
 {
     byte OCTOQUAD_CHIP_ID = 0x51;
@@ -299,7 +299,7 @@ public class OctoQuad_v3 extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
     @Override
     public String getDeviceName()
     {
-        return "OctoQuadFTC";
+        return "OctoQuad_v3";
     }
 
     enum RegisterType

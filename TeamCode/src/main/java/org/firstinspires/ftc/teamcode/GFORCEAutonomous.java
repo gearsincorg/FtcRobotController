@@ -490,11 +490,10 @@ public class GFORCEAutonomous extends LinearOpMode
 
             intake.setLEDtoAllianceColor();
             telemetry.addLine("\n Touch Play to run Auto");
-            telemetry.addData("GLOBALS", "%s %s", Globals.RC_SWEEP ? "SWEEP" : "NoSWEEP", Globals.RC_END ? "END" : "RUN");
-
             telemetry.update();
         }
 
+        Globals.OCTO_ERRORS = 0;
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
