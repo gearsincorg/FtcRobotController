@@ -45,8 +45,8 @@ public class GFORCEAutonomous extends LinearOpMode
     private final double START_X_SPEC = 14.25;
     private final double START_X_SAMP = -33;
 
-    private final double BASKET_X = -55;
-    private final double BASKET_Y = -55;
+    private final double BASKET_X = -54;
+    private final double BASKET_Y = -54;
 
     // Place all auto builders here!
     //================================================================================================================
@@ -334,24 +334,24 @@ public class GFORCEAutonomous extends LinearOpMode
 
     //================================================================================================================
     private Action collectAndScore_3_Bas_Level1() {
-        Action sample1ToBasket = robot.actionBuilder(new Pose2d(-49, -40, Math.toRadians(90)))
+        Action sample1ToBasket = robot.actionBuilder(new Pose2d(-48.5, -39, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-90))
                 .splineToLinearHeading(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
 
         Action basToSample2 = robot.actionBuilder(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)))
-                .afterTime(0.4, intake.actionLowerIt())
+                .afterTime(0.3, intake.actionLowerIt())
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-58.5, -40, Math.toRadians(90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-58.5, -39, Math.toRadians(90)), Math.toRadians(90))
                 .build();
 
-        Action sample2ToBasket = robot.actionBuilder(new Pose2d(-60, -40, Math.toRadians(90)))
+        Action sample2ToBasket = robot.actionBuilder(new Pose2d(-58.5, -39, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-90))
                 .splineToLinearHeading(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
 
         Action basToSample3 = robot.actionBuilder(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)))
-                .afterTime(0.4, intake.actionLowerIt())
+                .afterTime(0.3, intake.actionLowerIt())
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-56, -33, Math.toRadians(145)), Math.toRadians(90))
                 .build();
@@ -415,7 +415,7 @@ public class GFORCEAutonomous extends LinearOpMode
         Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -33, Math.toRadians(90)))
                 .afterTime(0.8, intake.actionLowerIt())
                 .setTangent(Math.toRadians(-90))
-                .splineToConstantHeading(new Vector2d(-49, -40), Math.toRadians(90), new TranslationalVelConstraint(40.0), new ProfileAccelConstraint(-40,60))
+                .splineToConstantHeading(new Vector2d(-48.5, -39), Math.toRadians(90), new TranslationalVelConstraint(40.0), new ProfileAccelConstraint(-40,60))
                 .build();
 
         return new SequentialAction(
@@ -434,15 +434,15 @@ public class GFORCEAutonomous extends LinearOpMode
         robot.setPose(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)));
 
         Action wallToBasket = robot.actionBuilder(new Pose2d(START_X_SAMP, START_Y, Math.toRadians(90)))
-                .afterTime(0.4, lift.actionSetState(SAMPLE_HELD))  // start lifting on the way to the basket.
+                .afterTime(0.2, lift.actionSetState(SAMPLE_HELD))  // start lifting on the way to the basket.
                 .setTangent(Math.toRadians(135))
                 .splineToLinearHeading(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)), Math.toRadians(-135), new TranslationalVelConstraint(15.0))
                 .build();
 
         Action basketToSamples = robot.actionBuilder(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)))
-                .afterTime(0.4, intake.actionLowerIt())
+                .afterTime(0.1, intake.actionLowerIt())
                 .setTangent(Math.toRadians(45))
-                .splineToLinearHeading(new Pose2d(-49, -40, Math.toRadians(90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-48.5, -39, Math.toRadians(90)), Math.toRadians(90))
                 .build();
 
         return new SequentialAction(
