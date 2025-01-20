@@ -438,7 +438,9 @@ public final class MecanumDrive {
 
             return new PoseVelocity2d(new Vector2d(OQlocalizer.velX_mmS, OQlocalizer.velY_mmS), OQlocalizer.velHeading_radS);
         } else {
-            Globals.OCTO_ERRORS++;
+            if (!OQlocalizer.crcOk) {
+                Globals.OCTO_ERRORS++;
+            }
             return new PoseVelocity2d(new Vector2d(0, 0), 0);
         }
     }
