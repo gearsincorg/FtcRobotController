@@ -219,7 +219,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action subToInspection = robot.actionBuilder(new Pose2d(1, -34, Math.toRadians(135)))
                 .setTangent(Math.toRadians(-40))
-                .splineToLinearHeading(new Pose2d(50, -60, Math.toRadians(90)), 0.0, new TranslationalVelConstraint(65.0), new ProfileAccelConstraint(-100,200))
+                .splineToLinearHeading(new Pose2d(50, -60, Math.toRadians(90)), 0.0, new TranslationalVelConstraint(65.0), new ProfileAccelConstraint(-40,180))
                 .build();
 
 

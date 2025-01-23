@@ -44,6 +44,7 @@ public class ArmSubsystem {
     private final double DEADBAND = 20.0;
 
     private final int CLIPPING_POSITION = 1000;
+    private final int UP_POSITION = 850;
     private final int CLIPPED_POSITON = 100;  //  was 600
     private final int HOME_POSITION = 0;
 
@@ -112,8 +113,10 @@ public class ArmSubsystem {
                 if (grabScore.pressed(myOpMode.gamepad1.right_bumper)){
                     claw.setPosition(CLAW_CLOSED);
                     setState(GRABBING);
-                } else {
-                    //stop();
+                } else if (myOpMode.gamepad1.right_trigger > 0.25) {
+                    setTargetPosition(UP_POSITION);
+                    claw.setPosition(CLAW_CLOSED);
+                    setState(LIFTING);
                 }
                 break;
             }
@@ -131,7 +134,6 @@ public class ArmSubsystem {
                 setState(LIFTING);
                 break;
             }
-
 
             case LIFTING:{
                 if(positionControl.inPosition()){
