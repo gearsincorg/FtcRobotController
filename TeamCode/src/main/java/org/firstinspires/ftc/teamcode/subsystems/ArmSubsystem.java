@@ -281,7 +281,7 @@ public class ArmSubsystem {
         };
     }
 
-    public Action actionClaw(boolean openClaw){
+    public Action actionOpenClaw(boolean openClaw){
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){

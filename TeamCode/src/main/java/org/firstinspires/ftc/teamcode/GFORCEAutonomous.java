@@ -161,6 +161,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action subToAllSamplesPath = robot.actionBuilder(new Pose2d(4, -31, Math.toRadians(90)))
                 .setTangent(Math.toRadians(-60))
+                .afterTime(1.0, arm.actionOpenClaw(false))    // close claw so we don't hit the wall.
                 .splineToConstantHeading(new Vector2d(36, -24), Math.toRadians(90))
                 .splineToConstantHeading(new Vector2d(44, -12), Math.toRadians(0))
 
@@ -233,6 +234,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 subToAllSamplesPath,
 
                 // Pickup and score Specimen 2
+                arm.actionOpenClaw(true),   // open claw if it is closed
                 samplesToSpecimenPath,
                 arm.actionSetState(ArmStates.GRABBING),
                 arm.actionWaitForState(ArmStates.GRABBED),
@@ -285,7 +287,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         return new SequentialAction(
-                arm.actionClaw(true),
+                arm.actionOpenClaw(true),
                 wallToBasket ,
                 lift.actionSetState(SAMPLE_HELD),
                 lift.actionWaitForHomeOrState(LOWERING),
@@ -322,7 +324,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         return new SequentialAction(
-                arm.actionClaw(true),
+                arm.actionOpenClaw(true),
                 wallToBasket ,
                 lift.actionSetState(SAMPLE_HELD),
                 lift.actionWaitForHomeOrState(LOWERING),
@@ -446,7 +448,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         return new SequentialAction(
-                arm.actionClaw(true),
+                arm.actionOpenClaw(true),
                 wallToBasket ,
                 // lift.actionSetState(SAMPLE_HELD),            // Start lift operation
                 lift.actionWaitForHomeOrState(LOWERING),        // Wait til the lift is coming down

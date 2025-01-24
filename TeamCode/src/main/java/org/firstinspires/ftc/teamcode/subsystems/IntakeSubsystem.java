@@ -41,6 +41,7 @@ public class IntakeSubsystem {
     private final double UNJAM_OUT = -0.35;
 
     private final double OFF = 0;
+    private final double WRIST_INIT = 0.35 ;  // just a tiny bit back
     private final double WRIST_IN = 0.39 ; // was 4.3
     private final double WRIST_OUT = 0.67;
     private final double WRIST_DOWN = 0.8;
@@ -128,11 +129,12 @@ public class IntakeSubsystem {
         // Always home in Auto, and sometimes in teleop, if running from a fresh restart
         if (Globals.IS_AUTO || !Globals.SLIDE_HOMED) {
             homeTheSlide();
+            wristIn();
         }
 
         slideIn();
         collectorOff();
-        wristIn();
+
         Globals.RC_END = false;
         Globals.DID_NOT_SWEEP_SAMPLE = false;
 
@@ -434,7 +436,11 @@ public class IntakeSubsystem {
     }
 
     public void wristIn(){
-        setWristPosition(WRIST_IN);
+        if (Globals.IS_AUTO && myOpMode.opModeInInit()) {
+            setWristPosition(WRIST_INIT);
+        } else {
+            setWristPosition(WRIST_IN);
+        }
         wristOut = false;
     }
 
