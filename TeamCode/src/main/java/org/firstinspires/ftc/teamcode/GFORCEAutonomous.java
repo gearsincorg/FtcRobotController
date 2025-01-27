@@ -342,7 +342,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         Action basToSample2 = robot.actionBuilder(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)))
-                .afterTime(0.3, intake.actionLowerIt())
+                .afterTime(0.3, intake.actionIntakeIt())
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-58.5, -39, Math.toRadians(90)), Math.toRadians(90))
                 .build();
@@ -353,7 +353,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         Action basToSample3 = robot.actionBuilder(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)))
-                .afterTime(0.3, intake.actionLowerIt())
+                .afterTime(0.3, intake.actionIntakeIt())
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-56, -33, Math.toRadians(145)), Math.toRadians(90))
                 .build();
@@ -415,7 +415,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         Action subToSample1 = robot.actionBuilder(new Pose2d(-15, -33, Math.toRadians(90)))
-                .afterTime(0.8, intake.actionLowerIt())
+                .afterTime(0.8, intake.actionIntakeIt())
                 .setTangent(Math.toRadians(-90))
                 .splineToConstantHeading(new Vector2d(-48.5, -39), Math.toRadians(90), new TranslationalVelConstraint(40.0), new ProfileAccelConstraint(-40,60))
                 .build();
@@ -442,7 +442,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         Action basketToSamples = robot.actionBuilder(new Pose2d(BASKET_X, BASKET_Y, Math.toRadians(45)))
-                .afterTime(0.1, intake.actionLowerIt())
+                .afterTime(0.1, intake.actionIntakeIt())
                 .setTangent(Math.toRadians(45))
                 .splineToLinearHeading(new Pose2d(-48.5, -39, Math.toRadians(90)), Math.toRadians(90))
                 .build();

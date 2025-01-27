@@ -1313,6 +1313,7 @@ public class OctoQuad_v3 extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
 
             // if it's not correct, try again.
             if(chipId != OCTOQUAD_CHIP_ID) {
+                RobotLog.addGlobalWarningMessage("OctoQuad ID Retry");
                 try {
                     Thread.sleep(100l);
                 }
@@ -1329,6 +1330,7 @@ public class OctoQuad_v3 extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
 
             // check for bad data and try again if not valid
             if ((fw.maj <= 0) || (fw.maj == 0xFF) || (fw.min == 0xFF) || (fw.eng == 0xFF)) {
+                RobotLog.addGlobalWarningMessage("OctoQuad VER Retry");
                 try {
                     Thread.sleep(100l);
                 }

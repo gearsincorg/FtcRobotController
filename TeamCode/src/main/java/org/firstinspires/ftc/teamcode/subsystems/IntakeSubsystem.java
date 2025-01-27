@@ -100,8 +100,7 @@ public class IntakeSubsystem {
     private boolean goingHome = false;
 
     // flags used in auto
-    private boolean autoTranser = false;
-    private boolean autoLower  = false;
+    private boolean autoLower = false;
 
     private Button wristInOut = new Button();
     private Button slideInOut = new Button();
@@ -205,7 +204,7 @@ public class IntakeSubsystem {
     public void runStateMachine() {
         switch (currentState) {
             case INIT: {
-                if (autoLower) {
+                if (autoLower || runIntake.pressed(myOpMode.gamepad2.dpad_down)) {
                     autoLower = false;
                     wristDown();
                     collectorIntake();
@@ -213,10 +212,6 @@ public class IntakeSubsystem {
                 } else if (wristInOut.pressed(myOpMode.gamepad2.left_bumper)) {
                     wristOut();
                     setState(IntakeStates.HOME);
-                } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoTranser) {
-                    wristDown();
-                    collectorIntake();
-                    setState(IntakeStates.INTAKING);
                 } else if (myOpMode.gamepad2.right_bumper) {
                     slideOut();
                     wristOut();
@@ -230,12 +225,8 @@ public class IntakeSubsystem {
             }
 
             case HOME:
-                if (autoLower){
+                 if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoLower) {
                     autoLower = false;
-                    wristDown();
-                    collectorIntake();
-                    setState(IntakeStates.INTAKING);
-                } else if (runIntake.pressed(myOpMode.gamepad2.dpad_down) || autoTranser) {
                     wristDown();
                     collectorIntake();
                     setState(IntakeStates.INTAKING);
@@ -291,8 +282,8 @@ public class IntakeSubsystem {
                 if (gotWrongSample) {
                     collectorEject();
                     setState(IntakeStates.EJECTING_SAMPLE);
-                } else if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoTranser || IMMEDIATE_TRANSFER) {
-                    autoTranser = false;
+                } else if (wristInOut.pressed(myOpMode.gamepad2.left_bumper) || autoLower || IMMEDIATE_TRANSFER) {
+                    autoLower = false;
                     slideIn();  /// NEW !!!!!!
                     setState(IntakeStates.TILT_WRIST_IN);
 
@@ -519,16 +510,6 @@ public class IntakeSubsystem {
     }
 
     public Action actionIntakeIt(){
-        return new Action() {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                autoTranser = true;
-                return false;
-            }
-        };
-    }
-
-    public Action actionLowerIt(){
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
