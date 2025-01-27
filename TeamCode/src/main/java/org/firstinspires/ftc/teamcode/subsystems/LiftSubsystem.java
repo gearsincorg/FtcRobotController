@@ -1,14 +1,14 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.AUTO_WAIT;
-import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.DUMPED;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.DUMPING;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.HOME;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.LIFTING;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.LOWERING;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.RDY_TO_DUMP;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.SAMPLE_HELD;
 import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.SLOW_DUMP;
-import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.WAIT_BUCKET;
+import static org.firstinspires.ftc.teamcode.subsystems.LiftStates.RESETTING_BUCKET;
 
 import androidx.annotation.NonNull;
 import androidx.core.math.MathUtils;
@@ -18,7 +18,6 @@ import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -173,7 +172,6 @@ public class LiftSubsystem {
                 Globals.SAFE_TO_TRANSFER = true;
                 if (Globals.IS_AUTO && Globals.DID_NOT_SWEEP_SAMPLE) {
                     // bypass the scoring process as we don't have a sample
-                    Globals.DID_NOT_SWEEP_SAMPLE = false;
                     setState(LOWERING);
                 } else if(myOpMode.gamepad2.triangle || Globals.IS_AUTO){
                     setSetpointInches(HIGH_BASKET);
@@ -185,7 +183,7 @@ public class LiftSubsystem {
                     setState(LIFTING);
                 } else if(myOpMode.gamepad2.cross){
                     setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
-                    setState(DUMPED);
+                    setState(DUMPING);
                 }
                 break;
             }
@@ -200,12 +198,11 @@ public class LiftSubsystem {
 
             case RDY_TO_DUMP:{
                 if(myOpMode.gamepad2.cross || Globals.IS_AUTO){
-                    Globals.SAFE_TO_TRANSFER = false;
                     setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
                     if (getSetpointInches() == MIN_HEIGHT){
                         setState(SLOW_DUMP);
                     } else {
-                        setState(DUMPED);
+                        setState(DUMPING);
                     }
                 } else if(myOpMode.gamepad2.triangle){
                     setSetpointInches(HIGH_BASKET);
@@ -220,23 +217,21 @@ public class LiftSubsystem {
             }
 
             case SLOW_DUMP:
-                Globals.SAFE_TO_TRANSFER = false;
                 if(stateTime.time() > 0.2){
-                    setState(DUMPED);
+                    setState(DUMPING);
                 }
                 break;
 
-            case DUMPED:{
+            case DUMPING:{
                 Globals.SAFE_TO_TRANSFER = false;
                 if(stateTime.time() > 0.5) {  // was .75
                     setBucketPosition(BucketPositions.HOME);
-                    setState(WAIT_BUCKET);
+                    setState(RESETTING_BUCKET);
                 }
                 break;
             }
 
-            case WAIT_BUCKET:{
-                Globals.SAFE_TO_TRANSFER = false;
+            case RESETTING_BUCKET:{
                 // Wait till bucket returned OR In Auto, OR driver starts moving away
                 if((stateTime.time() > 0.75) || Globals.IS_AUTO ||
                    ((Math.abs(Globals.DRIVE_AXIAL) + Math.abs(Globals.DRIVE_LATERAL)) > 0.25)){
@@ -247,7 +242,6 @@ public class LiftSubsystem {
             }
 
             case LOWERING:{
-                Globals.SAFE_TO_TRANSFER = false;
                 if(positionControl.inPosition()){
                     setState(HOME);
                 }

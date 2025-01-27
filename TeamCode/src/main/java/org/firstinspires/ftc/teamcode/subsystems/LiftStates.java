@@ -7,7 +7,7 @@ public enum LiftStates {
     LIFTING,
     RDY_TO_DUMP,
     SLOW_DUMP,
-    DUMPED,
+    DUMPING,
     LOWERING,
-    WAIT_BUCKET
+    RESETTING_BUCKET
 }
