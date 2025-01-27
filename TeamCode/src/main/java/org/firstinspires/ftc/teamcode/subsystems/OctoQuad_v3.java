@@ -1131,6 +1131,8 @@ public class OctoQuad_v3 extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
         setLocalizerPortY(portY);
         setLocalizerCountsPerMM_X(ticksPerMM_x);
         setLocalizerCountsPerMM_Y(ticksPerMM_y);
+        setLocalizerTcpOffsetMM_X(tcpOffsetMM_X);
+        setLocalizerTcpOffsetMM_Y(tcpOffsetMM_Y);
         setLocalizerImuHeadingScalar(headingScalar);
         setLocalizerVelocityIntervalMS(velocityIntervalMs);
     }
@@ -1308,12 +1310,31 @@ public class OctoQuad_v3 extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
         if(!isInitialized)
         {
             byte chipId = getChipId();
+
+            // if it's not correct, try again.
+            if(chipId != OCTOQUAD_CHIP_ID) {
+                try {
+                    Thread.sleep(100l);
+                }
+                catch(Exception e) {};
+                chipId = getChipId();
+            }
+
             if(chipId != OCTOQUAD_CHIP_ID)
             {
                 RobotLog.addGlobalWarningMessage("OctoQuad does not report correct CHIP_ID value; (got 0x%X; expected 0x%X) this likely indicates I2C comms are not working", chipId, OCTOQUAD_CHIP_ID);
             }
 
             FirmwareVersion fw = getFirmwareVersion();
+
+            // check for bad data and try again if not valid
+            if ((fw.maj <= 0) || (fw.maj == 0xFF) || (fw.min == 0xFF) || (fw.eng == 0xFF)) {
+                try {
+                    Thread.sleep(100l);
+                }
+                catch(Exception e) {};
+                fw = getFirmwareVersion();
+            }
 
             if(fw.maj != SUPPORTED_FW_VERSION_MAJ)
             {

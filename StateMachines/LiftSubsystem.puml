@@ -1,0 +1,45 @@
+@startuml
+
+' Use [*] as starting and ending point.
+' Use --> for arrows.
+
+' optionally, leave out empty state descriptions
+hide empty description
+mainframe Lift Subsystem State Diagram 
+
+state "Home" as HOME
+state "Auto Wait" as AUTO_WAIT
+state "Sample Held" as SAMPLE_HELD
+state "Lifting" as LIFTING
+state "Ready to Dump" as RDY_TO_DUMP
+state "Dumping" as DUMPED
+state "Resetting Bucket" as WAIT_BUCKET
+state "Lowering" as LOWERING
+
+HOME --> AUTO_WAIT : Time > 0.5 && IS_AUTO \n [Reset Encoders]
+HOME --> SAMPLE_HELD : Time > 0.5 && !IS_AUTO \n [Reset Encoders]
+HOME : SAFE_TO_TRANSFER = true
+
+AUTO_WAIT --> SAMPLE_HELD : [SAFE_TO_TRANSFER = true]
+
+SAMPLE_HELD --> LOWERING : IS_AUTO && DID_NOT_SWEEP_SAMPLE \n[DID_NOT_SWEEP_SAMPLE = false]
+SAMPLE_HELD --> LIFTING : IS_AUTO || GP_TRIANGLE \n[Goto HIGH_BASKET, BACK_DUMP_READY]
+SAMPLE_HELD --> LIFTING : GP_SQUARE \n[Goto LOW_BASKET, BACK_DUMP_READY]
+SAMPLE_HELD --> DUMPED : GP_CROSS \n[BACK_DUMP_RELEASE]
+
+LIFTING --> RDY_TO_DUMP : inPosition
+LIFTING : SAFE_TO_TRANSFER = false
+
+RDY_TO_DUMP --> DUMPED : IS_AUTO || GP_CROSS \n [BACK_DUMP_RELEASE]
+RDY_TO_DUMP --> LIFTING : GP_TRIANGLE \n[Goto HIGH_BASKET, BACK_DUMP_READY]
+RDY_TO_DUMP --> LIFTING : GP_SQUARE \n[Goto LOW_BASKET, BACK_DUMP_READY]
+
+DUMPED --> WAIT_BUCKET : Time > 0.5 \n[Bucket HOME]
+DUMPED: SAFE_TO_TRANSFER = false
+
+WAIT_BUCKET --> LOWERING : Time > 0.7 || IS_AUTO || DRIVING \n[Goto MIN_HEIGHT]
+
+LOWERING --> HOME : inPosition
+
+
+@enduml

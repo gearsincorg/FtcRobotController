@@ -32,9 +32,12 @@ public class LiftSubsystem {
 
     // Constants
     public final double MAX_HEIGHT = 46;
-    public final double MIN_HEIGHT = 8.5;
+    public final double MIN_HEIGHT = 8.25;  // Used to seat the lift each cycle.
+
     public final double HIGH_BASKET = 46.0;
-    public final double LOW_BASKET = 31 ;
+    public final double LOW_BASKET  = 31 ;
+    public final double HOME_HEIGHT = 8.5;
+
     private final double HOLD_POWER = 0.2; // 0.075
     private final double HOME_POWER = -0.6;
 
@@ -54,8 +57,6 @@ public class LiftSubsystem {
 
     private DcMotorEx lift;      //motor used to control the lift
     private Servo pitchServo;
-    private Servo yawServo;
-    private Servo holdServo;
 
     // Private Members
     private double  currentPosition = 0;
@@ -81,8 +82,6 @@ public class LiftSubsystem {
         lift.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         lift.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);    // Still Requires motor encoder cables to be hooked up.
         pitchServo = myOpMode.hardwareMap.get(Servo.class, "pitch");
-        yawServo = myOpMode.hardwareMap.get(Servo.class, "yaw");
-        holdServo = myOpMode.hardwareMap.get(Servo.class, "hold");
 
         setBucketPosition(BucketPositions.HOME);
 
@@ -152,19 +151,26 @@ public class LiftSubsystem {
         switch (currentState) {
             case HOME:{
                 Globals.SAFE_TO_TRANSFER = true;
-                if((stateTime.time() > 0.5)) {
+                if((stateTime.time() > 0.4)) {
                     resetEncoders();
                     if (Globals.IS_AUTO) {
                         setState(AUTO_WAIT);
                     } else {
                         setState(SAMPLE_HELD);
                     }
+                } else if((stateTime.time() > 0.2)) {
+                    // Release pressure on lift
+                    setSetpointInches(HOME_HEIGHT);
+                } else {
+                    // Lock lift at bottom
+                    setSetpointInches(MIN_HEIGHT);
                 }
-                break;
+                    break;
             }
 
             case AUTO_WAIT:{
-                Globals.SAFE_TO_TRANSFER = true;
+                // This state is used to wait for Autonomous action to trigger lift.
+                // actionSetState() will be used to jump out of here to SAMPLE_HELD
                 break;
             }
 
@@ -199,7 +205,7 @@ public class LiftSubsystem {
             case RDY_TO_DUMP:{
                 if(myOpMode.gamepad2.cross || Globals.IS_AUTO){
                     setBucketPosition(BucketPositions.BACK_DUMP_RELEASE);
-                    if (getSetpointInches() == MIN_HEIGHT){
+                    if (getSetpointInches() == HOME_HEIGHT){
                         setState(SLOW_DUMP);
                     } else {
                         setState(DUMPING);
@@ -235,7 +241,7 @@ public class LiftSubsystem {
                 // Wait till bucket returned OR In Auto, OR driver starts moving away
                 if((stateTime.time() > 0.75) || Globals.IS_AUTO ||
                    ((Math.abs(Globals.DRIVE_AXIAL) + Math.abs(Globals.DRIVE_LATERAL)) > 0.25)){
-                    setSetpointInches(MIN_HEIGHT);
+                    setSetpointInches(HOME_HEIGHT);
                     setState(LOWERING);
                 }
                break;
@@ -278,8 +284,8 @@ public class LiftSubsystem {
         // do sanity check on setpoint
         if (positionControl.getSetPoint() < MIN_HEIGHT){
             setSetpointInches(MIN_HEIGHT);
-        } else if (positionControl.getSetPoint() > HIGH_BASKET){
-            setSetpointInches(HIGH_BASKET);
+        } else if (positionControl.getSetPoint() > MAX_HEIGHT){
+            setSetpointInches(MAX_HEIGHT);
         }
 
         // Decides if the lift should be homing, or if it is going to the correct position
@@ -305,7 +311,7 @@ public class LiftSubsystem {
             // Controls the outputPower when moving to the set point
             outputPower = positionControl.getOutput(currentPosition);
 
-            if ((outputPower == 0) && (positionControl.getSetPoint() > MIN_HEIGHT)){
+            if ((outputPower == 0) && (positionControl.getSetPoint() > HOME_HEIGHT)){
                 outputPower = HOLD_POWER;
             }
         }
