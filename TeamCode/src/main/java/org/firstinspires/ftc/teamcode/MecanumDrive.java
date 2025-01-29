@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.subsystems.OctoQuad_v3.I2cRecoveryMode.MODE_2_M1_PLUS_SCL_IDLE_ONESHOT_TGL;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -506,6 +508,11 @@ public final class MecanumDrive {
         oq.setLocalizerTcpOffsetMM_Y(Y_OFFSET_FROM_CENTER_MM);
         oq.setLocalizerImuHeadingScalar(OQ_IMU_SCALAR);
         oq.setLocalizerVelocityIntervalMS(25);
+
+        oq.setI2cRecoveryMode(MODE_2_M1_PLUS_SCL_IDLE_ONESHOT_TGL);
+        if (Globals.IS_AUTO) {
+            oq.saveParametersToFlash();
+        }
         oq.resetLocalizer();
     }
 

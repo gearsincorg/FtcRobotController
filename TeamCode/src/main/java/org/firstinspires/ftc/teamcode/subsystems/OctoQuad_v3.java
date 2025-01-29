@@ -132,7 +132,7 @@ public class OctoQuad_v3 extends I2cDeviceSynchDevice<I2cDeviceSynchSimple>
         }
     }
 
-    enum I2cRecoveryMode
+    public enum I2cRecoveryMode
     {
         /**
          * Does not perform any active attempts to recover a wedged I2C bus
