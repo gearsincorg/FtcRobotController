@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
+import org.firstinspires.ftc.teamcode.subsystems.ArmStates;
 import org.firstinspires.ftc.teamcode.subsystems.ArmSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
@@ -33,9 +34,10 @@ import org.firstinspires.ftc.teamcode.subsystems.ProportionalControl;
 @TeleOp(name="GFORCE Teleop", group = "AA")
 public class GFORCETeleop extends LinearOpMode
 {
-    final double SAFE_DRIVE_SPEED   = 0.8 ; // Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_STRAFE_SPEED  = 0.8 ; // Slower usually means more accuracy.  Max value = 1.0
-    final double SAFE_YAW_SPEED     = 0.5 ; // Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_DRIVE_SPEED   = 0.9 ; // Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_STRAFE_SPEED  = 0.9 ; // Slower usually means more accuracy.  Max value = 1.0
+    final double SAFE_YAW_SPEED     = 0.6 ; // Slower usually means more accuracy.  Max value = 1.0
+    final double GRABBING_SPEED     = 0.1 ;
 
     final boolean USE_FIELD_CENTRIC_MODE = true;
 
@@ -138,6 +140,8 @@ public class GFORCETeleop extends LinearOpMode
                     yawController.reset(-90);   // facing to the Right
                 } else if (gamepad1.square) {
                     yawController.reset(-45);   /// NON STANDARD... Facing away from Basket.
+                } else if (gamepad1.cross) {
+                    yawController.reset(35);   /// NON STANDARD... Diagonal scoring angle
                 }
             }
 
@@ -155,6 +159,11 @@ public class GFORCETeleop extends LinearOpMode
                 drive = SAFE_DRIVE_SPEED / 4.0;
             } else if (gamepad1.dpad_down) {
                 drive = -SAFE_STRAFE_SPEED / 4.0;
+            }
+
+            // check to see if we need to drive away from the specimen on the wall.
+            if (arm.inState(ArmStates.GRABBING)) {
+                drive = GRABBING_SPEED;
             }
 
             // Save the current values in globals to share with other subsystems.

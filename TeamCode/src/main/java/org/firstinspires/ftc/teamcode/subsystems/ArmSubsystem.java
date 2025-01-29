@@ -57,6 +57,7 @@ public class ArmSubsystem {
     private int lastPosition = 0;
     private boolean goingHome = false;
     private Button grabScore = new Button();
+    private Button armSafe = new Button();
     private ProportionalControl positionControl = new ProportionalControl(GAIN, ACCEL_LIMIT, OUTPUT_LIMIT, TOLERANCE, DEADBAND, false);
 
     // Members used byt AUTO mode
@@ -113,9 +114,8 @@ public class ArmSubsystem {
                 if (grabScore.pressed(myOpMode.gamepad1.right_bumper)){
                     claw.setPosition(CLAW_CLOSED);
                     setState(GRABBING);
-                } else if (myOpMode.gamepad1.right_trigger > 0.25) {
+                } else if (armSafe.pressed(myOpMode.gamepad1.right_trigger > 0.25)) {
                     setTargetPosition(UP_POSITION);
-                    claw.setPosition(CLAW_CLOSED);
                     setState(LIFTING);
                 }
                 break;
@@ -147,10 +147,13 @@ public class ArmSubsystem {
                     setTargetPosition(CLIPPED_POSITON);
                     autoClip = false;
                     setState(CLIPPING);
-                } else if (myOpMode.gamepad1.right_trigger > 0.25){
-                    setTargetPosition(HOME_POSITION);
-                    claw.setPosition(CLAW_OPEN);
-                    setState(CANCEL);
+                } else if (armSafe.pressed(myOpMode.gamepad1.right_trigger > 0.25)){
+                    if (positionControl.getSetPoint() == UP_POSITION) {
+                        setTargetPosition(CLIPPING_POSITION);
+                    } else {
+                        setTargetPosition(UP_POSITION);
+                    }
+                    setState(LIFTING);
                 }
                 break;
             }
@@ -236,6 +239,10 @@ public class ArmSubsystem {
     }
     public void closeClaw(){
         claw.setPosition(CLAW_CLOSED);
+    }
+
+    public boolean inState(ArmStates state) {
+        return (currentState == state);
     }
 
     //-------------------------------------------------------------------------

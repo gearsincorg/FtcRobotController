@@ -239,7 +239,7 @@ public class LiftSubsystem {
 
             case RESETTING_BUCKET:{
                 // Wait till bucket returned OR In Auto, OR driver starts moving away
-                if((stateTime.time() > 0.75) || Globals.IS_AUTO ||
+                if((stateTime.time() > 0.5) || Globals.IS_AUTO ||
                    ((Math.abs(Globals.DRIVE_AXIAL) + Math.abs(Globals.DRIVE_LATERAL)) > 0.25)){
                     setSetpointInches(HOME_HEIGHT);
                     setState(LOWERING);
@@ -317,6 +317,10 @@ public class LiftSubsystem {
         }
 
         lift.setPower(outputPower);
+    }
+
+    public boolean inState(LiftStates state) {
+        return (currentState == state);
     }
 
     //-------------------------------------------------------------------------

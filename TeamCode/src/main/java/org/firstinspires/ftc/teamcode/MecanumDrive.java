@@ -365,8 +365,8 @@ public final class MecanumDrive {
     }
 
     public Action actionSweep() {
-        final double SWEEP_SPEED = 0.1;
-        final double SWEEP_EDGE  = Math.toRadians(8);
+        final double SWEEP_SPEED = 0.15;
+        final double SWEEP_EDGE  = Math.toRadians(10);
 
         return new Action() {
             boolean needInit   = true;

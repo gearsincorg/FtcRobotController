@@ -50,8 +50,8 @@ public class IntakeSubsystem {
     private final double SERVO_TILT_TIME = 0.65;
 
 
-    private final double SAMP_NOT_COLLECTED_IN_TIME = 1.35;
-    private final double SWEEP_TIMEOUT = 2;
+    private final double SAMP_NOT_COLLECTED_IN_TIME = 1.35;  // attempt without sweeping
+    private final double SWEEP_TIMEOUT = 2.5;  // additional time for sweeping
     private final double EJECT_TIMEOUT = 0.5;
 
     private final int    SLIDE_HOME = 0;
@@ -473,6 +473,10 @@ public class IntakeSubsystem {
 
     public void setCollector(double speed) {
         wheelMotor.setPower(speed);
+    }
+
+    public boolean inState(IntakeStates state) {
+        return (currentState == state);
     }
 
     //-------------------------------------------------------------------------
