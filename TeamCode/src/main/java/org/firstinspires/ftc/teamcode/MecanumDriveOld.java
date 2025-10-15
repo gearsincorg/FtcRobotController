@@ -57,7 +57,6 @@ import java.util.List;
 public final class MecanumDriveOld {
 
     private final boolean SEND_DASHBOARD_PATH = true;
-    private final double US_PER_IN = 25.4;
 
     LinearOpMode myOpMode;
     OctoQuad.LocalizerDataBlock OQlocalizer = new OctoQuad.LocalizerDataBlock();
@@ -71,7 +70,7 @@ public final class MecanumDriveOld {
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
         // drive model parameters
-        public double inPerTick = 0.0392 ;
+        public double inPerTick = 0.0394 ;
         public double lateralInPerTick = inPerTick;
         public double trackWidthTicks = 380;  
 

@@ -142,10 +142,12 @@ public final class TankDrive {
 
         for (DcMotorEx m : leftMotors) {
             m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            m.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
         for (DcMotorEx m : rightMotors) {
             m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             m.setDirection(DcMotorSimple.Direction.REVERSE);
+            m.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
         oq = hardwareMap.get(OctoQuad.class, "octoquad");
@@ -367,7 +369,8 @@ public final class TankDrive {
 
             pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
 
-            return new PoseVelocity2d(new Vector2d(OQlocalizer.velX_mmS, OQlocalizer.velY_mmS), OQlocalizer.velHeading_radS);
+            return new PoseVelocity2d(new Vector2d(mmToInch(OQlocalizer.velX_mmS), mmToInch(OQlocalizer.velY_mmS)),
+                                      OQlocalizer.velHeading_radS);
         } else {
             return new PoseVelocity2d(new Vector2d(0, 0), 0);
         }
@@ -418,9 +421,7 @@ public final class TankDrive {
         final int OQ_PORT_Y = 1;
 
         oq.resetEverything();
-
         oq.setChannelBankConfig(OctoQuad.ChannelBankConfig.BANK1_QUADRATURE_BANK2_PULSE_WIDTH);
-
 
         // Configure the localizer
         oq.setSingleEncoderDirection(OQ_PORT_X, OctoQuad.EncoderDirection.FORWARD);
@@ -460,7 +461,7 @@ public final class TankDrive {
     }
 
     public double getHeadingDeg() {
-        return Math.toDegrees(pose.heading.toDouble());
+        return Math.toDegrees(getHeadingRad());
     }
 
     private double mmToInch(double mm) {
