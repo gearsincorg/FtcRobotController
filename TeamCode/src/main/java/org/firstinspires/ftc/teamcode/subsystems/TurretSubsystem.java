@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -7,9 +11,11 @@ import com.qualcomm.robotcore.util.Range;
 
 public class TurretSubsystem {
 
-    private boolean showTelemetry;
-    private LinearOpMode myOpmode;
-    //private VisionSubsystem visionSubsystem;
+    private boolean showTelemetry = false;
+    private boolean enabled = false;
+    private LinearOpMode myOpMode;
+
+    private VisionSubsystem visionSubsystem;
 
     private final double DEADBAND = 1.0;
     private final double OUTPUT_LIMIT = 0.75;
@@ -23,11 +29,12 @@ public class TurretSubsystem {
     private double turns = 0;
     private boolean resetting = false;
 
-    private DcMotor rotate;
+    private DcMotor aim;
+    private DcMotor shoot;
 
     public TurretSubsystem(LinearOpMode opmode) {
-        myOpmode = opmode;
-        //visionSubsystem = new VisionSubsystem(myOpmode);
+        myOpMode = opmode;
+        visionSubsystem = new VisionSubsystem(myOpMode);
     }
 
     /**
@@ -36,64 +43,85 @@ public class TurretSubsystem {
      */
     public void init(boolean showTelemetry) {
         this.showTelemetry = showTelemetry;
+        this.enabled = true;
 
-        rotate = myOpmode.hardwareMap.get(DcMotor.class, "rotate");
-        rotate.setDirection(DcMotorSimple.Direction.FORWARD);
-        rotate.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        aim = myOpMode.hardwareMap.get(DcMotor.class, "aim");
+        aim.setDirection(DcMotorSimple.Direction.FORWARD);
+        aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        shoot = myOpMode.hardwareMap.get(DcMotor.class, "shoot");
+        shoot.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // initialize the vision subsystem
-        // visionSubsystem.init(true);
+        visionSubsystem.init(true);
     }
 
     public void update(){
-        if (myOpmode.gamepad1.rightBumperWasPressed()) {
+
+        // skip if not initialized
+        if (!enabled) return;
+
+        if (myOpMode.gamepad1.rightBumperWasPressed()) {
             int targetPosition;
 
             if (Math.abs(turns) > 1.0) {
                 resetting = true;
                 if (turns > 0){
-                    targetPosition = rotate.getCurrentPosition() - (int)COUNTS_PER_REVOLUTION;
+                    targetPosition = aim.getCurrentPosition() - (int)COUNTS_PER_REVOLUTION;
                 } else {
-                    targetPosition = rotate.getCurrentPosition() + (int)COUNTS_PER_REVOLUTION;
+                    targetPosition = aim.getCurrentPosition() + (int)COUNTS_PER_REVOLUTION;
                 }
 
-                rotate.setTargetPosition(targetPosition);
-                rotate.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                rotate.setPower(1.0);
+                aim.setTargetPosition(targetPosition);
+                aim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                aim.setPower(1.0);
             }
         }
 
         if (resetting){
-            if (!rotate.isBusy()){
-                rotate.setPower(0.0);
-                rotate.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            if (!aim.isBusy()){
+                aim.setPower(0.0);
+                aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 resetting = false;
             }
         } else {
-            //visionSubsystem.update();
-            //double bearing = visionSubsystem.getBearing();
+            visionSubsystem.update();
+            double bearing = visionSubsystem.getBearing();
             double output = 0;
 
-            //error = -bearing;
+            error = -bearing;
             if (Math.abs(error) > DEADBAND){
-                output = (error * GAIN) - (myOpmode.gamepad1.right_stick_x * 0.15);
+                output = (error * GAIN) - (myOpMode.gamepad1.right_stick_x * 0.15);
                 output = Range.clip(output, -OUTPUT_LIMIT, OUTPUT_LIMIT);
             }
 
             //converts encoder clicks to revolutions
-            turns = rotate.getCurrentPosition() / COUNTS_PER_REVOLUTION;
+            turns = aim.getCurrentPosition() / COUNTS_PER_REVOLUTION;
 
-            rotate.setPower(output);
+            aim.setPower(output);
             if (showTelemetry){
-                myOpmode.telemetry.addData("turret turns", turns);
+                myOpMode.telemetry.addData("turret turns", turns);
             }
 
             if (Math.abs(turns) > WARNING){
-                myOpmode.gamepad1.rumble(500);
+                myOpMode.gamepad1.rumble(500);
             }
         }
+    }
+
+    //-------------------------------------------------------------------------
+    // ACTION  methods
+    //-------------------------------------------------------------------------
+
+    public Action actionUpdate(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                update();
+                return true;
+            }
+        };
     }
 
 }

@@ -20,11 +20,12 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 
 @Autonomous(name="GFORCE Autonomous", group = "AA" ,  preselectTeleOp="GFORCE Teleop")
 public class GFORCEAutonomous extends LinearOpMode
 {
-    TankDrive robot;
+    DriveSubsystem driveSubsystem = new DriveSubsystem( this);
     AutoConfig autoConfig   = new AutoConfig(this);
 
     private Action selectedAuto  = null;
@@ -38,9 +39,9 @@ public class GFORCEAutonomous extends LinearOpMode
     //================================================================================================================
 
     private Action build_TestDrive() {
-        robot.setPose(new Pose2d(START_X, START_Y, Math.toRadians(90)));
+        driveSubsystem.setPose(new Pose2d(START_X, START_Y, Math.toRadians(90)));
 
-        Action testDrive = robot.actionBuilder(new Pose2d(START_X, START_Y, Math.toRadians(90)))
+        Action testDrive = driveSubsystem.actionBuilder(new Pose2d(START_X, START_Y, Math.toRadians(90)))
                 //.splineTo(new Vector2d(4, -32), Math.toRadians(90))
                 .splineTo(new Vector2d(4, -34), Math.toRadians(135), new TranslationalVelConstraint(50.0), new ProfileAccelConstraint(-40,180))
                 .build();
@@ -57,9 +58,8 @@ public class GFORCEAutonomous extends LinearOpMode
     public void runOpMode()
     {
         Globals.IS_AUTO = true;
-        robot = new TankDrive(hardwareMap, new Pose2d(0,0,0), this);
         autoConfig.initialize();
-
+        driveSubsystem.init(new Pose2d(0,0,0), true);
         selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);  // build the current auto sequence
 
         // Wait for driver to press start
@@ -101,7 +101,7 @@ public class GFORCEAutonomous extends LinearOpMode
             }
         }
 
-        Globals.LAST_POSE = new Pose2d(0,0, robot.getPose().heading.toDouble()-(Math.PI/2)) ;
+        Globals.LAST_POSE = new Pose2d(0,0, driveSubsystem.getPose().heading.toDouble()-(Math.PI/2)) ;
     }
 
     /**

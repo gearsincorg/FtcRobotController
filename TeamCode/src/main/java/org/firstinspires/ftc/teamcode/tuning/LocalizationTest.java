@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.Drawing;
-import org.firstinspires.ftc.teamcode.TankDrive;
+import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 
 @TeleOp(name="localization test", group="Linear OpMode")
 
@@ -19,7 +19,8 @@ public class LocalizationTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        TankDrive drive = new TankDrive(hardwareMap, new Pose2d(0, 0, 0), this);
+        DriveSubsystem drive = new DriveSubsystem( this);
+        drive.init(new Pose2d(0, 0, 0), true);
 
         waitForStart();
 

@@ -16,17 +16,17 @@ import java.util.concurrent.TimeUnit;
 
 public class VisionSubsystem {
 
+    private boolean showTelemetry = false;
+    private boolean enabled = false;
+    private LinearOpMode myOpmode;
+
     private VisionPortal visionPortal = null;        // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
-    LinearOpMode myOpmode;
 
     private int     myExposure  ;
     private int     minExposure ;
-    private int     maxExposure ;
     private int     myGain      ;
-    private int     minGain ;
     private int     maxGain ;
-    private boolean showTelemetry;
     private double  range   = 0;
     private double  bearing = 0;
 
@@ -35,11 +35,12 @@ public class VisionSubsystem {
     }
 
     public void init (boolean showTelemetry){
-
+        this.enabled = true;
         this.showTelemetry = showTelemetry;
 
         // Initialize the Apriltag Detection process
         initAprilTag();
+
         // Establish Min and Max Gains and Exposure.  Then set a low exposure with high gain
         getCameraSetting();
         myExposure = Math.min(5, minExposure);
@@ -48,6 +49,9 @@ public class VisionSubsystem {
     }
 
     public void update() {
+
+        // skip if not initialized
+        if (!enabled) return;
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         myOpmode.telemetry.addData("# AprilTags Detected", currentDetections.size());
@@ -74,9 +78,12 @@ public class VisionSubsystem {
      * Initialize the AprilTag processor.
      */
     private void initAprilTag() {
+
+        // skip if not initialized
+        if (!enabled) return;
+
         // Create the AprilTag processor by using a builder.
         aprilTag = new AprilTagProcessor.Builder().build();
-
         aprilTag.setDecimation(3);
 
         // Create the WEBCAM vision portal by using a builder.
@@ -89,6 +96,10 @@ public class VisionSubsystem {
     }
 
     private void waitForCamera() {
+
+        // skip if not initialized
+        if (!enabled) return;
+
         // Wait for the camera to be open
         if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
             myOpmode.telemetry.addData("Camera", "Waiting");
@@ -101,16 +112,14 @@ public class VisionSubsystem {
         }
     }
 
-    /*
-    Manually set the camera gain and exposure.
-    Can only be called AFTER calling initAprilTag();
-    Returns true if controls are set.
- */
-    private boolean    setManualExposure(int exposureMS, int gain) {
+    /**
+        Manually set the camera gain and exposure.
+        Can only be called AFTER calling initAprilTag();
+        Returns true if controls are set.
+     */
+    private void  setManualExposure(int exposureMS, int gain) {
         // Ensure Vision Portal has been setup.
-        if (visionPortal == null) {
-            return false;
-        }
+        if (visionPortal == null)  return;
 
         // Wait for the camera to be open
         waitForCamera();
@@ -130,21 +139,16 @@ public class VisionSubsystem {
             GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
             gainControl.setGain(gain);
             myOpmode.sleep(20);
-            return (true);
-        } else {
-            return (false);
         }
     }
 
-    /*
+    /**
         Read this camera's minimum and maximum Exposure and Gain settings.
         Can only be called AFTER calling initAprilTag();
      */
     private void getCameraSetting() {
         // Ensure Vision Portal has been setup.
-        if (visionPortal == null) {
-            return;
-        }
+        if (visionPortal == null) return;
 
         // Wait for the camera to be open
         waitForCamera();
@@ -153,10 +157,8 @@ public class VisionSubsystem {
         if (!myOpmode.isStopRequested()) {
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
             minExposure = (int)exposureControl.getMinExposure(TimeUnit.MILLISECONDS) + 1;
-            maxExposure = (int)exposureControl.getMaxExposure(TimeUnit.MILLISECONDS);
 
             GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
-            minGain = gainControl.getMinGain();
             maxGain = gainControl.getMaxGain();
         }
     }

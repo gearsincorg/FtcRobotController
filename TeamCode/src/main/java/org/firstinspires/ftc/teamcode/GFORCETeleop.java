@@ -19,7 +19,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ProportionalControl;
+import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
 /*
  * This OpMode illustrates a teleop OpMode for an Omni robot using Essential Mecanum functions.
@@ -33,12 +38,12 @@ public class GFORCETeleop extends LinearOpMode
     final double SAFE_DRIVE_SPEED   = 0.9 ; // Slower usually means more accuracy.  Max value = 1.0
     final double SAFE_YAW_SPEED     = 0.6 ; // Slower usually means more accuracy.  Max value = 1.0
 
-
     private static final double YAW_GAIN            = 0.02;    // Strength of Yaw position control 0.018
     private static final double YAW_ACCEL           = 3.0;     // Acceleration limit.  Percent Power change per second.  1.0 = 0-100% power in 1 sec.
     private static final double YAW_TOLERANCE       = 1.0;     // Controller is is "inPosition" if position error is < +/- this amount
     private static final double YAW_DEADBAND        = 0.25;    // Error less than this causes zero output.  Must be smaller than DRIVE_TOLERANCE
     private static final double YAW_MAX_AUTO        = 0.6;     // "default" Maximum Yaw power limit during autonomous
+    private static final double STOPPED_RATE        = 0.5;     // degrees per second rate to lock in current heading
 
     // local parameters
     ElapsedTime stopTime   = new ElapsedTime();  // Use for timeouts.
@@ -52,16 +57,20 @@ public class GFORCETeleop extends LinearOpMode
     // Private Members
 
     // get an instance of each of the subsystems
-    TankDrive  robot   ;
+    //DriveSubsystem robot   ;
     AutoConfig autoConfig   = new AutoConfig(this);
+
+    // Declare OpMode members.
+    private DriveSubsystem     driveSubsystem     = new DriveSubsystem(this);
+    private TurretSubsystem    turretSubsystem    = new TurretSubsystem(this);
+    private SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
+    private IntakeSubsystem    intakeSubsystem    = new IntakeSubsystem(this);
+
 
     @Override public void runOpMode()
     {
-        telemetry.setMsTransmissionInterval(50);
-
         Globals.IS_AUTO = false;
 
-        robot     = new TankDrive(hardwareMap, new Pose2d(0, 0, 0), this);
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         autoConfig.initialize();
 
@@ -73,19 +82,22 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         // Initialize the drive hardware & Turn on telemetry
+        driveSubsystem.init(new Pose2d(0, 0, 0),true);
+        turretSubsystem.init(true);
+        spindexerSubsystem.init(true);
+        intakeSubsystem.init(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {
             telemetry.addData(">", "Touch Play to drive");
 
             // Read and display sensor data
-            robot.updatePoseEstimate();
+            driveSubsystem.updatePoseEstimate();
             telemetry.update();
         }
 
         // Reset pose and mechanisms
-        robot.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
-
+        driveSubsystem.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
         Globals.OCTO_ERRORS = 0;
 
         while (opModeIsActive())
@@ -98,110 +110,34 @@ public class GFORCETeleop extends LinearOpMode
             }
 
             // update the robot's position based on the odometry pods.
-            robot.updatePoseEstimate();
-            Globals.LAST_POSE = robot.getPose();
+            driveSubsystem.updatePoseEstimate();
+            Globals.LAST_POSE = driveSubsystem.getPose();
 
-            if (gamepad1.touchpad || gamepad1.back ) {  // Let the driver reset the heading to one of the 4 ordinals.
-                if (gamepad1.triangle) {
-                    setHeadingDeg(0);
-                } else if (gamepad1.circle) {
-                    setHeadingDeg(-90);
-                } else if (gamepad1.cross) {
-                    setHeadingDeg(180);
-                } else if (gamepad1.square) {
-                    setHeadingDeg(90);
-                }
-            } else {
-                if (gamepad1.triangle) { // Let the driver change the setpoint
-                    yawController.reset(0);     // Facing away from driver
-                } else if (gamepad1.circle) {
-                    yawController.reset(-90);   // facing to the Right
-                } else if (gamepad1.square) {
-                    yawController.reset(-45);   /// NON STANDARD... Facing away from Basket.
-                } else if (gamepad1.cross) {
-                    yawController.reset(35);   /// NON STANDARD... Diagonal scoring angle
-                }
-            }
+            // use the smart manual drive feature of the DriveSubsystem
+            driveSubsystem.smartDrive();
 
-            // read joystick values and scale according to limits set at top of this file
-            double drive  = -lessSensitive(gamepad1.left_stick_y) * SAFE_DRIVE_SPEED;      //  Fwd/back on left stick
-            double yaw    = -lessSensitive(gamepad1.right_stick_x) * SAFE_YAW_SPEED;       //  Rotate on right stick
-
-            //  For special conditions, Use the DPAD to make slow-mo orthogonal motions.  Adjust the divider to your needs.
-            if (gamepad1.dpad_up) {
-                drive = SAFE_DRIVE_SPEED / 4.0;
-                fieldCentric = false;
-            } else if (gamepad1.dpad_down) {
-                drive = -SAFE_DRIVE_SPEED / 4.0;
-                fieldCentric = false;
-            }
-
-            // Save the current values in globals to share with other subsystems.
-            Globals.DRIVE_AXIAL   = drive;
-            Globals.DRIVE_YAW     = yaw;
-
-            // This is where we keep the robot heading locked so it doesn't turn while driving or strafing in a straight line.
-            headingDeg = Math.toDegrees(robot.getPose().heading.toDouble());
-            turnrate = robot.getTurnRateDPS();
-
-            // Is the driver turning the robot, or should it hold its heading?
-            if (Math.abs(yaw) > 0.05) {
-                // driver is commanding robot to turn, so turn off auto heading.
-                autoHeading = false;
-            } else {
-                // If we are not already locked, wait for robot to stop rotating (<2 deg per second) and then lock-in the current heading.
-                if (!autoHeading && Math.abs(turnrate) < 2.0) {
-                    yawController.reset(headingDeg);  // Lock in the current heading
-                    autoHeading = true;
-                }
-            }
-
-            // If auto heading is on, override manual yaw with the value generated by the heading controller.
-            if (autoHeading) {
-                yaw = yawController.getOutput(headingDeg);
-            }
-
-
-            //  Drive the wheels based on the desired axis motions
-            robot.setDrivePowers(new PoseVelocity2d(
-                    robotOrFieldCentric,
-                    yaw
-            ));
 
             telemetry.update();
 
             // Update the dashboard.
             TelemetryPacket packet = new TelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
-            Drawing.drawRobot(packet.fieldOverlay(), robot.getPose());
+            Drawing.drawRobot(packet.fieldOverlay(), driveSubsystem.getPose());
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
         }
 
         // tell AUTO to home next time
     }
 
+    /**
+     * Set a new heading for the robot in degrees
+     * @param heading
+     */
     void setHeadingDeg(double heading) {
-        robot.setPose(new Pose2d(robot.getPose().position.x, robot.getPose().position.y, Math.toRadians(heading)));
+        driveSubsystem.setPose(new Pose2d(driveSubsystem.getPose().position.x, driveSubsystem.getPose().position.y, Math.toRadians(heading)));
         yawController.reset(heading);
     }
 
-    // worker class to rotate vectors
-    class RotateVector {
-        Vector2d rotated;
-        double x;
-        double y;
-
-        // Constructor
-        public RotateVector(Vector2d vector, double angleR) {
-            x = vector.x * Math.cos(angleR) - vector.y * Math.sin(angleR);
-            y = vector.x * Math.sin(angleR) + vector.y * Math.cos(angleR);
-            rotated = new Vector2d(x,y);
-        }
-    }
-
-    public double lessSensitive(double joystick) {
-        return (joystick * joystick * Math.signum(joystick));
-    }
 }
 
 

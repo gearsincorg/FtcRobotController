@@ -2,6 +2,10 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import android.graphics.Color;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -14,8 +18,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 public class SpindexerSubsystem {
 
-    private boolean showTelemetry;
-    LinearOpMode myOpmode;
+    private boolean showTelemetry = false;
+    private boolean enabled = false;
+    private LinearOpMode myOpMode;
+
     private DcMotor shooter;
     private Servo engage;
     private NormalizedColorSensor color;
@@ -36,7 +42,7 @@ public class SpindexerSubsystem {
     private final ArtifactColor[] slotColors = new ArtifactColor[3];
 
     public SpindexerSubsystem(LinearOpMode opmode) {
-        myOpmode = opmode;
+        myOpMode = opmode;
     }
 
     /**
@@ -45,17 +51,18 @@ public class SpindexerSubsystem {
      */
     public void init(boolean showTelemetry) {
         this.showTelemetry = showTelemetry;
+        this.enabled = true;
 
-        shooter = myOpmode.hardwareMap.get(DcMotor.class, "shooter");
+        shooter = myOpMode.hardwareMap.get(DcMotor.class, "shooter");
         shooter.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        engage = myOpmode.hardwareMap.get(Servo.class, "engage");
+        engage = myOpMode.hardwareMap.get(Servo.class, "engage");
         engage.setPosition(0.0);
 
-        color = myOpmode.hardwareMap.get(ColorRangeSensor.class, "color");
+        color = myOpMode.hardwareMap.get(ColorRangeSensor.class, "color");
         color.setGain(10);
 
-        magnet = myOpmode.hardwareMap.get(DigitalChannel.class, "magnet");
+        magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "magnet");
         magnet.setMode(DigitalChannel.Mode.INPUT);
 
         spindexerZero();
@@ -65,6 +72,9 @@ public class SpindexerSubsystem {
     }
 
     public void update() {
+        // skip if not initialized
+        if (!enabled) return;
+
         currentColor = ArtifactColor.UNKNOWN;
 
         spindexerAngle = (int)(shooter.getCurrentPosition() / COUNTS_PER_REVOLUTION * 360) % 360;
@@ -92,23 +102,23 @@ public class SpindexerSubsystem {
         }
 
         if (showTelemetry) {
-            myOpmode.telemetry.addData("Spindexer Angle", spindexerAngle);
+            myOpMode.telemetry.addData("Spindexer Angle", spindexerAngle);
 
-            myOpmode.telemetry.addLine()
+            myOpMode.telemetry.addLine()
                     .addData("Slot 0", "%s", slotColors[0])
                     .addData("Slot 1", "%s", slotColors[1])
                     .addData("Slot 2", "%s", slotColors[2]);
 
-            myOpmode.telemetry.addData("Current color", currentColor);
+            myOpMode.telemetry.addData("Current color", currentColor);
 
-            myOpmode.telemetry.addData("magnet", magnet.getState());
+            myOpMode.telemetry.addData("magnet", magnet.getState());
 
-            myOpmode.telemetry.addData("Current Segment", currentSegment);
+            myOpMode.telemetry.addData("Current Segment", currentSegment);
 
-            myOpmode.telemetry.addData("Current Slot", currentSlot);
+            myOpMode.telemetry.addData("Current Slot", currentSlot);
         }
 
-        if (myOpmode.gamepad1.dpad_up) {
+        if (myOpMode.gamepad1.dpad_up) {
             engage.setPosition(1.0);
         } else {
             engage.setPosition(0.0);
@@ -117,13 +127,16 @@ public class SpindexerSubsystem {
 
     //Homes the Spindexer during init
     public void spindexerZero(){
+        // skip if not initialized
+        if (!enabled) return;
+
         isHomed = false;
         shooter.setPower(0.1);
 
         // wait until it detects the magnet
-        while (myOpmode.opModeInInit() && magnet.getState()){
-            myOpmode.telemetry.addData("magnet", magnet.getState());
-            myOpmode.telemetry.update();
+        while (myOpMode.opModeInInit() && magnet.getState()){
+            myOpMode.telemetry.addData("magnet", magnet.getState());
+            myOpMode.telemetry.update();
         }
 
         shooter.setPower(0.0);
@@ -131,6 +144,24 @@ public class SpindexerSubsystem {
     }
 
     public void rotate(){
+        // skip if not initialized
+        if (!enabled) return;
+
         shooter.setPower(0.15);
     }
+
+    //-------------------------------------------------------------------------
+    // ACTION  methods
+    //-------------------------------------------------------------------------
+
+    public Action actionUpdate(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                update();
+                return true;
+            }
+        };
+    }
+
 }
