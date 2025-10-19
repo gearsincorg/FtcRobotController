@@ -82,10 +82,10 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         // Initialize the drive hardware & Turn on telemetry
-        driveSubsystem.init(new Pose2d(0, 0, 0),true);
-        turretSubsystem.init(true);
+        //driveSubsystem.init(new Pose2d(0, 0, 0),true);
+        //turretSubsystem.init(true);
         spindexerSubsystem.init(true);
-        intakeSubsystem.init(true);
+        //intakeSubsystem.init(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -93,6 +93,7 @@ public class GFORCETeleop extends LinearOpMode
 
             // Read and display sensor data
             driveSubsystem.updatePoseEstimate();
+            spindexerSubsystem.update();
             telemetry.update();
         }
 
@@ -111,12 +112,10 @@ public class GFORCETeleop extends LinearOpMode
 
             // update the robot's position based on the odometry pods.
             driveSubsystem.updatePoseEstimate();
-            Globals.LAST_POSE = driveSubsystem.getPose();
+            spindexerSubsystem.update();
 
             // use the smart manual drive feature of the DriveSubsystem
             driveSubsystem.smartDrive();
-
-
             telemetry.update();
 
             // Update the dashboard.

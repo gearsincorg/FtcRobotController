@@ -7,16 +7,15 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class EmptySubsystem {
 
     private boolean showTelemetry;
     LinearOpMode myOpMode;
-    boolean      enabled = false;
-
-    public EmptySubsystem(LinearOpMode opmode) {
-        myOpMode = opmode;
-    }
+    boolean enabled = false;
+    private ElapsedTime stateTime       = new ElapsedTime();
+    // private EmptyStates  currentState    = INIT;
 
     /**
      * Initialize the Subsystem by creating hardware devices.
@@ -32,6 +31,14 @@ public class EmptySubsystem {
         // skip if not initialized
         if (!enabled) return;
     }
+
+    /*
+    public void setState (EmptyStates newState){
+        currentState = newState;
+        stateTime.reset();
+    }
+    */
+
 
     //-------------------------------------------------------------------------
     // ACTION  methods

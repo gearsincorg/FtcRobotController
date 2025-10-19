@@ -495,6 +495,8 @@ public final class DriveSubsystem
      */
     public PoseVelocity2d updatePoseEstimate() {
 
+        if (oq == null) return new PoseVelocity2d(new Vector2d(0, 0), 0);
+
         oq.readLocalizerData(OQlocalizer);
         if (OQlocalizer.isDataValid()) {
 
@@ -502,6 +504,7 @@ public final class DriveSubsystem
                     mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), Math.toDegrees(OQlocalizer.heading_rad));
 
             pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
+            Globals.LAST_POSE = pose;
 
             return new PoseVelocity2d(new Vector2d(mmToInch(OQlocalizer.velX_mmS), mmToInch(OQlocalizer.velY_mmS)),
                                       OQlocalizer.velHeading_radS);
@@ -583,7 +586,9 @@ public final class DriveSubsystem
     }
 
     public void setPose (Pose2d newPose) {
-        oq.setLocalizerPose(inchToMm(newPose.position.x), inchToMm(newPose.position.y), (float)newPose.heading.toDouble());
+        if (oq != null) {
+            oq.setLocalizerPose(inchToMm(newPose.position.x), inchToMm(newPose.position.y), (float) newPose.heading.toDouble());
+        }
         pose = newPose;
     }
 
