@@ -34,7 +34,6 @@ public class SpindexerSubsystem {
     private SpindexerStates currentState    = INIT;
 
     private DcMotor spinner;
-    private DcMotor shooter;
     private Servo fire;
 
     private NormalizedColorSensor color;
@@ -75,10 +74,6 @@ public class SpindexerSubsystem {
     public void init(boolean showTelemetry) {
         this.showTelemetry = showTelemetry;
         this.enabled = true;
-
-        shooter = myOpMode.hardwareMap.get(DcMotor.class, "shooter");
-        shooter.setDirection(DcMotor.Direction.FORWARD);
-        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         spinner = myOpMode.hardwareMap.get(DcMotor.class, "spinner");
         spinner.setDirection(DcMotor.Direction.FORWARD);

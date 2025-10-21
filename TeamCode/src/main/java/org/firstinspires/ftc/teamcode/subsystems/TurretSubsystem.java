@@ -50,11 +50,11 @@ public class TurretSubsystem {
         aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        shoot = myOpMode.hardwareMap.get(DcMotor.class, "shoot");
+        shoot = myOpMode.hardwareMap.get(DcMotor.class, "shooter");
         shoot.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // initialize the vision subsystem
-        visionSubsystem.init(true);
+        // visionSubsystem.init(true);
     }
 
     public void update(){

@@ -31,19 +31,24 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action selectedAuto  = null;
     private int lastSelectedAuto = -1;
 
-    private final double START_X = 0;
-    private final double START_Y = 0;
+    private final double START_X = 62;
+    private final double START_Y = 16;
+    private final double START_H = Math.toRadians(180);
 
 
     // Place all auto builders here!
     //================================================================================================================
 
     private Action build_TestDrive() {
-        driveSubsystem.setPose(new Pose2d(START_X, START_Y, Math.toRadians(90)));
+        driveSubsystem.setPose(new Pose2d(START_X, START_Y, START_H));
 
-        Action testDrive = driveSubsystem.actionBuilder(new Pose2d(START_X, START_Y, Math.toRadians(90)))
-                //.splineTo(new Vector2d(4, -32), Math.toRadians(90))
-                .splineTo(new Vector2d(4, -34), Math.toRadians(135), new TranslationalVelConstraint(50.0), new ProfileAccelConstraint(-40,180))
+        Action testDrive = driveSubsystem.actionBuilder(new Pose2d(START_X, START_Y, START_H))
+                .splineTo(new Vector2d(0, 54), Math.toRadians(90))
+                .waitSeconds(1)
+                .setReversed(true)
+                .splineTo(new Vector2d(-24, 24), Math.toRadians(180))
+                .setReversed(false)
+                .splineTo(new Vector2d(START_X, START_Y), Math.toRadians(0))
                 .build();
 
         return new SequentialAction(
@@ -91,6 +96,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 telemetry.addData("AUTO MODE",  "%s", autoConfig.autoArray[autoConfig.autoOptions.autoMode]);
                 telemetry.addData("COUNTDOWN",  "%d  %d  %d  %d", sec, sec, sec, sec);
                 telemetry.update();
+                sleep(1000);
             }
 
             if (selectedAuto != null) {
@@ -101,7 +107,7 @@ public class GFORCEAutonomous extends LinearOpMode
             }
         }
 
-        Globals.LAST_POSE = new Pose2d(0,0, driveSubsystem.getPose().heading.toDouble()-(Math.PI/2)) ;
+        Globals.LAST_POSE = driveSubsystem.getPose() ;
     }
 
     /**

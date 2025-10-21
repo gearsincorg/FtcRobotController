@@ -67,31 +67,31 @@ public final class DriveSubsystem
     private double      headingSetpointDeg = 0;
 
     public static class Params {
-        // drive model parameters
-        public double inPerTick = 0;
-        public double trackWidthTicks = 0;
+        // drive model parameters (Tick is 1 mm)
+        public double inPerTick       = 0.0392;  // approx
+        public double trackWidthTicks = 350;     // approx
 
-        // feedforward parameters (in tick units)
-        public double kS = 0.300;
-        public double kV = 0.006;
-        public double kA = 0.001;
+        // feedforward parameters (in tick (mm) units)
+        public double kS = 0.00;  // was 0.3
+        public double kV = 0.006;  // was 0.006
+        public double kA = 0.00;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 50;
+        public double maxWheelVel     =  40;
         public double minProfileAccel = -50;
-        public double maxProfileAccel = 150;
+        public double maxProfileAccel = 100;
 
         // turn profile parameters (in radians)
-        public double maxAngVel = Math.PI; // shared with path
-        public double maxAngAccel = Math.PI * 2;
+        public double maxAngVel   = Math.PI; // shared with path
+        public double maxAngAccel = Math.PI * 4;
 
         // path controller gains
-        public double ramseteZeta = 0.7; // in the range (0, 1)
-        public double ramseteBBar = 2.0; // positive
+        public double ramseteBBar = 2.0; // Like P gain (was 2)
+        public double ramseteZeta = 0.8; // in the range (0, 1)  was 0.7
 
         // turn controller gains
-        public double turnGain = 6.0;
-        public double turnVelGain = 0.0;
+        public double turnGain    = 4.0;  // was 4
+        public double turnVelGain = 0.0;  // was 0
     }
 
     public static Params PARAMS = new Params();
@@ -106,6 +106,15 @@ public final class DriveSubsystem
     static final double MIN_ROTATE          = 1.0 ;
     static final double RAD2DEG             = 180/Math.PI;
     static final double INCH2MM             = 2.54;
+
+    // OctoQuad constants
+    final float TICKS_PER_MM = 19.89f;
+    final float X_OFFSET_FROM_CENTER_MM =   80.0f;
+    final float Y_OFFSET_FROM_CENTER_MM =  185.0f;
+    final float OQ_IMU_SCALAR = (float)(360.0/348.66);
+    final int OQ_PORT_X = 0;
+    final int OQ_PORT_Y = 1;
+
 
     public final TankKinematics kinematics = new TankKinematics(PARAMS.inPerTick * PARAMS.trackWidthTicks);
 
@@ -495,16 +504,15 @@ public final class DriveSubsystem
      */
     public PoseVelocity2d updatePoseEstimate() {
 
-        if (oq == null) return new PoseVelocity2d(new Vector2d(0, 0), 0);
-
         oq.readLocalizerData(OQlocalizer);
         if (OQlocalizer.isDataValid()) {
 
-            myOpMode.telemetry.addData("X:Y:H in,Deg", "%4.1f %4.1f %4.0f",
+            myOpMode.telemetry.addData("ODO", "Axial %d, Lateral %d", oq.readSinglePosition_Caching(0), oq.readSinglePosition_Caching(1));
+
+            myOpMode.telemetry.addData("X:Y:H inch,Deg", "%4.1f  %4.1f  %4.0f",
                     mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), Math.toDegrees(OQlocalizer.heading_rad));
 
             pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
-            Globals.LAST_POSE = pose;
 
             return new PoseVelocity2d(new Vector2d(mmToInch(OQlocalizer.velX_mmS), mmToInch(OQlocalizer.velY_mmS)),
                                       OQlocalizer.velHeading_radS);
@@ -549,16 +557,7 @@ public final class DriveSubsystem
     private void intializeOctoQuad(OctoQuad oq) {
 
         //  exit if oq already initialized
-        if (oq != null) return;
-
-        // X_OFFSET_FROM_CENTER_MM is how sideways from the center of the robot is the X (forward) pod? Left increases
-        // Y_OFFSET_FROM_CENTER_MM is how far forward from the center of the robot is the Y (Strafe) pod? forward increases
-        final float TICKS_PER_MM = 19.89f;
-        final float X_OFFSET_FROM_CENTER_MM = -27.0f;
-        final float Y_OFFSET_FROM_CENTER_MM =  25.8f;
-        final float OQ_IMU_SCALAR = (float)(360.0/343.4);
-        final int OQ_PORT_X = 0;
-        final int OQ_PORT_Y = 1;
+        if (oq == null) return;
 
         oq.resetEverything();
         oq.setChannelBankConfig(OctoQuad.ChannelBankConfig.BANK1_QUADRATURE_BANK2_PULSE_WIDTH);
@@ -574,11 +573,13 @@ public final class DriveSubsystem
         oq.setLocalizerTcpOffsetMM_X(X_OFFSET_FROM_CENTER_MM);
         oq.setLocalizerTcpOffsetMM_Y(Y_OFFSET_FROM_CENTER_MM);
         oq.setLocalizerImuHeadingScalar(OQ_IMU_SCALAR);
-        oq.setLocalizerVelocityIntervalMS(25);
+        oq.setLocalizerVelocityIntervalMS(50);
 
         oq.setI2cRecoveryMode(MODE_2_M1_PLUS_SCL_IDLE_ONESHOT_TGL);
-        oq.saveParametersToFlash();
         oq.resetLocalizerAndCalibrateIMU();
+        oq.resetSinglePosition(0);
+        oq.resetSinglePosition(1);
+        oq.saveParametersToFlash();
     }
 
     public double getTurnRateDPS() {
@@ -586,9 +587,7 @@ public final class DriveSubsystem
     }
 
     public void setPose (Pose2d newPose) {
-        if (oq != null) {
-            oq.setLocalizerPose(inchToMm(newPose.position.x), inchToMm(newPose.position.y), (float) newPose.heading.toDouble());
-        }
+        oq.setLocalizerPose(inchToMm(newPose.position.x), inchToMm(newPose.position.y), (float)newPose.heading.toDouble());
         pose = newPose;
     }
 
