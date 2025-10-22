@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.subsystems;
+package org.firstinspires.ftc.teamcode.auxtools;
 
 import androidx.annotation.NonNull;
 
@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class SubsystemBase {
-    LinearOpMode    myOpMode;
-    StateBase       currentState;
+    public LinearOpMode     myOpMode;
+    public StateBase        currentState;
     boolean         showTelemetry = false;
     boolean         subsystemEnabled = false;
     ElapsedTime     stateTime = new ElapsedTime();

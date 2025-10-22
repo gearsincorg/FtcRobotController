@@ -4,26 +4,27 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-public class IntakeSubsystem {
+import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
-    private boolean showTelemetry = false;
-    private boolean enabled = false;
-    private LinearOpMode myOpMode;
-    private DcMotor intake;
+public class IntakeSubsystem extends SubsystemBase {
 
-    private final double INTAKE_POWER = 0.5;
-
-    public IntakeSubsystem(LinearOpMode opmode) {
-        myOpMode = opmode;
+    public IntakeSubsystem(LinearOpMode myOpMode) {
+        super(myOpMode);
     }
 
-    /**
-     * Initialize the Subsystem by creating hardware devices.
-     * @param showTelemetry
-     */
+    // subsystem devices
+    private DcMotor intake;
+
+    // Subsystem Speed/Power constants
+    private final double INTAKE_POWER = 0.5;
+
+    // Servo positions
+
+    // General Subsystem Members
+
+    @Override
     public void init(boolean showTelemetry) {
-        this.showTelemetry = showTelemetry;
-        this.enabled = true;
+        super.init(showTelemetry);
 
         intake = myOpMode.hardwareMap.get(DcMotor.class, "intake");
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -31,10 +32,8 @@ public class IntakeSubsystem {
         intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    public void update(){
-        // skip if not initialized
-        if (!enabled) return;
-
+    @Override
+    public void runStateMachine(){
         if (myOpMode.gamepad1.dpadUpWasPressed()){
             intake.setPower(INTAKE_POWER);
         } else {

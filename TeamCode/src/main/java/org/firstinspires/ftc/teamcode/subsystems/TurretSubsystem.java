@@ -1,49 +1,42 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.Range;
 
-public class TurretSubsystem {
+import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
-    private boolean showTelemetry = false;
-    private boolean enabled = false;
-    private LinearOpMode myOpMode;
+public class TurretSubsystem extends SubsystemBase {
 
+    public TurretSubsystem(LinearOpMode myOpMode) {
+        super(myOpMode);
+    }
+
+    // subsystem devices
     private VisionSubsystem visionSubsystem;
+    private DcMotor aim;
+    private DcMotor shoot;
 
+    // Subsystem Constants
     private final double DEADBAND = 1.0;
     private final double OUTPUT_LIMIT = 0.75;
     private final double GAIN = 0.005;
     private final double WARNING = 1.25;
-    private final double OVERIDE = 1.75;
     private final double COUNTS_PER_REVOLUTION = 537.5;
 
+    // Subsystem Speed/Power constants
 
+    // Servo positions
+
+    // General Subsystem Members
     private double error = 0;
     private double turns = 0;
     private boolean resetting = false;
 
-    private DcMotor aim;
-    private DcMotor shoot;
-
-    public TurretSubsystem(LinearOpMode opmode) {
-        myOpMode = opmode;
-        visionSubsystem = new VisionSubsystem(myOpMode);
-    }
-
-    /**
-     * Initialize the Subsystem by creating hardware devices.
-     * @param showTelemetry
-     */
+    @Override
     public void init(boolean showTelemetry) {
-        this.showTelemetry = showTelemetry;
-        this.enabled = true;
+        super.init(showTelemetry);  // do not remove
 
         aim = myOpMode.hardwareMap.get(DcMotor.class, "aim");
         aim.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -54,13 +47,11 @@ public class TurretSubsystem {
         shoot.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // initialize the vision subsystem
-        // visionSubsystem.init(true);
+        visionSubsystem.init(true);
     }
 
-    public void update(){
-
-        // skip if not initialized
-        if (!enabled) return;
+    @Override
+    public void runStateMachine(){
 
         if (myOpMode.gamepad1.rightBumperWasPressed()) {
             int targetPosition;
@@ -109,19 +100,4 @@ public class TurretSubsystem {
             }
         }
     }
-
-    //-------------------------------------------------------------------------
-    // ACTION  methods
-    //-------------------------------------------------------------------------
-
-    public Action actionUpdate(){
-        return new Action() {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                update();
-                return true;
-            }
-        };
-    }
-
 }

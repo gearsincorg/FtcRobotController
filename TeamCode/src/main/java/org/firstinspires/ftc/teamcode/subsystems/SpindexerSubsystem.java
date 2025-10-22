@@ -11,7 +11,9 @@ import android.graphics.Color;
 
 import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
 
-public class SpindexerSubsystem extends SubsystemBase{
+import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
+
+public class SpindexerSubsystem extends SubsystemBase {
 
     public SpindexerSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -33,17 +35,17 @@ public class SpindexerSubsystem extends SubsystemBase{
     private final double PURPLE_MIN = 230.0;
     private final double PURPLE_MAX = 300.0;
 
-    // Spindexer Speed constants
+    // Subsystem Speed constants
     private final double HOME_POWER = 0.05;
     private final double INTAKE_POWER = 0.15;
     private final double SHOOTING_POWER = 0.19;
 
-    // Flipper servo positions
+    // Servo positions
     private final double FIRE_RETRACT = 0.10;
     private final double FIRE_SHOOT   = 0.50;
     private final double FIRE_HOLD_TIME = 0.15;
 
-    // Subsystem Members
+    // General Subsystem Members
     private int spindexerAngle = 0;
     private int currentSlot = 0;
     private int currentSegment = 0;

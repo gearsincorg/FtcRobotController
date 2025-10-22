@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
+import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -14,11 +15,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class VisionSubsystem {
-
-    private boolean showTelemetry = false;
-    private boolean enabled = false;
-    private LinearOpMode myOpmode;
+public class VisionSubsystem extends SubsystemBase {
 
     private VisionPortal visionPortal = null;        // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
@@ -30,13 +27,14 @@ public class VisionSubsystem {
     private double  range   = 0;
     private double  bearing = 0;
 
-    public VisionSubsystem(LinearOpMode opmode){
-        myOpmode = opmode;
+    public VisionSubsystem(LinearOpMode myOpMode) {
+        super(myOpMode);
     }
 
+
+    @Override
     public void init (boolean showTelemetry){
-        this.enabled = true;
-        this.showTelemetry = showTelemetry;
+        super.init(showTelemetry);
 
         // Initialize the Apriltag Detection process
         initAprilTag();
@@ -48,13 +46,10 @@ public class VisionSubsystem {
         setManualExposure(myExposure, myGain);
     }
 
+    @Override
     public void update() {
-
-        // skip if not initialized
-        if (!enabled) return;
-
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        myOpmode.telemetry.addData("# AprilTags Detected", currentDetections.size());
+        myOpMode.telemetry.addData("# AprilTags Detected", currentDetections.size());
         range   = 0;
         bearing = 0;
 
@@ -65,50 +60,41 @@ public class VisionSubsystem {
             bearing = detection.ftcPose.bearing;
 
             if (showTelemetry) {
-
                 if (detection.metadata != null) {
-                    myOpmode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                    myOpmode.telemetry.addLine(String.format("Range %6.1f in, Bearing %6.1f deg.", range, bearing));
+                    myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                    myOpMode.telemetry.addLine(String.format("Range %6.1f in, Bearing %6.1f deg.", range, bearing));
                 }
             }
-        }   // end for() loop
-    }   // end method telemetryAprilTag()
+        }
+    }
 
     /**
      * Initialize the AprilTag processor.
      */
     private void initAprilTag() {
-
-        // skip if not initialized
-        if (!enabled) return;
-
         // Create the AprilTag processor by using a builder.
         aprilTag = new AprilTagProcessor.Builder().build();
         aprilTag.setDecimation(3);
 
         // Create the WEBCAM vision portal by using a builder.
         visionPortal = new VisionPortal.Builder()
-                .setCamera(myOpmode.hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .setCameraResolution(new Size(640, 480 ))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .addProcessor(aprilTag)
                 .build();
     }
 
-    private void waitForCamera() {
+    public boolean cameraReady() {
+        // Return camera ready status
+        return ((visionPortal != null) && (visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING));
+    }
 
-        // skip if not initialized
-        if (!enabled) return;
-
+    public void waitForCamera() {
         // Wait for the camera to be open
-        if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
-            myOpmode.telemetry.addData("Camera", "Waiting");
-            myOpmode.telemetry.update();
-            while (!myOpmode.isStopRequested() && (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING)) {
-                myOpmode.sleep(20);
-            }
-            myOpmode.telemetry.addData("Camera", "Ready");
-            myOpmode.telemetry.update();
+        while (!myOpMode.isStopRequested() && !cameraReady()) {
+            myOpMode.telemetry.addLine("Waiting for Camera");
+            myOpMode.telemetry.update();
         }
     }
 
@@ -124,21 +110,20 @@ public class VisionSubsystem {
         // Wait for the camera to be open
         waitForCamera();
 
-        // Set camera controls unless we are stopping.
-        if (!myOpmode.isStopRequested())
-        {
+        if (cameraReady()){
             // Set exposure.  Make sure we are in Manual Mode for these values to take effect.
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
             if (exposureControl.getMode() != ExposureControl.Mode.Manual) {
                 exposureControl.setMode(ExposureControl.Mode.Manual);
-                myOpmode.sleep(50);
+                myOpMode.sleep(50);
             }
             exposureControl.setExposure((long)exposureMS, TimeUnit.MILLISECONDS);
-            myOpmode.sleep(20);
+            myOpMode.sleep(20);
+
             // Set Gain.
             GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
             gainControl.setGain(gain);
-            myOpmode.sleep(20);
+            myOpMode.sleep(20);
         }
     }
 
@@ -154,7 +139,7 @@ public class VisionSubsystem {
         waitForCamera();
 
         // Get camera control values unless we are stopping.
-        if (!myOpmode.isStopRequested()) {
+        if (cameraReady()) {
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
             minExposure = (int)exposureControl.getMinExposure(TimeUnit.MILLISECONDS) + 1;
 

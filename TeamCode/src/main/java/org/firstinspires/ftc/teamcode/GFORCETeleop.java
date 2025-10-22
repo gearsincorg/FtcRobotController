@@ -12,6 +12,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.auxtools.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
@@ -34,7 +35,7 @@ public class GFORCETeleop extends LinearOpMode
 
     // Declare OpMode members.
     private DriveSubsystem     driveSubsystem     = new DriveSubsystem(this);
-    private SpindexerSubsystem spinSubsystem      = new SpindexerSubsystem(this);
+    private SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
     private TurretSubsystem    turretSubsystem    = new TurretSubsystem(this);
     private IntakeSubsystem    intakeSubsystem    = new IntakeSubsystem(this);
 
@@ -54,7 +55,7 @@ public class GFORCETeleop extends LinearOpMode
 
         // Initialize the drive hardware & Turn on telemetry
 //        driveSubsystem.init(new Pose2d(0, 0, 0),true);
-        spinSubsystem.init(true);
+        spindexerSubsystem.init(true);
 //        turretSubsystem.init(true);
 //        intakeSubsystem.init(true);
 
@@ -64,7 +65,7 @@ public class GFORCETeleop extends LinearOpMode
 
             // Read and display sensor data
             driveSubsystem.updatePoseEstimate();
-            spinSubsystem.update();
+            spindexerSubsystem.update();
             telemetry.update();
         }
 
@@ -81,7 +82,7 @@ public class GFORCETeleop extends LinearOpMode
 
             // update the robot's position based on the odometry pods.
             driveSubsystem.updatePoseEstimate();
-            spinSubsystem.update();
+            spindexerSubsystem.update();
 
             // use the smart manual drive feature of the DriveSubsystem
             driveSubsystem.smartDrive();
