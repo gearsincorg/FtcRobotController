@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-public enum SpindexerStates {
+public enum SpindexerStates implements StateBase{
     INIT,
     HOMING,
     HOME,

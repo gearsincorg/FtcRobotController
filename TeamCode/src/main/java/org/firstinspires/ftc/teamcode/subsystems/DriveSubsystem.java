@@ -503,6 +503,9 @@ public final class DriveSubsystem
      * @return
      */
     public PoseVelocity2d updatePoseEstimate() {
+        if (oq == null) {
+            return new PoseVelocity2d(new Vector2d(0, 0), 0);
+        }
 
         oq.readLocalizerData(OQlocalizer);
         if (OQlocalizer.isDataValid()) {
@@ -513,6 +516,7 @@ public final class DriveSubsystem
                     mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), Math.toDegrees(OQlocalizer.heading_rad));
 
             pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
+            Globals.LAST_POSE = pose ;
 
             return new PoseVelocity2d(new Vector2d(mmToInch(OQlocalizer.velX_mmS), mmToInch(OQlocalizer.velY_mmS)),
                                       OQlocalizer.velHeading_radS);
@@ -556,30 +560,29 @@ public final class DriveSubsystem
 
     private void intializeOctoQuad(OctoQuad oq) {
 
-        //  exit if oq already initialized
-        if (oq == null) return;
+        if (oq != null) {
+            oq.resetEverything();
+            oq.setChannelBankConfig(OctoQuad.ChannelBankConfig.BANK1_QUADRATURE_BANK2_PULSE_WIDTH);
 
-        oq.resetEverything();
-        oq.setChannelBankConfig(OctoQuad.ChannelBankConfig.BANK1_QUADRATURE_BANK2_PULSE_WIDTH);
+            // Configure the localizer
+            oq.setSingleEncoderDirection(OQ_PORT_X, OctoQuad.EncoderDirection.FORWARD);
+            oq.setSingleEncoderDirection(OQ_PORT_Y, OctoQuad.EncoderDirection.FORWARD);
 
-        // Configure the localizer
-        oq.setSingleEncoderDirection(OQ_PORT_X, OctoQuad.EncoderDirection.FORWARD);
-        oq.setSingleEncoderDirection(OQ_PORT_Y, OctoQuad.EncoderDirection.FORWARD);
+            oq.setLocalizerPortX(OQ_PORT_X);
+            oq.setLocalizerPortY(OQ_PORT_Y);
+            oq.setLocalizerCountsPerMM_X(TICKS_PER_MM);
+            oq.setLocalizerCountsPerMM_Y(TICKS_PER_MM);
+            oq.setLocalizerTcpOffsetMM_X(X_OFFSET_FROM_CENTER_MM);
+            oq.setLocalizerTcpOffsetMM_Y(Y_OFFSET_FROM_CENTER_MM);
+            oq.setLocalizerImuHeadingScalar(OQ_IMU_SCALAR);
+            oq.setLocalizerVelocityIntervalMS(50);
 
-        oq.setLocalizerPortX(OQ_PORT_X);
-        oq.setLocalizerPortY(OQ_PORT_Y);
-        oq.setLocalizerCountsPerMM_X(TICKS_PER_MM);
-        oq.setLocalizerCountsPerMM_Y(TICKS_PER_MM);
-        oq.setLocalizerTcpOffsetMM_X(X_OFFSET_FROM_CENTER_MM);
-        oq.setLocalizerTcpOffsetMM_Y(Y_OFFSET_FROM_CENTER_MM);
-        oq.setLocalizerImuHeadingScalar(OQ_IMU_SCALAR);
-        oq.setLocalizerVelocityIntervalMS(50);
-
-        oq.setI2cRecoveryMode(MODE_2_M1_PLUS_SCL_IDLE_ONESHOT_TGL);
-        oq.resetLocalizerAndCalibrateIMU();
-        oq.resetSinglePosition(0);
-        oq.resetSinglePosition(1);
-        oq.saveParametersToFlash();
+            oq.setI2cRecoveryMode(MODE_2_M1_PLUS_SCL_IDLE_ONESHOT_TGL);
+            oq.resetLocalizerAndCalibrateIMU();
+            oq.resetSinglePosition(0);
+            oq.resetSinglePosition(1);
+            oq.saveParametersToFlash();
+        }
     }
 
     public double getTurnRateDPS() {
@@ -587,8 +590,14 @@ public final class DriveSubsystem
     }
 
     public void setPose (Pose2d newPose) {
-        oq.setLocalizerPose(inchToMm(newPose.position.x), inchToMm(newPose.position.y), (float)newPose.heading.toDouble());
         pose = newPose;
+        if (oq != null){
+            oq.setLocalizerPose(inchToMm(newPose.position.x), inchToMm(newPose.position.y), (float) newPose.heading.toDouble());
+        }
+    }
+
+    void setHeadingDeg(double heading) {
+        setPose(new Pose2d(getPose().position.x, getPose().position.y, Math.toRadians(heading)));
     }
 
     public Pose2d getPose () {

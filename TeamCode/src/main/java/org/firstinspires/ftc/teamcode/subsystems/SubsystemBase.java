@@ -12,7 +12,7 @@ public class SubsystemBase {
     StateBase       currentState;
     boolean         showTelemetry = false;
     boolean         subsystemEnabled = false;
-    ElapsedTime stateTimer = new ElapsedTime();
+    ElapsedTime     stateTime = new ElapsedTime();
 
     public SubsystemBase (LinearOpMode myOpMode) {
         this.myOpMode = myOpMode;
@@ -24,10 +24,12 @@ public class SubsystemBase {
     }
 
     public void update(){
-        readSensors();
-        runStateMachine();
-        if (showTelemetry) {
-            showStatus();
+        if (subsystemEnabled) {
+            readSensors();
+            runStateMachine();
+            if (showTelemetry) {
+                showStatus();
+            }
         }
     }
 
@@ -35,7 +37,11 @@ public class SubsystemBase {
 
     public void setState(StateBase newState) {
         currentState = newState;
-        stateTimer.reset();
+        stateTime.reset();
+    }
+
+    public boolean timeInState(double waitTime){
+        return (stateTime.time() >= waitTime);
     }
 
     public void readSensors() { }

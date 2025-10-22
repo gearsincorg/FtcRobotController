@@ -1,20 +1,5 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.FULL;
-import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.HOME;
-import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.HOMING;
-import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.INIT;
-import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.INTAKING;
-import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.RELOADING;
-import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.SHOOTING;
-import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.STOPPED;
-
-import android.graphics.Color;
-
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -22,59 +7,60 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
+import android.graphics.Color;
 
+import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
 
-public class SpindexerSubsystem {
+public class SpindexerSubsystem extends SubsystemBase{
 
-    private boolean showTelemetry = false;
-    private boolean enabled = false;
-    private LinearOpMode    myOpMode;
-    private ElapsedTime     stateTime       = new ElapsedTime();
-    private SpindexerStates currentState    = INIT;
+    public SpindexerSubsystem(LinearOpMode myOpMode) {
+        super(myOpMode);
+    }
 
+    // subsystem devices
     private DcMotor spinner;
     private Servo fire;
-
     private NormalizedColorSensor color;
     private DigitalChannel magnet;
+
+    // Subsystem Constants
     private final double COUNTS_PER_REVOLUTION = 537.5;
+
+    // Color match constants
     private final double MIN_SATURATION = 0.05;
     private final double GREEN_MIN = 120.0;
     private final double GREEN_MAX = 160.0;
     private final double PURPLE_MIN = 230.0;
     private final double PURPLE_MAX = 300.0;
 
+    // Spindexer Speed constants
     private final double HOME_POWER = 0.05;
     private final double INTAKE_POWER = 0.15;
-    private final double SHOOTING_POWER = 0.2;
+    private final double SHOOTING_POWER = 0.19;
 
+    // Flipper servo positions
     private final double FIRE_RETRACT = 0.10;
-    private final double FIRE_SHOOT   = 0.55;
-    private final double FIRE_HOLD_TIME = 0.17;
+    private final double FIRE_SHOOT   = 0.50;
+    private final double FIRE_HOLD_TIME = 0.15;
 
+    // Subsystem Members
     private int spindexerAngle = 0;
     private int currentSlot = 0;
     private int currentSegment = 0;
     private int artifactsHeld = 0;
+    private float[] hsvValues = new float[3];
+    private int[] shootSegments = {2,7,12};
 
     private ArtifactColor currentColor = ArtifactColor.UNKNOWN;
-    private final float[] hsvValues = new float[3];
-    private final ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
-    private final int[] shootSegments = {2,7,12};
+    private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
 
-    public SpindexerSubsystem(LinearOpMode opmode) {
-        myOpMode = opmode;
-    }
+    @Override
+    public void init (boolean showTelemetry) {
 
-    /**
-     * Initialize the Subsystem by creating hardware devices.
-     * @param showTelemetry
-     */
-    public void init(boolean showTelemetry) {
-        this.showTelemetry = showTelemetry;
-        this.enabled = true;
+        super.init(showTelemetry);  // do not remove
+        setState(SpindexerStates.INIT);
 
+        // Attach to physical devices and configure them
         spinner = myOpMode.hardwareMap.get(DcMotor.class, "spinner");
         spinner.setDirection(DcMotor.Direction.FORWARD);
         spinner.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -89,10 +75,8 @@ public class SpindexerSubsystem {
         magnet.setMode(DigitalChannel.Mode.INPUT);
     }
 
-    public void update() {
-        // skip if not initialized
-        if (!enabled) return;
-
+    @Override
+    public void readSensors() {
         currentColor = ArtifactColor.UNKNOWN;
 
         // Read the spindexer position and detwerming which secment and slot we are in.
@@ -109,10 +93,10 @@ public class SpindexerSubsystem {
             //checking the hue and saturation of the color sensor
             //saturation needs to be high enough use the hue value
             //find which range the hue resides in to decide the color
-            if (hsvValues[1] > MIN_SATURATION){
-                if ((hsvValues[0] > GREEN_MIN) && (hsvValues[0] < GREEN_MAX)){
+            if (hsvValues[1] > MIN_SATURATION) {
+                if ((hsvValues[0] > GREEN_MIN) && (hsvValues[0] < GREEN_MAX)) {
                     currentColor = ArtifactColor.GREEN;
-                } else if ((hsvValues[0] > PURPLE_MIN) && (hsvValues[0] < PURPLE_MAX)){
+                } else if ((hsvValues[0] > PURPLE_MIN) && (hsvValues[0] < PURPLE_MAX)) {
                     currentColor = ArtifactColor.PURPLE;
                 }
             }
@@ -122,32 +106,18 @@ public class SpindexerSubsystem {
 
             // count number of slots with balls.
             int ballCount = 0;
-            for (int b=0; b < 3; b++){
+            for (int b = 0; b < 3; b++) {
                 if (slotColors[b] != ArtifactColor.UNKNOWN) {
                     ballCount++;
                 }
             }
             artifactsHeld = ballCount;
         }
-
-        runStateMachine();
-
-        if (showTelemetry) {
-            myOpMode.telemetry.addData("Spindexer", currentState);
-            myOpMode.telemetry.addData("Spindexer", "%d Deg, Seg %d Slot %d", spindexerAngle, currentSegment, currentSlot);
-            myOpMode.telemetry.addData("Current color", currentColor);
-            myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
-            myOpMode.telemetry.addData("magnet", magnet.getState());
-        }
     }
 
+    @Override
     public void runStateMachine() {
-
-        // skip if not initialized
-        if (!enabled) return;
-
-        // check the state and look for the required transitions
-        switch(currentState) {
+        switch ((SpindexerStates)currentState) {
             case INIT: {
                 spinner.setPower(HOME_POWER);
                 setState(HOMING);
@@ -171,7 +141,7 @@ public class SpindexerSubsystem {
                     }
                     setState(INTAKING);
                 } else
-                break;
+                    break;
             }
 
             case INTAKING: {
@@ -199,7 +169,7 @@ public class SpindexerSubsystem {
             case SHOOTING: {
                 // Do we have something to shoot?
                 if ((slotColors[currentSlot] != ArtifactColor.UNKNOWN) &&
-                    (currentSegment == shootSegments[currentSlot]))   {
+                        (currentSegment == shootSegments[currentSlot]))   {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
                     setState(RELOADING);
@@ -208,32 +178,22 @@ public class SpindexerSubsystem {
             }
 
             case RELOADING: {
-                if (stateTime.time() > FIRE_HOLD_TIME) {
+                if (timeInState(FIRE_HOLD_TIME)) {
                     fire.setPosition(FIRE_RETRACT);
                     setState(SHOOTING);
                 }
                 break;
             }
+
         }
     }
 
-    public void setState (SpindexerStates newState){
-        currentState = newState;
-        stateTime.reset();
+    @Override
+    public void showStatus() {
+        myOpMode.telemetry.addData("Spindexer", currentState);
+        myOpMode.telemetry.addData("Spindexer", "%d Deg, Seg %d Slot %d", spindexerAngle, currentSegment, currentSlot);
+        myOpMode.telemetry.addData("Current color", currentColor);
+        myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
+        myOpMode.telemetry.addData("magnet", magnet.getState());
     }
-
-    //-------------------------------------------------------------------------
-    // ACTION  methods
-    //-------------------------------------------------------------------------
-
-    public Action actionUpdate(){
-        return new Action() {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                update();
-                return true;
-            }
-        };
-    }
-
 }
