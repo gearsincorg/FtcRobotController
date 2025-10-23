@@ -11,7 +11,7 @@ public class SubsystemBase {
     public LinearOpMode     myOpMode;
     public StateBase        currentState;
     public boolean          showTelemetry = false;
-    boolean         subsystemEnabled = false;
+    public boolean          subsystemEnabled = false;
     ElapsedTime     stateTime = new ElapsedTime();
 
     public SubsystemBase (LinearOpMode myOpMode) {
@@ -42,6 +42,10 @@ public class SubsystemBase {
 
     public boolean timeInState(double waitTime){
         return (stateTime.time() >= waitTime);
+    }
+
+    public boolean isEnabled() {
+        return subsystemEnabled;
     }
 
     public void readSensors() { }

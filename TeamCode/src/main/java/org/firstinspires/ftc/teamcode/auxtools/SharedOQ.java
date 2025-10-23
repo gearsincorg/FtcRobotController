@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.subsystems;
+package org.firstinspires.ftc.teamcode.auxtools;
 
 import static com.qualcomm.hardware.digitalchickenlabs.OctoQuad.I2cRecoveryMode.MODE_2_M1_PLUS_SCL_IDLE_ONESHOT_TGL;
 
@@ -22,7 +22,9 @@ public class SharedOQ {
     static LinearOpMode myOpMode = null;
 
     public static void init(LinearOpMode opMode) {
-        myOpMode = opMode;
+        if (myOpMode == null) {
+            myOpMode = opMode;
+        }
     }
 
     public static void update() {

@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 
+import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
+
 public class ServoSpeedController {
 
     // class members
@@ -39,9 +41,15 @@ public class ServoSpeedController {
         servo.setPower(0);
 
         // determine the QUAD offset to offset
+        SharedOQ.init(myOpMode);
+        SharedOQ.update();
     }
 
     public void update() {
+        if (!DriveSubsystem.isEnabled()){
+            SharedOQ.update();
+        }
+
 
     }
 
@@ -58,7 +66,7 @@ public class ServoSpeedController {
     }
 
     public double getAng() {
-        currentAng = (double)Globals.OQ_POSITIONS[OQPosIdx] * COUNTS2DEGREES;
+
         return currentAng;
     }
 

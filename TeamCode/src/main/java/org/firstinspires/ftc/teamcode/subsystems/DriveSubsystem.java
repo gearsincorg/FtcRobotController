@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import static com.qualcomm.hardware.digitalchickenlabs.OctoQuad.I2cRecoveryMode.MODE_2_M1_PLUS_SCL_IDLE_ONESHOT_TGL;
-
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -44,6 +42,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.teamcode.auxtools.Drawing;
+import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.PoseMessage;
 import org.firstinspires.ftc.teamcode.messages.TankCommandMessage;
@@ -56,7 +55,7 @@ import java.util.List;
 public final class DriveSubsystem
 {
     private boolean showTelemetry = false;
-    private boolean enabled = false;
+    private static boolean enabled = false;
     private LinearOpMode myOpMode;
 
     public  static OctoQuad oq = null;
@@ -104,14 +103,6 @@ public final class DriveSubsystem
     static final double MIN_ROTATE          = 1.0 ;
     static final double RAD2DEG             = 180/Math.PI;
     static final double INCH2MM             = 2.54;
-
-    // OctoQuad constants
-    final float TICKS_PER_MM = 19.89f;
-    final float X_OFFSET_FROM_CENTER_MM =   80.0f;
-    final float Y_OFFSET_FROM_CENTER_MM =  185.0f;
-    final float OQ_IMU_SCALAR = (float)(360.0/348.66);
-    final int OQ_PORT_X = 0;
-    final int OQ_PORT_Y = 1;
 
 
     public final TankKinematics kinematics = new TankKinematics(PARAMS.inPerTick * PARAMS.trackWidthTicks);
@@ -168,8 +159,7 @@ public final class DriveSubsystem
             m.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
-        oq = myOpMode.hardwareMap.get(OctoQuad.class, "octoquad");
-        intializeOctoQuad(oq);
+        SharedOQ.init(myOpMode);
         setPose(pose);
 
         voltageSensor = myOpMode.hardwareMap.voltageSensor.iterator().next();
@@ -501,30 +491,23 @@ public final class DriveSubsystem
      * @return
      */
 
-    private OctoQuad.LocalizerDataBlock OQlocalizer = new OctoQuad.LocalizerDataBlock();
-    private OctoQuad.EncoderDataBlock   OQencoder   = new OctoQuad.EncoderDataBlock();
 
     public PoseVelocity2d updatePoseEstimate() {
         PoseVelocity2d poseVel = new PoseVelocity2d(new Vector2d(0, 0), 0);
 
         if (oq != null) {
             // Read localizer data AND encoder.  Process each if they are valid.
-            oq.readLocalizerDataAndAllEncoderData(OQlocalizer, OQencoder);
+            SharedOQ.update();
 
-            if (OQencoder.isDataValid()) {
-                Globals.OQ_POSITIONS = Arrays.copyOf(OQencoder.positions, OQencoder.positions.length);
-                Globals.OQ_VELOCITIES = Arrays.copyOf(OQencoder.velocities, OQencoder.velocities.length);
-            }
-
-            if (OQlocalizer.isDataValid()) {
+            if (SharedOQ.OQlocalizer.isDataValid()) {
                 myOpMode.telemetry.addData("X:Y:H inch,Deg", "%4.1f  %4.1f  %4.0f",
-                        mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), Math.toDegrees(OQlocalizer.heading_rad));
+                        mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm), Math.toDegrees(SharedOQ.OQlocalizer.heading_rad));
 
-                pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
+                pose = new Pose2d(mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm), SharedOQ.OQlocalizer.heading_rad);
                 Globals.LAST_POSE = pose ;
 
-                poseVel = new PoseVelocity2d(new Vector2d(mmToInch(OQlocalizer.velX_mmS), mmToInch(OQlocalizer.velY_mmS)),
-                                          OQlocalizer.velHeading_radS);
+                poseVel = new PoseVelocity2d(new Vector2d(mmToInch(SharedOQ.OQlocalizer.velX_mmS), mmToInch(SharedOQ.OQlocalizer.velY_mmS)),
+                        SharedOQ.OQlocalizer.velHeading_radS);
             }
         }
 
@@ -564,35 +547,8 @@ public final class DriveSubsystem
         );
     }
 
-    private void intializeOctoQuad(OctoQuad oq) {
-
-        if (oq != null) {
-            oq.resetEverything();
-            oq.setChannelBankConfig(OctoQuad.ChannelBankConfig.BANK1_QUADRATURE_BANK2_PULSE_WIDTH);
-
-            // Configure the localizer
-            oq.setSingleEncoderDirection(OQ_PORT_X, OctoQuad.EncoderDirection.FORWARD);
-            oq.setSingleEncoderDirection(OQ_PORT_Y, OctoQuad.EncoderDirection.FORWARD);
-
-            oq.setLocalizerPortX(OQ_PORT_X);
-            oq.setLocalizerPortY(OQ_PORT_Y);
-            oq.setLocalizerCountsPerMM_X(TICKS_PER_MM);
-            oq.setLocalizerCountsPerMM_Y(TICKS_PER_MM);
-            oq.setLocalizerTcpOffsetMM_X(X_OFFSET_FROM_CENTER_MM);
-            oq.setLocalizerTcpOffsetMM_Y(Y_OFFSET_FROM_CENTER_MM);
-            oq.setLocalizerImuHeadingScalar(OQ_IMU_SCALAR);
-            oq.setLocalizerVelocityIntervalMS(50);
-
-            oq.setI2cRecoveryMode(MODE_2_M1_PLUS_SCL_IDLE_ONESHOT_TGL);
-            oq.resetLocalizerAndCalibrateIMU();
-            oq.resetSinglePosition(0);
-            oq.resetSinglePosition(1);
-            oq.saveParametersToFlash();
-        }
-    }
-
     public double getTurnRateDPS() {
-        return Math.toDegrees(OQlocalizer.velHeading_radS);
+        return Math.toDegrees(SharedOQ.OQlocalizer.velHeading_radS);
     }
 
     public void setPose (Pose2d newPose) {
@@ -618,6 +574,10 @@ public final class DriveSubsystem
         return Math.toDegrees(getHeadingRad());
     }
 
+    public static boolean isEnabled() {
+        return enabled;
+    }
+
     private double mmToInch(double mm) {
         return mm / 25.4;
     }
@@ -629,4 +589,6 @@ public final class DriveSubsystem
     private double lessSensitive(double joystick) {
         return (joystick * joystick * Math.signum(joystick));
     }
+
+
 }
