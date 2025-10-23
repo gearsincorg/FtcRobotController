@@ -59,7 +59,6 @@ public final class DriveSubsystem
     private boolean enabled = false;
     private LinearOpMode myOpMode;
 
-    private OctoQuad.LocalizerDataBlock OQlocalizer = new OctoQuad.LocalizerDataBlock();
     public  static OctoQuad oq = null;
 
     private boolean     headingLocked = false;
@@ -501,27 +500,35 @@ public final class DriveSubsystem
      * Use localization from Octoquad to update robot position.
      * @return
      */
+
+    private OctoQuad.LocalizerDataBlock OQlocalizer = new OctoQuad.LocalizerDataBlock();
+    private OctoQuad.EncoderDataBlock   OQencoder   = new OctoQuad.EncoderDataBlock();
+
     public PoseVelocity2d updatePoseEstimate() {
-        if (oq == null) {
-            return new PoseVelocity2d(new Vector2d(0, 0), 0);
+        PoseVelocity2d poseVel = new PoseVelocity2d(new Vector2d(0, 0), 0);
+
+        if (oq != null) {
+            // Read localizer data AND encoder.  Process each if they are valid.
+            oq.readLocalizerDataAndAllEncoderData(OQlocalizer, OQencoder);
+
+            if (OQencoder.isDataValid()) {
+                Globals.OQ_POSITIONS = Arrays.copyOf(OQencoder.positions, OQencoder.positions.length);
+                Globals.OQ_VELOCITIES = Arrays.copyOf(OQencoder.velocities, OQencoder.velocities.length);
+            }
+
+            if (OQlocalizer.isDataValid()) {
+                myOpMode.telemetry.addData("X:Y:H inch,Deg", "%4.1f  %4.1f  %4.0f",
+                        mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), Math.toDegrees(OQlocalizer.heading_rad));
+
+                pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
+                Globals.LAST_POSE = pose ;
+
+                poseVel = new PoseVelocity2d(new Vector2d(mmToInch(OQlocalizer.velX_mmS), mmToInch(OQlocalizer.velY_mmS)),
+                                          OQlocalizer.velHeading_radS);
+            }
         }
 
-        oq.readLocalizerData(OQlocalizer);
-        if (OQlocalizer.isDataValid()) {
-
-            myOpMode.telemetry.addData("ODO", "Axial %d, Lateral %d", oq.readSinglePosition_Caching(0), oq.readSinglePosition_Caching(1));
-
-            myOpMode.telemetry.addData("X:Y:H inch,Deg", "%4.1f  %4.1f  %4.0f",
-                    mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), Math.toDegrees(OQlocalizer.heading_rad));
-
-            pose = new Pose2d(mmToInch(OQlocalizer.posX_mm), mmToInch(OQlocalizer.posY_mm), OQlocalizer.heading_rad);
-            Globals.LAST_POSE = pose ;
-
-            return new PoseVelocity2d(new Vector2d(mmToInch(OQlocalizer.velX_mmS), mmToInch(OQlocalizer.velY_mmS)),
-                                      OQlocalizer.velHeading_radS);
-        } else {
-            return new PoseVelocity2d(new Vector2d(0, 0), 0);
-        }
+        return poseVel;
     }
 
     private void drawPoseHistory(Canvas c) {

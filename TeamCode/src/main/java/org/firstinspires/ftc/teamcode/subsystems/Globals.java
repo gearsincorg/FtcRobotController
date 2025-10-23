@@ -14,4 +14,7 @@ public class Globals {
     public static Pose2d    LAST_POSE = new Pose2d(0,0,0);
     public static boolean   IS_AUTO       = false;
     public static int       OCTO_ERRORS   = 0;
+    public static int[]     OQ_POSITIONS;
+    public static short[]     OQ_VELOCITIES;
+
 }
