@@ -42,6 +42,7 @@ public class GFORCETeleop extends LinearOpMode
     @Override public void runOpMode()
     {
         Globals.IS_AUTO = false;
+        telemetry.setMsTransmissionInterval(50);
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         autoConfig.initialize();

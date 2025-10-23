@@ -91,13 +91,15 @@ public class TurretSubsystem extends SubsystemBase {
             turns = aim.getCurrentPosition() / COUNTS_PER_REVOLUTION;
 
             aim.setPower(output);
-            if (showTelemetry){
-                myOpMode.telemetry.addData("turret turns", turns);
-            }
 
             if (Math.abs(turns) > WARNING){
                 myOpMode.gamepad1.rumble(500);
             }
         }
+    }
+
+    @Override
+    public void showStatus(){
+        myOpMode.telemetry.addData("turret turns", turns);
     }
 }

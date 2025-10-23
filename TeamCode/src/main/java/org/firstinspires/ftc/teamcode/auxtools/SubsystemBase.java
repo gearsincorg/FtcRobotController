@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class SubsystemBase {
     public LinearOpMode     myOpMode;
     public StateBase        currentState;
-    boolean         showTelemetry = false;
+    public boolean          showTelemetry = false;
     boolean         subsystemEnabled = false;
     ElapsedTime     stateTime = new ElapsedTime();
 
