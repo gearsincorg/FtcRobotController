@@ -90,7 +90,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         currentSegment = spindexerAngle / 24;
 
         // only read & update ball color when in range of color sensor
-        // currentColor = ArtifactColor.UNKNOWN;
         if ((currentSegment == 0) || (currentSegment == 5) || (currentSegment == 10)) {
 
             NormalizedRGBA colors = color.getNormalizedColors();
@@ -108,10 +107,6 @@ public class SpindexerSubsystem extends SubsystemBase {
                     slotColors[currentSlot] = currentColor;
                 }
             }
-
-            //
-            // slotColors[currentSlot] = currentColor;
-            // slotColors[currentSlot] = ArtifactColor.PURPLE;
 
             // count number of slots with balls.
             int purpleCount = 0;
