@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorRangeSensor;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
@@ -10,6 +9,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import android.graphics.Color;
 
 import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
+
+import org.firstinspires.ftc.teamcode.auxtools.ServoSpeedController;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
 public class SpindexerSubsystem extends SubsystemBase {
@@ -19,7 +20,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     // subsystem devices
-    private DcMotor spinner;
+
+    private ServoSpeedController servoSC;
     private Servo fire;
     private NormalizedColorSensor color;
     private DigitalChannel magnet;
@@ -36,10 +38,10 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double PURPLE_MAX     = 300.0;
 
     // Subsystem Speed constants
-    private final double HOME_POWER     = 0.05;
-    private final double QUEUEING_POWER = 0.09;
-    private final double INTAKE_POWER   = 0.14;
-    private final double SHOOTING_POWER = 0.19;
+    private final double HOME_DPS = 0.05 * 360;
+    private final double QUEUEING_DPS = 0.09 * 360;
+    private final double INTAKE_DPS = 0.14 * 360;
+    private final double SHOOTING_DPS = 0.19 * 360;
 
     // Servo positions
     private final double FIRE_RETRACT   = 0.085;
@@ -67,10 +69,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         setState(SpindexerStates.INIT);
 
         // Attach to physical devices and configure them
-        spinner = myOpMode.hardwareMap.get(DcMotor.class, "spinner");
-        spinner.setDirection(DcMotor.Direction.FORWARD);
-        spinner.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        spinner.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        servoSC = new ServoSpeedController(myOpMode, "spindexer", 5, 2);
+        servoSC.init(showTelemetry);
 
         fire = myOpMode.hardwareMap.get(Servo.class, "fire");
         fire.setPosition(FIRE_RETRACT);
@@ -85,7 +86,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     @Override
     public void readSensors() {
         // Read the spindexer position and detwerming which secment and slot we are in.
-        spindexerAngle = (int)(spinner.getCurrentPosition() / COUNTS_PER_REVOLUTION * 360) % 360;
+        spindexerAngle = (int)servoSC.getAng();
         currentSlot = spindexerAngle / 120;
         currentSegment = spindexerAngle / 24;
 
@@ -122,6 +123,8 @@ public class SpindexerSubsystem extends SubsystemBase {
             allArtifactsHeld    = greenCount + purpleCount;
             greenArtifactsHeld  = greenCount;
             purpleArtifactsHeld = purpleCount;
+
+            servoSC.update();
         }
     }
 
@@ -129,16 +132,14 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void runStateMachine() {
         switch ((SpindexerStates)currentState) {
             case INIT: {
-                spinner.setPower(HOME_POWER);
+                servoSC.setVelTarget(HOME_DPS);
                 setState(HOMING);
                 break;
             }
 
             case HOMING: {
                 if (!magnet.getState()) {
-                    spinner.setPower(0.0);
-                    spinner.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    spinner.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    servoSC.stop();
                     setState(HOME);
                 }
                 break;
@@ -147,7 +148,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             case HOME: {
                 if (myOpMode.opModeIsActive()) {
                     if (allArtifactsHeld < 3) {
-                        spinner.setPower(INTAKE_POWER);
+                        servoSC.setVelTarget(INTAKE_DPS);
                     }
                     setState(INTAKING);
                 }
@@ -156,20 +157,20 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case INTAKING: {
                 if (myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) {
-                    spinner.setPower(SHOOTING_POWER);
+                    servoSC.setVelTarget(SHOOTING_DPS);
                     setState(SHOOTING);
                 } else if (allArtifactsHeld == 3) {
-                    spinner.setPower(0.0);
+                    servoSC.stop();
                     setState(QUEUEING);
                 } else {
-                    spinner.setPower(INTAKE_POWER);
+                    servoSC.setVelTarget(INTAKE_DPS);
                 }
                 break;
             }
 
             case FULL: {
                 if (myOpMode.gamepad1.rightBumperWasPressed()) {
-                    spinner.setPower(SHOOTING_POWER);
+                    servoSC.setVelTarget(SHOOTING_DPS);
                     setState(SHOOTING);
                 }
                 break;
@@ -177,14 +178,14 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case QUEUEING: {
                 if (allArtifactsHeld == 0 ) {
-                    spinner.setPower(INTAKE_POWER);
+                    servoSC.setVelTarget(INTAKE_DPS);
                     setState(INTAKING);
                 } else if ((slotColors[currentSlot] != ArtifactColor.UNKNOWN) &&
                         (currentSegment == shootSegments[currentSlot]))   {
-                    spinner.setPower(0);
+                    servoSC.stop();
                     setState(QUEUED);
                 } else {
-                    spinner.setPower(QUEUEING_POWER);
+                    servoSC.setVelTarget(QUEUEING_DPS);
                 }
                 break;
             }
@@ -193,7 +194,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 if (myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
-                    spinner.setPower(SHOOTING_POWER);
+                    servoSC.setVelTarget(SHOOTING_DPS);
                     setState(RELOADING);
                 }
                 break;
@@ -201,7 +202,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case SHOOTING: {
                 if (allArtifactsHeld == 0 ) {
-                    spinner.setPower(INTAKE_POWER);
+                    servoSC.setVelTarget(INTAKE_DPS);
                     setState(INTAKING);
                 } else if ((slotColors[currentSlot] != ArtifactColor.UNKNOWN) &&
                         (currentSegment == shootSegments[currentSlot]))   {
@@ -216,10 +217,10 @@ public class SpindexerSubsystem extends SubsystemBase {
                 if (timeInState(FIRE_HOLD_TIME)) {
                     fire.setPosition(FIRE_RETRACT);
                     if (myOpMode.gamepad1.right_bumper) {
-                        spinner.setPower(SHOOTING_POWER);
+                        servoSC.setVelTarget(SHOOTING_DPS);
                         setState(SHOOTING);
                     } else {
-                        spinner.setPower(QUEUEING_POWER);
+                        servoSC.setVelTarget(QUEUEING_DPS);
                         setState(QUEUEING);
                     }
                 }
