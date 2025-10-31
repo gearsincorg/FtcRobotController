@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -22,17 +23,29 @@ public class TurretSubsystem extends SubsystemBase {
     private final double DEADBAND = 1.0;
     private final double OUTPUT_LIMIT = 0.75;
     private final double GAIN = 0.005;
-    private final double WARNING = 1.25;
-    private final double COUNTS_PER_REVOLUTION = 537.5;
+    private final double WARNING = 140;
+    private final int ONE_ROTATION = 537;
+    private final double COUNTS_PER_DEGREES = 537.5 / 360;
+    private final double RED_X = -1482;
+    private final double RED_Y = -1413;
+    private final double BLUE_X = -1482;
+    private final double BLUE_Y = -1413;
+    private final double SPIN_LIMIT = 180;
 
     // Subsystem Speed/Power constants
+
 
     // Servo positions
 
     // General Subsystem Members
     private double error = 0;
-    private double turns = 0;
     private boolean resetting = false;
+
+    private double Aa = 0;
+    private double Ar = 0;
+    private double Ae = 0;
+    private double At = 0;
+    private double Ad = 0;
 
     @Override
     public void init(boolean showTelemetry) {
@@ -51,17 +64,23 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     @Override
+    public void readSensors(){
+        //turret angle, robot heading, calculate the AprilTag Angle
+        calculateAd();
+    }
+
+    @Override
     public void runStateMachine(){
 
         if (myOpMode.gamepad1.rightBumperWasPressed()) {
             int targetPosition;
 
-            if (Math.abs(turns) > 1.0) {
+            if (Math.abs(At) > SPIN_LIMIT) {
                 resetting = true;
-                if (turns > 0){
-                    targetPosition = aim.getCurrentPosition() - (int)COUNTS_PER_REVOLUTION;
+                if (At > 0){
+                    targetPosition = aim.getCurrentPosition() - ONE_ROTATION;
                 } else {
-                    targetPosition = aim.getCurrentPosition() + (int)COUNTS_PER_REVOLUTION;
+                    targetPosition = aim.getCurrentPosition() + ONE_ROTATION;
                 }
 
                 aim.setTargetPosition(targetPosition);
@@ -87,12 +106,12 @@ public class TurretSubsystem extends SubsystemBase {
                 output = Range.clip(output, -OUTPUT_LIMIT, OUTPUT_LIMIT);
             }
 
-            //converts encoder clicks to revolutions
-            turns = aim.getCurrentPosition() / COUNTS_PER_REVOLUTION;
+            //converts encoder clicks to degrees
+            At = (aim.getCurrentPosition() / COUNTS_PER_DEGREES) % 360;
 
             aim.setPower(output);
 
-            if (Math.abs(turns) > WARNING){
+            if (Math.abs(At) > WARNING){
                 myOpMode.gamepad1.rumble(500);
             }
         }
@@ -100,6 +119,14 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus(){
-        myOpMode.telemetry.addData("turret turns", turns);
+        myOpMode.telemetry.addData("turret degrees", At);
+    }
+
+    private void calculateAd(){
+        double x = RED_X - SharedOQ.OQlocalizer.posX_mm;
+        double y = RED_Y - SharedOQ.OQlocalizer.posY_mm;
+        Aa = Math.atan2(y, x);
+        Ar = Math.toDegrees(SharedOQ.OQlocalizer.heading_rad);
+        Ad = Aa - Ar;
     }
 }
