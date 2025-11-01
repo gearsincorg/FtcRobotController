@@ -7,9 +7,8 @@ public enum SpindexerStates implements StateBase {
     HOMING,
     HOME,
     INTAKING,
-    FULL,
     QUEUEING,
-    QUEUED,
-    SHOOTING,
-    RELOADING
+    READY_TO_SHOOT,
+    TAKING_SHOT,
+    SHOOTING
 }
