@@ -60,6 +60,8 @@ public final class DriveSubsystem
 
     public  static OctoQuad oq = null;
 
+    private boolean     intakeForward = false;
+    private boolean     intakeReverse = true;
     private boolean     headingLocked = false;
     private double      headingSetpointDeg = 0;
 
@@ -97,9 +99,12 @@ public final class DriveSubsystem
     static final double TURN_DEADBAND       =  0.1;      // Lock heading if JoyStick less than this
     static final double HEADING_GAIN        =  0.015;    // turn at full power of the error
     static final double HEADING_TOLLERANCE  = 30.0;      // Don't start driving until we are withing 30 Degrees
+
     static final double FC_SPEED_SCALE      =  1.0;      // Safe FC speed
     static final double RC_SPEED_SCALE      =  1.0;      // Safe RC Speed
     static final double RC_TURN_SCALE       =  0.5;      // Safe RC Turn
+
+    static final double INTAKE_HYSTERESIS   = 0.1 ;
     static final double MIN_ROTATE          = 1.0 ;
     static final double RAD2DEG             = 180/Math.PI;
     static final double INCH2MM             = 2.54;
@@ -275,6 +280,8 @@ public final class DriveSubsystem
 
         // skip if not initialized
         if (!enabled) return;
+
+        Globals.AXIAL_MOTION = powers.linearVel.x;
 
         TankKinematics.WheelVelocities<Time> wheelVels = new TankKinematics(2).inverse(
                 PoseVelocity2dDual.constant(powers, 1));
@@ -558,7 +565,7 @@ public final class DriveSubsystem
         }
     }
 
-    void setHeadingDeg(double heading) {
+    public void setHeadingDeg(double heading) {
         setPose(new Pose2d(getPose().position.x, getPose().position.y, Math.toRadians(heading)));
     }
 

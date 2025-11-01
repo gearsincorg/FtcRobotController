@@ -12,7 +12,7 @@ public class SubsystemBase {
     public StateBase        currentState;
     public boolean          showTelemetry = false;
     public boolean          subsystemEnabled = false;
-    ElapsedTime     stateTime = new ElapsedTime();
+    ElapsedTime             stateTime = new ElapsedTime();
 
     public SubsystemBase (LinearOpMode myOpMode) {
         this.myOpMode = myOpMode;

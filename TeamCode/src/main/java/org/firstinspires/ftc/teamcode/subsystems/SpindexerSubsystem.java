@@ -52,7 +52,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double currentAngle    = 0;
     private double targetAngle     = 0;
     private boolean inPosition     = false;
-    private boolean nearPosition   = false;
+    private boolean nearPosition   = false; 
 
     private int     currentSlot     = 0;
     private float[] hsvValues = new float[3];
@@ -201,8 +201,10 @@ public class SpindexerSubsystem extends SubsystemBase {
                 }
                 break;
             }
-
         }
+
+        // Save current state in Globals for other subsystems
+        Globals.SPINDEXER_STATE = (SpindexerStates) currentState;
     }
 
     @Override
