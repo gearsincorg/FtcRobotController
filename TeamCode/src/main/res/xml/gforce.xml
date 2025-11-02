@@ -14,8 +14,10 @@
             <goBILDA5202SeriesMotor name="back_right_drive" port="3" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
             <OctoQuadFTC name="octoquad" port="0" bus="1" />
+            <!--
             <RevColorSensorV3 name="colorFront" port="0" bus="2" />
             <RevColorSensorV3 name="colorBack" port="0" bus="2" />
+            -->
         </LynxModule>
 
         <ServoHub name="Servo Hub 2" port="2">

@@ -32,8 +32,14 @@ public class SharedOQ {
     }
 
     public static void update() {
-        if (myOpMode != null) { 
+        if (oq != null) {
             oq.readLocalizerDataAndAllEncoderData(OQlocalizer, OQencoder);
+        }
+    }
+
+    public static void resetEncoder(int channel){
+        if (oq != null) {
+            oq.resetSinglePosition(channel);
         }
     }
 
@@ -59,9 +65,5 @@ public class SharedOQ {
         oq.resetSinglePosition(0);
         oq.resetSinglePosition(1);
         oq.saveParametersToFlash();
-    }
-
-    public static void resetEncoder(int channel){
-        oq.resetSinglePosition(channel);
     }
 }

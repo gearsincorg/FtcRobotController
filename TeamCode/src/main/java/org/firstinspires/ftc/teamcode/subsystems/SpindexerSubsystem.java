@@ -27,9 +27,10 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     // Subsystem Constants
     private final int    OQ_ENCODER_INDEX = 2;
-    private final double ENC_TO_DEGREES   = 360 / 8192;
+    private final double ENC_TO_DEGREES   = 360.0 / 8192.0;
     private final double POSITION_TOLLERANCE = 5;
     private final double COLOR_SENSOR_POSITION_TOLLERANCE = 30;
+    private final double PULSE_SCALE_FACTOR = 1.8e-3;  // CONVERTS 150 DEG TO 0.28
 
     // Color match constants
     private final double MIN_SATURATION = 0.1;
@@ -47,7 +48,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double FIRE_HOLD_TIME = 0.15;
 
     // Spindexer Servo Positions (in degrees)
-    private final double[] SHOOT        = { -90,   0,   90};
+    private final double[] SHOOT        = {-120,   0,  120};
     private final double[] INTAKE_FRONT = { -30,  90, -150};
     private final double[] INTAKE_BACK  = { 150, -90,   30};
     private final double[] HOME_ANGLES  = { 120,   0, -120};
@@ -55,8 +56,10 @@ public class SpindexerSubsystem extends SubsystemBase {
     // General Subsystem Members
     private double currentAngle    = 0;
     private double targetAngle     = 0;
+    private double lastTargetAngle = 0;
     private boolean inPosition     = false;
-    private boolean nearPosition   = false; 
+    private boolean nearPosition   = false;
+    private double lastSpindexerServoValue = 0;
 
     private int     currentSlot     = 0;
     private float[] hsvValues = new float[3];
@@ -66,7 +69,8 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private ArtifactColor currentColor   = ArtifactColor.UNKNOWN;
     private ArtifactColor queuedColor  = ArtifactColor.ANY;
-    private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
+    private ArtifactColor[] slotColors = {ArtifactColor.PURPLE, ArtifactColor.GREEN, ArtifactColor.UNKNOWN};
+    //private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
 
     @Override
     public void init (boolean showTelemetry) {
@@ -81,11 +85,11 @@ public class SpindexerSubsystem extends SubsystemBase {
         spindexer = myOpMode.hardwareMap.get(Servo.class, "spindexer");
         sendSpindexerTo(SHOOT[1]);
 
-        frontColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorFront");
-        frontColorSensor.setGain(COLOR_GAIN);
+        //frontColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorFront");
+        //frontColorSensor.setGain(COLOR_GAIN);
 
-        backColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorBack");
-        backColorSensor.setGain(COLOR_GAIN);
+        //backColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorBack");
+        //backColorSensor.setGain(COLOR_GAIN);
     }
 
     /**
@@ -128,7 +132,7 @@ public class SpindexerSubsystem extends SubsystemBase {
          int    closestSlot  =   -1;
          double destination;
 
-         if (Globals.AXIAL_MOTION > 0){
+         if (Globals.AXIAL_MOTION >= 0){
              destination = 90;
          } else {
              destination = -90;
@@ -152,21 +156,25 @@ public class SpindexerSubsystem extends SubsystemBase {
     @Override
     public void readSensors() {
         // Read the spindexer position and determine which segment and slot we are in.
-        currentAngle   = (SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX] * ENC_TO_DEGREES);
-        inPosition = Math.abs(targetAngle - currentAngle) < POSITION_TOLLERANCE;
-        nearPosition = Math.abs(targetAngle - currentAngle) < COLOR_SENSOR_POSITION_TOLLERANCE;
+        SharedOQ.update();
+        if (SharedOQ.OQencoder.isDataValid()) {
+            currentAngle   = (double)(SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX]) * ENC_TO_DEGREES;
+        }
+
+        inPosition = Math.abs(targetAngle - currentAngle) <= POSITION_TOLLERANCE;
+        nearPosition = Math.abs(targetAngle - currentAngle) <= COLOR_SENSOR_POSITION_TOLLERANCE;
         NormalizedRGBA colors;
 
         if ((currentState == INTAKING) && nearPosition){
-            if (Globals.AXIAL_MOTION > 0){
+            if (Globals.AXIAL_MOTION >= 0){
                 // front intake
-                colors = frontColorSensor.getNormalizedColors();
+                //colors = frontColorSensor.getNormalizedColors();
             } else {
                 // back intake
-                colors = backColorSensor.getNormalizedColors();
+                //colors = backColorSensor.getNormalizedColors();
             }
 
-            Color.colorToHSV(colors.toColor(), hsvValues);
+            //Color.colorToHSV(colors.toColor(), hsvValues);
 
             //checking the hue and saturation of the color sensor
             //saturation needs to be high enough use the hue value
@@ -180,22 +188,22 @@ public class SpindexerSubsystem extends SubsystemBase {
                     slotColors[currentSlot] = currentColor;
                 }
             }
-
-            // count number of slots with balls.
-            int purpleCount = 0;
-            int greenCount = 0;
-            for (int b = 0; b < 3; b++) {
-                if (slotColors[b] == ArtifactColor.GREEN) {
-                    greenCount++;
-                } else if (slotColors[b] == ArtifactColor.PURPLE) {
-                    purpleCount++;
-                }
-            }
-
-            allArtifactsHeld    = greenCount + purpleCount;
-            greenArtifactsHeld  = greenCount;
-            purpleArtifactsHeld = purpleCount;
         }
+
+        // count number of slots with balls.
+        int purpleCount = 0;
+        int greenCount = 0;
+        for (int b = 0; b < 3; b++) {
+            if (slotColors[b] == ArtifactColor.GREEN) {
+                greenCount++;
+            } else if (slotColors[b] == ArtifactColor.PURPLE) {
+                purpleCount++;
+            }
+        }
+
+        allArtifactsHeld    = greenCount + purpleCount;
+        greenArtifactsHeld  = greenCount;
+        purpleArtifactsHeld = purpleCount;
     }
 
     @Override
@@ -208,7 +216,8 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case HOMING: {
-                if (inPosition) {
+                if (timeInState(0.25)) {
+                    SharedOQ.resetEncoder(OQ_ENCODER_INDEX);
                     setState(HOME);
                 }
                 break;
@@ -222,9 +231,12 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case INTAKING: {
-                if (myOpMode.gamepad1.dpad_left){
-                    sendBestToIntake();
+                // THIS if JUST FOR TESTING
+                if (myOpMode.gamepad1.dpadLeftWasPressed()){
+                    slotColors[2] = ArtifactColor.PURPLE;
                 }
+                // THIS if JUST FOR TESTING
+
                 if (allArtifactsHeld == 3) {
                     sendToShooter(0);
                     setState(QUEUEING);
@@ -281,8 +293,8 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("Spin", "%s %.0f -> %.0f %s", currentState, currentAngle, targetAngle, inPosition);
-        myOpMode.telemetry.addData("Spin colors", "C=$s", currentColor);
+        myOpMode.telemetry.addData("Spin", "%s (s%d) %.1f -> %.1f %s (%.2f)", currentState, currentSlot, currentAngle, targetAngle, inPosition, lastSpindexerServoValue);
+        myOpMode.telemetry.addData("Spin colors", "C=%s", currentColor);
         myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
     }
 
@@ -291,19 +303,25 @@ public class SpindexerSubsystem extends SubsystemBase {
         currentSlot = slot;
     }
 
-    public void sendSpindexerTo(double spindexerAngle) {
-        targetAngle = spindexerAngle;
-        inPosition = false;
-        spindexer.setPosition(0.5 - (targetAngle / 150));  // +ve angle turns CCW.
-    }
-
     public void sendToIntake(int slot){
-        if (Globals.AXIAL_MOTION > 0){
+        if (Globals.AXIAL_MOTION >= 0){
             sendSpindexerTo(INTAKE_FRONT[slot]);
         } else {
             sendSpindexerTo(INTAKE_BACK[slot]);
         }
         currentSlot = slot;
+    }
+
+    public void sendSpindexerTo(double spindexerAngle) {
+        targetAngle = spindexerAngle;
+        lastSpindexerServoValue = 0.5 + (targetAngle * PULSE_SCALE_FACTOR);
+        spindexer.setPosition(lastSpindexerServoValue);  // +ve angle turns CCW.
+
+        // do we need to clear "InPosition" ?
+        if (targetAngle != lastTargetAngle) {
+            inPosition = false;
+            lastTargetAngle = targetAngle;
+        }
     }
 
     public void queueColor( ArtifactColor colorToQueue) {
