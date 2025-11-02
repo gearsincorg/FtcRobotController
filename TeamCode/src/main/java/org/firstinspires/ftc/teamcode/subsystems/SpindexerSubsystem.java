@@ -3,9 +3,12 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
+
+import android.graphics.Color;
 
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
@@ -47,6 +50,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] SHOOT        = { -90,   0,   90};
     private final double[] INTAKE_FRONT = { -30,  90, -150};
     private final double[] INTAKE_BACK  = { 150, -90,   30};
+    private final double[] HOME_ANGLES  = { 120,   0, -120};
 
     // General Subsystem Members
     private double currentAngle    = 0;
@@ -60,8 +64,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private int greenArtifactsHeld = 0;
     private int purpleArtifactsHeld = 0;
 
-    private ArtifactColor frontColor   = ArtifactColor.UNKNOWN;
-    private ArtifactColor backColor    = ArtifactColor.UNKNOWN;
+    private ArtifactColor currentColor   = ArtifactColor.UNKNOWN;
     private ArtifactColor queuedColor  = ArtifactColor.ANY;
     private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
 
@@ -69,7 +72,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void init (boolean showTelemetry) {
 
         super.init(showTelemetry);  // do not remove
-        setState(SpindexerStates.INIT);
+        setState(INIT);
 
         // Attach to physical devices and configure them
         fire = myOpMode.hardwareMap.get(Servo.class, "fire");
@@ -85,19 +88,84 @@ public class SpindexerSubsystem extends SubsystemBase {
         backColorSensor.setGain(COLOR_GAIN);
     }
 
+    /**
+     * 
+     */
+    private int bestFullSlot(){
+        // automatically finds the closest full slot fpr the shooter
+        int bestSlot;
+
+        if (currentSlot == 0){
+            if (slotColors[1] != ArtifactColor.UNKNOWN){
+                bestSlot = 1;
+            } else {
+                // must be the best, because all others are empty
+                bestSlot = 2;
+            }
+        } else if (currentSlot == 1){
+            if (slotColors[0] != ArtifactColor.UNKNOWN){
+                bestSlot = 0;
+            } else {
+                bestSlot = 2;
+            }
+        } else {
+            if (slotColors[1] != ArtifactColor.UNKNOWN){
+                bestSlot = 1;
+            } else {
+                // must be the best, because all others are empty
+                bestSlot = 0;
+            }
+        }
+
+        return bestSlot;
+    }
+
+    /**
+     * sends the beat slot to the intake by deciding on the smallest distance between the three.
+     */
+    private void sendBestToIntake(){
+         double closestAngle = 360;
+         int    closestSlot  =   -1;
+         double destination;
+
+         if (Globals.AXIAL_MOTION > 0){
+             destination = 90;
+         } else {
+             destination = -90;
+         }
+
+         for(int s = 0; s < 3; s++){
+             if (slotColors[s] == ArtifactColor.UNKNOWN) {
+                 double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
+                 if (angle < closestAngle) {
+                     closestAngle = angle;
+                     closestSlot = s;
+                 }
+             }
+         }
+
+         if (closestSlot >= 0){
+             sendToIntake(closestSlot);
+         }
+    }
+
     @Override
     public void readSensors() {
         // Read the spindexer position and determine which segment and slot we are in.
-        currentAngle   = SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX] * ENC_TO_DEGREES;
+        currentAngle   = (SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX] * ENC_TO_DEGREES);
         inPosition = Math.abs(targetAngle - currentAngle) < POSITION_TOLLERANCE;
         nearPosition = Math.abs(targetAngle - currentAngle) < COLOR_SENSOR_POSITION_TOLLERANCE;
+        NormalizedRGBA colors;
 
-        // Fix this for two color sensors
-        // only read & update ball color when in range of color sensor
-        /*
-        if ((currentSegment == 0) || (currentSegment == 5) || (currentSegment == 10)) {
+        if ((currentState == INTAKING) && nearPosition){
+            if (Globals.AXIAL_MOTION > 0){
+                // front intake
+                colors = frontColorSensor.getNormalizedColors();
+            } else {
+                // back intake
+                colors = backColorSensor.getNormalizedColors();
+            }
 
-            NormalizedRGBA colors = color.getNormalizedColors();
             Color.colorToHSV(colors.toColor(), hsvValues);
 
             //checking the hue and saturation of the color sensor
@@ -105,7 +173,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             //find which range the hue resides in to decide the color
             if (hsvValues[1] > MIN_SATURATION) {
                 if ((hsvValues[0] > GREEN_MIN) && (hsvValues[0] < GREEN_MAX)) {
-                    currentColor = ArtifactColor.GREEN;
+                    currentColor  = ArtifactColor.GREEN;
                     slotColors[currentSlot] = currentColor;
                 } else if ((hsvValues[0] > PURPLE_MIN) && (hsvValues[0] < PURPLE_MAX)) {
                     currentColor = ArtifactColor.PURPLE;
@@ -128,14 +196,13 @@ public class SpindexerSubsystem extends SubsystemBase {
             greenArtifactsHeld  = greenCount;
             purpleArtifactsHeld = purpleCount;
         }
-        */
     }
 
     @Override
     public void runStateMachine() {
         switch ((SpindexerStates)currentState) {
             case INIT: {
-                sendToShooter(0);
+                sendToShooter(1);
                 setState(HOMING);
                 break;
             }
@@ -159,6 +226,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     sendToShooter(0);
                     setState(QUEUEING);
                 }
+                sendBestToIntake();
                 break;
             }
 
@@ -188,6 +256,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                         setState(INTAKING);
                     } else {
                         //  !!!!!!!! advance to the next ball
+                        sendToShooter(bestFullSlot());
                         setState(TAKING_SHOT);
                     }
                 }
@@ -210,18 +279,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         myOpMode.telemetry.addData("Spin", "%s %.0f -> %.0f %s", currentState, currentAngle, targetAngle, inPosition);
-        myOpMode.telemetry.addData("Spin colors", "F=$s, B=$s", frontColor, backColor);
+        myOpMode.telemetry.addData("Spin colors", "C=$s", currentColor);
         myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
-    }
-
-    public void sendToFrontIntake(int slot) {
-        sendSpindexerTo(INTAKE_FRONT[slot]);
-        currentSlot = slot;
-    }
-
-    public void sendToBackIntake(int slot) {
-        sendSpindexerTo(INTAKE_BACK[slot]);
-        currentSlot = slot;
     }
 
     public void sendToShooter(int slot) {
@@ -235,7 +294,36 @@ public class SpindexerSubsystem extends SubsystemBase {
         spindexer.setPosition(0.5 - (targetAngle / 150));  // +ve angle turns CCW.
     }
 
+    public void sendToIntake(int slot){
+        if (Globals.AXIAL_MOTION > 0){
+            sendSpindexerTo(INTAKE_FRONT[slot]);
+        } else {
+            sendSpindexerTo(INTAKE_BACK[slot]);
+        }
+        currentSlot = slot;
+    }
+
     public void queueColor( ArtifactColor colorToQueue) {
         queuedColor = colorToQueue;
+    }
+
+    public void resetEncoder(){
+        SharedOQ.resetEncoder(OQ_ENCODER_INDEX);
+    }
+
+    /**
+     * Convert any angle to a +/- 180  degree value.
+     * @param angle
+     * @return
+     */
+    double normalizeAngle(double angle){
+        while (angle > 180) {
+            angle -= 360;
+        }
+        while (angle < -180) {
+            angle += 360;
+        }
+
+        return angle;
     }
 }

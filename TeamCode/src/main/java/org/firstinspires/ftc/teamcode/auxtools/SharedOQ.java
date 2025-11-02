@@ -61,4 +61,8 @@ public class SharedOQ {
         oq.resetSinglePosition(1);
         oq.saveParametersToFlash();
     }
+
+    public static void resetEncoder(int channel){
+        oq.resetSinglePosition(channel);
+    }
 }
