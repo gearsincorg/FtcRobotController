@@ -9,6 +9,7 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -55,7 +56,7 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         // Initialize the drive hardware & Turn on telemetry
-//        driveSubsystem.init(new Pose2d(0, 0, 0),true);
+        driveSubsystem.init(new Pose2d(0, 0, 0),true);
         spindexerSubsystem.init(true);
 //        turretSubsystem.init(true);
 //        intakeSubsystem.init(true);
@@ -71,6 +72,7 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         // Reset pose and mechanisms
+        spindexerSubsystem.resetEncoder();
         driveSubsystem.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
         Globals.OCTO_ERRORS = 0;
 

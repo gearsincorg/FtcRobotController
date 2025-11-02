@@ -24,16 +24,15 @@ public class SharedOQ {
     public static void init(LinearOpMode opMode) {
         if (myOpMode == null) {
             myOpMode = opMode;
-        }
-    }
-
-    public static void update() {
-        if (myOpMode != null) {
             if (oq == null) {
                 oq = myOpMode.hardwareMap.get(OctoQuad.class, "octoquad");
                 intializeOctoQuad(oq);
             }
+        }
+    }
 
+    public static void update() {
+        if (myOpMode != null) { 
             oq.readLocalizerDataAndAllEncoderData(OQlocalizer, OQencoder);
         }
     }

@@ -89,7 +89,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     /**
-     * 
+     *
      */
     private int bestFullSlot(){
         // automatically finds the closest full slot fpr the shooter
@@ -222,6 +222,9 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case INTAKING: {
+                if (myOpMode.gamepad1.dpad_left){
+                    sendBestToIntake();
+                }
                 if (allArtifactsHeld == 3) {
                     sendToShooter(0);
                     setState(QUEUEING);
