@@ -34,7 +34,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     @Override
     public void runStateMachine(){
-        if (myOpMode.gamepad1.dpadUpWasPressed()){
+        if (myOpMode.gamepad1.dpad_up){
             intake.setPower(INTAKE_POWER);
         } else {
             intake.setPower(0.0);

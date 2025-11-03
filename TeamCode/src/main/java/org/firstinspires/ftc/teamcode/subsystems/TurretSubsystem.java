@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.Range;
 
@@ -17,7 +18,7 @@ public class TurretSubsystem extends SubsystemBase {
     // subsystem devices
     private VisionSubsystem visionSubsystem;
     private DcMotor aim;
-    private DcMotor shoot;
+    private DcMotorEx shoot;
 
     // Subsystem Constants
     private final double DEADBAND = 1.0;
@@ -32,12 +33,16 @@ public class TurretSubsystem extends SubsystemBase {
     private final double BLUE_Y = -1413;
     private final double SPIN_LIMIT = 180;
 
+    private final double SHOOTER_STEP = 0.05;
+
     // Subsystem Speed/Power constants
 
 
     // Servo positions
 
     // General Subsystem Members
+    private double shooterPower = 0;
+
     private double error = 0;
     private boolean resetting = false;
 
@@ -56,7 +61,7 @@ public class TurretSubsystem extends SubsystemBase {
         aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        shoot = myOpMode.hardwareMap.get(DcMotor.class, "shooter");
+        shoot = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
         shoot.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // initialize the vision subsystem
@@ -71,6 +76,8 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void runStateMachine(){
+
+        updateShooterSpeed();
 
         if (myOpMode.gamepad1.rightBumperWasPressed()) {
             int targetPosition;
@@ -117,9 +124,25 @@ public class TurretSubsystem extends SubsystemBase {
         }
     }
 
+    public void updateShooterSpeed() {
+        if (myOpMode.gamepad1.yWasPressed() && (shooterPower <= (1-SHOOTER_STEP))) {
+            shooterPower += SHOOTER_STEP;
+        }
+        if (myOpMode.gamepad1.aWasPressed() && (shooterPower >= SHOOTER_STEP)) {
+            shooterPower -= SHOOTER_STEP;
+        }
+
+        if (myOpMode.gamepad1.right_trigger > 0.25) {
+            shoot.setPower(shooterPower);
+        } else {
+            shoot.setPower(0);
+        }
+    }
+
     @Override
     public void showStatus(){
-        myOpMode.telemetry.addData("turret degrees", At);
+        myOpMode.telemetry.addData("Turret", "At=%4.0f, Ad=%4.0f, Aa=%4.0f, Ar=%4.0f", At, Ad, Aa, Ad);
+        myOpMode.telemetry.addData("Shooter", "P=%5.2 V=%d ", shooterPower, shoot.getVelocity());
     }
 
     private void calculateAd(){

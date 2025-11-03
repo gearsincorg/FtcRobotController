@@ -58,8 +58,6 @@ public final class DriveSubsystem
     private static boolean enabled = false;
     private LinearOpMode myOpMode;
 
-    public  static OctoQuad oq = null;
-
     private boolean     intakeForward = false;
     private boolean     intakeReverse = true;
     private boolean     headingLocked = false;
@@ -502,20 +500,17 @@ public final class DriveSubsystem
     public PoseVelocity2d updatePoseEstimate() {
         PoseVelocity2d poseVel = new PoseVelocity2d(new Vector2d(0, 0), 0);
 
-        if (oq != null) {
-            // Read localizer data AND encoder.  Process each if they are valid.
-            SharedOQ.update();
+        // Read localizer data AND encoder.  Process each if they are valid.
+        SharedOQ.update();
+        if (SharedOQ.OQlocalizer.isDataValid()) {
+            myOpMode.telemetry.addData("X:Y:H inch,Deg", "%4.1f  %4.1f  %4.0f",
+                    mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm), Math.toDegrees(SharedOQ.OQlocalizer.heading_rad));
 
-            if (SharedOQ.OQlocalizer.isDataValid()) {
-                myOpMode.telemetry.addData("X:Y:H inch,Deg", "%4.1f  %4.1f  %4.0f",
-                        mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm), Math.toDegrees(SharedOQ.OQlocalizer.heading_rad));
+            pose = new Pose2d(mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm), SharedOQ.OQlocalizer.heading_rad);
+            Globals.LAST_POSE = pose ;
 
-                pose = new Pose2d(mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm), SharedOQ.OQlocalizer.heading_rad);
-                Globals.LAST_POSE = pose ;
-
-                poseVel = new PoseVelocity2d(new Vector2d(mmToInch(SharedOQ.OQlocalizer.velX_mmS), mmToInch(SharedOQ.OQlocalizer.velY_mmS)),
-                        SharedOQ.OQlocalizer.velHeading_radS);
-            }
+            poseVel = new PoseVelocity2d(new Vector2d(mmToInch(SharedOQ.OQlocalizer.velX_mmS), mmToInch(SharedOQ.OQlocalizer.velY_mmS)),
+                    SharedOQ.OQlocalizer.velHeading_radS);
         }
 
         return poseVel;
@@ -560,9 +555,7 @@ public final class DriveSubsystem
 
     public void setPose (Pose2d newPose) {
         pose = newPose;
-        if (oq != null){
-            oq.setLocalizerPose(inchToMm(newPose.position.x), inchToMm(newPose.position.y), (float) newPose.heading.toDouble());
-        }
+        SharedOQ.setLocalizerPose(newPose);
     }
 
     public void setHeadingDeg(double heading) {
@@ -587,10 +580,6 @@ public final class DriveSubsystem
 
     private double mmToInch(double mm) {
         return mm / 25.4;
-    }
-
-    private int inchToMm(double inches) {
-        return (int)(inches * 25.4);
     }
 
     private double lessSensitive(double joystick) {

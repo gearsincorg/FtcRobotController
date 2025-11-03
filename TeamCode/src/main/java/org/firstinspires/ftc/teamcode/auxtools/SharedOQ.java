@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.auxtools;
 
 import static com.qualcomm.hardware.digitalchickenlabs.OctoQuad.I2cRecoveryMode.MODE_2_M1_PLUS_SCL_IDLE_ONESHOT_TGL;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -43,6 +44,12 @@ public class SharedOQ {
         }
     }
 
+    public static void setLocalizerPose(Pose2d newPose) {
+        if (oq != null) {
+            oq.setLocalizerPose(inchToMm(newPose.position.x), inchToMm(newPose.position.y), (float) newPose.heading.toDouble());
+        }
+    }
+
     private static void intializeOctoQuad(OctoQuad oq) {
         oq.resetEverything();
         oq.setChannelBankConfig(OctoQuad.ChannelBankConfig.BANK1_QUADRATURE_BANK2_PULSE_WIDTH);
@@ -66,4 +73,9 @@ public class SharedOQ {
         oq.resetSinglePosition(1);
         oq.saveParametersToFlash();
     }
+
+    private static int inchToMm(double inches) {
+        return (int)(inches * 25.4);
+    }
+
 }

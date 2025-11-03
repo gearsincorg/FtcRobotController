@@ -92,71 +92,10 @@ public class SpindexerSubsystem extends SubsystemBase {
         //backColorSensor.setGain(COLOR_GAIN);
     }
 
-    /**
-     *
-     */
-    private int bestFullSlot(){
-        // automatically finds the closest full slot fpr the shooter
-        int bestSlot;
-
-        if (currentSlot == 0){
-            if (slotColors[1] != ArtifactColor.UNKNOWN){
-                bestSlot = 1;
-            } else {
-                // must be the best, because all others are empty
-                bestSlot = 2;
-            }
-        } else if (currentSlot == 1){
-            if (slotColors[0] != ArtifactColor.UNKNOWN){
-                bestSlot = 0;
-            } else {
-                bestSlot = 2;
-            }
-        } else {
-            if (slotColors[1] != ArtifactColor.UNKNOWN){
-                bestSlot = 1;
-            } else {
-                // must be the best, because all others are empty
-                bestSlot = 0;
-            }
-        }
-
-        return bestSlot;
-    }
-
-    /**
-     * sends the beat slot to the intake by deciding on the smallest distance between the three.
-     */
-    private void sendBestToIntake(){
-         double closestAngle = 360;
-         int    closestSlot  =   -1;
-         double destination;
-
-         if (Globals.AXIAL_MOTION >= 0){
-             destination = 90;
-         } else {
-             destination = -90;
-         }
-
-         for(int s = 0; s < 3; s++){
-             if (slotColors[s] == ArtifactColor.UNKNOWN) {
-                 double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
-                 if (angle < closestAngle) {
-                     closestAngle = angle;
-                     closestSlot = s;
-                 }
-             }
-         }
-
-         if (closestSlot >= 0){
-             sendToIntake(closestSlot);
-         }
-    }
 
     @Override
     public void readSensors() {
         // Read the spindexer position and determine which segment and slot we are in.
-        SharedOQ.update();
         if (SharedOQ.OQencoder.isDataValid()) {
             currentAngle   = (double)(SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX]) * ENC_TO_DEGREES;
         }
@@ -240,8 +179,9 @@ public class SpindexerSubsystem extends SubsystemBase {
                 if (allArtifactsHeld == 3) {
                     sendToShooter(0);
                     setState(QUEUEING);
+
                 }
-                sendBestToIntake();
+                sendClostestEmptyToIntake();
                 break;
             }
 
@@ -267,10 +207,8 @@ public class SpindexerSubsystem extends SubsystemBase {
                 // wait for the shot to start  !!  THIS PAUSE MAY NOT BE REQUIRED
                 if (timeInState(ADVANCE_DELAY_TIME)) {
                     // Move the spindexer to the next ball if there is one
-                    if (allArtifactsHeld == 0) {
-                        setState(INTAKING);
-                    } else {
-                        //  !!!!!!!! advance to the next ball
+                    if (allArtifactsHeld > 0) {
+                        //  advance to the next ball
                         sendToShooter(bestFullSlot());
                         setState(TAKING_SHOT);
                     }
@@ -281,7 +219,11 @@ public class SpindexerSubsystem extends SubsystemBase {
             case TAKING_SHOT: {
                 if (timeInState(FIRE_HOLD_TIME)) {
                     fire.setPosition(FIRE_RETRACT);
-                    setState(QUEUEING);
+                    if (allArtifactsHeld > 0) {
+                        setState(QUEUEING);
+                    } else {
+                        setState(INTAKING);
+                    }
                 }
                 break;
             }
@@ -296,6 +238,66 @@ public class SpindexerSubsystem extends SubsystemBase {
         myOpMode.telemetry.addData("Spin", "%s (s%d) %.1f -> %.1f %s (%.2f)", currentState, currentSlot, currentAngle, targetAngle, inPosition, lastSpindexerServoValue);
         myOpMode.telemetry.addData("Spin colors", "C=%s", currentColor);
         myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
+    }
+
+    /**
+     *
+     */
+    private int bestFullSlot(){
+        // automatically finds the closest full slot for the shooter
+        int bestSlot;
+
+        if (currentSlot == 0){
+            if (slotColors[1] != ArtifactColor.UNKNOWN){
+                bestSlot = 1;
+            } else {
+                // must be the best, because all others are empty
+                bestSlot = 2;
+            }
+        } else if (currentSlot == 1){
+            if (slotColors[0] != ArtifactColor.UNKNOWN){
+                bestSlot = 0;
+            } else {
+                bestSlot = 2;
+            }
+        } else {
+            if (slotColors[1] != ArtifactColor.UNKNOWN){
+                bestSlot = 1;
+            } else {
+                // must be the best, because all others are empty
+                bestSlot = 0;
+            }
+        }
+        return bestSlot;
+    }
+
+    /**
+     * sends the beat slot to the intake by deciding on the smallest distance between the three.
+     */
+    private void sendClostestEmptyToIntake(){
+        double closestAngle = 360;
+        int    closestSlot  =   -1;
+        double destination;
+
+        if (Globals.AXIAL_MOTION >= 0){
+            destination = 90;
+        } else {
+            destination = -90;
+        }
+
+        for(int s = 0; s < 3; s++){
+            if (slotColors[s] == ArtifactColor.UNKNOWN) {
+                double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
+                if (angle < closestAngle) {
+                    closestAngle = angle;
+                    closestSlot = s;
+                }
+            }
+        }
+
+        if (closestSlot >= 0){
+            sendToIntake(closestSlot);
+        }
     }
 
     public void sendToShooter(int slot) {
