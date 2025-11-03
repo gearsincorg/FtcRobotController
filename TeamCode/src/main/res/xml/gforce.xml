@@ -8,10 +8,10 @@
         </LynxModule>
 
         <LynxModule name="Control Hub" port="173">
-            <goBILDA5202SeriesMotor name="front_left_drive" port="0" />
-            <goBILDA5202SeriesMotor name="back_left_drive" port="1" />
+            <goBILDA5202SeriesMotor name="front_left_drive" port="3" />
+            <goBILDA5202SeriesMotor name="back_left_drive" port="0" />
             <goBILDA5202SeriesMotor name="front_right_drive" port="2" />
-            <goBILDA5202SeriesMotor name="back_right_drive" port="3" />
+            <goBILDA5202SeriesMotor name="back_right_drive" port="1" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
             <OctoQuadFTC name="octoquad" port="0" bus="1" />
             <!--

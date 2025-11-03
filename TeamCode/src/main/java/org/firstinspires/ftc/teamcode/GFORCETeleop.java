@@ -58,8 +58,8 @@ public class GFORCETeleop extends LinearOpMode
         // Initialize the drive hardware & Turn on telemetry
         driveSubsystem.init(new Pose2d(0, 0, 0),true);
         spindexerSubsystem.init(true);
-        turretSubsystem.init(true);
-        intakeSubsystem.init(true);
+        //turretSubsystem.init(true);
+        //intakeSubsystem.init(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {

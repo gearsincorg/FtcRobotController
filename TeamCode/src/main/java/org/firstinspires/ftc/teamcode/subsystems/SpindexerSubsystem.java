@@ -1,14 +1,11 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
-
-import android.graphics.Color;
 
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
@@ -195,7 +192,13 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case READY_TO_SHOOT: {
-                if (myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) {
+                if(myOpMode.gamepad1.yWasPressed()) {
+                    sendClostestColorToShooter(ArtifactColor.PURPLE);
+                    setState(QUEUEING);
+                }  else if(myOpMode.gamepad1.xWasPressed()) {
+                    sendClostestColorToShooter(ArtifactColor.GREEN);
+                    setState(QUEUEING);
+                }  else  if (myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
                     setState(SHOOTING);
@@ -209,7 +212,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     // Move the spindexer to the next ball if there is one
                     if (allArtifactsHeld > 0) {
                         //  advance to the next ball
-                        sendToShooter(bestFullSlot());
+                        sendClostestColorToShooter(ArtifactColor.ANY);
                         setState(TAKING_SHOT);
                     }
                 }
@@ -243,7 +246,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     /**
      *
      */
-    private int bestFullSlot(){
+   /* private int bestFullSlot(){
         // automatically finds the closest full slot for the shooter
         int bestSlot;
 
@@ -269,7 +272,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
         }
         return bestSlot;
-    }
+    } */
 
     /**
      * sends the beat slot to the intake by deciding on the smallest distance between the three.
@@ -287,6 +290,26 @@ public class SpindexerSubsystem extends SubsystemBase {
 
         for(int s = 0; s < 3; s++){
             if (slotColors[s] == ArtifactColor.UNKNOWN) {
+                double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
+                if (angle < closestAngle) {
+                    closestAngle = angle;
+                    closestSlot = s;
+                }
+            }
+        }
+
+        if (closestSlot >= 0){
+            sendToIntake(closestSlot);
+        }
+    }
+
+    private void sendClostestColorToShooter(ArtifactColor color){
+        double closestAngle = 360;
+        int    closestSlot  =  -1;
+        double destination  =   0;
+
+        for (int s = 0; s < 3; s++) {
+            if ((slotColors[s] == color) || ((color == ArtifactColor.ANY) && (slotColors[s] != ArtifactColor.UNKNOWN))) {
                 double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
                 if (angle < closestAngle) {
                     closestAngle = angle;
