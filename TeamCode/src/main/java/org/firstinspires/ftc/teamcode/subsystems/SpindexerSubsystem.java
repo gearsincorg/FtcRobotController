@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
 
@@ -28,6 +29,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double POSITION_TOLLERANCE = 5;
     private final double COLOR_SENSOR_POSITION_TOLLERANCE = 30;
     private final double PULSE_SCALE_FACTOR = 1.8e-3;  // CONVERTS 150 DEG TO 0.28
+    private final double MAX_INCREMENT_DPS = 360;
 
     // Color match constants
     private final double MIN_SATURATION = 0.1;
@@ -57,6 +59,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private boolean inPosition     = false;
     private boolean nearPosition   = false;
     private double lastSpindexerServoValue = 0;
+    private ElapsedTime incrementTime = new ElapsedTime();
 
     private int     currentSlot     = 0;
     private float[] hsvValues = new float[3];
@@ -80,19 +83,22 @@ public class SpindexerSubsystem extends SubsystemBase {
         fire.setPosition(FIRE_RETRACT);
 
         spindexer = myOpMode.hardwareMap.get(Servo.class, "spindexer");
-        sendSpindexerTo(SHOOT[1]);
+        targetAngle = SHOOT[1];
 
         //frontColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorFront");
         //frontColorSensor.setGain(COLOR_GAIN);
 
         //backColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorBack");
         //backColorSensor.setGain(COLOR_GAIN);
+
+        incrementTime.reset();
     }
 
 
     @Override
     public void readSensors() {
         // Read the spindexer position and determine which segment and slot we are in.
+        SharedOQ.update();
         if (SharedOQ.OQencoder.isDataValid()) {
             currentAngle   = (double)(SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX]) * ENC_TO_DEGREES;
         }
@@ -144,6 +150,8 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     @Override
     public void runStateMachine() {
+        runIncrementalMovement();
+
         switch ((SpindexerStates)currentState) {
             case INIT: {
                 sendToShooter(1);
@@ -323,30 +331,32 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
     }
 
+    private void runIncrementalMovement(){
+        double error = targetAngle - currentAngle;
+        double increment = MAX_INCREMENT_DPS * incrementTime.time();
+        double newServoPosition;
+
+        if (Math.abs(error) > increment){
+            newServoPosition = currentAngle + (Math.signum(error) * increment);
+        } else {
+            newServoPosition = targetAngle;
+        }
+        lastSpindexerServoValue = 0.5 + (newServoPosition * PULSE_SCALE_FACTOR);
+        spindexer.setPosition(lastSpindexerServoValue);  // +ve angle turns CCW.
+    }
+
     public void sendToShooter(int slot) {
-        sendSpindexerTo(SHOOT[slot]);
+        targetAngle = SHOOT[slot];
         currentSlot = slot;
     }
 
     public void sendToIntake(int slot){
         if (Globals.AXIAL_MOTION >= 0){
-            sendSpindexerTo(INTAKE_FRONT[slot]);
+            targetAngle = INTAKE_FRONT[slot];
         } else {
-            sendSpindexerTo(INTAKE_BACK[slot]);
+            targetAngle = INTAKE_BACK[slot];
         }
         currentSlot = slot;
-    }
-
-    public void sendSpindexerTo(double spindexerAngle) {
-        targetAngle = spindexerAngle;
-        lastSpindexerServoValue = 0.5 + (targetAngle * PULSE_SCALE_FACTOR);
-        spindexer.setPosition(lastSpindexerServoValue);  // +ve angle turns CCW.
-
-        // do we need to clear "InPosition" ?
-        if (targetAngle != lastTargetAngle) {
-            inPosition = false;
-            lastTargetAngle = targetAngle;
-        }
     }
 
     public void queueColor( ArtifactColor colorToQueue) {
