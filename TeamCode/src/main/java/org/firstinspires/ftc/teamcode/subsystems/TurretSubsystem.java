@@ -41,7 +41,7 @@ public class TurretSubsystem extends SubsystemBase {
     // Servo positions
 
     // General Subsystem Members
-    private double shooterPower = 0;
+    private double shooterPower = 0.5;
 
     private double error = 0;
     private boolean resetting = false;
@@ -63,18 +63,31 @@ public class TurretSubsystem extends SubsystemBase {
 
         shoot = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
         shoot.setDirection(DcMotorSimple.Direction.FORWARD);
+        shoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // initialize the vision subsystem
         visionSubsystem.init(true);
     }
 
     @Override
+    /**
+     * Read any sensor for this subsystem and calculate any derived values
+     * Called every Update() cycle;
+     */
     public void readSensors(){
-        //turret angle, robot heading, calculate the AprilTag Angle
+        // read and calculate turret angle, robot heading, calculate the AprilTag Angle
         calculateAd();
     }
 
-    @Override
+    /**
+     *  Run any non-state machine pre-processing
+     *  Called every update() Cycle
+     */
+    public void runProcessing() {
+        updateShooterSpeed();  // this is just here for testing.
+    }
+
+        @Override
     public void runStateMachine(){
 
         updateShooterSpeed();

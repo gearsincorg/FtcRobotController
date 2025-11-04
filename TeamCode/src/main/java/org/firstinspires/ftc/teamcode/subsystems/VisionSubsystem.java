@@ -47,6 +47,10 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     @Override
+    /**
+     * Read any sensor for this subsystem and calculate any derived values
+     * Called every Update() cycle;
+     */
     public void update() {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         myOpMode.telemetry.addData("# AprilTags Detected", currentDetections.size());

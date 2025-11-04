@@ -26,12 +26,15 @@ public class SubsystemBase {
     public void update(){
         if (subsystemEnabled) {
             readSensors();
+            runProcessing();
             runStateMachine();
             if (showTelemetry) {
                 showStatus();
             }
         }
     }
+
+    public void runProcessing() {}
 
     public void runStateMachine() {}
 

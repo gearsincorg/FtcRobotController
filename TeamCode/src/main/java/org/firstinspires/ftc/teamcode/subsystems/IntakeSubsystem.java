@@ -33,7 +33,11 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     @Override
-    public void runStateMachine(){
+    /**
+     *  Run any non-state machine pre-processing
+     *  Called every update() Cycle
+     */
+    public void runProcessing() {
         if (myOpMode.gamepad1.dpad_up){
             intake.setPower(INTAKE_POWER);
         } else {

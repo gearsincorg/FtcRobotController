@@ -96,6 +96,10 @@ public class SpindexerSubsystem extends SubsystemBase {
 
 
     @Override
+    /**
+     * Read any sensor for this subsystem and calculate any derived values
+     * Called every Update() cycle;
+     */
     public void readSensors() {
         // Read the spindexer position and determine which segment and slot we are in.
         SharedOQ.update();
@@ -149,9 +153,21 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     @Override
-    public void runStateMachine() {
+    /**
+     *  Run any non-state machine pre-processing
+     *  Called every update() Cycle
+     */
+    public void runProcessing() {
         runIncrementalMovement();
+    }
 
+
+    @Override
+    /**
+     *  Run subsystem state machine
+     *  Called every update() Cycle
+     */
+    public void runStateMachine() {
         switch ((SpindexerStates)currentState) {
             case INIT: {
                 sendToShooter(1);
@@ -283,7 +299,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     } */
 
     /**
-     * sends the beat slot to the intake by deciding on the smallest distance between the three.
+     * sends the best empty slot to the intake by deciding on the smallest distance between the three.
      */
     private void sendClostestEmptyToIntake(){
         double closestAngle = 360;
@@ -296,6 +312,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             destination = -90;
         }
 
+        // calculate how far the spindexer needs to turn for each empty slot, and use the smallest angle.
         for(int s = 0; s < 3; s++){
             if (slotColors[s] == ArtifactColor.UNKNOWN) {
                 double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
@@ -311,12 +328,17 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
     }
 
+    /**
+     * sends the best full slot to the intake by deciding on the smallest distance between the three.
+     */
     private void sendClostestColorToShooter(ArtifactColor color){
         double closestAngle = 360;
         int    closestSlot  =  -1;
         double destination  =   0;
 
+        // calculate how far the spindexer needs to turn for each full slot, and use the smallest angle.
         for (int s = 0; s < 3; s++) {
+            // do a color match or a match all
             if ((slotColors[s] == color) || ((color == ArtifactColor.ANY) && (slotColors[s] != ArtifactColor.UNKNOWN))) {
                 double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
                 if (angle < closestAngle) {
