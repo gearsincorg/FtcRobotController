@@ -8,6 +8,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
 
+import androidx.core.math.MathUtils;
+
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
@@ -29,7 +31,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double POSITION_TOLLERANCE = 5;
     private final double COLOR_SENSOR_POSITION_TOLLERANCE = 30;
     private final double PULSE_SCALE_FACTOR = 1.8e-3;  // CONVERTS 150 DEG TO 0.28
-    private final double MAX_INCREMENT_DPS = 360;
+    private final double MAX_INCREMENT_DPS = 1500;
 
     // Color match constants
     private final double MIN_SATURATION = 0.1;
@@ -83,6 +85,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         fire.setPosition(FIRE_RETRACT);
 
         spindexer = myOpMode.hardwareMap.get(Servo.class, "spindexer");
+        spindexer.setPosition(0.5);
+        myOpMode.sleep(500);
+        resetEncoder();
         targetAngle = SHOOT[1];
 
         //frontColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorFront");
@@ -104,7 +109,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         // Read the spindexer position and determine which segment and slot we are in.
         SharedOQ.update();
         if (SharedOQ.OQencoder.isDataValid()) {
-            currentAngle   = (double)(SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX]) * ENC_TO_DEGREES;
+            currentAngle   = normalizeAngle((double)(SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX]) * ENC_TO_DEGREES);
         }
 
         inPosition = Math.abs(targetAngle - currentAngle) <= POSITION_TOLLERANCE;
@@ -201,8 +206,9 @@ public class SpindexerSubsystem extends SubsystemBase {
                     sendToShooter(0);
                     setState(QUEUEING);
 
+                } else {
+                    sendClostestEmptyToIntake();
                 }
-                sendClostestEmptyToIntake();
                 break;
             }
 
@@ -237,8 +243,9 @@ public class SpindexerSubsystem extends SubsystemBase {
                     if (allArtifactsHeld > 0) {
                         //  advance to the next ball
                         sendClostestColorToShooter(ArtifactColor.ANY);
-                        setState(TAKING_SHOT);
                     }
+
+                    setState(TAKING_SHOT);
                 }
                 break;
             }
@@ -268,37 +275,6 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     /**
-     *
-     */
-   /* private int bestFullSlot(){
-        // automatically finds the closest full slot for the shooter
-        int bestSlot;
-
-        if (currentSlot == 0){
-            if (slotColors[1] != ArtifactColor.UNKNOWN){
-                bestSlot = 1;
-            } else {
-                // must be the best, because all others are empty
-                bestSlot = 2;
-            }
-        } else if (currentSlot == 1){
-            if (slotColors[0] != ArtifactColor.UNKNOWN){
-                bestSlot = 0;
-            } else {
-                bestSlot = 2;
-            }
-        } else {
-            if (slotColors[1] != ArtifactColor.UNKNOWN){
-                bestSlot = 1;
-            } else {
-                // must be the best, because all others are empty
-                bestSlot = 0;
-            }
-        }
-        return bestSlot;
-    } */
-
-    /**
      * sends the best empty slot to the intake by deciding on the smallest distance between the three.
      */
     private void sendClostestEmptyToIntake(){
@@ -315,7 +291,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         // calculate how far the spindexer needs to turn for each empty slot, and use the smallest angle.
         for(int s = 0; s < 3; s++){
             if (slotColors[s] == ArtifactColor.UNKNOWN) {
-                double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
+                double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
                 if (angle < closestAngle) {
                     closestAngle = angle;
                     closestSlot = s;
@@ -340,7 +316,8 @@ public class SpindexerSubsystem extends SubsystemBase {
         for (int s = 0; s < 3; s++) {
             // do a color match or a match all
             if ((slotColors[s] == color) || ((color == ArtifactColor.ANY) && (slotColors[s] != ArtifactColor.UNKNOWN))) {
-                double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
+                double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
+                //double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
                 if (angle < closestAngle) {
                     closestAngle = angle;
                     closestSlot = s;
@@ -349,7 +326,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
 
         if (closestSlot >= 0){
-            sendToIntake(closestSlot);
+            sendToShooter(closestSlot);
         }
     }
 
@@ -363,8 +340,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         } else {
             newServoPosition = targetAngle;
         }
-        lastSpindexerServoValue = 0.5 + (newServoPosition * PULSE_SCALE_FACTOR);
+        lastSpindexerServoValue = MathUtils.clamp(0.5 + (newServoPosition * PULSE_SCALE_FACTOR), 0.22, 0.78);
         spindexer.setPosition(lastSpindexerServoValue);  // +ve angle turns CCW.
+        incrementTime.reset();
     }
 
     public void sendToShooter(int slot) {

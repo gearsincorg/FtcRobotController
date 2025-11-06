@@ -59,7 +59,7 @@ public class GFORCETeleop extends LinearOpMode
         driveSubsystem.init(new Pose2d(0, 0, 0),true);
         spindexerSubsystem.init(true);
         //turretSubsystem.init(true);
-        //intakeSubsystem.init(true);
+        intakeSubsystem.init(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {
