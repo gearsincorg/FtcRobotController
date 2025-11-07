@@ -33,11 +33,12 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double ENC_TO_DEGREES   = 360.0 / 8192.0;
     private final double POSITION_TOLLERANCE = 5;
     private final double COLOR_SENSOR_POSITION_TOLLERANCE = 30;
-    private final double PULSE_SCALE_FACTOR = 1.8e-3;  // CONVERTS 150 DEG TO 0.28
-    private final double MAX_INCREMENT_DPS = 1500;
+    private final double PULSE_SCALE_FACTOR = 1.8e-3;  // CONVERTS 150 DEG TO 0.28 ??
+    private final double MAX_INCREMENT_DPS = 360;
 
     // Color match constants
     private final double MIN_SATURATION = 0.1;
+    private final double MAX_SATURATION = 0.9;
     private final float  COLOR_GAIN     = 5;
     private final double GREEN_MIN      = 120.0;
     private final double GREEN_MAX      = 165.0;
@@ -118,7 +119,13 @@ public class SpindexerSubsystem extends SubsystemBase {
         inPosition = Math.abs(targetAngle - currentAngle) <= POSITION_TOLLERANCE;
         nearPosition = Math.abs(targetAngle - currentAngle) <= COLOR_SENSOR_POSITION_TOLLERANCE;
         NormalizedRGBA colors;
+        colors = frontColorSensor.getNormalizedColors();
+        Color.colorToHSV(colors.toColor(), hsvValues);
+        myOpMode.telemetry.addData("Front hsv", "%.2f %.2f %.2f", hsvValues[0], hsvValues[1], hsvValues[2]);
 
+        colors = backColorSensor.getNormalizedColors();
+        Color.colorToHSV(colors.toColor(), hsvValues);
+        myOpMode.telemetry.addData("Back hsv", "%.2f %.2f %.2f", hsvValues[0], hsvValues[1], hsvValues[2]);
         if ((currentState == INTAKING) && nearPosition){
             if (Globals.AXIAL_MOTION >= 0){
                 // front intake
@@ -133,8 +140,8 @@ public class SpindexerSubsystem extends SubsystemBase {
             //checking the hue and saturation of the color sensor
             //saturation needs to be high enough use the hue value
             //find which range the hue resides in to decide the color
-            if (hsvValues[1] > MIN_SATURATION) {
-                /*
+            double saturation =  hsvValues[1];
+            if ((saturation > MIN_SATURATION) && (saturation < MAX_SATURATION)) {
                 if ((hsvValues[0] > GREEN_MIN) && (hsvValues[0] < GREEN_MAX)) {
                     currentColor  = ArtifactColor.GREEN;
                     slotColors[currentSlot] = currentColor;
@@ -142,7 +149,6 @@ public class SpindexerSubsystem extends SubsystemBase {
                     currentColor = ArtifactColor.PURPLE;
                     slotColors[currentSlot] = currentColor;
                 }
-                 */
                 currentColor = ArtifactColor.PURPLE;
                 slotColors[currentSlot] = currentColor;
             }
@@ -279,6 +285,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         myOpMode.telemetry.addData("Spin", "%s (s%d) %.1f -> %.1f %s (%.2f)", currentState, currentSlot, currentAngle, targetAngle, inPosition, lastSpindexerServoValue);
         myOpMode.telemetry.addData("Spin colors", "C=%s", currentColor);
         myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
+        myOpMode.telemetry.addData("hue saturation value", "%s %s %s", hsvValues[0], hsvValues[1], hsvValues[2]);
     }
 
     /**
