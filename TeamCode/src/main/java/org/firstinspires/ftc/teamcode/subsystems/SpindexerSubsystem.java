@@ -1,12 +1,15 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorRangeSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
+
+import android.graphics.Color;
 
 import androidx.core.math.MathUtils;
 
@@ -71,8 +74,8 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private ArtifactColor currentColor   = ArtifactColor.UNKNOWN;
     private ArtifactColor queuedColor  = ArtifactColor.ANY;
-    private ArtifactColor[] slotColors = {ArtifactColor.PURPLE, ArtifactColor.GREEN, ArtifactColor.UNKNOWN};
-    //private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
+    //private ArtifactColor[] slotColors = {ArtifactColor.PURPLE, ArtifactColor.GREEN, ArtifactColor.UNKNOWN};
+    private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
 
     @Override
     public void init (boolean showTelemetry) {
@@ -90,11 +93,11 @@ public class SpindexerSubsystem extends SubsystemBase {
         resetEncoder();
         targetAngle = SHOOT[1];
 
-        //frontColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorFront");
-        //frontColorSensor.setGain(COLOR_GAIN);
+        frontColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorFront");
+        frontColorSensor.setGain(COLOR_GAIN);
 
-        //backColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorBack");
-        //backColorSensor.setGain(COLOR_GAIN);
+        backColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorBack");
+        backColorSensor.setGain(COLOR_GAIN);
 
         incrementTime.reset();
     }
@@ -119,18 +122,19 @@ public class SpindexerSubsystem extends SubsystemBase {
         if ((currentState == INTAKING) && nearPosition){
             if (Globals.AXIAL_MOTION >= 0){
                 // front intake
-                //colors = frontColorSensor.getNormalizedColors();
+                colors = frontColorSensor.getNormalizedColors();
             } else {
                 // back intake
-                //colors = backColorSensor.getNormalizedColors();
+                colors = backColorSensor.getNormalizedColors();
             }
 
-            //Color.colorToHSV(colors.toColor(), hsvValues);
+            Color.colorToHSV(colors.toColor(), hsvValues);
 
             //checking the hue and saturation of the color sensor
             //saturation needs to be high enough use the hue value
             //find which range the hue resides in to decide the color
             if (hsvValues[1] > MIN_SATURATION) {
+                /*
                 if ((hsvValues[0] > GREEN_MIN) && (hsvValues[0] < GREEN_MAX)) {
                     currentColor  = ArtifactColor.GREEN;
                     slotColors[currentSlot] = currentColor;
@@ -138,6 +142,9 @@ public class SpindexerSubsystem extends SubsystemBase {
                     currentColor = ArtifactColor.PURPLE;
                     slotColors[currentSlot] = currentColor;
                 }
+                 */
+                currentColor = ArtifactColor.PURPLE;
+                slotColors[currentSlot] = currentColor;
             }
         }
 

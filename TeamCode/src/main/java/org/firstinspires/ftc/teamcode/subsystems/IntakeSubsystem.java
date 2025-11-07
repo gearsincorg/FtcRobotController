@@ -21,6 +21,7 @@ public class IntakeSubsystem extends SubsystemBase {
     // Servo positions
 
     // General Subsystem Members
+    private double power = 0;
 
     @Override
     public void init(boolean showTelemetry) {
@@ -28,8 +29,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
         intake = myOpMode.hardwareMap.get(DcMotor.class, "intake");
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
-        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     @Override
@@ -39,9 +39,17 @@ public class IntakeSubsystem extends SubsystemBase {
      */
     public void runProcessing() {
         if (myOpMode.gamepad1.dpad_up){
-            intake.setPower(INTAKE_POWER);
+            power = INTAKE_POWER;
         } else {
-            intake.setPower(0.0);
+            power = 0.0;
         }
+        intake.setPower(power);
     }
+
+    @Override
+    public void showStatus() {
+        myOpMode.telemetry.addData("Intake", "%s Power %.1f", currentState, power);
+    }
+
+
 }

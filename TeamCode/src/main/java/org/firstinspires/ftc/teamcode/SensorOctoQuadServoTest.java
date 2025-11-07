@@ -22,6 +22,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -61,6 +62,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  *
  * See the sensor's product page: https://www.tindie.com/products/35114/
  */
+@Disabled
 @TeleOp(name = "OctoQuad Basic", group="OctoQuad")
 public class SensorOctoQuadServoTest extends LinearOpMode {
 

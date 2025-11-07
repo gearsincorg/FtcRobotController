@@ -86,6 +86,8 @@ public class GFORCETeleop extends LinearOpMode
             // update the robot's position based on the odometry pods.
             driveSubsystem.updatePoseEstimate();
             spindexerSubsystem.update();
+            intakeSubsystem.update();
+            turretSubsystem.update();
 
             // use the smart manual drive feature of the DriveSubsystem
             driveSubsystem.smartDrive();
