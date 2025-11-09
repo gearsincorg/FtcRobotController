@@ -32,7 +32,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final int    OQ_ENCODER_INDEX = 2;
     private final double ENC_TO_DEGREES   = 360.0 / 8192.0;
     private final double POSITION_TOLLERANCE = 5;
-    private final double COLOR_SENSOR_POSITION_TOLLERANCE = 30;
+    private final double COLOR_SENSOR_POSITION_TOLLERANCE = 10;
     private final double PULSE_SCALE_FACTOR = 1.8e-3;  // CONVERTS 150 DEG TO 0.28 ??
     private final double MAX_INCREMENT_DPS = 360;
 
@@ -127,7 +127,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         Color.colorToHSV(colors.toColor(), hsvValues);
         myOpMode.telemetry.addData("Back hsv", "%.2f %.2f %.2f", hsvValues[0], hsvValues[1], hsvValues[2]);
         if ((currentState == INTAKING) && nearPosition){
-            if (Globals.AXIAL_MOTION >= 0){
+            if (Globals.FORWARD_MOTION){
                 // front intake
                 colors = frontColorSensor.getNormalizedColors();
             } else {
@@ -149,7 +149,6 @@ public class SpindexerSubsystem extends SubsystemBase {
                     currentColor = ArtifactColor.PURPLE;
                     slotColors[currentSlot] = currentColor;
                 }
-                currentColor = ArtifactColor.PURPLE;
                 slotColors[currentSlot] = currentColor;
             }
         }
@@ -286,6 +285,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         myOpMode.telemetry.addData("Spin colors", "C=%s", currentColor);
         myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
         myOpMode.telemetry.addData("hue saturation value", "%s %s %s", hsvValues[0], hsvValues[1], hsvValues[2]);
+        myOpMode.telemetry.addData("Forward motion", "%s", Globals.FORWARD_MOTION);
     }
 
     /**
@@ -296,7 +296,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         int    closestSlot  =   -1;
         double destination;
 
-        if (Globals.AXIAL_MOTION >= 0){
+        if (Globals.FORWARD_MOTION){
             destination = 90;
         } else {
             destination = -90;
@@ -365,7 +365,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     public void sendToIntake(int slot){
-        if (Globals.AXIAL_MOTION >= 0){
+        if (Globals.FORWARD_MOTION){
             targetAngle = INTAKE_FRONT[slot];
         } else {
             targetAngle = INTAKE_BACK[slot];

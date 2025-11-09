@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
@@ -19,19 +20,25 @@ public class TurretSubsystem extends SubsystemBase {
     private VisionSubsystem visionSubsystem;
     private DcMotor aim;
     private DcMotorEx shoot;
+    private DcMotorEx rollers;
+    private Servo hood;
 
     // Subsystem Constants
     private final double DEADBAND = 1.0;
     private final double OUTPUT_LIMIT = 0.75;
-    private final double GAIN = 0.005;
+    private final double GAIN = 0.01; // was 0.005
     private final double WARNING = 140;
-    private final int ONE_ROTATION = 537;
-    private final double COUNTS_PER_DEGREES = 537.5 / 360;
+    private final int    ONE_ROTATION = 537;
+    private final double COUNTS_PER_DEGREES = 537.5 * 135 / 21 / 360;
+    private final double ROLLER_COUNTS_TO_MPS  = 0.072 * Math.PI / 28;
+    private final double SHOOTER_COUNTS_TO_MPS = 0.072 * Math.PI / 28;
     private final double RED_X = -1482;
     private final double RED_Y = -1413;
     private final double BLUE_X = -1482;
     private final double BLUE_Y = -1413;
-    private final double SPIN_LIMIT = 180;
+    private final double SPIN_LIMIT = 180 ;
+    private final double MIN_HOOD = 0.22;
+    private final double MAX_HOOD = 0.78;
 
     private final double SHOOTER_STEP = 0.05;
 
@@ -48,7 +55,6 @@ public class TurretSubsystem extends SubsystemBase {
 
     private double Aa = 0;
     private double Ar = 0;
-    private double Ae = 0;
     private double At = 0;
     private double Ad = 0;
 
@@ -63,9 +69,16 @@ public class TurretSubsystem extends SubsystemBase {
 
         shoot = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
         shoot.setDirection(DcMotorSimple.Direction.FORWARD);
-        shoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //shoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        rollers = myOpMode.hardwareMap.get(DcMotorEx.class, "rollers");
+        rollers.setDirection(DcMotorSimple.Direction.REVERSE);
+        //rollers.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        hood = myOpMode.hardwareMap.get(Servo.class, "hood");
 
         // initialize the vision subsystem
+        visionSubsystem = new VisionSubsystem(myOpMode);
         visionSubsystem.init(true);
     }
 
@@ -138,7 +151,7 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     public void updateShooterSpeed() {
-        if (myOpMode.gamepad1.yWasPressed() && (shooterPower <= (1-SHOOTER_STEP))) {
+        if (myOpMode.gamepad1.bWasPressed() && (shooterPower <= 1)) {
             shooterPower += SHOOTER_STEP;
         }
         if (myOpMode.gamepad1.aWasPressed() && (shooterPower >= SHOOTER_STEP)) {
@@ -147,15 +160,18 @@ public class TurretSubsystem extends SubsystemBase {
 
         if (myOpMode.gamepad1.right_trigger > 0.25) {
             shoot.setPower(shooterPower);
+            rollers.setPower(shooterPower);
         } else {
             shoot.setPower(0);
+            rollers.setPower(0);
         }
     }
 
     @Override
     public void showStatus(){
         myOpMode.telemetry.addData("Turret", "At=%4.0f, Ad=%4.0f, Aa=%4.0f, Ar=%4.0f", At, Ad, Aa, Ad);
-        myOpMode.telemetry.addData("Shooter", "P=%5.2 V=%d ", shooterPower, shoot.getVelocity());
+        myOpMode.telemetry.addData("Shooter", "P=%5.2f V=%.1f ", shooterPower, shoot.getVelocity() * SHOOTER_COUNTS_TO_MPS);
+        myOpMode.telemetry.addData("Roller", "P=%5.2f V=%.1f ", shooterPower, rollers.getVelocity() * ROLLER_COUNTS_TO_MPS);
     }
 
     private void calculateAd(){

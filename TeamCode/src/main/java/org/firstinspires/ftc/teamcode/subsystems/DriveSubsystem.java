@@ -33,7 +33,6 @@ import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.DownsampledWriter;
 import com.acmerobotics.roadrunner.ftc.FlightRecorder;
 import com.acmerobotics.roadrunner.ftc.LynxFirmware;
-import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -279,7 +278,7 @@ public final class DriveSubsystem
         // skip if not initialized
         if (!enabled) return;
 
-        Globals.AXIAL_MOTION = powers.linearVel.x;
+        Globals.FORWARD_MOTION = (powers.linearVel.x >= 0);
 
         TankKinematics.WheelVelocities<Time> wheelVels = new TankKinematics(2).inverse(
                 PoseVelocity2dDual.constant(powers, 1));

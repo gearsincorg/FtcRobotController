@@ -16,7 +16,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private DcMotor intake;
 
     // Subsystem Speed/Power constants
-    private final double INTAKE_POWER = 0.5;
+    private final double INTAKE_POWER = 1.0;
 
     // Servo positions
 
