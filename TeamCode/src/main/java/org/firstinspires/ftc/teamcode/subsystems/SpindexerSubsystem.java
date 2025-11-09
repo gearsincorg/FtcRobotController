@@ -31,7 +31,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     // Subsystem Constants
     private final int    OQ_ENCODER_INDEX = 2;
     private final double ENC_TO_DEGREES   = 360.0 / 8192.0;
-    private final double POSITION_TOLLERANCE = 5;
+    private final double POSITION_TOLLERANCE = 8;
     private final double COLOR_SENSOR_POSITION_TOLLERANCE = 10;
     private final double PULSE_SCALE_FACTOR = 1.8e-3;  // CONVERTS 150 DEG TO 0.28 ??
     private final double MAX_INCREMENT_DPS = 360;
@@ -39,7 +39,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     // Color match constants
     private final double MIN_SATURATION = 0.1;
     private final double MAX_SATURATION = 0.9;
-    private final float  COLOR_GAIN     = 5;
+    private final float  COLOR_GAIN     = 2.5f;
     private final double GREEN_MIN      = 120.0;
     private final double GREEN_MAX      = 165.0;
     private final double PURPLE_MIN     = 220.0;

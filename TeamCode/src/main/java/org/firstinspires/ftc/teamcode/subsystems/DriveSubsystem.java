@@ -278,7 +278,11 @@ public final class DriveSubsystem
         // skip if not initialized
         if (!enabled) return;
 
-        Globals.FORWARD_MOTION = (powers.linearVel.x >= 0);
+        if (Globals.FORWARD_MOTION && (powers.linearVel.x < -INTAKE_HYSTERESIS)){
+            Globals.FORWARD_MOTION = false;
+        } else if (!Globals.FORWARD_MOTION && (powers.linearVel.x > INTAKE_HYSTERESIS)){
+            Globals.FORWARD_MOTION = true;
+        }
 
         TankKinematics.WheelVelocities<Time> wheelVels = new TankKinematics(2).inverse(
                 PoseVelocity2dDual.constant(powers, 1));
