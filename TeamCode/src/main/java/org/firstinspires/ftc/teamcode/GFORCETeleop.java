@@ -12,6 +12,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.auxtools.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
@@ -39,6 +40,9 @@ public class GFORCETeleop extends LinearOpMode
     private SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
     private TurretSubsystem    turretSubsystem    = new TurretSubsystem(this);
     private IntakeSubsystem    intakeSubsystem    = new IntakeSubsystem(this);
+
+    private ElapsedTime cycleTimer = new ElapsedTime();
+    private double lastCycle = 0;
 
     @Override public void runOpMode()
     {
@@ -68,6 +72,7 @@ public class GFORCETeleop extends LinearOpMode
             // Read and display sensor data
             driveSubsystem.updatePoseEstimate();
             spindexerSubsystem.update();
+            showCycleTime();
             telemetry.update();
         }
 
@@ -91,6 +96,7 @@ public class GFORCETeleop extends LinearOpMode
 
             // use the smart manual drive feature of the DriveSubsystem
             driveSubsystem.smartDrive();
+            showCycleTime();
             telemetry.update();
 
             // Update the dashboard.
@@ -101,6 +107,12 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         // tell AUTO to home next time
+    }
+
+    private void showCycleTime() {
+        double now = cycleTimer.time();
+        telemetry.addData("Cycle Time", "%.1f mS",(now - lastCycle) * 1000);
+        lastCycle = now;
     }
 }
 

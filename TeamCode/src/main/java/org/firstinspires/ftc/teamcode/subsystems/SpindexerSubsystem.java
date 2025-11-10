@@ -111,7 +111,7 @@ public class SpindexerSubsystem extends SubsystemBase {
      */
     public void readSensors() {
         // Read the spindexer position and determine which segment and slot we are in.
-        SharedOQ.update();
+        // SharedOQ.update();
         if (SharedOQ.OQencoder.isDataValid()) {
             currentAngle   = normalizeAngle((double)(SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX]) * ENC_TO_DEGREES);
         }
