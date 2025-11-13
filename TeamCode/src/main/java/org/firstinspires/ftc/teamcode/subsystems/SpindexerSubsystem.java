@@ -349,11 +349,12 @@ public class SpindexerSubsystem extends SubsystemBase {
         double increment = MAX_INCREMENT_DPS * incrementTime.time();
         double newServoPosition;
 
-        if (Math.abs(error) > increment){
-            newServoPosition = currentAngle + (Math.signum(error) * increment);
-        } else {
+//        if (Math.abs(error) > increment){
+//            newServoPosition = currentAngle + (Math.signum(error) * increment);
+//        } else {
             newServoPosition = targetAngle;
-        }
+//        }
+
         lastSpindexerServoValue = MathUtils.clamp(0.5 + (newServoPosition * PULSE_SCALE_FACTOR), 0.22, 0.78);
         spindexer.setPosition(lastSpindexerServoValue);  // +ve angle turns CCW.
         incrementTime.reset();
