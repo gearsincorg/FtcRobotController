@@ -42,7 +42,9 @@ public class GFORCETeleop extends LinearOpMode
     private IntakeSubsystem    intakeSubsystem    = new IntakeSubsystem(this);
 
     private ElapsedTime cycleTimer = new ElapsedTime();
+    private double avgCycle = 0;
     private double lastCycle = 0;
+    private double sampleCount = 0;
 
     @Override public void runOpMode()
     {
@@ -110,9 +112,12 @@ public class GFORCETeleop extends LinearOpMode
     }
 
     private void showCycleTime() {
-        double now = cycleTimer.time();
-        telemetry.addData("Cycle Time", "%.1f mS",(now - lastCycle) * 1000);
-        lastCycle = now;
+        if ((++sampleCount % 5) == 0) {
+            double now = cycleTimer.time();
+            avgCycle = (now - lastCycle) * 200;
+            lastCycle = now;
+        }
+        telemetry.addData("Cycle Time", "%.1f mS", avgCycle);
     }
 }
 

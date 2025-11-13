@@ -119,23 +119,19 @@ public class SpindexerSubsystem extends SubsystemBase {
         inPosition = Math.abs(targetAngle - currentAngle) <= POSITION_TOLLERANCE;
         nearPosition = Math.abs(targetAngle - currentAngle) <= COLOR_SENSOR_POSITION_TOLLERANCE;
         NormalizedRGBA colors;
-        colors = frontColorSensor.getNormalizedColors();
-        Color.colorToHSV(colors.toColor(), hsvValues);
-        myOpMode.telemetry.addData("Front hsv", "%.2f %.2f %.2f", hsvValues[0], hsvValues[1], hsvValues[2]);
-
-        colors = backColorSensor.getNormalizedColors();
-        Color.colorToHSV(colors.toColor(), hsvValues);
-        myOpMode.telemetry.addData("Back hsv", "%.2f %.2f %.2f", hsvValues[0], hsvValues[1], hsvValues[2]);
         if ((currentState == INTAKING) && nearPosition){
             if (Globals.FORWARD_MOTION){
                 // front intake
                 colors = frontColorSensor.getNormalizedColors();
+                Color.colorToHSV(colors.toColor(), hsvValues);
+                myOpMode.telemetry.addData("Front HSV", "%s %s %s", hsvValues[0], hsvValues[1], hsvValues[2]);
             } else {
                 // back intake
                 colors = backColorSensor.getNormalizedColors();
+                Color.colorToHSV(colors.toColor(), hsvValues);
+                myOpMode.telemetry.addData("Back  HSV", "%s %s %s", hsvValues[0], hsvValues[1], hsvValues[2]);
             }
 
-            Color.colorToHSV(colors.toColor(), hsvValues);
 
             //checking the hue and saturation of the color sensor
             //saturation needs to be high enough use the hue value
@@ -282,9 +278,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         myOpMode.telemetry.addData("Spin", "%s (s%d) %.1f -> %.1f %s (%.2f)", currentState, currentSlot, currentAngle, targetAngle, inPosition, lastSpindexerServoValue);
-        myOpMode.telemetry.addData("Spin colors", "C=%s", currentColor);
         myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
-        myOpMode.telemetry.addData("hue saturation value", "%s %s %s", hsvValues[0], hsvValues[1], hsvValues[2]);
         myOpMode.telemetry.addData("Forward motion", "%s", Globals.FORWARD_MOTION);
     }
 
