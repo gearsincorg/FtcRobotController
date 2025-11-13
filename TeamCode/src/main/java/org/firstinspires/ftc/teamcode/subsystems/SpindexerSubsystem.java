@@ -29,28 +29,23 @@ public class SpindexerSubsystem extends SubsystemBase {
     private NormalizedColorSensor backColorSensor;
 
     // Subsystem Constants
-    private final int    OQ_ENCODER_INDEX = 2;
-    private final double ENC_TO_DEGREES   = 360.0 / 8192.0;
-    private final double POSITION_TOLLERANCE = 8;
-    private final double COLOR_SENSOR_POSITION_TOLLERANCE = 10;
     private final double PULSE_SCALE_FACTOR = 1.8e-3;  // CONVERTS 150 DEG TO 0.28 ??
-    private final double MAX_INCREMENT_DPS = 360;
 
     // Color match constants
     private final double MIN_SATURATION = 0.1;
     private final double MAX_SATURATION = 0.9;
-    private final float  COLOR_GAIN     = 2.5f;
+    private final float  COLOR_GAIN     = 3.0f;
     private final double GREEN_MIN      = 120.0;
     private final double GREEN_MAX      = 165.0;
     private final double PURPLE_MIN     = 220.0;
     private final double PURPLE_MAX     = 300.0;
 
     // Flipper Servo positions and times for shooting
-    private final double FIRE_RETRACT   = 0.085;
     private final double FIRE_SHOOT     = 0.50;
+    private final double FIRE_RETRACT   = 0.085;
 
-    private final double ADVANCE_DELAY_TIME = 0.05;
     private final double FIRE_HOLD_TIME = 0.15;
+    private final double ADVANCE_DELAY_TIME = 0.05;
 
     // Spindexer Servo Positions (in degrees)
     private final double[] SHOOT        = {-120,   0,  120};
@@ -59,13 +54,11 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] HOME_ANGLES  = { 120,   0, -120};
 
     // General Subsystem Members
-    private double currentAngle    = 0;
-    private double targetAngle     = 0;
-    private double lastTargetAngle = 0;
-    private boolean inPosition     = false;
-    private boolean nearPosition   = false;
+    private double targetAngle      = 0;
+    private double currentAngle     = 0;
+    private double estimatedTransitTime = 0;
     private double lastSpindexerServoValue = 0;
-    private ElapsedTime incrementTime = new ElapsedTime();
+    private ElapsedTime spinServoTimer = new ElapsedTime();
 
     private int     currentSlot     = 0;
     private float[] hsvValues = new float[3];
@@ -89,10 +82,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         fire.setPosition(FIRE_RETRACT);
 
         spindexer = myOpMode.hardwareMap.get(Servo.class, "spindexer");
-        spindexer.setPosition(0.5);
-        myOpMode.sleep(500);
-        resetEncoder();
-        targetAngle = SHOOT[1];
 
         frontColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorFront");
         frontColorSensor.setGain(COLOR_GAIN);
@@ -100,7 +89,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         backColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorBack");
         backColorSensor.setGain(COLOR_GAIN);
 
-        incrementTime.reset();
+        spinServoTimer.reset();
     }
 
 
@@ -112,14 +101,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void readSensors() {
         // Read the spindexer position and determine which segment and slot we are in.
         // SharedOQ.update();
-        if (SharedOQ.OQencoder.isDataValid()) {
-            currentAngle   = normalizeAngle((double)(SharedOQ.OQencoder.positions[OQ_ENCODER_INDEX]) * ENC_TO_DEGREES);
-        }
 
-        inPosition = Math.abs(targetAngle - currentAngle) <= POSITION_TOLLERANCE;
-        nearPosition = Math.abs(targetAngle - currentAngle) <= COLOR_SENSOR_POSITION_TOLLERANCE;
         NormalizedRGBA colors;
-        if ((currentState == INTAKING) && nearPosition){
+        if ((currentState == INTAKING) && inPosition()){
             if (Globals.FORWARD_MOTION){
                 // front intake
                 colors = frontColorSensor.getNormalizedColors();
@@ -171,7 +155,6 @@ public class SpindexerSubsystem extends SubsystemBase {
      *  Called every update() Cycle
      */
     public void runProcessing() {
-        runIncrementalMovement();
     }
 
 
@@ -183,16 +166,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void runStateMachine() {
         switch ((SpindexerStates)currentState) {
             case INIT: {
-                sendToShooter(1);
-                setState(HOMING);
-                break;
-            }
-
-            case HOMING: {
-                if (timeInState(0.25)) {
-                    SharedOQ.resetEncoder(OQ_ENCODER_INDEX);
-                    setState(HOME);
-                }
+                sendToIntake(0);
+                setState(HOME);
                 break;
             }
 
@@ -223,7 +198,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             case QUEUEING: {
                 if (allArtifactsHeld == 0 ) {
                     setState(INTAKING);
-                } else if (inPosition)   {
+                } else if (inPosition())   {
                     setState(READY_TO_SHOOT);
                 }
                 break;
@@ -245,28 +220,22 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case SHOOTING: {
-                // wait for the shot to start  !!  THIS PAUSE MAY NOT BE REQUIRED
-                if (timeInState(ADVANCE_DELAY_TIME)) {
-                    // Move the spindexer to the next ball if there is one
-                    if (allArtifactsHeld > 0) {
-                        //  advance to the next ball
-                        sendClostestColorToShooter(ArtifactColor.ANY);
-                    }
-
-                    setState(TAKING_SHOT);
+                if (timeInState(FIRE_HOLD_TIME)) {
+                    fire.setPosition(FIRE_RETRACT);
+                    setState(COCKING_SHOT);
                 }
                 break;
             }
 
-            case TAKING_SHOT: {
-                if (timeInState(FIRE_HOLD_TIME)) {
-                    fire.setPosition(FIRE_RETRACT);
-                    if (allArtifactsHeld > 0) {
-                        setState(QUEUEING);
-                    } else {
-                        setState(INTAKING);
-                    }
+            case COCKING_SHOT: {
+                //if (timeInState(ADVANCE_DELAY_TIME)) {
+                if (allArtifactsHeld > 0) {
+                    sendClostestColorToShooter(ArtifactColor.ANY);
+                    setState(QUEUEING);
+                } else {
+                    setState(INTAKING);
                 }
+                //}
                 break;
             }
         }
@@ -277,7 +246,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("Spin", "%s (s%d) %.1f -> %.1f %s (%.2f)", currentState, currentSlot, currentAngle, targetAngle, inPosition, lastSpindexerServoValue);
+        myOpMode.telemetry.addData("Spin", "%s (s%d) %.1f -> %.1f %s (%.2f)", currentState, currentSlot, currentAngle,targetAngle, inPosition(), lastSpindexerServoValue);
         myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
         myOpMode.telemetry.addData("Forward motion", "%s", Globals.FORWARD_MOTION);
     }
@@ -325,7 +294,6 @@ public class SpindexerSubsystem extends SubsystemBase {
             // do a color match or a match all
             if ((slotColors[s] == color) || ((color == ArtifactColor.ANY) && (slotColors[s] != ArtifactColor.UNKNOWN))) {
                 double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
-                //double angle = Math.abs(normalizeAngle(destination - currentAngle - HOME_ANGLES[s]));
                 if (angle < closestAngle) {
                     closestAngle = angle;
                     closestSlot = s;
@@ -338,42 +306,39 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
     }
 
-    private void runIncrementalMovement(){
-        double error = targetAngle - currentAngle;
-        double increment = MAX_INCREMENT_DPS * incrementTime.time();
-        double newServoPosition;
-
-//        if (Math.abs(error) > increment){
-//            newServoPosition = currentAngle + (Math.signum(error) * increment);
-//        } else {
-            newServoPosition = targetAngle;
-//        }
-
-        lastSpindexerServoValue = MathUtils.clamp(0.5 + (newServoPosition * PULSE_SCALE_FACTOR), 0.22, 0.78);
-        spindexer.setPosition(lastSpindexerServoValue);  // +ve angle turns CCW.
-        incrementTime.reset();
-    }
-
     public void sendToShooter(int slot) {
-        targetAngle = SHOOT[slot];
+        sendToAngle(SHOOT[slot]);
         currentSlot = slot;
     }
 
     public void sendToIntake(int slot){
         if (Globals.FORWARD_MOTION){
-            targetAngle = INTAKE_FRONT[slot];
+            sendToAngle(INTAKE_FRONT[slot]);
         } else {
-            targetAngle = INTAKE_BACK[slot];
+            sendToAngle(INTAKE_BACK[slot]);
         }
         currentSlot = slot;
     }
 
-    public void queueColor( ArtifactColor colorToQueue) {
-        queuedColor = colorToQueue;
+    public boolean inPosition() {
+        if (spinServoTimer.time() > estimatedTransitTime) {
+          currentAngle = targetAngle;
+          return true;
+        }
+        else {
+          return false;
+        }
     }
 
-    public void resetEncoder(){
-        SharedOQ.resetEncoder(OQ_ENCODER_INDEX);
+    private void sendToAngle(double newTargetAngle){
+        // only process new targets
+        if (newTargetAngle != targetAngle ) {
+            lastSpindexerServoValue = MathUtils.clamp(0.5 + (newTargetAngle * PULSE_SCALE_FACTOR), 0.22, 0.78);
+            spindexer.setPosition(lastSpindexerServoValue);
+            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 360; // SWYFT torque server .. 60 deg in .115 sec
+            spinServoTimer.reset();
+            targetAngle = newTargetAngle ;
+        }
     }
 
     /**

@@ -79,7 +79,6 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         // Reset pose and mechanisms
-        spindexerSubsystem.resetEncoder();
         driveSubsystem.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
         Globals.OCTO_ERRORS = 0;
 

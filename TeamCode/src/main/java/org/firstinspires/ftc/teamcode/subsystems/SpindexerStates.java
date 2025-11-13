@@ -9,6 +9,6 @@ public enum SpindexerStates implements StateBase {
     INTAKING,
     QUEUEING,
     READY_TO_SHOOT,
-    TAKING_SHOT,
+    COCKING_SHOT,
     SHOOTING
 }

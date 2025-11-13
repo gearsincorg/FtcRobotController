@@ -34,7 +34,8 @@ public class SharedOQ {
 
     public static void update() {
         if (oq != null) {
-            oq.readLocalizerDataAndAllEncoderData(OQlocalizer, OQencoder);
+            //oq.readLocalizerDataAndAllEncoderData(OQlocalizer, OQencoder);
+            oq.readLocalizerData(OQlocalizer);
         }
     }
 
