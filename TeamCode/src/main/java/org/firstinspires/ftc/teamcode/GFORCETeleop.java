@@ -74,6 +74,7 @@ public class GFORCETeleop extends LinearOpMode
             // Read and display sensor data
             driveSubsystem.updatePoseEstimate();
             spindexerSubsystem.update();
+            turretSubsystem.update();
             showCycleTime();
             telemetry.update();
         }

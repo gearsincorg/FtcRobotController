@@ -7,6 +7,7 @@
             <goBILDA5202SeriesMotor name="aim" port="0" />
             <goBILDA5202SeriesMotor name="intake" port="3" />
             <Servo name="hood" port="0" />
+            <DigitalDevice  name="magnet" port="6" />
         </LynxModule>
 
         <LynxModule name="Control Hub" port="173">

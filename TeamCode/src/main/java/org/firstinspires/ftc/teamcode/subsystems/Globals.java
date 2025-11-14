@@ -17,5 +17,6 @@ public class Globals {
     public static boolean   FORWARD_MOTION = true;
 
     public static SpindexerStates SPINDEXER_STATE = SpindexerStates.INIT;
+    public static TurretStates TURRET_STATE = TurretStates.INIT;
 
 }
