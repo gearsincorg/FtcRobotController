@@ -8,6 +8,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
+import org.firstinspires.ftc.teamcode.auxtools.Target;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -17,6 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 public class VisionSubsystem extends SubsystemBase {
 
+    private final int BLUE_GOAL_ID = 20;
+    private final int RED_GOAL_ID  = 24;
+
     private VisionPortal visionPortal = null;        // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
 
@@ -24,13 +28,13 @@ public class VisionSubsystem extends SubsystemBase {
     private int     minExposure ;
     private int     myGain      ;
     private int     maxGain ;
+
     private double  range   = 0;
     private double  bearing = 0;
 
     public VisionSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
     }
-
 
     @Override
     public void init (boolean showTelemetry){
@@ -51,25 +55,28 @@ public class VisionSubsystem extends SubsystemBase {
      * Read any sensor for this subsystem and calculate any derived values
      * Called every Update() cycle;
      */
-    public void update() {
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        myOpMode.telemetry.addData("# AprilTags Detected", currentDetections.size());
-        range   = 0;
-        bearing = 0;
+    public Target findTarget() {
+        int targetTagID = (Globals.ALLIANCE_COLOR == AllianceColor.RED) ? RED_GOAL_ID : BLUE_GOAL_ID;
+        Target target = new Target();
 
-        // Step through the list of detections and display info for each one.
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+
+        // Step through the list of detections see if the desired goal is visible
         for (AprilTagDetection detection : currentDetections) {
 
-            range   = detection.ftcPose.range;
-            bearing = detection.ftcPose.bearing;
+            if (detection.metadata.id == targetTagID) {
+                target = new Target(detection.ftcPose.range, detection.ftcPose.bearing);
 
-            if (showTelemetry) {
-                if (detection.metadata != null) {
-                    myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                    myOpMode.telemetry.addLine(String.format("Range %6.1f in, Bearing %6.1f deg.", range, bearing));
+                if (showTelemetry) {
+                    if (detection.metadata != null) {
+                        myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                        myOpMode.telemetry.addLine(String.format("Range %6.1f in, Bearing %6.1f deg.", target.range, target.bearing));
+                    }
                 }
             }
         }
+
+        return target;
     }
 
     /**
@@ -150,13 +157,5 @@ public class VisionSubsystem extends SubsystemBase {
             GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
             maxGain = gainControl.getMaxGain();
         }
-    }
-
-    public double getBearing(){
-        return bearing;
-    }
-
-    public double getRange() {
-        return bearing;
     }
 }
