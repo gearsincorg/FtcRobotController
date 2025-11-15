@@ -48,11 +48,6 @@ public class TurretSubsystem extends SubsystemBase {
 
     private final double SHOOTER_STEP = 0.05;
 
-    // Subsystem Speed/Power constants
-
-
-    // Servo positions
-
     // General Subsystem Members
     private double shooterPower = 0.5;
 
@@ -181,14 +176,6 @@ public class TurretSubsystem extends SubsystemBase {
         myOpMode.telemetry.addData("Turret", "%s At=%4.0f, Ad=%4.0f, Aa=%4.0f, Ar=%4.0f", currentState, At, Ad, Aa, Ad);
         myOpMode.telemetry.addData("Shooter", "P=%5.2f V=%.1f ", shooterPower, shoot.getVelocity() * SHOOTER_COUNTS_TO_MPS);
         myOpMode.telemetry.addData("Roller", "P=%5.2f V=%.1f ", shooterPower, rollers.getVelocity() * ROLLER_COUNTS_TO_MPS);
-    }
-
-    public boolean turretInPosition(){
-        return !aim.isBusy();
-    }
-
-    public boolean onTarget(){
-
     }
 
     /**
