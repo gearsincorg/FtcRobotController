@@ -69,7 +69,7 @@ public class GFORCETeleop extends LinearOpMode
 
         // Wait for driver to press start
         while(opModeInInit()) {
-            telemetry.addData(">", "Touch Play to drive");
+            telemetry.addData("PLAYING", Globals.ALLIANCE_COLOR);
 
             // Read and display sensor data
             driveSubsystem.updatePoseEstimate();
@@ -85,6 +85,8 @@ public class GFORCETeleop extends LinearOpMode
 
         while (opModeIsActive())
         {
+            telemetry.addData("PLAYING", Globals.ALLIANCE_COLOR);
+
             // Check to see if we need to home the subsystems
             if (gamepad2.touchpad  || gamepad2.back) {
 

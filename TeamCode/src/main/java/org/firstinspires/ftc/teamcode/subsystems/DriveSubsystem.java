@@ -92,8 +92,8 @@ public final class DriveSubsystem
 
     public static Params PARAMS = new Params();
 
-    static final double DRIVE_DEADBAND      =  0.1;      // Dont start turning until we need to move position.
-    static final double TURN_DEADBAND       =  0.1;      // Lock heading if JoyStick less than this
+    static final double DRIVE_DEADBAND      =  0.05;      // Dont start turning until we need to move position.
+    static final double TURN_DEADBAND       =  0.05;      // Lock heading if JoyStick less than this
     static final double HEADING_GAIN        =  0.015;    // turn at full power of the error
     static final double HEADING_TOLLERANCE  = 30.0;      // Don't start driving until we are withing 30 Degrees
 
@@ -199,7 +199,7 @@ public final class DriveSubsystem
         if (Math.abs(rotateCCW) < TURN_DEADBAND ) {
             if (headingLocked) {
                 rotateCCW = normalizeAngle(headingSetpointDeg - getHeadingDeg()) * HEADING_GAIN;
-            } else if (getTurnRateDPS() < MIN_ROTATE) {
+            } else if (Math.abs(getTurnRateDPS()) < MIN_ROTATE) {
                 headingSetpointDeg = getHeadingDeg();
                 headingLocked = true;
             }
@@ -506,8 +506,9 @@ public final class DriveSubsystem
         // Read localizer data AND encoder.  Process each if they are valid.
         SharedOQ.update();
         if (SharedOQ.OQlocalizer.isDataValid()) {
-            myOpMode.telemetry.addData("X:Y:H inch,Deg", "%4.1f  %4.1f  %4.0f",
-                    mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm), Math.toDegrees(SharedOQ.OQlocalizer.heading_rad));
+            myOpMode.telemetry.addData("X:Y:H inch,Deg,dps", "%4.1f  %4.1f  %4.0f  %4.2f",
+                    mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm),
+                    Math.toDegrees(SharedOQ.OQlocalizer.heading_rad), getTurnRateDPS());
 
             pose = new Pose2d(mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm), SharedOQ.OQlocalizer.heading_rad);
             Globals.LAST_POSE = pose ;

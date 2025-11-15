@@ -45,12 +45,11 @@ public class VisionSubsystem extends SubsystemBase {
 
         // Establish Min and Max Gains and Exposure.  Then set a low exposure with high gain
         getCameraSetting();
-        myExposure = Math.min(5, minExposure);
-        myGain = maxGain;
+        myExposure =  Math.min(3, minExposure);
+        myGain     =  20;
         setManualExposure(myExposure, myGain);
     }
 
-    @Override
     /**
      * Read any sensor for this subsystem and calculate any derived values
      * Called every Update() cycle;
@@ -59,18 +58,20 @@ public class VisionSubsystem extends SubsystemBase {
         int targetTagID = (Globals.ALLIANCE_COLOR == AllianceColor.RED) ? RED_GOAL_ID : BLUE_GOAL_ID;
         Target target = new Target();
 
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        List<AprilTagDetection> currentDetections = aprilTag.getFreshDetections();
 
         // Step through the list of detections see if the desired goal is visible
-        for (AprilTagDetection detection : currentDetections) {
+        if (currentDetections != null) {
+            for (AprilTagDetection detection : currentDetections) {
 
-            if (detection.metadata.id == targetTagID) {
-                target = new Target(detection.ftcPose.range, detection.ftcPose.bearing);
+                if ((detection != null) && (detection.metadata != null) && (detection.metadata.id == targetTagID)) {
+                    target = new Target(detection.ftcPose.range, detection.ftcPose.bearing);
 
-                if (showTelemetry) {
-                    if (detection.metadata != null) {
-                        myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                        myOpMode.telemetry.addLine(String.format("Range %6.1f in, Bearing %6.1f deg.", target.range, target.bearing));
+                    if (showTelemetry) {
+                        if (detection.metadata != null) {
+                            myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                            myOpMode.telemetry.addLine(String.format("Range %6.1f in, Bearing %6.1f deg.", target.range, target.bearing));
+                        }
                     }
                 }
             }
@@ -85,7 +86,7 @@ public class VisionSubsystem extends SubsystemBase {
     private void initAprilTag() {
         // Create the AprilTag processor by using a builder.
         aprilTag = new AprilTagProcessor.Builder().build();
-        aprilTag.setDecimation(3);
+        aprilTag.setDecimation(2);
 
         // Create the WEBCAM vision portal by using a builder.
         visionPortal = new VisionPortal.Builder()

@@ -36,10 +36,10 @@ public class TurretSubsystem extends SubsystemBase {
     private final double COUNTS_PER_DEGREES = 145.1 * 135 / 21 / 360;
     private final double ROLLER_COUNTS_TO_MPS = 0.072 * Math.PI / 28;
     private final double SHOOTER_COUNTS_TO_MPS = 0.072 * Math.PI / 28;
-    private final double RED_X =  -1482;
-    private final double RED_Y =   1413;
-    private final double BLUE_X = -1482;
-    private final double BLUE_Y = -1413;
+    private final double RED_X =  -1828.8;
+    private final double RED_Y =   1828.8;
+    private final double BLUE_X = -1828.8;
+    private final double BLUE_Y = -1828.8;
 
     private final double MIN_TURRET_ANGLE = -55;
     private final double MAX_TURRET_ANGLE =  55;
@@ -109,11 +109,11 @@ public class TurretSubsystem extends SubsystemBase {
 
             // If we can see the apriltag, use it to point the turret,
             // otherwise use the angle calculated from the robot's location on the field.
-            if (target.isValid) {
-                Ad = At + target.bearing;
-            } else {
-                //  Ad = calculateAd();
-            }
+            //if (target.isValid) {
+            //    Ad = At + target.bearing;
+            //} else {
+                Ad = calculateAd();
+            //}
             goToTurretAd(Ad);
         }
     }
@@ -173,7 +173,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("Turret", "%s At=%4.0f, Ad=%4.0f, Aa=%4.0f, Ar=%4.0f", currentState, At, Ad, Aa, Ad);
+        myOpMode.telemetry.addData("Turret", "%s At=%4.0f, Ad=%4.0f, Aa=%4.0f, Ar=%4.0f", currentState, At, Ad, Aa, Ar);
         myOpMode.telemetry.addData("Shooter", "P=%5.2f V=%.1f ", shooterPower, shoot.getVelocity() * SHOOTER_COUNTS_TO_MPS);
         myOpMode.telemetry.addData("Roller", "P=%5.2f V=%.1f ", shooterPower, rollers.getVelocity() * ROLLER_COUNTS_TO_MPS);
     }
@@ -208,7 +208,7 @@ public class TurretSubsystem extends SubsystemBase {
         double x = targetX - SharedOQ.OQlocalizer.posX_mm;
         double y = targetY - SharedOQ.OQlocalizer.posY_mm;
 
-        Aa = Math.atan2(y, x);
+        Aa = Math.toDegrees(Math.atan2(y, x));
         Ar = Math.toDegrees(SharedOQ.OQlocalizer.heading_rad);
         return normalizeAngle(Aa - Ar);
     }
