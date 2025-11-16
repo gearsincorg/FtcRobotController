@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
@@ -24,7 +25,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     // subsystem devices
     private VisionSubsystem visionSubsystem;
-    private DcMotor aim;
+    private DcMotorEx aim;
     private DcMotorEx shoot;
     private DcMotorEx rollers;
     private Servo hood;
@@ -58,15 +59,19 @@ public class TurretSubsystem extends SubsystemBase {
     private boolean turretInPosition = false;
     private boolean turretOnTarget   = false;
 
+    private PIDFCoefficients pidf;
+
     @Override
     public void init(boolean showTelemetry) {
         super.init(showTelemetry);  // do not remove
         setState(INIT);
 
-        aim = myOpMode.hardwareMap.get(DcMotor.class, "aim");
+        aim = myOpMode.hardwareMap.get(DcMotorEx.class, "aim");
         aim.setDirection(DcMotorSimple.Direction.REVERSE);
         aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        pidf = aim.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
+        aim.setPositionPIDFCoefficients(26);
 
         shoot = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
         shoot.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -81,7 +86,7 @@ public class TurretSubsystem extends SubsystemBase {
 
         hood = myOpMode.hardwareMap.get(Servo.class, "hood");
 
-        // initialize the vision subsystem
+        // initialize the vision subsystem 
         visionSubsystem = new VisionSubsystem(myOpMode);
         visionSubsystem.init(true);
     }
@@ -176,6 +181,7 @@ public class TurretSubsystem extends SubsystemBase {
         myOpMode.telemetry.addData("Turret", "%s At=%4.0f, Ad=%4.0f, Aa=%4.0f, Ar=%4.0f", currentState, At, Ad, Aa, Ar);
         myOpMode.telemetry.addData("Shooter", "P=%5.2f V=%.1f ", shooterPower, shoot.getVelocity() * SHOOTER_COUNTS_TO_MPS);
         myOpMode.telemetry.addData("Roller", "P=%5.2f V=%.1f ", shooterPower, rollers.getVelocity() * ROLLER_COUNTS_TO_MPS);
+        myOpMode.telemetry.addData("shooter pidf P=%f", pidf.p);
     }
 
     /**
