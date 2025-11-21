@@ -9,9 +9,7 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -21,11 +19,17 @@ import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 
 @Autonomous(name="GFORCE Autonomous", group = "AA" ,  preselectTeleOp="GFORCE Teleop")
 public class GFORCEAutonomous extends LinearOpMode
 {
     DriveSubsystem driveSubsystem = new DriveSubsystem( this);
+    SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
+    TurretSubsystem turretSubsystem    = new TurretSubsystem(this);
+    IntakeSubsystem intakeSubsystem    = new IntakeSubsystem(this);
     AutoConfig autoConfig   = new AutoConfig(this);
 
     private Action selectedAuto  = null;
@@ -34,26 +38,35 @@ public class GFORCEAutonomous extends LinearOpMode
     private final double START_X = 62;
     private final double START_Y = 16;
     private final double START_H = Math.toRadians(180);
+    private final int NUMBERS_OF_AUTOS = 1;
+    private final Pose2d[] startLocations = new Pose2d[NUMBERS_OF_AUTOS];
 
 
     // Place all auto builders here!
     //================================================================================================================
 
-    private Action build_TestDrive() {
-        driveSubsystem.setPose(new Pose2d(START_X, START_Y, START_H));
+    private Action build_LeaveGoal() {
+        driveSubsystem.setPose(startLocations[0]);
 
-        Action testDrive = driveSubsystem.actionBuilder(new Pose2d(START_X, START_Y, START_H))
-                .splineTo(new Vector2d(0, 54), Math.toRadians(90))
-                .waitSeconds(1)
-                .setReversed(true)
-                .splineTo(new Vector2d(-24, 24), Math.toRadians(180))
-                .setReversed(false)
-                .splineTo(new Vector2d(START_X, START_Y), Math.toRadians(0))
+        Action drivePath = driveSubsystem.actionBuilder(startLocations[0])
+                .lineToY(-24)
                 .build();
 
         return new SequentialAction(
                 // Score Specimen 1 then sweep 3 more, score 4
-                testDrive
+                drivePath
+        );
+    }
+
+    private Action build_GoalShoot(){
+        driveSubsystem.setPose(startLocations[0]);
+
+        Action drivePath = driveSubsystem.actionBuilder(startLocations[0])
+                .lineToY(-24)
+                .build();
+
+        return new SequentialAction(
+            drivePath
         );
     }
 
@@ -64,7 +77,12 @@ public class GFORCEAutonomous extends LinearOpMode
     {
         Globals.IS_AUTO = true;
         autoConfig.initialize();
+        startLocations[0] = new Pose2d(-58, -45, Math.toRadians(52));
         driveSubsystem.init(new Pose2d(0,0,0), true);
+        spindexerSubsystem.init(true);
+        spindexerSubsystem.preloadSequence();
+        turretSubsystem.init(true);
+        intakeSubsystem.init(true);
         selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);  // build the current auto sequence
 
         // Wait for driver to press start
@@ -124,14 +142,19 @@ public class GFORCEAutonomous extends LinearOpMode
         // Note:  The cases below MUST match the order of auto options in the AutoConfig.java file.
         switch (autoMode) {
             case 0:
-                sequentialAction = build_TestDrive();
+                sequentialAction = build_LeaveGoal();
+                break;
+
+            case 1:
+                sequentialAction = build_GoalShoot();
                 break;
         }
 
         // Run 4 actions simultaniously
         return  new ParallelAction(
-                //arm.actionUpdate(),
-                //lift.actionUpdate(),
+                intakeSubsystem.actionUpdate(),
+                turretSubsystem.actionUpdate(),
+                spindexerSubsystem.actionUpdate(),
                 sequentialAction
                 //arm.actionUpdateTelemetry()
         );

@@ -41,10 +41,10 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double PURPLE_MAX     = 300.0;
 
     // Flipper Servo positions and times for shooting
-    private final double FIRE_SHOOT     = 0.50;
+    private final double FIRE_SHOOT     = 0.65;
     private final double FIRE_RETRACT   = 0.085;
 
-    private final double FIRE_HOLD_TIME = 0.15;
+    private final double FIRE_HOLD_TIME = 0.2;
     private final double ADVANCE_DELAY_TIME = 0.05;
 
     // Spindexer Servo Positions (in degrees)
@@ -179,12 +179,6 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case INTAKING: {
-                // THIS if JUST FOR TESTING
-                if (myOpMode.gamepad1.dpadLeftWasPressed()){
-                    slotColors[2] = ArtifactColor.PURPLE;
-                }
-                // THIS if JUST FOR TESTING
-
                 if (allArtifactsHeld == 3) {
                     sendToShooter(0);
                     setState(QUEUEING);
@@ -211,7 +205,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 }  else if(myOpMode.gamepad1.xWasPressed()) {
                     sendClostestColorToShooter(ArtifactColor.GREEN);
                     setState(QUEUEING);
-                }  else  if (myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) {
+                }  else  if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) && Globals.AT_SPEED) {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
                     setState(SHOOTING);
@@ -335,7 +329,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (newTargetAngle != targetAngle ) {
             lastSpindexerServoValue = MathUtils.clamp(0.5 + (newTargetAngle * PULSE_SCALE_FACTOR), 0.22, 0.78);
             spindexer.setPosition(lastSpindexerServoValue);
-            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 360; // SWYFT torque server .. 60 deg in .115 sec
+            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 360; // SWYFT torque servo .. 60 deg in .115 sec
             spinServoTimer.reset();
             targetAngle = newTargetAngle ;
         }
@@ -355,5 +349,11 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
 
         return angle;
+    }
+
+    public void preloadSequence(){
+        slotColors[0] = ArtifactColor.PURPLE;
+        slotColors[1] = ArtifactColor.PURPLE;
+        slotColors[3] = ArtifactColor.GREEN;
     }
 }
