@@ -29,7 +29,6 @@ public class GFORCEAutonomous extends LinearOpMode
     DriveSubsystem driveSubsystem = new DriveSubsystem( this);
     SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
     TurretSubsystem turretSubsystem    = new TurretSubsystem(this);
-    IntakeSubsystem intakeSubsystem    = new IntakeSubsystem(this);
     AutoConfig autoConfig   = new AutoConfig(this);
 
     private Action selectedAuto  = null;
@@ -82,7 +81,6 @@ public class GFORCEAutonomous extends LinearOpMode
         spindexerSubsystem.init(true);
         spindexerSubsystem.preloadSequence();
         turretSubsystem.init(true);
-        intakeSubsystem.init(true);
         selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);  // build the current auto sequence
 
         // Wait for driver to press start
@@ -152,7 +150,6 @@ public class GFORCEAutonomous extends LinearOpMode
 
         // Run 4 actions simultaniously
         return  new ParallelAction(
-                intakeSubsystem.actionUpdate(),
                 turretSubsystem.actionUpdate(),
                 spindexerSubsystem.actionUpdate(),
                 sequentialAction

@@ -39,7 +39,6 @@ public class GFORCETeleop extends LinearOpMode
     private DriveSubsystem     driveSubsystem     = new DriveSubsystem(this);
     private SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
     private TurretSubsystem    turretSubsystem    = new TurretSubsystem(this);
-    private IntakeSubsystem    intakeSubsystem    = new IntakeSubsystem(this);
 
     private ElapsedTime cycleTimer = new ElapsedTime();
     private double avgCycle = 0;
@@ -65,7 +64,6 @@ public class GFORCETeleop extends LinearOpMode
         driveSubsystem.init(new Pose2d(0, 0, 0),true);
         spindexerSubsystem.init(true);
         turretSubsystem.init(true);
-        intakeSubsystem.init(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -95,7 +93,6 @@ public class GFORCETeleop extends LinearOpMode
             // update the robot's position based on the odometry pods.
             driveSubsystem.updatePoseEstimate();
             spindexerSubsystem.update();
-            intakeSubsystem.update();
             turretSubsystem.update();
 
             // use the smart manual drive feature of the DriveSubsystem

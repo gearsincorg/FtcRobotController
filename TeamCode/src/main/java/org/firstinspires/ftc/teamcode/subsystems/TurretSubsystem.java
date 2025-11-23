@@ -11,7 +11,6 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 import org.firstinspires.ftc.teamcode.auxtools.Target;
-import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 import static org.firstinspires.ftc.teamcode.subsystems.TurretStates.*;
 
@@ -24,10 +23,11 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     // subsystem devices
-    private VisionSubsystem visionSubsystem;
+    private VisionSubsystem  visionSubsystem = new VisionSubsystem(myOpMode);
+    private ShooterSubsystem shooter = new ShooterSubsystem(myOpMode);
+
     private DcMotorEx aim;
     private DigitalChannel magnet;
-    private ShooterSubsystem shooter;
 
     private Target target = new Target();
 
@@ -59,8 +59,8 @@ public class TurretSubsystem extends SubsystemBase {
     @Override
     public void init(boolean showTelemetry) {
         super.init(showTelemetry);  // do not remove
-        setState(INIT);
 
+        setState(INIT);
         aim = myOpMode.hardwareMap.get(DcMotorEx.class, "aim");
         aim.setDirection(DcMotorSimple.Direction.REVERSE);
         aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -71,13 +71,17 @@ public class TurretSubsystem extends SubsystemBase {
         magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "magnet");
         magnet.setMode(DigitalChannel.Mode.INPUT);
 
-        // initialize the vision subsystem 
-        visionSubsystem = new VisionSubsystem(myOpMode);
+        // initialize all the subsystem
         visionSubsystem.init(true);
-
-        shooter = new ShooterSubsystem(myOpMode);
         shooter.init(true);
     }
+
+    @Override
+    public void update() {
+        super.update();  // do not remove
+        shooter.update();
+    }
+
 
     @Override
     /**
@@ -85,8 +89,6 @@ public class TurretSubsystem extends SubsystemBase {
      * Called every Update() cycle;
      */
     public void readSensors() {
-        shooter.update();
-
         At = encoderToDegrees(aim.getCurrentPosition());
         turretInPosition = !aim.isBusy();
         turretOnTarget   = (Math.abs(Ad-At) < AIM_MARGIN);
@@ -114,7 +116,7 @@ public class TurretSubsystem extends SubsystemBase {
                 shooter.setAngle(Atilt);
             }
 
-            goToTurretAd(Ad);
+            setTurretAngle(Ad);
         }
     }
 
@@ -131,7 +133,7 @@ public class TurretSubsystem extends SubsystemBase {
                     aim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     aim.setPower(0.5);
 
-                    goToTurretAd(0);
+                    setTurretAngle(0);
                     setState(HOMING);
                 }
                 break;
@@ -207,9 +209,11 @@ public class TurretSubsystem extends SubsystemBase {
         return (int) (normalizeAngle(degrees - TURRET_OFFSET_ANGLE) * COUNTS_PER_DEGREES);
     }
 
-    private void goToTurretAd(double Ad) {
+    private void setTurretAngle(double newAngle) {
         //  make sure the turret is kep within it's range of motion
-        double clampedAd = MathUtils.clamp(Ad, MIN_TURRET_ANGLE, MAX_TURRET_ANGLE);
+        double clampedAd = MathUtils.clamp(newAngle, MIN_TURRET_ANGLE, MAX_TURRET_ANGLE);
         aim.setTargetPosition(degreesToEncoder(clampedAd));
     }
+
+
 }

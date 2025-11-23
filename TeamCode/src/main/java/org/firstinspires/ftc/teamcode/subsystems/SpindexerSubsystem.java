@@ -13,7 +13,6 @@ import android.graphics.Color;
 
 import androidx.core.math.MathUtils;
 
-import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
 public class SpindexerSubsystem extends SubsystemBase {
@@ -23,10 +22,13 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     // subsystem devices
+    private IntakeSubsystem  intake  = new IntakeSubsystem(myOpMode);
+
     private Servo fire;
     private Servo spindexer;
     private NormalizedColorSensor frontColorSensor;
     private NormalizedColorSensor backColorSensor;
+    private boolean newBall = false;
 
     // Subsystem Constants
     private final double PULSE_SCALE_FACTOR = 1.8e-3;  // CONVERTS 150 DEG TO 0.28 ??
@@ -35,7 +37,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double MIN_SATURATION = 0.1;
     private final double MAX_SATURATION = 0.9;
     private final float  COLOR_GAIN     = 3.0f;
-    private final double GREEN_MIN      = 120.0;
+    private final double GREEN_MIN      = 122.0;
     private final double GREEN_MAX      = 165.0;
     private final double PURPLE_MIN     = 220.0;
     private final double PURPLE_MAX     = 300.0;
@@ -46,6 +48,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private final double FIRE_HOLD_TIME = 0.2;
     private final double ADVANCE_DELAY_TIME = 0.05;
+    private final double NEW_ARTIFACT_HOLD_TIME = 0.1;
 
     // Spindexer Servo Positions (in degrees)
     private final double[] SHOOT        = {-120,   0,  120};
@@ -68,7 +71,6 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private ArtifactColor currentColor   = ArtifactColor.UNKNOWN;
     private ArtifactColor queuedColor  = ArtifactColor.ANY;
-    //private ArtifactColor[] slotColors = {ArtifactColor.PURPLE, ArtifactColor.GREEN, ArtifactColor.UNKNOWN};
     private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
 
     @Override
@@ -90,8 +92,16 @@ public class SpindexerSubsystem extends SubsystemBase {
         backColorSensor.setGain(COLOR_GAIN);
 
         spinServoTimer.reset();
+
+        // initialize all the subsystem
+        intake.init(true);
     }
 
+    @Override
+    public void update() {
+        super.update();  // do not remove
+        intake.update();
+    }
 
     @Override
     /**
@@ -103,7 +113,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         // SharedOQ.update();
 
         NormalizedRGBA colors;
-        if ((currentState == INTAKING) && inPosition()){
+        if ((currentState == INTAKING) && inPosition() && (slotColors[currentSlot] == ArtifactColor.UNKNOWN)){
             if (Globals.FORWARD_MOTION){
                 // front intake
                 colors = frontColorSensor.getNormalizedColors();
@@ -116,20 +126,20 @@ public class SpindexerSubsystem extends SubsystemBase {
                 myOpMode.telemetry.addData("Back  HSV", "%s %s %s", hsvValues[0], hsvValues[1], hsvValues[2]);
             }
 
-
-            //checking the hue and saturation of the color sensor
-            //saturation needs to be high enough use the hue value
-            //find which range the hue resides in to decide the color
+            // checking the hue and saturation of the color sensor.
+            // saturation needs to be high enough use the hue value, but not 1.0
+            // find which range the hue resides in to decide the color
             double saturation =  hsvValues[1];
             if ((saturation > MIN_SATURATION) && (saturation < MAX_SATURATION)) {
                 if ((hsvValues[0] > GREEN_MIN) && (hsvValues[0] < GREEN_MAX)) {
                     currentColor  = ArtifactColor.GREEN;
                     slotColors[currentSlot] = currentColor;
+                    newBall = true;
                 } else if ((hsvValues[0] > PURPLE_MIN) && (hsvValues[0] < PURPLE_MAX)) {
                     currentColor = ArtifactColor.PURPLE;
                     slotColors[currentSlot] = currentColor;
+                    newBall = true;
                 }
-                slotColors[currentSlot] = currentColor;
             }
         }
 
@@ -166,30 +176,60 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void runStateMachine() {
         switch ((SpindexerStates)currentState) {
             case INIT: {
-                sendToIntake(0);
+                sendToShooter(0);
                 setState(HOME);
                 break;
             }
 
             case HOME: {
                 if (myOpMode.opModeIsActive()) {
+                    if (allArtifactsHeld == 3) {
+                        sendToShooter(0);
+                        setState(SHOT_QUEUEING);
+                    } else {
+                        sendClostestEmptyToIntake();
+                        setState(INTAKE_QUEUEING);
+                    }
+                }
+                break;
+            }
+
+            case INTAKE_QUEUEING: {
+                newBall = false;  // reset this for next intake
+                if (inPosition())   {
+                    intake.startIntaking();
                     setState(INTAKING);
                 }
                 break;
             }
 
             case INTAKING: {
-                if (allArtifactsHeld == 3) {
-                    sendToShooter(0);
-                    setState(QUEUEING);
-
+                if (newBall) {
+                    setState(INTAKE_HOLD);
                 } else {
                     sendClostestEmptyToIntake();
                 }
+
                 break;
             }
 
-            case QUEUEING: {
+            case INTAKE_HOLD: {
+                if (timeInState(NEW_ARTIFACT_HOLD_TIME)) {
+                    if (allArtifactsHeld == 3) {
+                        intake.stopIntaking();
+                        myOpMode.gamepad1.leftBumperWasPressed();  // forget any past button presses
+                        sendToShooter(0);                      // queue up first shot.
+                        setState(SHOT_QUEUEING);
+                    } else {
+                        // intake.stopIntaking();    // Only needed if balls jam during intake spin.
+                        sendClostestEmptyToIntake();
+                        setState(INTAKE_QUEUEING);
+                    }
+                }
+            }
+
+            case SHOT_QUEUEING: {
+                newBall = false;  // reset this for next intake
                 if (allArtifactsHeld == 0 ) {
                     setState(INTAKING);
                 } else if (inPosition())   {
@@ -201,10 +241,10 @@ public class SpindexerSubsystem extends SubsystemBase {
             case READY_TO_SHOOT: {
                 if(myOpMode.gamepad1.yWasPressed()) {
                     sendClostestColorToShooter(ArtifactColor.PURPLE);
-                    setState(QUEUEING);
+                    setState(SHOT_QUEUEING);
                 }  else if(myOpMode.gamepad1.xWasPressed()) {
                     sendClostestColorToShooter(ArtifactColor.GREEN);
-                    setState(QUEUEING);
+                    setState(SHOT_QUEUEING);
                 }  else  if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) && Globals.AT_SPEED) {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
@@ -225,7 +265,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 //if (timeInState(ADVANCE_DELAY_TIME)) {
                 if (allArtifactsHeld > 0) {
                     sendClostestColorToShooter(ArtifactColor.ANY);
-                    setState(QUEUEING);
+                    setState(SHOT_QUEUEING);
                 } else {
                     setState(INTAKING);
                 }

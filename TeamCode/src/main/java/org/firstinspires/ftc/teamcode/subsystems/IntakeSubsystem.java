@@ -18,8 +18,6 @@ public class IntakeSubsystem extends SubsystemBase {
     // Subsystem Speed/Power constants
     private final double INTAKE_POWER = 1.0;
 
-    // Servo positions
-
     // General Subsystem Members
     private double power = 0;
 
@@ -39,17 +37,25 @@ public class IntakeSubsystem extends SubsystemBase {
      */
     public void runProcessing() {
         if (myOpMode.gamepad1.dpad_up){
-            power = INTAKE_POWER;
-        } else {
-            power = 0.0;
+            startIntaking();
+        } else if (myOpMode.gamepad1.dpad_down){
+            stopIntaking();
         }
-        intake.setPower(power);
     }
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("Intake", "%s Power %.1f", currentState, power);
+        myOpMode.telemetry.addData("Intake", "Power %.1f", power);
     }
 
+    public void startIntaking(){
+        power = INTAKE_POWER;
+        intake.setPower(power);
+    }
+
+    public void stopIntaking(){
+        power = 0.0;
+        intake.setPower(power);
+    }
 
 }
