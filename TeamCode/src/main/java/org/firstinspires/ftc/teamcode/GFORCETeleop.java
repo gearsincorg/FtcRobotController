@@ -70,9 +70,10 @@ public class GFORCETeleop extends LinearOpMode
             telemetry.addData("PLAYING", Globals.ALLIANCE_COLOR);
 
             // Read and display sensor data
-            driveSubsystem.updatePoseEstimate();
-            spindexerSubsystem.update();
-            turretSubsystem.update();
+            driveSubsystem.updatePoseEstimate();    //  !!!!!!!!!!!!  TO DO  !!!!!!!!!!!!!!!!
+            spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
+            turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
             showCycleTime();
             telemetry.update();
         }
@@ -80,6 +81,8 @@ public class GFORCETeleop extends LinearOpMode
         // Reset pose and mechanisms
         driveSubsystem.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
         Globals.OCTO_ERRORS = 0;
+
+        spindexerSubsystem.startIntaking();
 
         while (opModeIsActive())
         {
@@ -111,9 +114,9 @@ public class GFORCETeleop extends LinearOpMode
     }
 
     private void showCycleTime() {
-        if ((++sampleCount % 5) == 0) {
+        if ((++sampleCount % 10) == 0) {
             double now = cycleTimer.time();
-            avgCycle = (now - lastCycle) * 200;
+            avgCycle = (now - lastCycle) * 100;
             lastCycle = now;
         }
         telemetry.addData("Cycle Time", "%.1f mS", avgCycle);

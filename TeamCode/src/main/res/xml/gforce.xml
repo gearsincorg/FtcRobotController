@@ -25,6 +25,7 @@
         <ServoHub name="Servo Hub 2" port="2">
             <Servo name="spindexer" port="0" />
             <Servo name="fire" port="1" />
+            <Servo name="test" port="2" />
         </ServoHub>
     </LynxUsbDevice>
     <Webcam name="Webcam 1" serialNumber="UC762" />

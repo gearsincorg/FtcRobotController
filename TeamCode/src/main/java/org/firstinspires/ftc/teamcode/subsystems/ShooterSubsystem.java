@@ -19,8 +19,10 @@ public class ShooterSubsystem extends SubsystemBase {
     private final double SERVO_GEAR_RATIO        =  24.0 / 90.0;
     private final double SHOOTER_ANGLE_MAX       =  40.0;
     private final double SHOOTER_ANGLE_MIN       = -40.0;
-    private final double PULSE_SCALE_FACTOR      =  1.8e-3;
+    private final double PULSE_SCALE_FACTOR      =  1.8e-3;   // make this match the spindexer in 2 places once servo is reprogrammed
     private final double SHOOTER_SPEED_TOLERANCE =  1.0;
+    private final double IDLE_MPS                =  2.0;
+    private final double MAX_MPS                 = 16.0;
 
     // Subsystem Speed/Power constants
     private final double SHOOTER_STEP = 1.0;
@@ -80,17 +82,21 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void updateShooterSpeed() {
-        if (myOpMode.gamepad1.bWasPressed()) {
+        if (myOpMode.gamepad1.bWasPressed()  && (shooterMPS <= MAX_MPS)) {
             shooterMPS += SHOOTER_STEP;
         }
         if (myOpMode.gamepad1.aWasPressed() && (shooterMPS >= SHOOTER_STEP)) {
             shooterMPS -= SHOOTER_STEP;
         }
 
-        if (myOpMode.gamepad1.right_trigger > 0.25) {
-            setVelocity(shooterMPS, shooterMPS);
+        if (myOpMode.opModeIsActive()) {
+            if ((Globals.ROBOT_STATE == RobotStates.SHOOTING) || (myOpMode.gamepad1.right_trigger > 0.25)) {
+                setVelocity(shooterMPS, shooterMPS);
+            } else {
+                setVelocity(IDLE_MPS, IDLE_MPS);
+            }
         } else {
-            setVelocity(0,0);
+            setVelocity(0, 0);
         }
     }
 
@@ -110,7 +116,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void setAngle(double angle){
         angle = MathUtils.clamp(angle, SHOOTER_ANGLE_MIN, SHOOTER_ANGLE_MAX);
-        shooterServoValue = MathUtils.clamp(0.5 - (angle * PULSE_SCALE_FACTOR / SERVO_GEAR_RATIO), 0.22, 0.78);
+        shooterServoValue = MathUtils.clamp(0.5 - (angle * PULSE_SCALE_FACTOR / SERVO_GEAR_RATIO), 0.22, 0.78);  // make this match the spindexer in 2 places once servo is reprogrammed
         hood.setPosition(shooterServoValue);
     }
 

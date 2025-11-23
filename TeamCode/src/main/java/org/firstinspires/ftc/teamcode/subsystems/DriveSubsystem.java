@@ -165,8 +165,9 @@ public final class DriveSubsystem
         setPose(pose);
 
         voltageSensor = myOpMode.hardwareMap.voltageSensor.iterator().next();
-
         FlightRecorder.write("TANK_PARAMS", PARAMS);
+
+        Globals.FORWARD_MOTION = true;
     }
 
     /**

@@ -58,19 +58,21 @@ public class VisionSubsystem extends SubsystemBase {
         int targetTagID = (Globals.ALLIANCE_COLOR == AllianceColor.RED) ? RED_GOAL_ID : BLUE_GOAL_ID;
         Target target = new Target();
 
-        List<AprilTagDetection> currentDetections = aprilTag.getFreshDetections();
+        if (subsystemEnabled) {
+            List<AprilTagDetection> currentDetections = aprilTag.getFreshDetections();
 
-        // Step through the list of detections see if the desired goal is visible
-        if (currentDetections != null) {
-            for (AprilTagDetection detection : currentDetections) {
+            // Step through the list of detections see if the desired goal is visible
+            if (currentDetections != null) {
+                for (AprilTagDetection detection : currentDetections) {
 
-                if ((detection != null) && (detection.metadata != null) && (detection.metadata.id == targetTagID)) {
-                    target = new Target(detection.ftcPose.range, detection.ftcPose.bearing);
+                    if ((detection != null) && (detection.metadata != null) && (detection.metadata.id == targetTagID)) {
+                        target = new Target(detection.ftcPose.range, detection.ftcPose.bearing);
 
-                    if (showTelemetry) {
-                        if (detection.metadata != null) {
-                            myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                            myOpMode.telemetry.addLine(String.format("Range %6.1f in, Bearing %6.1f deg.", target.range, target.bearing));
+                        if (showTelemetry) {
+                            if (detection.metadata != null) {
+                                myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+                                myOpMode.telemetry.addLine(String.format("Range %6.1f in, Bearing %6.1f deg.", target.range, target.bearing));
+                            }
                         }
                     }
                 }
@@ -98,11 +100,17 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     public boolean cameraReady() {
+        // Ensure Vision Portal has been setup.
+        if (visionPortal == null)  return true;
+
         // Return camera ready status
-        return ((visionPortal != null) && (visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING));
+        return (visionPortal.getCameraState() == VisionPortal.CameraState.STREAMING);
     }
 
     public void waitForCamera() {
+        // Ensure Vision Portal has been setup.
+        if (visionPortal == null)  return;
+
         // Wait for the camera to be open
         while (!myOpMode.isStopRequested() && !cameraReady()) {
             myOpMode.telemetry.addLine("Waiting for Camera");

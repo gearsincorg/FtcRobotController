@@ -72,7 +72,7 @@ public class TurretSubsystem extends SubsystemBase {
         magnet.setMode(DigitalChannel.Mode.INPUT);
 
         // initialize all the subsystem
-        visionSubsystem.init(true);
+        // visionSubsystem.init(true);
         shooter.init(true);
     }
 
