@@ -44,11 +44,11 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     // Flipper Servo positions and times for shooting
     private final double FIRE_SHOOT     = 0.65;
-    private final double FIRE_RETRACT   = 0.085;
+    private final double FIRE_RETRACT   = 0.08;
 
-    private final double FIRE_HOLD_TIME = 0.2;
-    private final double ADVANCE_DELAY_TIME = 0.05;
-    private final double NEW_ARTIFACT_HOLD_TIME = 0.1;
+    private final double FIRE_HOLD_TIME = 0.25;
+    private final double ADVANCE_DELAY_TIME = 0.15;
+    private final double NEW_ARTIFACT_HOLD_TIME = 0.02;
 
     // Spindexer Servo Positions (in degrees)
     private final double   CENTER_OFFSET = 5.0;
@@ -265,16 +265,16 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case COCKING_SHOT: {
-                //if (timeInState(ADVANCE_DELAY_TIME)) {
-                if (allArtifactsHeld > 0) {
-                    sendClostestColorToShooter(ArtifactColor.ANY);
-                    setState(SHOT_QUEUEING);
-                } else {
-                    intake.startIntaking();
-                    Globals.ROBOT_STATE = RobotStates.INTAKING;
-                    setState(INTAKING);
+                if (timeInState(ADVANCE_DELAY_TIME)) {
+                    if (allArtifactsHeld > 0) {
+                        sendClostestColorToShooter(ArtifactColor.ANY);
+                        setState(SHOT_QUEUEING);
+                    } else {
+                        intake.startIntaking();
+                        Globals.ROBOT_STATE = RobotStates.INTAKING;
+                        setState(INTAKING);
+                    }
                 }
-                //}
                 break;
             }
         }

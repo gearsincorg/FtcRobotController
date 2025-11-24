@@ -42,7 +42,7 @@ public class TurretSubsystem extends SubsystemBase {
     private final double MAX_TURRET_ANGLE =  90;
     private final double AIM_MARGIN       =   2;
     private final double TURRET_OFFSET_ANGLE = 90;
-    private final double TURRET_OFFSET_DISTANCE = 78;
+    private final double TURRET_OFFSET_DISTANCE = 100;  //  78;
 
     // General Subsystem Members
 
@@ -159,7 +159,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("Turret", "%s At=%4.0f, Ad=%4.0f, Aa=%4.0f, Ar=%4.0f", currentState, At, Ad, Aa, Ar);
+        myOpMode.telemetry.addData("Turret", "%s At=%4.1f, Ad=%4.1f, Aa=%4.1f, Ar=%4.1f", currentState, At, Ad, Aa, Ar);
         myOpMode.telemetry.addData("shooter pidf P=%f", pidf.p);
     }
 
