@@ -4,6 +4,8 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -22,8 +24,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     // subsystem devices
-    private IntakeSubsystem  intake  = new IntakeSubsystem(myOpMode);
-
+    private DcMotor intake;
     private Servo fire;
     private Servo spindexer;
     private Rev2mDistanceSensor distanceFront;
@@ -31,6 +32,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private boolean newBall = false;
 
     // Subsystem Constants
+    private final double INTAKE_POWER = 1.0;
+
     private final double PULSE_SCALE_FACTOR = 3.125e-3;  // CONVERTS 320 DEG TO 1.0 range ??
     private final double MIN_RANGE =  50;
     private final double MAX_RANGE = 120;
@@ -52,14 +55,15 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final int[][]  AUTO_SLOTS   = {{2, 1, 0}, {0, 2, 1}, {0, 1, 2}};
 
     // General Subsystem Members
-    private double targetAngle      = -1;
-    private double currentAngle     = 0;
-    private double estimatedTransitTime = 0;
+    private double intakePower          =  0;
+    private double targetAngle          = -1;
+    private double currentAngle         =  0;
+    private double estimatedTransitTime =  0;
     private double lastSpindexerServoValue = 0;
-    private ElapsedTime spinServoTimer = new ElapsedTime();
-    private double sensorRange = 0;
+    private ElapsedTime spinServoTimer  =  new ElapsedTime();
+    private double sensorRange          =  0;
 
-    private int     currentSlot     = 0;
+    private int currentSlot         = 0;
     private int allArtifactsHeld    = 0;
     private int greenArtifactsHeld  = 0;
     private int purpleArtifactsHeld = 0;
@@ -78,6 +82,10 @@ public class SpindexerSubsystem extends SubsystemBase {
         super.init(showTelemetry);  // do not remove
         setState(INIT);
 
+        intake = myOpMode.hardwareMap.get(DcMotor.class, "intake");
+        intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         // Attach to physical devices and configure them
         fire = myOpMode.hardwareMap.get(Servo.class, "fire");
         fire.setPosition(FIRE_RETRACT);
@@ -85,19 +93,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         spindexer = myOpMode.hardwareMap.get(Servo.class, "spindexer");
 
         distanceFront = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceFront");
-
         distanceBack = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceBack");
 
         spinServoTimer.reset();
-
-        // initialize all the subsystem
-        intake.init(true);
-    }
-
-    @Override
-    public void update() {
-        super.update();  // do not remove
-        intake.update();
     }
 
     @Override
@@ -181,7 +179,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             case INTAKE_QUEUEING: {
                 newBall = false;  // reset this for next intake
                 if (inPosition())   {
-                    intake.startIntaking();
+                    runIntake();
                     setState(INTAKING);
                 }
                 break;
@@ -200,13 +198,13 @@ public class SpindexerSubsystem extends SubsystemBase {
             case INTAKE_HOLD: {
                 if (timeInState(NEW_ARTIFACT_HOLD_TIME)) {
                     if (allArtifactsHeld == 3) {
-                        intake.stopIntaking();
+                        stopIntake();
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
                         myOpMode.gamepad1.leftBumperWasPressed();  // forget any past button presses
                         sendToShooter(0);                      // queue up first shot.
                         setState(SHOT_QUEUEING);
                     } else {
-                        intake.stopIntaking();    // Only needed if balls jam during intake spin.
+                        stopIntake();
                         sendClostestEmptyToIntake();
                         setState(INTAKE_QUEUEING);
                     }
@@ -253,7 +251,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     } else {
                         currentAutoSlot = 0; //after shooting if we intake three more it needs to reset
                         startAutoShoot = false;
-                        intake.startIntaking();
+                        runIntake();
                         Globals.ROBOT_STATE = RobotStates.INTAKING;
                         setState(INTAKING);
                     }
@@ -268,9 +266,13 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("Spin", "%s (s%d) %.1f -> %.1f %s (%.2f)", currentState, currentSlot, currentAngle,targetAngle, inPosition(), lastSpindexerServoValue);
-        myOpMode.telemetry.addData("Slots", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
-        myOpMode.telemetry.addData("Forward motion", "%s", Globals.FORWARD_MOTION);
+        myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
+        myOpMode.telemetry.addData("SPINDEXER", "%s (s%d) -> %.1f %s (%.2f)", currentState, currentSlot, targetAngle, inPosition(), lastSpindexerServoValue);
+        myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
+        if (Globals.IS_AUTO) {
+            myOpMode.telemetry.addData("AUTO", "%s", startAutoShoot ? "Auto Shoot Active" : "idle");
+        }
+
     }
 
     public void startIntaking() {
@@ -283,6 +285,16 @@ public class SpindexerSubsystem extends SubsystemBase {
         sendClostestColorToShooter(ArtifactColor.ANY);
         Globals.ROBOT_STATE = RobotStates.SHOOTING;
         setState(SHOT_QUEUEING);
+    }
+
+    public void runIntake(){
+        intakePower = INTAKE_POWER;
+        intake.setPower(intakePower);
+    }
+
+    public void stopIntake(){
+        intakePower = 0.0;
+        intake.setPower(intakePower);
     }
 
     /**
@@ -405,7 +417,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                return currentState == state;
+                return currentState != state;
             }
         };
     }
@@ -415,7 +427,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 startAutoShoot = true;
-                return true;
+                return false;
             }
         };
     }

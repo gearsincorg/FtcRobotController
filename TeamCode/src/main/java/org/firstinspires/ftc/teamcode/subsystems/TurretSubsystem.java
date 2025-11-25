@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -14,6 +16,7 @@ import org.firstinspires.ftc.teamcode.auxtools.Target;
 
 import static org.firstinspires.ftc.teamcode.subsystems.TurretStates.*;
 
+import androidx.annotation.NonNull;
 import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
@@ -164,8 +167,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("Turret", "%s At=%4.1f, Ad=%4.1f, Aa=%4.1f, Ar=%4.1f", currentState, At, Ad, Aa, Ar);
-        myOpMode.telemetry.addData("shooter pidf P=%f", pidf.p);
+        myOpMode.telemetry.addData("TURRET", "%s At=%4.1f, Ad=%4.1f, Aa=%4.1f, Ar=%4.1f", currentState, At, Ad, Aa, Ar);
     }
 
     /**
@@ -220,5 +222,16 @@ public class TurretSubsystem extends SubsystemBase {
         aim.setTargetPosition(degreesToEncoder(clampedAd));
     }
 
+    // =============  Action methods  ========================
 
+    public Action actionTelemetryUpdate(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                myOpMode.telemetry.update();
+                myOpMode.telemetry.addData("ROBOT", "%s - %s", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
+                return false;
+            }
+        };
+    }
 }

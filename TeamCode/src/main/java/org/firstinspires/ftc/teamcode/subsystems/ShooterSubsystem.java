@@ -13,6 +13,9 @@ import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 public class ShooterSubsystem extends SubsystemBase {
 
     // subsystem devices
+    private DcMotorEx shoot;
+    private DcMotorEx rollers;
+    private Servo hood;
 
     // Subsystem Constants
     private final double SHOOTER_COUNTS_TO_MPS = 0.072 * Math.PI / 28;
@@ -42,19 +45,6 @@ public class ShooterSubsystem extends SubsystemBase {
     public ShooterSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
     }
-
-    // subsystem devices
-    private DcMotorEx shoot;
-    private DcMotorEx rollers;
-    private Servo hood;
-
-    // Subsystem Constants
-
-    // Subsystem Speed/Power constants
-
-    // Servo positions
-
-    // General Subsystem Members
 
     @Override
     public void init(boolean showTelemetry) {
@@ -109,9 +99,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("Shooter", "P=%5.2f V=%.1f ", shooterMPS, currentFrontMPS);
-        myOpMode.telemetry.addData("Roller", "P=%5.2f V=%.1f ", shooterMPS, currentRearMPS);
-        myOpMode.telemetry.addData("at speed", "%s", atSpeed);
+        myOpMode.telemetry.addData("SHOOTER",   "A: %5.2f  B: %.1f %s", currentFrontMPS, currentRearMPS, atSpeed ? "At Speed" : "SLOW");
     }
 
     public void setAngle(double angle){

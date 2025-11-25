@@ -31,7 +31,7 @@ public class Globals {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 ROBOT_STATE = state;
-                return true;
+                return false;
             }
         };
     }

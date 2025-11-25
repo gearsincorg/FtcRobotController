@@ -10,7 +10,6 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -19,7 +18,6 @@ import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.RobotStates;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
@@ -42,9 +40,9 @@ public class GFORCEAutonomous extends LinearOpMode
     private final Pose2d[] startLocations = new Pose2d[NUMBERS_OF_AUTOS];
 
 
+    // ==========================================================================================
     // Place all auto builders here!
-    //================================================================================================================
-
+    // ==========================================================================================
     private Action build_LeaveGoal() {
         driveSubsystem.setPose(startLocations[0]);
 
@@ -58,6 +56,7 @@ public class GFORCEAutonomous extends LinearOpMode
         );
     }
 
+    // ==========================================================================================
     private Action build_GoalShoot(){
         driveSubsystem.setPose(startLocations[0]);
 
@@ -90,10 +89,6 @@ public class GFORCEAutonomous extends LinearOpMode
         while(opModeInInit()) {
 
             autoConfig.runMenuUI(); // Run menu system
-            if (autoConfig.autoOptions.autoMode != lastSelectedAuto) {
-                lastSelectedAuto = autoConfig.autoOptions.autoMode;
-                selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);
-            }
 
             // Set GLOBAL flags based on menu choices.
             if (autoConfig.autoOptions.redAlliance )
@@ -101,7 +96,14 @@ public class GFORCEAutonomous extends LinearOpMode
             else
                 Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
 
-            //needed subsystem updates
+            // If auto mode changes, load the new mode.
+            if (autoConfig.autoOptions.autoMode != lastSelectedAuto) {
+                lastSelectedAuto = autoConfig.autoOptions.autoMode;
+                selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);
+            }
+
+            // updated needed subsystem
+            driveSubsystem.updatePoseEstimate();
             turretSubsystem.update();
             spindexerSubsystem.update();
 
@@ -159,7 +161,8 @@ public class GFORCEAutonomous extends LinearOpMode
         return  new ParallelAction(
                 turretSubsystem.actionUpdate(),
                 spindexerSubsystem.actionUpdate(),
-                sequentialAction
+                sequentialAction,
+                turretSubsystem.actionTelemetryUpdate()  // just update telemetry
         );
     }
 }

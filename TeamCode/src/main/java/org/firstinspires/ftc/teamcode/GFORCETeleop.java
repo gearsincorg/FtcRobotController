@@ -18,7 +18,6 @@ import org.firstinspires.ftc.teamcode.auxtools.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
-import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
@@ -86,7 +85,7 @@ public class GFORCETeleop extends LinearOpMode
 
         while (opModeIsActive())
         {
-            telemetry.addData("PLAYING", Globals.ALLIANCE_COLOR);
+            telemetry.addData("ROBOT", "%s - %s", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
 
             // Check to see if we need to home the subsystems
             if (gamepad2.touchpad  || gamepad2.back) {

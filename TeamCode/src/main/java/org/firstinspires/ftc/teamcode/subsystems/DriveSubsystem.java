@@ -301,8 +301,7 @@ public final class DriveSubsystem
         }
 
         if (showTelemetry){
-            myOpMode.telemetry.addData("drive L:R", "%.2f <-> %.2f ",
-                                        wheelVels.left.get(0), wheelVels.right.get(0));
+            myOpMode.telemetry.addData("MOTION", "%s", Globals.FORWARD_MOTION ? "FORWARD" : "REVERSE");
         }
     }
 
@@ -507,7 +506,7 @@ public final class DriveSubsystem
         // Read localizer data AND encoder.  Process each if they are valid.
         SharedOQ.update();
         if (SharedOQ.OQlocalizer.isDataValid()) {
-            myOpMode.telemetry.addData("X:Y:H inch,Deg,dps", "%4.1f  %4.1f  %4.0f  %4.2f",
+            myOpMode.telemetry.addData("LOCATION", "%4.1f:%4.1f  %4.0f D %4.2f DPS",
                     mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm),
                     Math.toDegrees(SharedOQ.OQlocalizer.heading_rad), getTurnRateDPS());
 
