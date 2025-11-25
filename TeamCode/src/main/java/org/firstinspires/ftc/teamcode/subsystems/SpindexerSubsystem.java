@@ -1,18 +1,15 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.ColorRangeSensor;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
 
-import android.graphics.Color;
-
 import androidx.core.math.MathUtils;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
 public class SpindexerSubsystem extends SubsystemBase {
@@ -26,28 +23,21 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private Servo fire;
     private Servo spindexer;
-    private NormalizedColorSensor frontColorSensor;
-    private NormalizedColorSensor backColorSensor;
+    private Rev2mDistanceSensor distanceFront;
+    private Rev2mDistanceSensor distanceBack;
     private boolean newBall = false;
 
     // Subsystem Constants
     private final double PULSE_SCALE_FACTOR = 3.125e-3;  // CONVERTS 320 DEG TO 1.0 range ??
-
-    // Color match constants
-    private final double MIN_SATURATION = 0.1;
-    private final double MAX_SATURATION = 0.9;
-    private final float  COLOR_GAIN     = 3.0f;
-    private final double GREEN_MIN      = 122.0;
-    private final double GREEN_MAX      = 165.0;
-    private final double PURPLE_MIN     = 220.0;
-    private final double PURPLE_MAX     = 300.0;
+    private final double MIN_RANGE =  50;
+    private final double MAX_RANGE = 120;
 
     // Flipper Servo positions and times for shooting
     private final double FIRE_SHOOT     = 0.65;
     private final double FIRE_RETRACT   = 0.08;
 
-    private final double FIRE_HOLD_TIME = 0.25;
-    private final double ADVANCE_DELAY_TIME = 0.15;
+    private final double FIRE_HOLD_TIME         = 0.25;
+    private final double ADVANCE_DELAY_TIME     = 0.15;
     private final double NEW_ARTIFACT_HOLD_TIME = 0.02;
 
     // Spindexer Servo Positions (in degrees)
@@ -63,6 +53,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double estimatedTransitTime = 0;
     private double lastSpindexerServoValue = 0;
     private ElapsedTime spinServoTimer = new ElapsedTime();
+    private double sensorRange = 0;
 
     private int     currentSlot     = 0;
     private float[] hsvValues = new float[3];
@@ -86,11 +77,9 @@ public class SpindexerSubsystem extends SubsystemBase {
 
         spindexer = myOpMode.hardwareMap.get(Servo.class, "spindexer");
 
-        frontColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorFront");
-        frontColorSensor.setGain(COLOR_GAIN);
+        distanceFront = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceFront");
 
-        backColorSensor = myOpMode.hardwareMap.get(ColorRangeSensor.class, "colorBack");
-        backColorSensor.setGain(COLOR_GAIN);
+        distanceBack = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceBack");
 
         spinServoTimer.reset();
 
@@ -112,33 +101,19 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void readSensors() {
         // Read the spindexer position and determine which segment and slot we are in.
         // SharedOQ.update();
-
-        NormalizedRGBA colors;
-        if ((currentState == INTAKING) && inPosition() && (slotColors[currentSlot] == ArtifactColor.UNKNOWN)){
-            if (Globals.FORWARD_MOTION){
-                // front intake
-                colors = frontColorSensor.getNormalizedColors();
-                Color.colorToHSV(colors.toColor(), hsvValues);
-                myOpMode.telemetry.addData("Front HSV", "%s %s %s", hsvValues[0], hsvValues[1], hsvValues[2]);
-            } else {
-                // back intake
-                colors = backColorSensor.getNormalizedColors();
-                Color.colorToHSV(colors.toColor(), hsvValues);
-                myOpMode.telemetry.addData("Back  HSV", "%s %s %s", hsvValues[0], hsvValues[1], hsvValues[2]);
-            }
-
-            // checking the hue and saturation of the color sensor.
-            // saturation needs to be high enough use the hue value, but not 1.0
-            // find which range the hue resides in to decide the color
-            double saturation =  hsvValues[1];
-            if ((saturation > MIN_SATURATION) && (saturation < MAX_SATURATION)) {
-                if ((hsvValues[0] > GREEN_MIN) && (hsvValues[0] < GREEN_MAX)) {
-                    currentColor  = ArtifactColor.GREEN;
-                    slotColors[currentSlot] = currentColor;
+        if ((currentState == INTAKING) && inPosition() && (slotColors[currentSlot] == ArtifactColor.UNKNOWN)) {
+            if (Globals.FORWARD_MOTION) {
+                sensorRange = distanceFront.getDistance(DistanceUnit.MM);
+                myOpMode.telemetry.addData("distance front = %.0f", sensorRange);
+                if ((sensorRange > MIN_RANGE) && (sensorRange < MAX_RANGE)) {
+                    slotColors[currentSlot] = ArtifactColor.PURPLE;
                     newBall = true;
-                } else if ((hsvValues[0] > PURPLE_MIN) && (hsvValues[0] < PURPLE_MAX)) {
-                    currentColor = ArtifactColor.PURPLE;
-                    slotColors[currentSlot] = currentColor;
+                }
+            } else {
+                sensorRange = distanceBack.getDistance(DistanceUnit.MM);
+                myOpMode.telemetry.addData("distance back = %.0f", sensorRange);
+                if (distanceBack.getDistance(DistanceUnit.MM) > MIN_RANGE && distanceBack.getDistance(DistanceUnit.MM) < MAX_RANGE) {
+                    slotColors[currentSlot] = ArtifactColor.PURPLE;
                     newBall = true;
                 }
             }
@@ -242,13 +217,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case READY_TO_SHOOT: {
-                if(myOpMode.gamepad1.yWasPressed()) {
-                    sendClostestColorToShooter(ArtifactColor.PURPLE);
-                    setState(SHOT_QUEUEING);
-                }  else if(myOpMode.gamepad1.xWasPressed()) {
-                    sendClostestColorToShooter(ArtifactColor.GREEN);
-                    setState(SHOT_QUEUEING);
-                }  else  if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) && Globals.AT_SPEED) {
+                if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) && Globals.AT_SPEED) {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
                     setState(SHOOTING);
