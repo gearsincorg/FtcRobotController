@@ -20,6 +20,7 @@ import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.RobotStates;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 
@@ -65,7 +66,9 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         return new SequentialAction(
-            drivePath
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            drivePath,
+            spindexerSubsystem.actionStartAutoShooting()
         );
     }
 
@@ -97,6 +100,10 @@ public class GFORCEAutonomous extends LinearOpMode
                 Globals.ALLIANCE_COLOR = AllianceColor.RED;
             else
                 Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
+
+            //needed subsystem updates
+            turretSubsystem.update();
+            spindexerSubsystem.update();
 
             telemetry.addLine("\n Touch Play to run Auto");
             telemetry.update();
@@ -153,7 +160,6 @@ public class GFORCEAutonomous extends LinearOpMode
                 turretSubsystem.actionUpdate(),
                 spindexerSubsystem.actionUpdate(),
                 sequentialAction
-                //arm.actionUpdateTelemetry()
         );
     }
 }

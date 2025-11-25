@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -7,6 +9,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static org.firstinspires.ftc.teamcode.subsystems.SpindexerStates.*;
 
+import androidx.annotation.NonNull;
 import androidx.core.math.MathUtils;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -46,6 +49,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] INTAKE_FRONT = { -30,  90, -150};
     private final double[] INTAKE_BACK  = { 150, -90,   30};
     private final double[] HOME_ANGLES  = { 120,   0, -120};
+    private final int[][]  AUTO_SLOTS   = {{2, 1, 0}, {0, 2, 1}, {0, 1, 2}};
 
     // General Subsystem Members
     private double targetAngle      = -1;
@@ -56,10 +60,13 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double sensorRange = 0;
 
     private int     currentSlot     = 0;
-    private float[] hsvValues = new float[3];
-    private int allArtifactsHeld = 0;
-    private int greenArtifactsHeld = 0;
+    private int allArtifactsHeld    = 0;
+    private int greenArtifactsHeld  = 0;
     private int purpleArtifactsHeld = 0;
+    private int patternID           = 2;
+    private int currentAutoSlot     = 0;
+
+    private boolean startAutoShoot  = false;
 
     private ArtifactColor currentColor   = ArtifactColor.UNKNOWN;
     private ArtifactColor queuedColor  = ArtifactColor.ANY;
@@ -152,7 +159,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void runStateMachine() {
         switch ((SpindexerStates)currentState) {
             case INIT: {
-                sendToShooter(1);
+                //sendToShooter(1); //might be used
                 setState(HOME);
                 break;
             }
@@ -160,7 +167,8 @@ public class SpindexerSubsystem extends SubsystemBase {
             case HOME: {
                 if (myOpMode.opModeIsActive()) {
                     if (allArtifactsHeld == 3) {
-                        sendToShooter(0);
+                        // sending the spindexer to the position needed fpr the first color of the obolisk pattern
+                        sendToShooter(AUTO_SLOTS[patternID][currentAutoSlot++]);
                         setState(SHOT_QUEUEING);
                     } else {
                         sendClostestEmptyToIntake();
@@ -217,7 +225,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case READY_TO_SHOOT: {
-                if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed()) && Globals.AT_SPEED) {
+                if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed() || startAutoShoot) && Globals.AT_SPEED) {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
                     setState(SHOOTING);
@@ -236,9 +244,15 @@ public class SpindexerSubsystem extends SubsystemBase {
             case COCKING_SHOT: {
                 if (timeInState(ADVANCE_DELAY_TIME)) {
                     if (allArtifactsHeld > 0) {
-                        sendClostestColorToShooter(ArtifactColor.ANY);
+                        if (Globals.IS_AUTO) {
+                            sendToShooter(AUTO_SLOTS[patternID][currentAutoSlot++]);
+                        } else {
+                            sendClostestColorToShooter(ArtifactColor.ANY);
+                        }
                         setState(SHOT_QUEUEING);
                     } else {
+                        currentAutoSlot = 0; //after shooting if we intake three more it needs to reset
+                        startAutoShoot = false;
                         intake.startIntaking();
                         Globals.ROBOT_STATE = RobotStates.INTAKING;
                         setState(INTAKING);
@@ -380,6 +394,29 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void preloadSequence(){
         slotColors[0] = ArtifactColor.PURPLE;
         slotColors[1] = ArtifactColor.PURPLE;
-        slotColors[3] = ArtifactColor.GREEN;
+        slotColors[2] = ArtifactColor.GREEN;
+    }
+
+    public void setPatternID (int id){
+        patternID = id;
+    }
+
+    public Action actionWaitForState(SpindexerStates state){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                return currentState == state;
+            }
+        };
+    }
+
+    public Action actionStartAutoShooting(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                startAutoShoot = true;
+                return true;
+            }
+        };
     }
 }

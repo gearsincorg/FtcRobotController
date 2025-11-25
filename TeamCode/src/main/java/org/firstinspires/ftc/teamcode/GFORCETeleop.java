@@ -110,7 +110,8 @@ public class GFORCETeleop extends LinearOpMode
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
         }
 
-        // tell AUTO to home next time
+        // tell AUTO or TELEOP to home next time they run
+        Globals.TURRET_HAS_HOMED = false;
     }
 
     private void showCycleTime() {

@@ -30,7 +30,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // Servo positions
 
     // General Subsystem Members
-    private double  shooterMPS = 10.0;
+    private double  shooterMPS        = 10.0;
     private double  shooterServoValue = 0;
     private double  currentFrontMPS;
     private double  currentRearMPS;
