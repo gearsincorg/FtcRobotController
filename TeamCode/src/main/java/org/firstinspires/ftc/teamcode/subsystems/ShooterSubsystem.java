@@ -13,8 +13,8 @@ import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 public class ShooterSubsystem extends SubsystemBase {
 
     // subsystem devices
-    private DcMotorEx shoot;
-    private DcMotorEx rollers;
+    private DcMotorEx front;
+    private DcMotorEx rear;
     private Servo hood;
 
     // Subsystem Constants
@@ -50,13 +50,13 @@ public class ShooterSubsystem extends SubsystemBase {
     public void init(boolean showTelemetry) {
         super.init(showTelemetry);  // do not remove
 
-        shoot = myOpMode.hardwareMap.get(DcMotorEx.class, "shooter");
-        shoot.setDirection(DcMotorSimple.Direction.FORWARD);
-        shoot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        front = myOpMode.hardwareMap.get(DcMotorEx.class, "frontWheel");
+        front.setDirection(DcMotorSimple.Direction.FORWARD);
+        front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        rollers = myOpMode.hardwareMap.get(DcMotorEx.class, "rollers");
-        rollers.setDirection(DcMotorSimple.Direction.REVERSE);
-        rollers.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rear = myOpMode.hardwareMap.get(DcMotorEx.class, "rearWheel");
+        rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         hood = myOpMode.hardwareMap.get(Servo.class, "hood");
 
@@ -67,8 +67,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void readSensors() {
-        currentFrontMPS = shoot.getVelocity()   * SHOOTER_COUNTS_TO_MPS;
-        currentRearMPS  = rollers.getVelocity() * SHOOTER_COUNTS_TO_MPS;
+        currentFrontMPS = front.getVelocity()   * SHOOTER_COUNTS_TO_MPS;
+        currentRearMPS  = rear.getVelocity() * SHOOTER_COUNTS_TO_MPS;
     }
 
     public void updateShooterSpeed() {
@@ -112,7 +112,7 @@ public class ShooterSubsystem extends SubsystemBase {
         targetFrontMPS = frontVelocityMPS;
         targetRearMPS = rearVelocityMPS;
 
-        shoot.setVelocity(targetFrontMPS /  SHOOTER_COUNTS_TO_MPS);
-        rollers.setVelocity(targetRearMPS / SHOOTER_COUNTS_TO_MPS);
+        front.setVelocity(targetFrontMPS /  SHOOTER_COUNTS_TO_MPS);
+        rear.setVelocity(targetRearMPS / SHOOTER_COUNTS_TO_MPS);
     }
 }

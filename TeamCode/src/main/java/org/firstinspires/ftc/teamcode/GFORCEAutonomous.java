@@ -9,7 +9,9 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Pose2dDual;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -19,8 +21,10 @@ import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.RobotStates;
+import org.firstinspires.ftc.teamcode.subsystems.SpindexerStates;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
+import org.opencv.core.Mat;
 
 @Autonomous(name="GFORCE Autonomous", group = "AA" ,  preselectTeleOp="GFORCE Teleop")
 public class GFORCEAutonomous extends LinearOpMode
@@ -44,10 +48,10 @@ public class GFORCEAutonomous extends LinearOpMode
     // Place all auto builders here!
     // ==========================================================================================
     private Action build_LeaveGoal() {
-        driveSubsystem.setPose(startLocations[0]);
+        driveSubsystem.setPose(mirror(startLocations[0]));
 
-        Action drivePath = driveSubsystem.actionBuilder(startLocations[0])
-                .lineToY(-24)
+        Action drivePath = driveSubsystem.actionBuilder(mirror(startLocations[0]))
+                .splineTo(mirror(-48, -24), mirror(45))
                 .build();
 
         return new SequentialAction(
@@ -56,18 +60,57 @@ public class GFORCEAutonomous extends LinearOpMode
         );
     }
 
-    // ==========================================================================================
-    private Action build_GoalShoot(){
-        driveSubsystem.setPose(startLocations[0]);
+    //===========================================================================================
 
-        Action drivePath = driveSubsystem.actionBuilder(startLocations[0])
-                .lineToY(-24)
+    private Action build_TestAuto() {
+        driveSubsystem.setPose(mirror(startLocations[0]));
+
+        Action drivePath = driveSubsystem.actionBuilder(mirror(startLocations[0]))
+                .splineTo(mirror(-48, 24), mirror(45))
                 .build();
 
         return new SequentialAction(
+                drivePath
+        );
+    }
+
+    // ==========================================================================================
+    private Action build_GoalShoot(){
+        driveSubsystem.setPose(mirror(startLocations[0]));
+
+        Action drivePath = driveSubsystem.actionBuilder(mirror(startLocations[0]))
+                .splineTo(mirror(-48, -24), mirror(45))
+                .build();
+
+        return new SequentialAction(
+            turretSubsystem.actionSetupShooter(20, 9, 0),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             drivePath,
             spindexerSubsystem.actionStartAutoShooting()
+        );
+    }
+
+    private Action build_GoalShootAndCollect(){
+        driveSubsystem.setPose(mirror(startLocations[0]));
+
+        Action drivePath = driveSubsystem.actionBuilder(mirror(startLocations[0]))
+                .splineTo(mirror(-48, -24), mirror(45))
+                .build();
+
+        Action collectPath = driveSubsystem.actionBuilder(mirror(new Pose2d(-48, -24, mirror(45))))
+                .splineTo(mirror(-12, -12), mirror(0))
+                .turnTo(mirror(90))
+                .splineTo(mirror(-12, -24), mirror(90))
+                .build();
+
+
+        return new SequentialAction(
+                turretSubsystem.actionSetupShooter(20, 9, 0),
+                Globals.actionSetRobotState(RobotStates.SHOOTING),
+                drivePath,
+                spindexerSubsystem.actionStartAutoShooting(),
+                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+                collectPath
         );
     }
 
@@ -135,6 +178,36 @@ public class GFORCEAutonomous extends LinearOpMode
         Globals.LAST_POSE = driveSubsystem.getPose() ;
     }
 
+    private double mirror(double headingDeg){
+        double headingRad = Math.toRadians(headingDeg);
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
+            headingRad = -headingRad;
+        }
+        return headingRad;
+    }
+
+    private Vector2d mirror(Vector2d position){
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
+            position = new Vector2d(position.x, -position.y);
+        }
+        return position;
+    }
+
+    private Vector2d mirror(double x, double y){
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
+            return new Vector2d(x, -y);
+        }else{
+           return new Vector2d(x, y);
+        }
+    }
+
+    private Pose2d mirror(Pose2d pose){
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
+            pose = new Pose2d(pose.position.x, -pose.position.y, -pose.heading.toDouble());
+        }
+        return pose;
+    }
+
     /**
      * Take the current auto mode and build the matching RadRunner sequence.
      * Save the last auto value for outside comparison.
@@ -154,6 +227,14 @@ public class GFORCEAutonomous extends LinearOpMode
 
             case 1:
                 sequentialAction = build_GoalShoot();
+                break;
+
+            case 2:
+                sequentialAction = build_TestAuto();
+                break;
+
+            case 3:
+                sequentialAction = build_GoalShootAndCollect();
                 break;
         }
 

@@ -49,11 +49,13 @@ public class TurretSubsystem extends SubsystemBase {
 
     // General Subsystem Members
 
+    private double shooterSpeedMPS        = 0;
+    private double shooterBackspinPercent = 0;
+    private double shooterAngle           = 30;
     private double Aa    = 0;
     private double Ar    = 0;
     private double At    = 0;  // measured Turret angle
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
-    private double Atilt = 0;
     private boolean turretInPosition = false;
     private boolean turretOnTarget   = false;
 
@@ -105,21 +107,24 @@ public class TurretSubsystem extends SubsystemBase {
      */
     public void runProcessing() {
         // only drive turret once it's been homed.
-
-        Atilt = 40;
-
         if (currentState != INIT) {
             Ad = calculateAd();
 
             //determine which way we are pointing and change angles to compensate
             if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE){
                 Ad = normalizeAngle(Ad - 180);
-                shooter.setAngle(-Atilt);
+                shooter.setAngle(-shooterAngle);
+                shooter.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
+                                    shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)));
             }else {
-                shooter.setAngle(Atilt);
+                shooter.setAngle(shooterAngle);
+                shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
+                                    shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
             }
 
             setTurretAngle(Ad);
+
+
         }
     }
 
@@ -222,6 +227,18 @@ public class TurretSubsystem extends SubsystemBase {
         aim.setTargetPosition(degreesToEncoder(clampedAd));
     }
 
+    /**
+     * this function allows you to change the angle speed and back spin on the turret
+     * @param angle
+     * @param speed
+     * @param backspinPercent
+     */
+    public void setupShooter(double angle, double speed, double backspinPercent){
+        shooterAngle = angle;
+        shooterSpeedMPS = speed;
+        shooterBackspinPercent = backspinPercent;
+    }
+
     // =============  Action methods  ========================
 
     public Action actionTelemetryUpdate(){
@@ -230,6 +247,16 @@ public class TurretSubsystem extends SubsystemBase {
             public boolean run(@NonNull TelemetryPacket packet){
                 myOpMode.telemetry.update();
                 myOpMode.telemetry.addData("ROBOT", "%s - %s", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
+                return false;
+            }
+        };
+    }
+
+    public Action actionSetupShooter(double angle, double speed, double backspinPercent){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                setupShooter(angle, speed, backspinPercent);
                 return false;
             }
         };
