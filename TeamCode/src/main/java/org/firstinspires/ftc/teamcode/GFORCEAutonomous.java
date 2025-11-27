@@ -10,6 +10,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -147,23 +148,59 @@ public class GFORCEAutonomous extends LinearOpMode
 
     //===========================================================================================
     private Action build_GoalShootAndCollect(){
-        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-                .splineTo(mirror(-48, -24), mirror(45))
+
+        Action firstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+                .splineTo(mirror(-48, -32), mirror(45))
                 .build();
 
-        Action collectPath = driveSubsystem.actionBuilder(mirror(-48, -24, 45))
-                .splineTo(mirror(-12, -12), mirror(-85))
-                .splineTo(mirror(-12, -36), mirror(-90))   // this CRASHES the code if straight line
+        Action collectPath1 = driveSubsystem.actionBuilder(mirror(-48, -32, 45))
+                .splineTo(mirror(-12, -30), mirror(-90))
+                .lineToY(mirrorY(-54), new TranslationalVelConstraint(15))
                 .build();
 
+        Action returnPath1 = driveSubsystem.actionBuilder(mirror(-12, -54, -90))
+                .setReversed(true)
+                .splineTo(mirror(-36, -36), mirror(-180))
+                .build();
+
+        Action collectPath2 = driveSubsystem.actionBuilder(mirror(-36, -36, 0))
+                .setReversed(false)
+                .splineTo(mirror(12, -30), mirror(-90))
+                .lineToY(mirrorY(-54), new TranslationalVelConstraint(15))
+                .build();
+
+        Action returnPath2 = driveSubsystem.actionBuilder(mirror(12, -54, -90))
+                .setReversed(true)
+                .splineTo(mirror(-36, -36), mirror(-180))
+                .build();
+
+        Action movePath = driveSubsystem.actionBuilder(mirror(-36, -36, 0))
+                .setReversed(false)
+                .lineToX(0)
+                .build();
 
         return new SequentialAction(
                 turretSubsystem.actionSetupShooter(20, 9, 0),
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
-                drivePath,
+                firstScore,
                 spindexerSubsystem.actionStartAutoShooting(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
-                collectPath
+
+                collectPath1,
+                turretSubsystem.actionSetupShooter(20, 10, 0),
+                Globals.actionSetRobotState(RobotStates.SHOOTING),
+                returnPath1,
+                spindexerSubsystem.actionStartAutoShooting(),
+                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+
+                collectPath2,
+                turretSubsystem.actionSetupShooter(20, 10, 0),
+                Globals.actionSetRobotState(RobotStates.SHOOTING),
+                returnPath2,
+                spindexerSubsystem.actionStartAutoShooting(),
+                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+
+                movePath
         );
     }
 
@@ -176,6 +213,13 @@ public class GFORCEAutonomous extends LinearOpMode
             headingRad = -headingRad;
         }
         return headingRad;
+    }
+
+    private static double mirrorY(double lineToY){
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
+            lineToY = -lineToY;
+        }
+        return lineToY;
     }
 
     private Vector2d mirror(Vector2d positionXY){

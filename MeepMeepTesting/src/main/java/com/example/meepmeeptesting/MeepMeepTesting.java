@@ -11,6 +11,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.VelConstraint;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
+import com.noahbres.meepmeep.roadrunner.DriveShim;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 import org.jetbrains.annotations.NotNull;
@@ -27,27 +28,54 @@ public class MeepMeepTesting {
 
         RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
-                .setConstraints(30, 50, Math.toRadians(180), Math.toRadians(360), 15)
+                .setConstraints(40, 60, Math.toRadians(180), Math.toRadians(360), 15)
                 .build();
+
+        DriveShim driveSubsystem = myBot.getDrive();
 
         // ---------------------------------------------------------------------------------------
 
-        Action drivePath = myBot.getDrive().actionBuilder(mirror(autoStartLocations[autoMode]))
+        Action firstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
                 .splineTo(mirror(-48, -32), mirror(45))
                 .build();
 
-        Action collectPath = myBot.getDrive().actionBuilder(mirror(-48, -32, 45))
-                .splineTo(mirror(-12, -24), mirror(-89))
-                .splineTo (mirror(-12, -36), mirror(-90), new TranslationalVelConstraint(5))
+        Action collectPath1 = driveSubsystem.actionBuilder(mirror(-48, -32, 45))
+                .splineTo(mirror(-12, -30), mirror(-90))
+                .lineToY(mirrorY(-54), new TranslationalVelConstraint(15))
                 .build();
 
+        Action returnPath1 = driveSubsystem.actionBuilder(mirror(-12, -54, -90))
+                .setReversed(true)
+                .splineTo(mirror(-36, -36), mirror(-180))
+                .build();
+
+        Action collectPath2 = driveSubsystem.actionBuilder(mirror(-36, -36, 0))
+                .setReversed(false)
+                .splineTo(mirror(12, -30), mirror(-90))
+                .lineToY(mirrorY(-54), new TranslationalVelConstraint(15))
+                .build();
+
+        Action returnPath2 = driveSubsystem.actionBuilder(mirror(12, -54, -90))
+                .setReversed(true)
+                .splineTo(mirror(-36, -36), mirror(-180))
+                .build();
+
+        Action movePath = driveSubsystem.actionBuilder(mirror(-36, -36, 0))
+                .setReversed(false)
+                .lineToX(0)
+                .build();
 
         myBot.runAction(new SequentialAction(
-                drivePath,
-                collectPath) );
+                firstScore,
+                collectPath1,
+                returnPath1,
+                collectPath2,
+                returnPath2,
+                movePath
+                ) );
 
         // ---------------------------------------------------------------------------------------
-        meepMeep.setBackground(MeepMeep.Background.FIELD_POWERPLAY_KAI_LIGHT)
+        meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
                 .addEntity(myBot)
@@ -57,6 +85,10 @@ public class MeepMeepTesting {
     private static double mirror(double headingDeg){
         double headingRad = Math.toRadians(headingDeg);
         return headingRad;
+    }
+
+    private static double mirrorY(double lineToY){
+        return lineToY;
     }
 
     private  static Vector2d mirror(Vector2d positionXY){
