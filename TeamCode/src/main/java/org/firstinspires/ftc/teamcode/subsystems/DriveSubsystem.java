@@ -57,8 +57,6 @@ public final class DriveSubsystem
     private static boolean enabled = false;
     private LinearOpMode myOpMode;
 
-    private boolean     intakeForward = false;
-    private boolean     intakeReverse = true;
     private boolean     headingLocked = false;
     private double      headingSetpointDeg = 0;
 
@@ -104,8 +102,6 @@ public final class DriveSubsystem
     static final double INTAKE_HYSTERESIS   = 0.1 ;
     static final double MIN_ROTATE          = 1.0 ;
     static final double RAD2DEG             = 180/Math.PI;
-    static final double INCH2MM             = 2.54;
-
 
     public final TankKinematics kinematics = new TankKinematics(PARAMS.inPerTick * PARAMS.trackWidthTicks);
 
