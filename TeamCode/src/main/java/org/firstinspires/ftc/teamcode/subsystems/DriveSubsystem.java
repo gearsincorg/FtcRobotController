@@ -510,6 +510,13 @@ public final class DriveSubsystem
                     mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm),
                     Math.toDegrees(SharedOQ.OQlocalizer.heading_rad), getTurnRateDPS());
 
+            myOpMode.telemetry.addData("VELOCITY", "%5.2f:%5.2f",
+                    mmToInch(SharedOQ.OQlocalizer.velX_mmS), mmToInch(SharedOQ.OQlocalizer.velY_mmS));
+
+            if (Globals.IS_AUTO) {
+                myOpMode.telemetry.update();
+            }
+
             pose = new Pose2d(mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm), SharedOQ.OQlocalizer.heading_rad);
             Globals.LAST_POSE = pose ;
 

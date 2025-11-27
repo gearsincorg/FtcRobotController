@@ -34,9 +34,6 @@ public class GFORCEAutonomous extends LinearOpMode
 
     private Action selectedAuto  = null;
 
-    private int lastSelectedAuto = -1;
-    private AllianceColor lastAllianceColor = AllianceColor.UNKNOWN;
-
     // Configure the starting location for each Auto Mode
     Pose2d  atGoal =  new Pose2d(-58, -45, Math.toRadians(52));
     private final Pose2d[] autoStartLocations = {atGoal, atGoal, atGoal, atGoal};
@@ -47,6 +44,7 @@ public class GFORCEAutonomous extends LinearOpMode
     public void runOpMode()
     {
         Globals.IS_AUTO = true;
+        telemetry.setMsTransmissionInterval(50);
         autoConfig.initialize();
 
         driveSubsystem.init(new Pose2d(0,0,0), true);
@@ -58,19 +56,18 @@ public class GFORCEAutonomous extends LinearOpMode
         while(opModeInInit()) {
 
             autoConfig.runMenuUI(); // Run menu system
-
             // Set GLOBAL flags based on menu choices.
             if (autoConfig.autoOptions.redAlliance )
                 Globals.ALLIANCE_COLOR = AllianceColor.RED;
             else
                 Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
-
+/*
             // if Alliance color changes, or Auto mode changes, then load new auto and starting location.
             if ((Globals.ALLIANCE_COLOR          != lastAllianceColor) ||
                 (autoConfig.autoOptions.autoMode != lastSelectedAuto)) {
                 selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);
             }
-
+*/
             // updated needed subsystem
             driveSubsystem.updatePoseEstimate();
             turretSubsystem.update();
@@ -85,6 +82,8 @@ public class GFORCEAutonomous extends LinearOpMode
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
+            selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);
+
             // Do a count down if these is a delayed start,
             for (int sec = autoConfig.autoOptions.delayStart; sec > 0; sec--) {
                 telemetry.addData("AUTO MODE",  "%s", autoConfig.autoArray[autoConfig.autoOptions.autoMode]);
@@ -158,10 +157,9 @@ public class GFORCEAutonomous extends LinearOpMode
                 .splineTo(mirror(-48, -24), mirror(45))
                 .build();
 
-        Action collectPath = driveSubsystem.actionBuilder(mirror(new Pose2d(-48, -24, mirror(45))))
-                .splineTo(mirror(-12, -12), mirror(0))
-                .turnTo(mirror(90))
-                .splineTo(mirror(-12, -24), mirror(90))
+        Action collectPath = driveSubsystem.actionBuilder(mirror(-48, -24, 45))
+                .splineTo(mirror(-12, -12), mirror(-85))
+                .splineTo(mirror(-12, -36), mirror(-90))   // this CRASHES the code if straight line
                 .build();
 
 
@@ -186,11 +184,11 @@ public class GFORCEAutonomous extends LinearOpMode
         return headingRad;
     }
 
-    private Vector2d mirror(Vector2d position){
+    private Vector2d mirror(Vector2d positionXY){
         if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
-            position = new Vector2d(position.x, -position.y);
+            positionXY = new Vector2d(positionXY.x, -positionXY.y);
         }
-        return position;
+        return positionXY;
     }
 
     private Vector2d mirror(double x, double y){
@@ -208,6 +206,14 @@ public class GFORCEAutonomous extends LinearOpMode
         return pose;
     }
 
+    private Pose2d mirror(double x, double y, double headingDeg){
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
+            return new Pose2d(x, -y, Math.toRadians(-headingDeg));
+        } else {
+            return new Pose2d(x, y, Math.toRadians(headingDeg));
+        }
+    }
+
     /**
      * Take the current auto mode and build the matching RoadRunner sequence.
      * Save the last auto value for outside comparison.
@@ -216,9 +222,7 @@ public class GFORCEAutonomous extends LinearOpMode
      */
     private Action loadSelectedAuto(int autoMode) {
 
-        // Save the latest chnaaes for next time arounf INIT loop.
-        lastSelectedAuto = autoMode;
-        lastAllianceColor = Globals.ALLIANCE_COLOR;
+        // Save the latest chanages for next time arounf INIT loop.
         driveSubsystem.setPose(mirror(autoStartLocations[autoMode]));
 
         // Note:  The cases below MUST match the order of auto options in the AutoConfig.java file.
