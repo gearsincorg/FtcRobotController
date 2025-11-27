@@ -32,6 +32,7 @@ public class GFORCEAutonomous extends LinearOpMode
     TurretSubsystem turretSubsystem    = new TurretSubsystem(this);
     AutoConfig autoConfig   = new AutoConfig(this);
 
+    private int    autoMode      = 0;
     private Action selectedAuto  = null;
 
     // Configure the starting location for each Auto Mode
@@ -78,11 +79,12 @@ public class GFORCEAutonomous extends LinearOpMode
         }
 
         Globals.OCTO_ERRORS = 0;
+        autoMode = autoConfig.autoOptions.autoMode;
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
-            selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);
+            selectedAuto = loadSelectedAuto();
 
             // Do a count down if these is a delayed start,
             for (int sec = autoConfig.autoOptions.delayStart; sec > 0; sec--) {
@@ -108,9 +110,7 @@ public class GFORCEAutonomous extends LinearOpMode
     // Place all auto builders here!
     // ==========================================================================================
     private Action build_LeaveGoal() {
-        driveSubsystem.setPose(mirror(autoStartLocations[0]));
-
-        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
+        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
                 .splineTo(mirror(-48, -24), mirror(45))
                 .build();
 
@@ -122,9 +122,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
     //===========================================================================================
     private Action build_TestAuto() {
-        driveSubsystem.setPose(mirror(autoStartLocations[0]));
-
-        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
+        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
                 .splineTo(mirror(-48, 24), mirror(45))
                 .build();
 
@@ -135,9 +133,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
     // ==========================================================================================
     private Action build_GoalShoot(){
-        driveSubsystem.setPose(mirror(autoStartLocations[0]));
-
-        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
+        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
                 .splineTo(mirror(-48, -24), mirror(45))
                 .build();
 
@@ -151,9 +147,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
     //===========================================================================================
     private Action build_GoalShootAndCollect(){
-        driveSubsystem.setPose(mirror(autoStartLocations[0]));
-
-        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
+        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
                 .splineTo(mirror(-48, -24), mirror(45))
                 .build();
 
@@ -217,10 +211,9 @@ public class GFORCEAutonomous extends LinearOpMode
     /**
      * Take the current auto mode and build the matching RoadRunner sequence.
      * Save the last auto value for outside comparison.
-     * @param autoMode
      * @return
      */
-    private Action loadSelectedAuto(int autoMode) {
+    private Action loadSelectedAuto() {
 
         // Save the latest chanages for next time arounf INIT loop.
         driveSubsystem.setPose(mirror(autoStartLocations[autoMode]));
