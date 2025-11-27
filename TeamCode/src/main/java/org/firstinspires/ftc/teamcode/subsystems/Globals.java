@@ -10,7 +10,7 @@ public class Globals {
     /**
      * Match constants.
      */
-    public static AllianceColor ALLIANCE_COLOR = AllianceColor.RED;
+    public static AllianceColor ALLIANCE_COLOR = AllianceColor.UNKNOWN;
 
     /**
      * Robot state constants.

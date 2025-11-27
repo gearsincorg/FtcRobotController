@@ -31,7 +31,6 @@ public class TurretSubsystem extends SubsystemBase {
 
     private DcMotorEx aim;
     private DigitalChannel magnet;
-
     private Target target = new Target();
 
     // Subsystem Constants
@@ -48,7 +47,6 @@ public class TurretSubsystem extends SubsystemBase {
     private final double TURRET_OFFSET_DISTANCE = 100;  //  78;
 
     // General Subsystem Members
-
     private double shooterSpeedMPS        = 0;
     private double shooterBackspinPercent = 0;
     private double shooterAngle           = 30;
@@ -87,7 +85,6 @@ public class TurretSubsystem extends SubsystemBase {
         shooter.update();
     }
 
-
     @Override
     /**
      * Read any sensor for this subsystem and calculate any derived values
@@ -116,35 +113,28 @@ public class TurretSubsystem extends SubsystemBase {
                 shooter.setAngle(-shooterAngle);
                 shooter.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
                                     shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)));
-            }else {
+            } else {
                 shooter.setAngle(shooterAngle);
                 shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
                                     shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
             }
 
             setTurretAngle(Ad);
-
-
         }
     }
 
     @Override
     public void runStateMachine() {
         switch ((TurretStates) currentState) {
+
             case INIT: {
-                if (Globals.TURRET_HAS_HOMED) {
-                    setState(HOME);
+                if (Globals.TURRET_HAS_HOMED && !Globals.IS_AUTO) {
+                    setState(HOMING);
                 } else {
                     aim.setPower(0.15);
                     if (!magnet.getState()) {
                         // reset encoder, lock in current position and switch to RTP mode
-                        aim.setPower(0.0);
                         aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                        aim.setTargetPosition(aim.getCurrentPosition());
-                        aim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                        aim.setPower(0.5);
-
-                        setTurretAngle(0);
                         setState(HOMING);
                     }
                 }
@@ -152,15 +142,15 @@ public class TurretSubsystem extends SubsystemBase {
             }
 
             case HOMING: {
-                if (!aim.isBusy()) {
-                    Globals.TURRET_HAS_HOMED = true;
-                    setState(HOME);
-                }
+                aim.setPower(0.0);
+                aim.setTargetPosition(aim.getCurrentPosition());
+                aim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                aim.setPower(0.5);
+                setState(HOME);
                 break;
             }
 
             case HOME: {
-
                 break;
             }
         }
@@ -168,7 +158,6 @@ public class TurretSubsystem extends SubsystemBase {
         // Save current state in Globals for other subsystems
         Globals.TURRET_STATE = (TurretStates) currentState;
     }
-
 
     @Override
     public void showStatus() {

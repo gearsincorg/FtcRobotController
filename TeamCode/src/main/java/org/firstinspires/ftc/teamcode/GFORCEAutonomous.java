@@ -9,7 +9,6 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Pose2dDual;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -24,7 +23,6 @@ import org.firstinspires.ftc.teamcode.subsystems.RobotStates;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerStates;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
-import org.opencv.core.Mat;
 
 @Autonomous(name="GFORCE Autonomous", group = "AA" ,  preselectTeleOp="GFORCE Teleop")
 public class GFORCEAutonomous extends LinearOpMode
@@ -35,84 +33,13 @@ public class GFORCEAutonomous extends LinearOpMode
     AutoConfig autoConfig   = new AutoConfig(this);
 
     private Action selectedAuto  = null;
+
     private int lastSelectedAuto = -1;
+    private AllianceColor lastAllianceColor = AllianceColor.UNKNOWN;
 
-    private final double START_X = 62;
-    private final double START_Y = 16;
-    private final double START_H = Math.toRadians(180);
-    private final int NUMBERS_OF_AUTOS = 1;
-    private final Pose2d[] startLocations = new Pose2d[NUMBERS_OF_AUTOS];
-
-
-    // ==========================================================================================
-    // Place all auto builders here!
-    // ==========================================================================================
-    private Action build_LeaveGoal() {
-        driveSubsystem.setPose(mirror(startLocations[0]));
-
-        Action drivePath = driveSubsystem.actionBuilder(mirror(startLocations[0]))
-                .splineTo(mirror(-48, -24), mirror(45))
-                .build();
-
-        return new SequentialAction(
-                // Score Specimen 1 then sweep 3 more, score 4
-                drivePath
-        );
-    }
-
-    //===========================================================================================
-
-    private Action build_TestAuto() {
-        driveSubsystem.setPose(mirror(startLocations[0]));
-
-        Action drivePath = driveSubsystem.actionBuilder(mirror(startLocations[0]))
-                .splineTo(mirror(-48, 24), mirror(45))
-                .build();
-
-        return new SequentialAction(
-                drivePath
-        );
-    }
-
-    // ==========================================================================================
-    private Action build_GoalShoot(){
-        driveSubsystem.setPose(mirror(startLocations[0]));
-
-        Action drivePath = driveSubsystem.actionBuilder(mirror(startLocations[0]))
-                .splineTo(mirror(-48, -24), mirror(45))
-                .build();
-
-        return new SequentialAction(
-            turretSubsystem.actionSetupShooter(20, 9, 0),
-            Globals.actionSetRobotState(RobotStates.SHOOTING),
-            drivePath,
-            spindexerSubsystem.actionStartAutoShooting()
-        );
-    }
-
-    private Action build_GoalShootAndCollect(){
-        driveSubsystem.setPose(mirror(startLocations[0]));
-
-        Action drivePath = driveSubsystem.actionBuilder(mirror(startLocations[0]))
-                .splineTo(mirror(-48, -24), mirror(45))
-                .build();
-
-        Action collectPath = driveSubsystem.actionBuilder(mirror(new Pose2d(-48, -24, mirror(45))))
-                .splineTo(mirror(-12, -12), mirror(0))
-                .turnTo(mirror(90))
-                .splineTo(mirror(-12, -24), mirror(90))
-                .build();
-
-
-        return new SequentialAction(
-                turretSubsystem.actionSetupShooter(20, 9, 0),
-                Globals.actionSetRobotState(RobotStates.SHOOTING),
-                drivePath,
-                spindexerSubsystem.actionStartAutoShooting(),
-                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
-                collectPath
-        );
-    }
+    // Configure the starting location for each Auto Mode
+    Pose2d  atGoal =  new Pose2d(-58, -45, Math.toRadians(52));
+    private final Pose2d[] autoStartLocations = {atGoal, atGoal, atGoal, atGoal};
 
     // ############################################################################
 
@@ -121,14 +48,13 @@ public class GFORCEAutonomous extends LinearOpMode
     {
         Globals.IS_AUTO = true;
         autoConfig.initialize();
-        startLocations[0] = new Pose2d(-58, -45, Math.toRadians(52));
+
         driveSubsystem.init(new Pose2d(0,0,0), true);
         spindexerSubsystem.init(true);
         spindexerSubsystem.preloadSequence();
         turretSubsystem.init(true);
-        selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);  // build the current auto sequence
 
-        // Wait for driver to press start
+            // Wait for driver to press start
         while(opModeInInit()) {
 
             autoConfig.runMenuUI(); // Run menu system
@@ -139,9 +65,9 @@ public class GFORCEAutonomous extends LinearOpMode
             else
                 Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
 
-            // If auto mode changes, load the new mode.
-            if (autoConfig.autoOptions.autoMode != lastSelectedAuto) {
-                lastSelectedAuto = autoConfig.autoOptions.autoMode;
+            // if Alliance color changes, or Auto mode changes, then load new auto and starting location.
+            if ((Globals.ALLIANCE_COLOR          != lastAllianceColor) ||
+                (autoConfig.autoOptions.autoMode != lastSelectedAuto)) {
                 selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);
             }
 
@@ -178,6 +104,80 @@ public class GFORCEAutonomous extends LinearOpMode
         Globals.LAST_POSE = driveSubsystem.getPose() ;
     }
 
+
+    // ==========================================================================================
+    // Place all auto builders here!
+    // ==========================================================================================
+    private Action build_LeaveGoal() {
+        driveSubsystem.setPose(mirror(autoStartLocations[0]));
+
+        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
+                .splineTo(mirror(-48, -24), mirror(45))
+                .build();
+
+        return new SequentialAction(
+                // Score Specimen 1 then sweep 3 more, score 4
+                drivePath
+        );
+    }
+
+    //===========================================================================================
+    private Action build_TestAuto() {
+        driveSubsystem.setPose(mirror(autoStartLocations[0]));
+
+        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
+                .splineTo(mirror(-48, 24), mirror(45))
+                .build();
+
+        return new SequentialAction(
+                drivePath
+        );
+    }
+
+    // ==========================================================================================
+    private Action build_GoalShoot(){
+        driveSubsystem.setPose(mirror(autoStartLocations[0]));
+
+        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
+                .splineTo(mirror(-48, -24), mirror(45))
+                .build();
+
+        return new SequentialAction(
+            turretSubsystem.actionSetupShooter(20, 9, 0),
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            drivePath,
+            spindexerSubsystem.actionStartAutoShooting()
+        );
+    }
+
+    //===========================================================================================
+    private Action build_GoalShootAndCollect(){
+        driveSubsystem.setPose(mirror(autoStartLocations[0]));
+
+        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
+                .splineTo(mirror(-48, -24), mirror(45))
+                .build();
+
+        Action collectPath = driveSubsystem.actionBuilder(mirror(new Pose2d(-48, -24, mirror(45))))
+                .splineTo(mirror(-12, -12), mirror(0))
+                .turnTo(mirror(90))
+                .splineTo(mirror(-12, -24), mirror(90))
+                .build();
+
+
+        return new SequentialAction(
+                turretSubsystem.actionSetupShooter(20, 9, 0),
+                Globals.actionSetRobotState(RobotStates.SHOOTING),
+                drivePath,
+                spindexerSubsystem.actionStartAutoShooting(),
+                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+                collectPath
+        );
+    }
+
+    //===========================================================================================
+    //===========================================================================================
+
     private double mirror(double headingDeg){
         double headingRad = Math.toRadians(headingDeg);
         if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
@@ -209,17 +209,20 @@ public class GFORCEAutonomous extends LinearOpMode
     }
 
     /**
-     * Take the current auto mode and build the matching RadRunner sequence.
+     * Take the current auto mode and build the matching RoadRunner sequence.
      * Save the last auto value for outside comparison.
      * @param autoMode
      * @return
      */
     private Action loadSelectedAuto(int autoMode) {
 
-        Action sequentialAction = new SequentialAction();
+        // Save the latest chnaaes for next time arounf INIT loop.
         lastSelectedAuto = autoMode;
+        lastAllianceColor = Globals.ALLIANCE_COLOR;
+        driveSubsystem.setPose(mirror(autoStartLocations[autoMode]));
 
         // Note:  The cases below MUST match the order of auto options in the AutoConfig.java file.
+        Action sequentialAction;
         switch (autoMode) {
             case 0:
                 sequentialAction = build_LeaveGoal();
@@ -236,6 +239,10 @@ public class GFORCEAutonomous extends LinearOpMode
             case 3:
                 sequentialAction = build_GoalShootAndCollect();
                 break;
+
+            default:
+                sequentialAction = new SequentialAction();
+
         }
 
         // Run 4 actions simultaniously
