@@ -51,11 +51,11 @@ public class ShooterSubsystem extends SubsystemBase {
         super.init(showTelemetry);  // do not remove
 
         front = myOpMode.hardwareMap.get(DcMotorEx.class, "frontWheel");
-        front.setDirection(DcMotorSimple.Direction.FORWARD);
+        front.setDirection(DcMotorSimple.Direction.REVERSE);
         front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         rear = myOpMode.hardwareMap.get(DcMotorEx.class, "rearWheel");
-        rear.setDirection(DcMotorSimple.Direction.REVERSE);
+        rear.setDirection(DcMotorSimple.Direction.FORWARD);
         rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         hood = myOpMode.hardwareMap.get(Servo.class, "hood");
