@@ -7,7 +7,6 @@
             <goBILDA5202SeriesMotor name="aim" port="0" />
             <goBILDA5202SeriesMotor name="intake" port="3" />
             <Servo name="hood" port="0" />
-            <DigitalDevice  name="magnet" port="6" />
         </LynxModule>
 
         <LynxModule name="Control Hub" port="173">
@@ -19,7 +18,7 @@
             <OctoQuadFTC name="octoquad" port="0" bus="1" />
             <REV_VL53L0X_RANGE_SENSOR name="distanceFront" port="0" bus="3" />
             <REV_VL53L0X_RANGE_SENSOR name="distanceBack" port="0" bus="2" />
-
+            <DigitalDevice  name="magnet" port="6" />
         </LynxModule>
 
         <ServoHub name="Servo Hub 2" port="2">

@@ -38,7 +38,8 @@ public class GFORCEAutonomous extends LinearOpMode
 
     // Configure the starting location for each Auto Mode
     Pose2d  atGoal =  new Pose2d(-58, -45, Math.toRadians(52));
-    private final Pose2d[] autoStartLocations = {atGoal, atGoal, atGoal, atGoal};
+    Pose2d atOrigin = new Pose2d(0,0,0);
+    private final Pose2d[] autoStartLocations = {atGoal, atGoal, atOrigin, atGoal};
 
     // ############################################################################
 
@@ -124,7 +125,13 @@ public class GFORCEAutonomous extends LinearOpMode
     //===========================================================================================
     private Action build_TestAuto() {
         Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-                .splineTo(mirror(-48, 24), mirror(45))
+                .turnTo(mirror(180))
+                .waitSeconds(2)
+                .turnTo(mirror(1))
+                .waitSeconds(2)
+                .turnTo(mirror(180))
+                .waitSeconds(2)
+                .turnTo(mirror(1))
                 .build();
 
         return new SequentialAction(

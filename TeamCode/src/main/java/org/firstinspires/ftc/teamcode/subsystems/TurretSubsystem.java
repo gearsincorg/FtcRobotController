@@ -46,10 +46,10 @@ public class TurretSubsystem extends SubsystemBase {
     private final double TURRET_OFFSET_ANGLE = 90;
     private final double TURRET_OFFSET_DISTANCE = 100;  //  78;
 
-    private final double RANGE_2_TILT_SLOPE  =  1.0;
-    private final double RANGE_2_TILT_OFFSET =  0.0;
-    private final double RANGE_2_MPS_SLOPE   =  1.0;
-    private final double RANGE_2_MPS_OFFSET  =  0.0;
+    private final double RANGE_2_TILT_SLOPE  =  0.0189;
+    private final double RANGE_2_TILT_OFFSET =  1.5254;
+    private final double RANGE_2_MPS_SLOPE   =  0.00475;
+    private final double RANGE_2_MPS_OFFSET  =  4.881;
 
     // General Subsystem Members
     private double shooterSpeedMPS        = 0;
@@ -114,8 +114,7 @@ public class TurretSubsystem extends SubsystemBase {
             calculate_Ad_Range();
 
             // calculate speed and angle for shooter trajectory
-            //shooterSpeedMPS   = (RANGE_2_MPS_SLOPE * range) + RANGE_2_MPS_OFFSET;
-            //shooterAngle      = (RANGE_2_TILT_SLOPE * range) + RANGE_2_TILT_OFFSET;
+            // autoAim();
 
             //determine which way we are pointing and change angles to compensate
             if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE){
@@ -224,6 +223,11 @@ public class TurretSubsystem extends SubsystemBase {
         //  make sure the turret is kep within it's range of motion
         double clampedAd = MathUtils.clamp(newAngle, MIN_TURRET_ANGLE, MAX_TURRET_ANGLE);
         aim.setTargetPosition(degreesToEncoder(clampedAd));
+    }
+
+    public void autoAim() {
+        shooterAngle = (RANGE_2_TILT_SLOPE * range) + RANGE_2_TILT_OFFSET;
+        shooterSpeedMPS = (RANGE_2_MPS_SLOPE * range) + RANGE_2_MPS_OFFSET;
     }
 
     /**

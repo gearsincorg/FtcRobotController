@@ -31,6 +31,10 @@ public class MeepMeepTesting {
                 .setConstraints(40, 60, Math.toRadians(180), Math.toRadians(360), 15)
                 .build();
 
+        RoadRunnerBotEntity testBot = new  DefaultBotBuilder(meepMeep)
+                .setConstraints(40, 60, Math.toRadians(180), Math.toRadians(360), 15)
+                .build();
+
         DriveShim driveSubsystem = myBot.getDrive();
 
         // ---------------------------------------------------------------------------------------
@@ -65,6 +69,13 @@ public class MeepMeepTesting {
                 .lineToX(0)
                 .build();
 
+        //===============================================================
+
+        Action test = driveSubsystem.actionBuilder(mirror(0,0,0))
+                .turnTo(mirror(180))
+                .turnTo(mirror(1))
+                .build();
+
         myBot.runAction(new SequentialAction(
                 firstScore,
                 collectPath1,
@@ -74,11 +85,16 @@ public class MeepMeepTesting {
                 movePath
                 ) );
 
+        testBot.runAction(new SequentialAction(test, test, test));
+
+
+
         // ---------------------------------------------------------------------------------------
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(myBot)
+                //.addEntity(myBot)
+                .addEntity(testBot)
                 .start();
     }
 
