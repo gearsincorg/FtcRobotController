@@ -63,11 +63,12 @@ public class SpindexerSubsystem extends SubsystemBase {
     private ElapsedTime spinServoTimer  =  new ElapsedTime();
     private double sensorRange          =  0;
 
+    private boolean shootingPreloads = true;
+    private int patternID           = 2;
     private int currentSlot         = 0;
     private int allArtifactsHeld    = 0;
     private int greenArtifactsHeld  = 0;
     private int purpleArtifactsHeld = 0;
-    private int patternID           = 2;
     private int currentAutoSlot     = 0;
 
     private boolean startAutoShoot  = false;
@@ -188,6 +189,9 @@ public class SpindexerSubsystem extends SubsystemBase {
             case INTAKING: {
                 if (newBall) {
                     setState(INTAKE_HOLD);
+                } if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
+                    sendClostestColorToShooter(ArtifactColor.ANY);
+                    setState(SHOT_QUEUEING);
                 } else {
                     sendClostestEmptyToIntake();
                 }
@@ -223,7 +227,8 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case READY_TO_SHOOT: {
-                if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed() || startAutoShoot) && Globals.AT_SPEED) {
+                if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed() || startAutoShoot) &&
+                        Globals.SHOOTER_AT_SPEED && Globals.TURRET_ON_TARGET) {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
                     setState(SHOOTING);
@@ -242,7 +247,8 @@ public class SpindexerSubsystem extends SubsystemBase {
             case COCKING_SHOT: {
                 if (timeInState(ADVANCE_DELAY_TIME)) {
                     if (allArtifactsHeld > 0) {
-                        if (Globals.IS_AUTO) {
+                        // only run the preload sequence once.  Then just get the next available artifact
+                        if (Globals.IS_AUTO && shootingPreloads) {
                             sendToShooter(AUTO_SLOTS[patternID][currentAutoSlot++]);
                         } else {
                             sendClostestColorToShooter(ArtifactColor.ANY);
@@ -250,6 +256,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                         setState(SHOT_QUEUEING);
                     } else {
                         currentAutoSlot = 0; //after shooting if we intake three more it needs to reset
+                        shootingPreloads = false;  // we are done with preloads.
                         startAutoShoot = false;
                         runIntake();
                         Globals.ROBOT_STATE = RobotStates.INTAKING;

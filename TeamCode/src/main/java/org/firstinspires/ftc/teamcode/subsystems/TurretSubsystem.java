@@ -46,6 +46,11 @@ public class TurretSubsystem extends SubsystemBase {
     private final double TURRET_OFFSET_ANGLE = 90;
     private final double TURRET_OFFSET_DISTANCE = 100;  //  78;
 
+    private final double RANGE_2_TILT_SLOPE  =  1.0;
+    private final double RANGE_2_TILT_OFFSET =  0.0;
+    private final double RANGE_2_MPS_SLOPE   =  1.0;
+    private final double RANGE_2_MPS_OFFSET  =  0.0;
+
     // General Subsystem Members
     private double shooterSpeedMPS        = 0;
     private double shooterBackspinPercent = 0;
@@ -54,8 +59,9 @@ public class TurretSubsystem extends SubsystemBase {
     private double Ar    = 0;
     private double At    = 0;  // measured Turret angle
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
+    private double range = 0;  // Range to goal in mm
+
     private boolean turretInPosition = false;
-    private boolean turretOnTarget   = false;
 
     private PIDFCoefficients pidf;
 
@@ -93,9 +99,9 @@ public class TurretSubsystem extends SubsystemBase {
     public void readSensors() {
         At = encoderToDegrees(aim.getCurrentPosition());
         turretInPosition = !aim.isBusy();
-        turretOnTarget   = (Math.abs(Ad-At) < AIM_MARGIN);
+        Globals.TURRET_ON_TARGET = (Math.abs(Ad-At) < AIM_MARGIN);
         target = visionSubsystem.findTarget();
-        Globals.AT_SPEED = shooter.atSpeed;
+        Globals.SHOOTER_AT_SPEED = shooter.atSpeed;
     }
 
     /**
@@ -104,8 +110,12 @@ public class TurretSubsystem extends SubsystemBase {
      */
     public void runProcessing() {
         // only drive turret once it's been homed.
-        if (currentState != INIT) {
-            Ad = calculateAd();
+        if (currentState == READY) {
+            calculate_Ad_Range();
+
+            // calculate speed and angle for shooter trajectory
+            //shooterSpeedMPS   = (RANGE_2_MPS_SLOPE * range) + RANGE_2_MPS_OFFSET;
+            //shooterAngle      = (RANGE_2_TILT_SLOPE * range) + RANGE_2_TILT_OFFSET;
 
             //determine which way we are pointing and change angles to compensate
             if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE){
@@ -118,7 +128,6 @@ public class TurretSubsystem extends SubsystemBase {
                 shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
                                     shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
             }
-
             setTurretAngle(Ad);
         }
     }
@@ -146,11 +155,11 @@ public class TurretSubsystem extends SubsystemBase {
                 aim.setTargetPosition(aim.getCurrentPosition());
                 aim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 aim.setPower(0.5);
-                setState(HOME);
+                setState(READY);
                 break;
             }
 
-            case HOME: {
+            case READY: {
                 break;
             }
         }
@@ -181,7 +190,7 @@ public class TurretSubsystem extends SubsystemBase {
         return angle;
     }
 
-    private double calculateAd() {
+    private void calculate_Ad_Range() {
         double targetX, targetY ;
         if (Globals.ALLIANCE_COLOR == AllianceColor.RED) {
             targetX = RED_X;
@@ -197,9 +206,10 @@ public class TurretSubsystem extends SubsystemBase {
         double x = targetX - robotX;
         double y = targetY - robotY;
 
+        range = Math.hypot(x,y);
         Aa = Math.toDegrees(Math.atan2(y, x));
         Ar = Math.toDegrees(SharedOQ.OQlocalizer.heading_rad);
-        return normalizeAngle(Aa - Ar);
+        Ad = Aa - Ar;
     }
 
     private double encoderToDegrees(int encoder) {
