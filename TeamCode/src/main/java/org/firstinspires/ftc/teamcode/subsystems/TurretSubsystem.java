@@ -146,7 +146,7 @@ public class TurretSubsystem extends SubsystemBase {
                 calculate_Ad_Range();
 
                 // calculate speed and angle for shooter trajectory
-                //autoAim();
+                autoAim();
 
                 //determine which way we are pointing and change angles to compensate
                 if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
