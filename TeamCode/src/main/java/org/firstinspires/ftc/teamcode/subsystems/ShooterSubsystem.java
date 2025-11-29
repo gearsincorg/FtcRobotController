@@ -20,11 +20,11 @@ public class ShooterSubsystem extends SubsystemBase {
     // Subsystem Constants
     private final double SHOOTER_COUNTS_TO_MPS = 0.072 * Math.PI / 28;
     private final double SERVO_GEAR_RATIO        =  24.0 / 90.0;
-    private final double SHOOTER_ANGLE_MAX       =  40.0;
-    private final double SHOOTER_ANGLE_MIN       = -40.0;
+    private final double SHOOTER_ANGLE_MAX       =  35.0;
+    private final double SHOOTER_ANGLE_MIN       = -35.0;
     private final double PULSE_SCALE_FACTOR      =  1.8e-3;   // make this match the spindexer in 2 places once servo is reprogrammed
     private final double SHOOTER_SPEED_TOLERANCE =  1.0;
-    private final double IDLE_MPS                =  2.0;
+    private final double IDLE_MPS                =  0.0;
     private final double MAX_MPS                 = 16.0;
 
     // Subsystem Speed/Power constants
@@ -33,7 +33,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // Servo positions
 
     // General Subsystem Members
-    private double  shooterMPS        = 10.0;
+    private double  shooterMPS        = 0.0;
     private double  shooterServoValue = 0;
     private double  currentFrontMPS;
     private double  currentRearMPS;
@@ -71,6 +71,18 @@ public class ShooterSubsystem extends SubsystemBase {
         currentRearMPS  = rear.getVelocity() * SHOOTER_COUNTS_TO_MPS;
     }
 
+    @Override
+    public void runProcessing() {
+        //updateShooterSpeed();  // this is just here for testing.
+        atSpeed = ((Math.abs(targetFrontMPS - currentFrontMPS) < SHOOTER_SPEED_TOLERANCE) &&
+                (Math.abs(targetRearMPS - currentRearMPS) < SHOOTER_SPEED_TOLERANCE));
+    }
+
+    @Override
+    public void showStatus() {
+        myOpMode.telemetry.addData("SHOOTER",   "A: %5.2f  B: %.1f %s", currentFrontMPS, currentRearMPS, atSpeed ? "At Speed" : "SLOW");
+    }
+
     public void updateShooterSpeed() {
         if (myOpMode.gamepad1.bWasPressed()  && (shooterMPS <= MAX_MPS)) {
             shooterMPS += SHOOTER_STEP;
@@ -88,18 +100,6 @@ public class ShooterSubsystem extends SubsystemBase {
         } else {
             setVelocity(0, 0);
         }
-    }
-
-    @Override
-    public void runProcessing() {
-        updateShooterSpeed();  // this is just here for testing.
-        atSpeed = ((Math.abs(targetFrontMPS - currentFrontMPS) < SHOOTER_SPEED_TOLERANCE) &&
-                (Math.abs(targetRearMPS - currentRearMPS) < SHOOTER_SPEED_TOLERANCE));
-    }
-
-    @Override
-    public void showStatus() {
-        myOpMode.telemetry.addData("SHOOTER",   "A: %5.2f  B: %.1f %s", currentFrontMPS, currentRearMPS, atSpeed ? "At Speed" : "SLOW");
     }
 
     public void setAngle(double angle){

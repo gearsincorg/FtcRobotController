@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.robot.RobotState;
 
 
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
@@ -43,8 +44,8 @@ public class TurretSubsystem extends SubsystemBase {
     private final double MIN_TURRET_ANGLE = -90;
     private final double MAX_TURRET_ANGLE =  90;
     private final double AIM_MARGIN       =   2;
-    private final double TURRET_OFFSET_ANGLE = 90;
-    private final double TURRET_OFFSET_DISTANCE = 100;  //  78;
+    private final double TURRET_OFFSET_ANGLE = 85;
+    private final double TURRET_OFFSET_DISTANCE = 78;  //  78;
 
     private final double RANGE_2_TILT_SLOPE  =  0.0189;
     private final double RANGE_2_TILT_OFFSET =  1.5254;
@@ -110,11 +111,11 @@ public class TurretSubsystem extends SubsystemBase {
      */
     public void runProcessing() {
         // only drive turret once it's been homed.
-        if (currentState == READY) {
+        if (currentState == READY && Globals.ROBOT_STATE == RobotStates.SHOOTING) {
             calculate_Ad_Range();
 
             // calculate speed and angle for shooter trajectory
-            autoAim();
+            //autoAim();
 
             //determine which way we are pointing and change angles to compensate
             if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE){
@@ -154,6 +155,7 @@ public class TurretSubsystem extends SubsystemBase {
                 aim.setTargetPosition(aim.getCurrentPosition());
                 aim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 aim.setPower(0.5);
+                setTurretAngle(0);
                 setState(READY);
                 break;
             }
