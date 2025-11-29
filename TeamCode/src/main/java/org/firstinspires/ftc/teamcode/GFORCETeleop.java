@@ -73,6 +73,7 @@ public class GFORCETeleop extends LinearOpMode
             spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
             turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+            turretSubsystem.setupShooter(0, 0, 0);
             showCycleTime();
             telemetry.update();
         }
@@ -96,8 +97,6 @@ public class GFORCETeleop extends LinearOpMode
             driveSubsystem.updatePoseEstimate();
             spindexerSubsystem.update();
             turretSubsystem.update();
-
-            turretSubsystem.setupShooter(30, 10, 0);
 
             // use the smart manual drive feature of the DriveSubsystem
             driveSubsystem.smartDrive();

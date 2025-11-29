@@ -20,8 +20,8 @@ public class ShooterSubsystem extends SubsystemBase {
     // Subsystem Constants
     private final double SHOOTER_COUNTS_TO_MPS = 0.072 * Math.PI / 28;
     private final double SERVO_GEAR_RATIO        =  24.0 / 90.0;
-    private final double SHOOTER_ANGLE_MAX       =  35.0;
-    private final double SHOOTER_ANGLE_MIN       = -35.0;
+    public final double SHOOTER_ANGLE_MAX       =  38.0;
+    public final double SHOOTER_ANGLE_MIN       = -38.0;
     private final double PULSE_SCALE_FACTOR      =  1.8e-3;   // make this match the spindexer in 2 places once servo is reprogrammed
     private final double SHOOTER_SPEED_TOLERANCE =  1.0;
     private final double IDLE_MPS                =  0.0;
@@ -39,6 +39,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private double  currentRearMPS;
     private double  targetFrontMPS;
     private double  targetRearMPS;
+    private double  tiltAngle;
 
     public boolean  atSpeed = false;
 
@@ -80,7 +81,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("SHOOTER",   "A: %5.2f  B: %.1f %s", currentFrontMPS, currentRearMPS, atSpeed ? "At Speed" : "SLOW");
+        myOpMode.telemetry.addData("SHOOTER",   "A: %5.2f  B: %.1f %s Angle: %.0f", currentFrontMPS, currentRearMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
     }
 
     public void updateShooterSpeed() {
@@ -104,6 +105,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void setAngle(double angle){
         angle = MathUtils.clamp(angle, SHOOTER_ANGLE_MIN, SHOOTER_ANGLE_MAX);
+        tiltAngle = angle;
         shooterServoValue = MathUtils.clamp(0.5 - (angle * PULSE_SCALE_FACTOR / SERVO_GEAR_RATIO), 0.22, 0.78);  // make this match the spindexer in 2 places once servo is reprogrammed
         hood.setPosition(shooterServoValue);
     }

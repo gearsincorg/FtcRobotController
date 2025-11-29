@@ -40,7 +40,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     // Flipper Servo positions and times for shooting
     private final double FIRE_SHOOT     = 0.65;
-    private final double FIRE_RETRACT   = 0.08;
+    private final double FIRE_RETRACT   = 0.12;
 
     private final double FIRE_HOLD_TIME         = 0.25;
     private final double ADVANCE_DELAY_TIME     = 0.15;

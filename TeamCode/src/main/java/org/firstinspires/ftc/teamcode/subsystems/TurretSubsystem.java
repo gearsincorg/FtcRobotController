@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -21,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
+    private final boolean TEST_MODE = false;
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -47,10 +49,14 @@ public class TurretSubsystem extends SubsystemBase {
     private final double TURRET_OFFSET_ANGLE = 85;
     private final double TURRET_OFFSET_DISTANCE = 78;  //  78;
 
-    private final double RANGE_2_TILT_SLOPE  =  0.0189;
-    private final double RANGE_2_TILT_OFFSET =  1.5254;
-    private final double RANGE_2_MPS_SLOPE   =  0.00475;
-    private final double RANGE_2_MPS_OFFSET  =  4.881;
+    private final double SHOOTER_STEP = 0.25;
+    private final double MAX_MPS = 30;
+    private final double ANGLE_STEP = 2;
+    private final Vector2d SPEED_POINT_ONE = new Vector2d(25, 7.5);
+    private final Vector2d SPEED_POINT_TWO = new Vector2d(1500, 9.5);
+
+    private final Vector2d ANGLE_POINT_ONE = new Vector2d(25, 10);
+    private final Vector2d ANGLE_POINT_TWO = new Vector2d(1500, 38);
 
     // General Subsystem Members
     private double shooterSpeedMPS        = 0;
@@ -61,6 +67,10 @@ public class TurretSubsystem extends SubsystemBase {
     private double At    = 0;  // measured Turret angle
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
     private double range = 0;  // Range to goal in mm
+    private double shooterMPS = 0.0;
+    private Vector2d speedCoefs;
+    private Vector2d angleCoefs;
+
 
     private boolean turretInPosition = false;
 
@@ -80,6 +90,9 @@ public class TurretSubsystem extends SubsystemBase {
 
         magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "magnet");
         magnet.setMode(DigitalChannel.Mode.INPUT);
+
+        speedCoefs = calculateCoefs(SPEED_POINT_ONE, SPEED_POINT_TWO);
+        angleCoefs = calculateCoefs(ANGLE_POINT_ONE, ANGLE_POINT_TWO);
 
         // initialize all the subsystem
         // visionSubsystem.init(true);
@@ -110,25 +123,44 @@ public class TurretSubsystem extends SubsystemBase {
      * Called every update() Cycle
      */
     public void runProcessing() {
-        // only drive turret once it's been homed.
-        if (currentState == READY && Globals.ROBOT_STATE == RobotStates.SHOOTING) {
-            calculate_Ad_Range();
-
-            // calculate speed and angle for shooter trajectory
-            //autoAim();
-
-            //determine which way we are pointing and change angles to compensate
-            if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE){
-                Ad = normalizeAngle(Ad - 180);
-                shooter.setAngle(-shooterAngle);
-                shooter.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
-                                    shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)));
-            } else {
-                shooter.setAngle(shooterAngle);
-                shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
-                                    shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
+        if(TEST_MODE){
+            if (myOpMode.gamepad1.dpadUpWasPressed()  && (shooterSpeedMPS <= MAX_MPS)) {
+                shooterSpeedMPS += SHOOTER_STEP;
             }
-            setTurretAngle(Ad);
+            if (myOpMode.gamepad1.dpadDownWasPressed() && (shooterSpeedMPS >= SHOOTER_STEP)) {
+                shooterSpeedMPS -= SHOOTER_STEP;
+            }
+
+            if (myOpMode.gamepad1.dpadRightWasPressed()  && (shooterAngle <= shooter.SHOOTER_ANGLE_MAX)) {
+                shooterAngle += ANGLE_STEP;
+            }
+            if (myOpMode.gamepad1.dpadLeftWasPressed() && (shooterAngle >= shooter.SHOOTER_ANGLE_MIN)) {
+                shooterAngle -= ANGLE_STEP;
+            }
+
+            shooter.setAngle(shooterAngle);
+            shooter.setVelocity(shooterSpeedMPS, shooterSpeedMPS);
+        } else {
+            // only drive turret once it's been homed.
+            if (currentState == READY && Globals.ROBOT_STATE == RobotStates.SHOOTING) {
+                calculate_Ad_Range();
+
+                // calculate speed and angle for shooter trajectory
+                //autoAim();
+
+                //determine which way we are pointing and change angles to compensate
+                if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
+                    Ad = normalizeAngle(Ad - 180);
+                    shooter.setAngle(-shooterAngle);
+                    shooter.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
+                            shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)));
+                } else {
+                    shooter.setAngle(shooterAngle);
+                    shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
+                            shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
+                }
+                setTurretAngle(Ad);
+            }
         }
     }
 
@@ -228,8 +260,8 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     public void autoAim() {
-        shooterAngle = (RANGE_2_TILT_SLOPE * range) + RANGE_2_TILT_OFFSET;
-        shooterSpeedMPS = (RANGE_2_MPS_SLOPE * range) + RANGE_2_MPS_OFFSET;
+        shooterAngle = solve(range, angleCoefs);
+        shooterSpeedMPS = solve(range, speedCoefs) ;
     }
 
     /**
@@ -243,6 +275,18 @@ public class TurretSubsystem extends SubsystemBase {
         shooterSpeedMPS = speed;
         shooterBackspinPercent = backspinPercent;
     }
+
+    public Vector2d calculateCoefs(Vector2d p1, Vector2d p2){
+        double m = p2.y - p1.y / p2.x - p1.x;
+        double c = p1.y - m * p1.x;
+
+        return new Vector2d(m,c);
+    }
+
+    public double solve(double range, Vector2d coefs){
+        return coefs.x * range + coefs.y;
+    }
+
 
     // =============  Action methods  ========================
 
