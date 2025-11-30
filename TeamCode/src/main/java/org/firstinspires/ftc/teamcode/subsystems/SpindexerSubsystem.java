@@ -43,8 +43,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double FIRE_RETRACT   = 0.12;
 
     private final double FIRE_HOLD_TIME         = 0.25;
-    private final double ADVANCE_DELAY_TIME     = 0.15;
-    private final double NEW_ARTIFACT_HOLD_TIME = 0.02;
+    private final double ADVANCE_DELAY_TIME     = 0.20;  // was 0.15
+    private final double NEW_ARTIFACT_HOLD_TIME = 0.10;  // was 0.02
 
     // Spindexer Servo Positions (in degrees)
     private final double   CENTER_OFFSET = 5.0;
@@ -274,7 +274,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
-        myOpMode.telemetry.addData("SPINDEXER", "%s (s%d) -> %.1f %s (%.2f)", currentState, currentSlot, targetAngle, inPosition(), lastSpindexerServoValue);
+        myOpMode.telemetry.addData("SPINDEX", "%s (s%d) -> %.1f %s (%.2f)", currentState, currentSlot, targetAngle, inPosition(), lastSpindexerServoValue);
         myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
         if (Globals.IS_AUTO) {
             myOpMode.telemetry.addData("AUTO", "%s", startAutoShoot ? "Auto Shoot Active" : "idle");
@@ -388,7 +388,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (newTargetAngle != targetAngle ) {
             lastSpindexerServoValue = MathUtils.clamp(0.5 + ((newTargetAngle + CENTER_OFFSET) * PULSE_SCALE_FACTOR), 0, 1.0);
             spindexer.setPosition(lastSpindexerServoValue);
-            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 360; // SWYFT torque servo .. 60 deg in .115 sec
+            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 450; // SWYFT torque servo .. 60 deg in .115 sec = 514 deg/s
             spinServoTimer.reset();
             targetAngle = newTargetAngle ;
         }
@@ -419,6 +419,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void setPatternID (int id){
         patternID = id;
     }
+
+    // =============  Action methods  ========================
 
     public Action actionWaitForState(SpindexerStates state){
         return new Action() {

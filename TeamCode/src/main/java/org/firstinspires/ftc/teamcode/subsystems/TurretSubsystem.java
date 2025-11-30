@@ -9,7 +9,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.robot.RobotState;
 
 
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
@@ -22,7 +21,8 @@ import androidx.annotation.NonNull;
 import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
-    private final boolean TEST_MODE = false;
+
+    private boolean TEST_MODE = false;  //  <<---  set to true to play with shooter speed/angle
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -43,20 +43,21 @@ public class TurretSubsystem extends SubsystemBase {
     private final double BLUE_X = -1828.8;
     private final double BLUE_Y = -1828.8;
 
-    private final double MIN_TURRET_ANGLE = -90;
-    private final double MAX_TURRET_ANGLE =  90;
+    private final double MIN_TURRET_ANGLE = -91;
+    private final double MAX_TURRET_ANGLE =  91;
     private final double AIM_MARGIN       =   2;
-    private final double TURRET_OFFSET_ANGLE = 85;
-    private final double TURRET_OFFSET_DISTANCE = 78;  //  78;
+    private final double TURRET_OFFSET_ANGLE = 85;  // Adjust this  if the shooter is not centered on marks/
+    private final double TURRET_OFFSET_DISTANCE = 78;
 
     private final double SHOOTER_STEP = 0.25;
     private final double MAX_MPS = 30;
     private final double ANGLE_STEP = 2;
     private final Vector2d SPEED_POINT_ONE = new Vector2d(25, 7.5);
-    private final Vector2d SPEED_POINT_TWO = new Vector2d(1500, 9.5);
+    //    private final Vector2d SPEED_POINT_TWO = new Vector2d(2500, 9.5);
+    private final Vector2d SPEED_POINT_TWO = new Vector2d(3800, 12.0);
 
     private final Vector2d ANGLE_POINT_ONE = new Vector2d(25, 10);
-    private final Vector2d ANGLE_POINT_TWO = new Vector2d(1500, 38);
+    private final Vector2d ANGLE_POINT_TWO = new Vector2d(3800, 36);
 
     // General Subsystem Members
     private double shooterSpeedMPS        = 0;
@@ -66,14 +67,9 @@ public class TurretSubsystem extends SubsystemBase {
     private double Ar    = 0;
     private double At    = 0;  // measured Turret angle
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
-    private double range = 0;  // Range to goal in mm
-    private double shooterMPS = 0.0;
+    private double targetRange = 0;  // Range to goal in mm
     private Vector2d speedCoefs;
     private Vector2d angleCoefs;
-
-
-    private boolean turretInPosition = false;
-
     private PIDFCoefficients pidf;
 
     @Override
@@ -85,8 +81,8 @@ public class TurretSubsystem extends SubsystemBase {
         aim.setDirection(DcMotorSimple.Direction.REVERSE);
         aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        pidf = aim.getPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION);
-        aim.setPositionPIDFCoefficients(26);
+        // pidf = aim.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+        aim.setPositionPIDFCoefficients(26);  // was 26
 
         magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "magnet");
         magnet.setMode(DigitalChannel.Mode.INPUT);
@@ -112,10 +108,11 @@ public class TurretSubsystem extends SubsystemBase {
      */
     public void readSensors() {
         At = encoderToDegrees(aim.getCurrentPosition());
-        turretInPosition = !aim.isBusy();
         Globals.TURRET_ON_TARGET = (Math.abs(Ad-At) < AIM_MARGIN);
-        target = visionSubsystem.findTarget();
+        calculate_Ad_and_Range();
         Globals.SHOOTER_AT_SPEED = shooter.atSpeed;
+
+        target = visionSubsystem.findTarget();
     }
 
     /**
@@ -123,7 +120,7 @@ public class TurretSubsystem extends SubsystemBase {
      * Called every update() Cycle
      */
     public void runProcessing() {
-        if(TEST_MODE){
+        if((currentState == READY) && TEST_MODE){
             if (myOpMode.gamepad1.dpadUpWasPressed()  && (shooterSpeedMPS <= MAX_MPS)) {
                 shooterSpeedMPS += SHOOTER_STEP;
             }
@@ -143,10 +140,9 @@ public class TurretSubsystem extends SubsystemBase {
         } else {
             // only drive turret once it's been homed.
             if (currentState == READY && Globals.ROBOT_STATE == RobotStates.SHOOTING) {
-                calculate_Ad_Range();
 
-                // calculate speed and angle for shooter trajectory
-                //autoAim();
+                // calculate parameters for shooter trajectory
+                autoAim();
 
                 //determine which way we are pointing and change angles to compensate
                 if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
@@ -203,7 +199,10 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("TURRET", "%s At=%4.1f, Ad=%4.1f, Aa=%4.1f, Ar=%4.1f", currentState, At, Ad, Aa, Ar);
+        myOpMode.telemetry.addData("TURRET A", "%s At=%4.1f, Ad=%4.1f, Aa=%4.1f, Ar=%4.1f %s",
+                currentState, At, Ad, Aa, Ar, Globals.TURRET_ON_TARGET? "On target" : "BAD aim");
+        myOpMode.telemetry.addData("TURRET S", "R= %5.3f mm , A= %4.2f deg, S %4.1fMPS",
+                targetRange, shooterAngle, shooterSpeedMPS);
     }
 
     /**
@@ -223,7 +222,7 @@ public class TurretSubsystem extends SubsystemBase {
         return angle;
     }
 
-    private void calculate_Ad_Range() {
+    private void calculate_Ad_and_Range() {
         double targetX, targetY ;
         if (Globals.ALLIANCE_COLOR == AllianceColor.RED) {
             targetX = RED_X;
@@ -239,7 +238,7 @@ public class TurretSubsystem extends SubsystemBase {
         double x = targetX - robotX;
         double y = targetY - robotY;
 
-        range = Math.hypot(x,y);
+        targetRange = Math.hypot(x,y);
         Aa = Math.toDegrees(Math.atan2(y, x));
         Ar = Math.toDegrees(SharedOQ.OQlocalizer.heading_rad);
         Ad = Aa - Ar;
@@ -260,8 +259,8 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     public void autoAim() {
-        shooterAngle = solve(range, angleCoefs);
-        shooterSpeedMPS = solve(range, speedCoefs) ;
+        shooterAngle = solve(targetRange, angleCoefs);
+        shooterSpeedMPS = solve(targetRange, speedCoefs) ;
     }
 
     /**
@@ -276,17 +275,16 @@ public class TurretSubsystem extends SubsystemBase {
         shooterBackspinPercent = backspinPercent;
     }
 
-    public Vector2d calculateCoefs(Vector2d p1, Vector2d p2){
-        double m = p2.y - p1.y / p2.x - p1.x;
-        double c = p1.y - m * p1.x;
+    private Vector2d calculateCoefs(Vector2d p1, Vector2d p2){
+        double m = (p2.y - p1.y) / (p2.x - p1.x);
+        double c = p1.y - (m * p1.x);
 
         return new Vector2d(m,c);
     }
 
     public double solve(double range, Vector2d coefs){
-        return coefs.x * range + coefs.y;
+        return (coefs.x * range) + coefs.y;
     }
-
 
     // =============  Action methods  ========================
 
