@@ -22,7 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
-    private final boolean TEST_MODE = false;
+    private final boolean TEST_MODE = true;
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -146,7 +146,8 @@ public class TurretSubsystem extends SubsystemBase {
                 calculate_Ad_Range();
 
                 // calculate speed and angle for shooter trajectory
-                //autoAim();
+                shooterAngle    = MathUtils.clamp(solve(range, angleCoefs), 0 , shooter.SHOOTER_ANGLE_MAX);
+                shooterSpeedMPS = MathUtils.clamp(solve(range, speedCoefs), 0 , MAX_MPS) ;
 
                 //determine which way we are pointing and change angles to compensate
                 if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
@@ -259,11 +260,6 @@ public class TurretSubsystem extends SubsystemBase {
         aim.setTargetPosition(degreesToEncoder(clampedAd));
     }
 
-    public void autoAim() {
-        shooterAngle = solve(range, angleCoefs);
-        shooterSpeedMPS = solve(range, speedCoefs) ;
-    }
-
     /**
      * this function allows you to change the angle speed and back spin on the turret
      * @param angle
@@ -277,14 +273,14 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     public Vector2d calculateCoefs(Vector2d p1, Vector2d p2){
-        double m = p2.y - p1.y / p2.x - p1.x;
-        double c = p1.y - m * p1.x;
+        double m = (p2.y - p1.y) / (p2.x - p1.x);
+        double c = p1.y - (m * p1.x);
 
         return new Vector2d(m,c);
     }
 
     public double solve(double range, Vector2d coefs){
-        return coefs.x * range + coefs.y;
+        return (coefs.x * range) + coefs.y;
     }
 
 
