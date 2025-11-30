@@ -146,7 +146,7 @@ public class TurretSubsystem extends SubsystemBase {
                 calculate_Ad_Range();
 
                 // calculate speed and angle for shooter trajectory
-                autoAim();
+                //autoAim();
 
                 //determine which way we are pointing and change angles to compensate
                 if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
@@ -203,7 +203,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("TURRET", "%s At=%4.1f, Ad=%4.1f, Aa=%4.1f, Ar=%4.1f, range=%.1f", currentState, At, Ad, Aa, Ar, range);
+        myOpMode.telemetry.addData("TURRET", "%s At=%4.1f, Ad=%4.1f, Aa=%4.1f, Ar=%4.1f", currentState, At, Ad, Aa, Ar);
     }
 
     /**
