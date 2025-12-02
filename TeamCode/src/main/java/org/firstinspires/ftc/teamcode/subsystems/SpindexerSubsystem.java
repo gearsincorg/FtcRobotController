@@ -388,7 +388,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (newTargetAngle != targetAngle ) {
             lastSpindexerServoValue = MathUtils.clamp(0.5 + ((newTargetAngle + CENTER_OFFSET) * PULSE_SCALE_FACTOR), 0, 1.0);
             spindexer.setPosition(lastSpindexerServoValue);
-            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 450; // SWYFT torque servo .. 60 deg in .115 sec = 514 deg/s
+            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 400; // SWYFT torque servo .. 60 deg in .115 sec = 514 deg/s
             spinServoTimer.reset();
             targetAngle = newTargetAngle ;
         }
