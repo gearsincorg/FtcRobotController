@@ -62,8 +62,8 @@ public final class DriveSubsystem
 
     public static class Params {
         // drive model parameters (Tick is 1 mm)
-        public double inPerTick       = 0.0392;  // approx
-        public double trackWidthTicks = 350;     // approx
+        public double inPerTick       = 0.0397;  // approx
+        public double trackWidthTicks = 368;     // approx
 
         // feedforward parameters (in tick (mm) units)
         public double kS = 0.00;  // was 0.3
@@ -72,27 +72,23 @@ public final class DriveSubsystem
 
         // path profile parameters (in inches)
         public double maxWheelVel     =  40;
-        public double minProfileAccel = -50;
-        public double maxProfileAccel = 100;
+        public double minProfileAccel = -60;
+        public double maxProfileAccel = 60;
 
         // turn profile parameters (in radians)
-        public double maxAngVel   = Math.PI; // shared with path
-        public double maxAngAccel = Math.PI * 2;
+        public double maxAngVel   = Math.PI / 2.0; // shared with path was:   PI
+        public double maxAngAccel = Math.PI;  // was PI*2
 
         // path controller gains
         public double ramseteBBar = 2.0; // Like P gain (was 2)
         public double ramseteZeta = 0.8; // in the range (0, 1)  was 0.7
-
-        // turn controller gains
-        public double turnGain    = 4.0;  // was 4
-        public double turnVelGain = 0.0;  // was 0
     }
 
     public static Params PARAMS = new Params();
 
     static final double DRIVE_DEADBAND      =  0.05;      // Dont start turning until we need to move position.
     static final double TURN_DEADBAND       =  0.05;      // Lock heading if JoyStick less than this
-    static final double HEADING_GAIN        =  0.015;    // turn at full power of the error
+    static final double HEADING_GAIN        =  0.01;    // turn at full power of the error was .015
     static final double HEADING_TOLLERANCE  = 30.0;      // Don't start driving until we are withing 30 Degrees
 
     static final double FC_SPEED_SCALE      =  1.0;      // Safe FC speed
@@ -444,6 +440,13 @@ public final class DriveSubsystem
 
             PoseVelocity2d robotVelRobot = updatePoseEstimate();
 
+            myOpMode.telemetry.addData("TURN", "TA= %.1f, TV= %.1f", txWorldTarget.heading.value().toDouble(),txWorldTarget.heading.velocity().value());
+
+            double rotateCCW = normalizeAngle(Math.toDegrees(txWorldTarget.heading.value().toDouble()) - getHeadingDeg()) * HEADING_GAIN;
+            // send axis powers to drive
+            setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), rotateCCW));
+
+            /*
             PoseVelocity2dDual<Time> command = new PoseVelocity2dDual<>(
                     Vector2dDual.constant(new Vector2d(0, 0), 3),
                     txWorldTarget.heading.velocity().plus(
@@ -451,6 +454,9 @@ public final class DriveSubsystem
                             PARAMS.turnVelGain * (robotVelRobot.angVel - txWorldTarget.heading.velocity().value())
                     )
             );
+
+            myOpMode.telemetry.addData("TURN", "TA= %.1f, TV= %.1f", txWorldTarget.heading.value().toDouble(),txWorldTarget.heading.velocity().value());
+
             driveCommandWriter.write(new DriveCommandMessage(command));
 
             TankKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
@@ -467,6 +473,7 @@ public final class DriveSubsystem
             for (DcMotorEx m : rightMotors) {
                 m.setPower(rightPower);
             }
+            */
 
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);
@@ -506,10 +513,10 @@ public final class DriveSubsystem
                     mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm),
                     Math.toDegrees(SharedOQ.OQlocalizer.heading_rad), getTurnRateDPS());
 
-            myOpMode.telemetry.addData("VELOCITY", "%5.2f:%5.2f",
-                    mmToInch(SharedOQ.OQlocalizer.velX_mmS), mmToInch(SharedOQ.OQlocalizer.velY_mmS));
+            myOpMode.telemetry.addData("VELOCITY", "L:%5.2f IPS A:%5.2f RPS",
+            mmToInch(Math.hypot(SharedOQ.OQlocalizer.velX_mmS, SharedOQ.OQlocalizer.velY_mmS)), SharedOQ.OQlocalizer.velHeading_radS);
 
-            if (Globals.IS_AUTO) {
+            if (Globals.IS_AUTO && myOpMode.opModeIsActive()) {
                 myOpMode.telemetry.update();
             }
 

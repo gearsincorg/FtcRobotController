@@ -22,7 +22,7 @@ import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
 
-    private boolean TEST_MODE = false;  //  <<---  set to true to play with shooter speed/angle
+    private boolean TEST_MODE = true;  //  <<---  set to true to play with shooter speed/angle
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -61,7 +61,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     // General Subsystem Members
     private double shooterSpeedMPS        = 0;
-    private double shooterBackspinPercent = 0;
+    private double shooterBackspinPercent = -20;
     private double shooterAngle           = 30;
     private double Aa    = 0;
     private double Ar    = 0;
@@ -108,7 +108,11 @@ public class TurretSubsystem extends SubsystemBase {
      */
     public void readSensors() {
         At = encoderToDegrees(aim.getCurrentPosition());
-        Globals.TURRET_ON_TARGET = (Math.abs(Ad-At) < AIM_MARGIN);
+        if (TEST_MODE) {
+            Globals.TURRET_ON_TARGET = true;
+        } else {
+            Globals.TURRET_ON_TARGET = (Math.abs(Ad - At) < AIM_MARGIN);
+        }
         calculate_Ad_and_Range();
         Globals.SHOOTER_AT_SPEED = shooter.atSpeed;
 
@@ -121,6 +125,15 @@ public class TurretSubsystem extends SubsystemBase {
      */
     public void runProcessing() {
         if((currentState == READY) && TEST_MODE){
+
+            // fast start up
+            if (shooterAngle == 0) {
+                shooterAngle = -20;
+                // shooterSpeedMPS = 10;
+
+            }
+
+
             if (myOpMode.gamepad1.dpadUpWasPressed()  && (shooterSpeedMPS <= MAX_MPS)) {
                 shooterSpeedMPS += SHOOTER_STEP;
             }
@@ -136,7 +149,8 @@ public class TurretSubsystem extends SubsystemBase {
             }
 
             shooter.setAngle(shooterAngle);
-            shooter.setVelocity(shooterSpeedMPS, shooterSpeedMPS);
+            shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100.0)),
+                                shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100.0)));
         } else {
             // only drive turret once it's been homed.
             if (currentState == READY && Globals.ROBOT_STATE == RobotStates.SHOOTING) {

@@ -189,7 +189,8 @@ public class SpindexerSubsystem extends SubsystemBase {
             case INTAKING: {
                 if (newBall) {
                     setState(INTAKE_HOLD);
-                } if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
+                } else if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
+                    stopIntake();
                     sendClostestColorToShooter(ArtifactColor.ANY);
                     setState(SHOT_QUEUEING);
                 } else {
@@ -219,7 +220,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             case SHOT_QUEUEING: {
                 newBall = false;  // reset this for next intake
                 if (allArtifactsHeld == 0 ) {
-                    setState(INTAKING);
+                    setState(INTAKE_QUEUEING);
                 } else if (inPosition())   {
                     setState(READY_TO_SHOOT);
                 }
@@ -388,7 +389,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (newTargetAngle != targetAngle ) {
             lastSpindexerServoValue = MathUtils.clamp(0.5 + ((newTargetAngle + CENTER_OFFSET) * PULSE_SCALE_FACTOR), 0, 1.0);
             spindexer.setPosition(lastSpindexerServoValue);
-            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 400; // SWYFT torque servo .. 60 deg in .115 sec = 514 deg/s
+            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 360; // SWYFT torque servo .. 60 deg in .115 sec = 514 deg/s
             spinServoTimer.reset();
             targetAngle = newTargetAngle ;
         }

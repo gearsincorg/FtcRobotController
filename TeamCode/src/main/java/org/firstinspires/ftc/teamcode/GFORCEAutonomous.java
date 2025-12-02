@@ -125,13 +125,13 @@ public class GFORCEAutonomous extends LinearOpMode
     //===========================================================================================
     private Action build_TestAuto() {
         Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-                .turnTo(mirror(180))
+                .turn(Math.PI/2)
                 .waitSeconds(2)
-                .turnTo(mirror(1))
+                .turn(Math.PI/2)
                 .waitSeconds(2)
-                .turnTo(mirror(180))
+                .turn(Math.PI/2)
                 .waitSeconds(2)
-                .turnTo(mirror(1))
+                .turn(Math.PI/2)
                 .build();
 
         return new SequentialAction(
@@ -162,21 +162,23 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action collectPath1 = driveSubsystem.actionBuilder(mirror(-48, -32, 45))
                 .splineTo(mirror(-12, -30), mirror(-90))
-                .lineToY(mirrorY(-54), new TranslationalVelConstraint(15))
+                .lineToY(mirrorY(-54), new TranslationalVelConstraint(10))
+                .waitSeconds(1)
                 .build();
 
         Action returnPath1 = driveSubsystem.actionBuilder(mirror(-12, -54, -90))
                 .setReversed(true)
-                .splineTo(mirror(-36, -36), mirror(-180))
+                .splineTo(mirror(-36, -36), mirror(-135))
                 .build();
 
-        Action collectPath2 = driveSubsystem.actionBuilder(mirror(-36, -36, 0))
+        Action collectPath2 = driveSubsystem.actionBuilder(mirror(-36, -36, 45))
                 .setReversed(false)
                 .splineTo(mirror(12, -30), mirror(-90))
-                .lineToY(mirrorY(-54), new TranslationalVelConstraint(15))
+                .lineToY(mirrorY(-60), new TranslationalVelConstraint(10))
+                .waitSeconds(1)
                 .build();
 
-        Action returnPath2 = driveSubsystem.actionBuilder(mirror(12, -54, -90))
+        Action returnPath2 = driveSubsystem.actionBuilder(mirror(12, -60, -90))
                 .setReversed(true)
                 .splineTo(mirror(-36, -36), mirror(-180))
                 .build();
@@ -187,21 +189,21 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         return new SequentialAction(
-                turretSubsystem.actionSetupShooter(20, 9, 0),
+                //turretSubsystem.actionSetupShooter(20, 9, 0),
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
                 firstScore,
                 spindexerSubsystem.actionStartAutoShooting(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
                 collectPath1,
-                turretSubsystem.actionSetupShooter(20, 10, 0),
+                //turretSubsystem.actionSetupShooter(20, 10, 0),
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
                 returnPath1,
                 spindexerSubsystem.actionStartAutoShooting(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
                 collectPath2,
-                turretSubsystem.actionSetupShooter(20, 10, 0),
+                //turretSubsystem.actionSetupShooter(20, 10, 0),
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
                 returnPath2,
                 spindexerSubsystem.actionStartAutoShooting(),

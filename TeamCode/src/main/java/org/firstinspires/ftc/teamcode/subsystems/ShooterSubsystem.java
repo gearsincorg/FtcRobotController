@@ -113,6 +113,8 @@ public class ShooterSubsystem extends SubsystemBase {
         targetFrontMPS = frontVelocityMPS;
         targetRearMPS = rearVelocityMPS;
 
+        myOpMode.telemetry.addData("SET VELOCITY",   "A: %5.2f  B: %.1f %s Angle: %.0f", frontVelocityMPS, rearVelocityMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
+
         front.setVelocity(targetFrontMPS /  SHOOTER_COUNTS_TO_MPS);
         rear.setVelocity(targetRearMPS / SHOOTER_COUNTS_TO_MPS);
     }
