@@ -22,7 +22,7 @@ import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
 
-    private boolean TEST_MODE = true;  //  <<---  set to true to play with shooter speed/angle
+    private boolean TEST_MODE = false;  //  <<---  set to true to play with shooter speed/angle
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -61,7 +61,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     // General Subsystem Members
     private double shooterSpeedMPS        = 0;
-    private double shooterBackspinPercent = -20;
+    private double shooterBackspinPercent = 0;
     private double shooterAngle           = 30;
     private double Aa    = 0;
     private double Ar    = 0;
@@ -109,7 +109,7 @@ public class TurretSubsystem extends SubsystemBase {
     public void readSensors() {
         At = encoderToDegrees(aim.getCurrentPosition());
         if (TEST_MODE) {
-            Globals.TURRET_ON_TARGET = true;
+            //Globals.TURRET_ON_TARGET = true;
         } else {
             Globals.TURRET_ON_TARGET = (Math.abs(Ad - At) < AIM_MARGIN);
         }
@@ -133,7 +133,6 @@ public class TurretSubsystem extends SubsystemBase {
 
             }
 
-
             if (myOpMode.gamepad1.dpadUpWasPressed()  && (shooterSpeedMPS <= MAX_MPS)) {
                 shooterSpeedMPS += SHOOTER_STEP;
             }
@@ -151,12 +150,24 @@ public class TurretSubsystem extends SubsystemBase {
             shooter.setAngle(shooterAngle);
             shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100.0)),
                                 shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100.0)));
+
+            if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
+                Ad = normalizeAngle(Ad - 180);
+                shooter.setAngle(-shooterAngle);
+                shooter.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
+                        shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)));
+            } else {
+                shooter.setAngle(shooterAngle);
+                shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
+                        shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
+            }
+            setTurretAngle(Ad);
         } else {
             // only drive turret once it's been homed.
             if (currentState == READY && Globals.ROBOT_STATE == RobotStates.SHOOTING) {
 
                 // calculate parameters for shooter trajectory
-                autoAim();
+                // autoAim();
 
                 //determine which way we are pointing and change angles to compensate
                 if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {

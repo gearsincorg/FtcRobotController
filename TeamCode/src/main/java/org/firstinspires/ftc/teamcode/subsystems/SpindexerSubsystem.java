@@ -35,8 +35,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double INTAKE_POWER = 1.0;
 
     private final double PULSE_SCALE_FACTOR = 3.125e-3;  // CONVERTS 320 DEG TO 1.0 range ??
-    private final double MIN_RANGE =  50;
-    private final double MAX_RANGE = 120;
+    private final double MIN_RANGE =  70; // was 50
+    private final double MAX_RANGE = 100; // was 120
 
     // Flipper Servo positions and times for shooting
     private final double FIRE_SHOOT     = 0.65;
@@ -60,6 +60,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double currentAngle         =  0;
     private double estimatedTransitTime =  0;
     private double lastSpindexerServoValue = 0;
+    private boolean lastDirectionForward = false;
     private ElapsedTime spinServoTimer  =  new ElapsedTime();
     private double sensorRange          =  0;
 
@@ -194,7 +195,9 @@ public class SpindexerSubsystem extends SubsystemBase {
                     sendClostestColorToShooter(ArtifactColor.ANY);
                     setState(SHOT_QUEUEING);
                 } else {
-                    sendClostestEmptyToIntake();
+                    if (sendClostestEmptyToIntake()){
+                        setState(INTAKE_QUEUEING);
+                    }
                 }
 
                 break;
@@ -308,7 +311,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     /**
      * sends the best empty slot to the intake by deciding on the smallest distance between the three.
      */
-    private void sendClostestEmptyToIntake(){
+    private boolean sendClostestEmptyToIntake(){
         double closestAngle = 360;
         int    closestSlot  =   -1;
         double destination;
@@ -318,6 +321,8 @@ public class SpindexerSubsystem extends SubsystemBase {
         } else {
             destination = -90;
         }
+
+        boolean directionChanged = Globals.FORWARD_MOTION != lastDirectionForward;
 
         // calculate how far the spindexer needs to turn for each empty slot, and use the smallest angle.
         for(int s = 0; s < 3; s++){
@@ -333,6 +338,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (closestSlot >= 0){
             sendToIntake(closestSlot);
         }
+        lastDirectionForward = Globals.FORWARD_MOTION;
+
+        return directionChanged;
     }
 
     /**

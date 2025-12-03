@@ -73,7 +73,7 @@ public class GFORCETeleop extends LinearOpMode
             spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
             turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-            turretSubsystem.setupShooter(0, 0, 0);
+            turretSubsystem.setupShooter(36, 10, 0);
             showCycleTime();
             telemetry.update();
         }
