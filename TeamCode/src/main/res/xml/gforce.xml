@@ -27,5 +27,4 @@
             <Servo name="test" port="2" />
         </ServoHub>
     </LynxUsbDevice>
-    <Webcam name="Webcam 1" serialNumber="UC762" />
 </Robot>

@@ -171,14 +171,9 @@ public final class DriveSubsystem
         double jsRightX = -myOpMode.gamepad1.right_stick_x;
         double jsRightY = -myOpMode.gamepad1.right_stick_y;
 
-        // Assume Field Centric Driving takes precidence   (could be changed)
-        if (Math.hypot(jsLeftX, jsLeftY) > DRIVE_DEADBAND) {
-            // Field Centric driving
-            driveFC(jsLeftY * FC_SPEED_SCALE, jsLeftX * FC_SPEED_SCALE);
-        } else {
-            // Robot Centric driving (with joystick squaring)
-            driveRC(lessSensitive(jsRightY) * RC_SPEED_SCALE, lessSensitive(jsRightX) * RC_TURN_SCALE);
-        }
+        // Robot Centric driving (with joystick squaring)
+        driveRC(lessSensitive(jsLeftY) * RC_SPEED_SCALE, lessSensitive(jsRightX) * RC_TURN_SCALE);
+
     }
 
     /**

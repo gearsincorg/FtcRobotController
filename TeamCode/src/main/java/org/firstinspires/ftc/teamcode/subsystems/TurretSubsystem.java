@@ -22,14 +22,14 @@ import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
 
-    private boolean TEST_MODE = false;  //  <<---  set to true to play with shooter speed/angle
+    private boolean TEST_MODE = true;  //  <<---  set to true to play with shooter speed/angle
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
     }
 
     // subsystem devices
-    private VisionSubsystem  visionSubsystem = new VisionSubsystem(myOpMode);
+    //private VisionSubsystem  visionSubsystem = new VisionSubsystem(myOpMode);
     private ShooterSubsystem shooter = new ShooterSubsystem(myOpMode);
 
     private DcMotorEx aim;
@@ -108,15 +108,12 @@ public class TurretSubsystem extends SubsystemBase {
      */
     public void readSensors() {
         At = encoderToDegrees(aim.getCurrentPosition());
-        if (TEST_MODE) {
-            //Globals.TURRET_ON_TARGET = true;
-        } else {
-            Globals.TURRET_ON_TARGET = (Math.abs(Ad - At) < AIM_MARGIN);
-        }
+        Globals.TURRET_ON_TARGET = (Math.abs(Ad - At) < AIM_MARGIN);
+
         calculate_Ad_and_Range();
         Globals.SHOOTER_AT_SPEED = shooter.atSpeed;
 
-        target = visionSubsystem.findTarget();
+        //target = visionSubsystem.findTarget();
     }
 
     /**
@@ -125,13 +122,6 @@ public class TurretSubsystem extends SubsystemBase {
      */
     public void runProcessing() {
         if((currentState == READY) && TEST_MODE){
-
-            // fast start up
-            if (shooterAngle == 0) {
-                shooterAngle = -20;
-                // shooterSpeedMPS = 10;
-
-            }
 
             if (myOpMode.gamepad1.dpadUpWasPressed()  && (shooterSpeedMPS <= MAX_MPS)) {
                 shooterSpeedMPS += SHOOTER_STEP;
@@ -147,7 +137,6 @@ public class TurretSubsystem extends SubsystemBase {
                 shooterAngle -= ANGLE_STEP;
             }
 
-            shooter.setAngle(shooterAngle);
             shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100.0)),
                                 shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100.0)));
 
