@@ -190,10 +190,16 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case INTAKING: {
                 if (myOpMode.gamepad1.right_trigger > 0.25) {
-                    ejectIntake();
+                    ejectIntake(); // Start UNJAM process
                     unjamRestoreAngle = targetAngle;
-                    sendToAngle(lastSlotAngleFilled);
+                    sendToLastAngle(lastSlotAngleFilled, lastSlotFilled);
                     setState(UNJAM);
+                } else if (myOpMode.gamepad1.left_trigger > 0.25) {
+                    stopIntake();  // Force shooting even without 3 artifacts
+                    Globals.ROBOT_STATE = RobotStates.SHOOTING;
+                    myOpMode.gamepad1.leftBumperWasPressed();  // forget any past button presses
+                    sendClostestColorToShooter(ArtifactColor.ANY);                    // queue up first shot.
+                    setState(SHOT_QUEUEING);
                 } else if (newArtifact) {
                     setState(INTAKE_HOLD);
                 } else if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
@@ -237,7 +243,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 if (myOpMode.gamepad1.right_trigger > 0.25) {
                     ejectIntake();
                     unjamRestoreAngle = targetAngle;
-                    sendToAngle(lastSlotAngleFilled);
+                    sendToLastAngle(lastSlotAngleFilled, lastSlotFilled);
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
                     setState(UNJAM);
                 } else if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed() || startAutoShoot) &&
@@ -281,9 +287,14 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case UNJAM: {
                 if (myOpMode.gamepad1.right_trigger < 0.25){
-                    slotColors[lastSlotFilled] = ArtifactColor.UNKNOWN;  // maybe empty all of them
-                    // sendToAngle(unjamRestoreAngle);
-                    setState(INTAKE_QUEUEING);
+                    if (allArtifactsHeld == 3) {
+                        sendClostestColorToShooter(ArtifactColor.ANY);
+                        stopIntake();
+                        Globals.ROBOT_STATE = RobotStates.SHOOTING;
+                        setState(SHOT_QUEUEING);
+                    } else {
+                        setState(INTAKE_QUEUEING);
+                    }
                 }
                 break;
             }
@@ -297,7 +308,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
-        myOpMode.telemetry.addData("SPINDEX", "%s (s%d) -> %.1f %s (%.2f)", currentState, currentSlot, targetAngle, inPosition(), lastSpindexerServoValue);
+        myOpMode.telemetry.addData("SPINDEX", "%s (s%d) -> %.1f %s (%.0f)", currentState, currentSlot, targetAngle, inPosition(), currentAngle);
         myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
         if (Globals.IS_AUTO) {
             myOpMode.telemetry.addData("AUTO", "%s", startAutoShoot ? "Auto Shoot Active" : "idle");
@@ -343,17 +354,24 @@ public class SpindexerSubsystem extends SubsystemBase {
 
         if (Globals.FORWARD_MOTION){
             destination = 90;
+            for(int s = 0; s < 3; s++){
+                if (slotColors[s] == ArtifactColor.UNKNOWN) {
+                    double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
+                    if (angle < closestAngle) {
+                        closestAngle = angle;
+                        closestSlot = s;
+                    }
+                }
+            }
         } else {
             destination = -90;
-        }
-
-        // calculate how far the spindexer needs to turn for each empty slot, and use the smallest angle.
-        for(int s = 0; s < 3; s++){
-            if (slotColors[s] == ArtifactColor.UNKNOWN) {
-                double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
-                if (angle < closestAngle) {
-                    closestAngle = angle;
-                    closestSlot = s;
+            for(int s = 2; s >= 0; s--){
+                if (slotColors[s] == ArtifactColor.UNKNOWN) {
+                    double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
+                    if (angle < closestAngle) {
+                        closestAngle = angle;
+                        closestSlot = s;
+                    }
                 }
             }
         }
@@ -369,7 +387,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private void sendClostestColorToShooter(ArtifactColor color){
         double closestAngle = 360;
         int    closestSlot  =  -1;
-        double destination  =   0;
+        double destination  =   0;  // can be simplified
 
         // calculate how far the spindexer needs to turn for each full slot, and use the smallest angle.
         for (int s = 0; s < 3; s++) {
@@ -410,6 +428,11 @@ public class SpindexerSubsystem extends SubsystemBase {
         else {
           return false;
         }
+    }
+
+    private void sendToLastAngle(double lastAngle, int lastSlot) {
+        currentSlot = MathUtils.clamp(lastSlot, 0, 2);
+        sendToAngle(lastAngle);
     }
 
     private void sendToAngle(double newTargetAngle){
