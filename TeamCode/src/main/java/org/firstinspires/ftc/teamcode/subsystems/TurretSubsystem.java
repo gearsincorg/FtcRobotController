@@ -33,7 +33,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     private DcMotorEx aim;
     private DigitalChannel magnet;
-    private Target target = new Target();
+    // private Target target = new Target();
 
     // Subsystem Constants
     private final double COUNTS_PER_DEGREES = 145.1 * 135 / 21 / 360;
@@ -48,9 +48,10 @@ public class TurretSubsystem extends SubsystemBase {
     private final double TURRET_OFFSET_ANGLE =  85;  // Adjust this  if the shooter is not centered on marks/
     private final double TURRET_OFFSET_DISTANCE = 78;
 
-    private final double SHOOTER_STEP = 0.25;
-    private final double MAX_MPS = 30;
-    private final double ANGLE_STEP = 2;
+    private final double SHOOTER_STEP   = 0.25;
+    private final double MAX_MPS        = 30;
+    private final double SHOOTER_IDLE   = 5;
+    private final double ANGLE_STEP     = 2;
     private final Vector2d SPEED_POINT_ONE = new Vector2d(1500,  8.0);
     private final Vector2d ANGLE_POINT_ONE = new Vector2d(1500, 32.0);
 
@@ -122,7 +123,7 @@ public class TurretSubsystem extends SubsystemBase {
 
                 // if this is the first time through, setup initial values
                 if (shooterSpeedMPS == 0) {
-                    setupShooter(36, 10, 0);
+                    setupShooter(36, 10, 0);  // Default manual settings
                 }
 
                 // DETERMINE MANUAL shooter speed
@@ -155,6 +156,13 @@ public class TurretSubsystem extends SubsystemBase {
                         shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
             }
             setTurretAngle(Ad);
+        } else {
+            // power down the shooter if we're not shooting
+            if (myOpMode.opModeIsActive()) {
+                shooter.setVelocity(SHOOTER_IDLE, SHOOTER_IDLE);
+            } else {
+                shooter.setVelocity(0,0);
+            }
         }
     }
 
