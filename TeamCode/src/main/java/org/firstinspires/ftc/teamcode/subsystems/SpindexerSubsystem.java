@@ -29,7 +29,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private Servo spindexer;
     private Rev2mDistanceSensor distanceFront;
     private Rev2mDistanceSensor distanceBack;
-    private boolean newBall = false;
+    private boolean newArtifact = false;
 
     // Subsystem Constants
     private final double INTAKE_POWER = 1.0;
@@ -46,8 +46,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double ADVANCE_DELAY_TIME     = 0.20;  // was 0.15
     private final double NEW_ARTIFACT_HOLD_TIME = 0.50;  // was 0.02
     // Spindexer Servo Positions (in degrees)
-    private final double   CENTER_OFFSET = 5.0;
-    private final double[] SHOOT        = {-120,   0,  120};  // adjust for offcenter allignment
+    private final double   CENTER_OFFSET = 5.0;  // used to adjust the spindexer so 0 deg is B centered
+    private final double[] SHOOT        = {-120,   0,  120};
     private final double[] INTAKE_FRONT = { -30,  90, -150};
     private final double[] INTAKE_BACK  = { 150, -90,   30};
     private final double[] HOME_ANGLES  = { 120,   0, -120};
@@ -59,23 +59,17 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double currentAngle         =  0;
     private double estimatedTransitTime =  0;
     private double lastSpindexerServoValue = 0;
-    private boolean lastDirectionForward = false;
+    private boolean lastDirectionForward = true;
     private ElapsedTime spinServoTimer  =  new ElapsedTime();
     private double sensorRange          =  0;
 
-
+    private boolean startAutoShoot  = false;
     private boolean shootingPreloads = true;
     private int patternID           = 2;
     private int currentSlot         = 0;
     private int allArtifactsHeld    = 0;
-    private int greenArtifactsHeld  = 0;
-    private int purpleArtifactsHeld = 0;
     private int currentAutoSlot     = 0;
 
-    private boolean startAutoShoot  = false;
-
-    private ArtifactColor currentColor   = ArtifactColor.UNKNOWN;
-    private ArtifactColor queuedColor  = ArtifactColor.ANY;
     private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
 
     @Override
@@ -93,7 +87,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         fire.setPosition(FIRE_RETRACT);
 
         spindexer = myOpMode.hardwareMap.get(Servo.class, "spindexer");
-
         distanceFront = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceFront");
         distanceBack = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceBack");
 
@@ -106,40 +99,42 @@ public class SpindexerSubsystem extends SubsystemBase {
      * Called every Update() cycle;
      */
     public void readSensors() {
-        // Read the spindexer position and determine which segment and slot we are in.
-        // SharedOQ.update();
-        if ((currentState == INTAKING) && inPosition() && (slotColors[currentSlot] == ArtifactColor.UNKNOWN)) {
-            if (Globals.FORWARD_MOTION) {
-                sensorRange = distanceFront.getDistance(DistanceUnit.MM);
-                myOpMode.telemetry.addData("distance front = %.0f", sensorRange);
+        // process the artifact range sensors if we are INTAKING
+        if (currentState == INTAKING) {
+
+            // Watch for a direction change...  set new position if needed
+            if (lastDirectionForward != Globals.FORWARD_MOTION ) {
+                sendClostestEmptyToIntake();
+                lastDirectionForward =  Globals.FORWARD_MOTION;
+            };
+
+            // check contents if we are presenting an empty slot
+            if (inPosition() && (slotColors[currentSlot] == ArtifactColor.UNKNOWN)) {
+                // check the appropriate sensor based on travel direction
+                if (Globals.FORWARD_MOTION) {
+                    sensorRange = distanceFront.getDistance(DistanceUnit.MM);
+                    myOpMode.telemetry.addData("distance front = %.0f", sensorRange);
+                } else {
+                    sensorRange = distanceBack.getDistance(DistanceUnit.MM);
+                    myOpMode.telemetry.addData("distance back = %.0f", sensorRange);
+                }
+
+                // see if we have an artifact
                 if ((sensorRange > MIN_RANGE) && (sensorRange < MAX_RANGE)) {
                     slotColors[currentSlot] = ArtifactColor.PURPLE;
-                    newBall = true;
-                }
-            } else {
-                sensorRange = distanceBack.getDistance(DistanceUnit.MM);
-                myOpMode.telemetry.addData("distance back = %.0f", sensorRange);
-                if (distanceBack.getDistance(DistanceUnit.MM) > MIN_RANGE && distanceBack.getDistance(DistanceUnit.MM) < MAX_RANGE) {
-                    slotColors[currentSlot] = ArtifactColor.PURPLE;
-                    newBall = true;
+                    newArtifact = true;
                 }
             }
+
         }
 
         // count number of slots with balls.
-        int purpleCount = 0;
-        int greenCount = 0;
+        allArtifactsHeld = 0;
         for (int b = 0; b < 3; b++) {
-            if (slotColors[b] == ArtifactColor.GREEN) {
-                greenCount++;
-            } else if (slotColors[b] == ArtifactColor.PURPLE) {
-                purpleCount++;
+            if (slotColors[b] != ArtifactColor.UNKNOWN) {
+                allArtifactsHeld++;
             }
         }
-
-        allArtifactsHeld    = greenCount + purpleCount;
-        greenArtifactsHeld  = greenCount;
-        purpleArtifactsHeld = purpleCount;
     }
 
     @Override
@@ -179,7 +174,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case INTAKE_QUEUEING: {
-                newBall = false;  // reset this for next intake
+                newArtifact = false;  // reset this for next intake
                 if (inPosition())   {
                     runIntake();
                     setState(INTAKING);
@@ -188,16 +183,14 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case INTAKING: {
-                if (newBall) {
+                if (newArtifact) {
                     setState(INTAKE_HOLD);
                 } else if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
                     stopIntake();
                     sendClostestColorToShooter(ArtifactColor.ANY);
                     setState(SHOT_QUEUEING);
                 } else {
-                    if (sendClostestEmptyToIntake()){
-                        setState(INTAKE_QUEUEING);
-                    }
+                    sendClostestEmptyToIntake();
                 }
 
                 break;
@@ -221,7 +214,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case SHOT_QUEUEING: {
-                newBall = false;  // reset this for next intake
+                newArtifact = false;  // reset this for next intake
                 if (allArtifactsHeld == 0 ) {
                     setState(INTAKE_QUEUEING);
                 } else if (inPosition())   {
@@ -311,7 +304,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     /**
      * sends the best empty slot to the intake by deciding on the smallest distance between the three.
      */
-    private boolean sendClostestEmptyToIntake(){
+    private void sendClostestEmptyToIntake(){
         double closestAngle = 360;
         int    closestSlot  =   -1;
         double destination;
@@ -321,8 +314,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         } else {
             destination = -90;
         }
-
-        boolean directionChanged = Globals.FORWARD_MOTION != lastDirectionForward;
 
         // calculate how far the spindexer needs to turn for each empty slot, and use the smallest angle.
         for(int s = 0; s < 3; s++){
@@ -338,9 +329,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (closestSlot >= 0){
             sendToIntake(closestSlot);
         }
-        lastDirectionForward = Globals.FORWARD_MOTION;
-
-        return directionChanged;
     }
 
     /**

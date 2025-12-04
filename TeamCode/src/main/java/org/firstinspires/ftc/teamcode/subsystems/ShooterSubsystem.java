@@ -26,7 +26,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private final double SHOOTER_SPEED_TOLERANCE =  0.5;
     private final double IDLE_MPS                =  0.0;
     private final double MAX_MPS                 =  16.0;
-    private final double SHOOTER_OFFSET          = -3.0;
+    private final double SHOOTER_OFFSET          = -3.0;    // used to ensure that zero degrees is level.
 
     // Subsystem Speed/Power constants
     private final double SHOOTER_STEP = 1.0;
@@ -34,7 +34,6 @@ public class ShooterSubsystem extends SubsystemBase {
     // Servo positions
 
     // General Subsystem Members
-    private double  shooterMPS        = 0.0;
     private double  tiltAngle         = 0;
     private double  shooterServoValue = 0;
     private double  currentFrontMPS   = 0;
@@ -75,7 +74,6 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void runProcessing() {
-        //updateShooterSpeed();  // this is just here for testing.
         atSpeed = ((Math.abs(targetFrontMPS - currentFrontMPS) < SHOOTER_SPEED_TOLERANCE) &&
                 (Math.abs(targetRearMPS - currentRearMPS) < SHOOTER_SPEED_TOLERANCE));
     }
@@ -83,25 +81,6 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         myOpMode.telemetry.addData("SHOOTER",   "A: %5.2f  B: %.1f %s Angle: %.0f", currentFrontMPS, currentRearMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
-    }
-
-    public void updateShooterSpeed() {
-        if (myOpMode.gamepad1.bWasPressed()  && (shooterMPS <= MAX_MPS)) {
-            shooterMPS += SHOOTER_STEP;
-        }
-        if (myOpMode.gamepad1.aWasPressed() && (shooterMPS >= SHOOTER_STEP)) {
-            shooterMPS -= SHOOTER_STEP;
-        }
-
-        if (myOpMode.opModeIsActive()) {
-            if ((Globals.ROBOT_STATE == RobotStates.SHOOTING) || (myOpMode.gamepad1.right_trigger > 0.25)) {
-                setVelocity(shooterMPS, shooterMPS);
-            } else {
-                setVelocity(IDLE_MPS, IDLE_MPS);
-            }
-        } else {
-            setVelocity(0, 0);
-        }
     }
 
     public void setAngle(double angle){
@@ -116,7 +95,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         myOpMode.telemetry.addData("SET VELOCITY",   "A: %5.2f  B: %.1f %s Angle: %.0f", frontVelocityMPS, rearVelocityMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
 
-        front.setVelocity(targetFrontMPS /  SHOOTER_COUNTS_TO_MPS);
+        front.setVelocity(targetFrontMPS / SHOOTER_COUNTS_TO_MPS);
         rear.setVelocity(targetRearMPS / SHOOTER_COUNTS_TO_MPS);
     }
 }
