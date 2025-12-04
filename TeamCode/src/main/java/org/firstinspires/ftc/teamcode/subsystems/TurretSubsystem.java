@@ -22,7 +22,7 @@ import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
 
-    private boolean TEST_MODE = true;  //  <<---  set to true to play with shooter speed/angle
+    private boolean TEST_MODE = false;  //  <<---  set to true to play with shooter speed/angle
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -156,7 +156,7 @@ public class TurretSubsystem extends SubsystemBase {
             if (currentState == READY && Globals.ROBOT_STATE == RobotStates.SHOOTING) {
 
                 // calculate parameters for shooter trajectory
-                // autoAim();
+                autoAim();
 
                 //determine which way we are pointing and change angles to compensate
                 if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
