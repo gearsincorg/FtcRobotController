@@ -45,7 +45,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private final double FIRE_HOLD_TIME         = 0.25;
     private final double ADVANCE_DELAY_TIME     = 0.20;  // was 0.15
-    private final double NEW_ARTIFACT_HOLD_TIME = 0.50;  // was 0.02
+    private final double NEW_ARTIFACT_HOLD_TIME = 0.40;  // was 0.02
     // Spindexer Servo Positions (in degrees)
     private final double   CENTER_OFFSET = 5.0;  // used to adjust the spindexer so 0 deg is B centered
     private final double[] SHOOT        = {-120,   0,  120};
@@ -95,6 +95,8 @@ public class SpindexerSubsystem extends SubsystemBase {
         distanceBack = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceBack");
 
         spinServoTimer.reset();
+
+        sendToShooter(1);
     }
 
     @Override
@@ -110,7 +112,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             if (lastDirectionForward != Globals.FORWARD_MOTION ) {
                 sendClostestEmptyToIntake();
                 lastDirectionForward =  Globals.FORWARD_MOTION;
-            };
+            }
 
             // check contents if we are presenting an empty slot
             if (inPosition() && (slotColors[currentSlot] == ArtifactColor.UNKNOWN)) {
@@ -232,6 +234,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             case SHOT_QUEUEING: {
                 newArtifact = false;  // reset this for next intake
                 if (allArtifactsHeld == 0 ) {
+                    Globals.ROBOT_STATE = RobotStates.INTAKING;
                     setState(INTAKE_QUEUEING);
                 } else if (inPosition())   {
                     setState(READY_TO_SHOOT);

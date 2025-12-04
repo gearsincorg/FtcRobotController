@@ -158,10 +158,8 @@ public class TurretSubsystem extends SubsystemBase {
             setTurretAngle(Ad);
         } else {
             // power down the shooter if we're not shooting
-            if (myOpMode.opModeIsActive()) {
-                shooter.setVelocity(SHOOTER_IDLE, SHOOTER_IDLE);
-            } else {
-                shooter.setVelocity(0,0);
+            if (!myOpMode.opModeIsActive()) {
+                 shooter.setVelocity(0,0);
             }
         }
     }
