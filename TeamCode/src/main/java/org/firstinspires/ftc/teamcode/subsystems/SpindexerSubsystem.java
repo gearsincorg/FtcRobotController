@@ -35,8 +35,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double INTAKE_POWER = 1.0;
 
     private final double PULSE_SCALE_FACTOR = 3.125e-3;  // CONVERTS 320 DEG TO 1.0 range ??
-    private final double MIN_RANGE =  70; // was 50
-    private final double MAX_RANGE = 100; // was 120
+    private final double MIN_RANGE =  50; // was 50
+    private final double MAX_RANGE = 120; // was 120
 
     // Flipper Servo positions and times for shooting
     private final double FIRE_SHOOT     = 0.65;
@@ -44,8 +44,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private final double FIRE_HOLD_TIME         = 0.25;
     private final double ADVANCE_DELAY_TIME     = 0.20;  // was 0.15
-    private final double NEW_ARTIFACT_HOLD_TIME = 0.10;  // was 0.02
-
+    private final double NEW_ARTIFACT_HOLD_TIME = 0.50;  // was 0.02
     // Spindexer Servo Positions (in degrees)
     private final double   CENTER_OFFSET = 5.0;
     private final double[] SHOOT        = {-120,   0,  120};  // adjust for offcenter allignment
@@ -63,6 +62,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private boolean lastDirectionForward = false;
     private ElapsedTime spinServoTimer  =  new ElapsedTime();
     private double sensorRange          =  0;
+
 
     private boolean shootingPreloads = true;
     private int patternID           = 2;
