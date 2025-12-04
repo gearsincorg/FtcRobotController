@@ -32,7 +32,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private boolean newArtifact = false;
 
     // Subsystem Constants
-    private final double INTAKE_POWER = 1.0;
+    private final double INTAKE_POWER =  1.0;
+    private final double EJECT_POWER  = -0.5;
 
     private final double PULSE_SCALE_FACTOR = 3.125e-3;  // CONVERTS 320 DEG TO 1.0 range ??
     private final double MIN_RANGE =  50; // was 50
@@ -69,6 +70,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     private int currentSlot         = 0;
     private int allArtifactsHeld    = 0;
     private int currentAutoSlot     = 0;
+    private double lastSlotAngleFilled  = 0;  // Used during unjamming
+    private int lastSlotFilled      = -1;
+    private double unjamRestoreAngle    = 0;
 
     private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
 
@@ -122,10 +126,13 @@ public class SpindexerSubsystem extends SubsystemBase {
                 // see if we have an artifact
                 if ((sensorRange > MIN_RANGE) && (sensorRange < MAX_RANGE)) {
                     slotColors[currentSlot] = ArtifactColor.PURPLE;
+
+                    lastSlotFilled = currentSlot;
+                    lastSlotAngleFilled = targetAngle; // Save current location
+
                     newArtifact = true;
                 }
             }
-
         }
 
         // count number of slots with balls.
@@ -144,7 +151,6 @@ public class SpindexerSubsystem extends SubsystemBase {
      */
     public void runProcessing() {
     }
-
 
     @Override
     /**
@@ -183,7 +189,12 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case INTAKING: {
-                if (newArtifact) {
+                if (myOpMode.gamepad1.right_trigger > 0.25) {
+                    ejectIntake();
+                    unjamRestoreAngle = targetAngle;
+                    sendToAngle(lastSlotAngleFilled);
+                    setState(UNJAM);
+                } else if (newArtifact) {
                     setState(INTAKE_HOLD);
                 } else if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
                     stopIntake();
@@ -192,7 +203,6 @@ public class SpindexerSubsystem extends SubsystemBase {
                 } else {
                     sendClostestEmptyToIntake();
                 }
-
                 break;
             }
 
@@ -224,8 +234,14 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case READY_TO_SHOOT: {
-                if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed() || startAutoShoot) &&
-                        Globals.SHOOTER_AT_SPEED && Globals.TURRET_ON_TARGET) {
+                if (myOpMode.gamepad1.right_trigger > 0.25) {
+                    ejectIntake();
+                    unjamRestoreAngle = targetAngle;
+                    sendToAngle(lastSlotAngleFilled);
+                    Globals.ROBOT_STATE = RobotStates.INTAKING;
+                    setState(UNJAM);
+                } else if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed() || startAutoShoot) &&
+                    Globals.SHOOTER_AT_SPEED && Globals.TURRET_ON_TARGET) {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
                     setState(SHOOTING);
@@ -262,6 +278,16 @@ public class SpindexerSubsystem extends SubsystemBase {
                 }
                 break;
             }
+
+            case UNJAM: {
+                if (myOpMode.gamepad1.right_trigger < 0.25){
+                    slotColors[lastSlotFilled] = ArtifactColor.UNKNOWN;  // maybe empty all of them
+                    // sendToAngle(unjamRestoreAngle);
+                    setState(INTAKE_QUEUEING);
+                }
+                break;
+            }
+
         }
 
         // Save current state in Globals for other subsystems
@@ -296,10 +322,16 @@ public class SpindexerSubsystem extends SubsystemBase {
         intake.setPower(intakePower);
     }
 
+    public void ejectIntake(){
+        intakePower = EJECT_POWER;
+        intake.setPower(intakePower);
+    }
+
     public void stopIntake(){
         intakePower = 0.0;
         intake.setPower(intakePower);
     }
+
 
     /**
      * sends the best empty slot to the intake by deciding on the smallest distance between the three.

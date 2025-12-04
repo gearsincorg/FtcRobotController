@@ -11,5 +11,6 @@ public enum SpindexerStates implements StateBase {
     SHOT_QUEUEING,
     READY_TO_SHOOT,
     COCKING_SHOT,
-    SHOOTING
+    SHOOTING,
+    UNJAM
 }
