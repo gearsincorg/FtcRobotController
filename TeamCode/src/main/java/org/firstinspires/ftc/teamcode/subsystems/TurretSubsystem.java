@@ -50,13 +50,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     private final double SHOOTER_STEP   = 0.25;
     private final double MAX_MPS        = 30;
-    private final double SHOOTER_IDLE   = 5;
     private final double ANGLE_STEP     = 2;
-    private final Vector2d SPEED_POINT_ONE = new Vector2d(1500,  8.0);
-    private final Vector2d ANGLE_POINT_ONE = new Vector2d(1500, 32.0);
-
-    private final Vector2d SPEED_POINT_TWO = new Vector2d(3800, 12.0);
-    private final Vector2d ANGLE_POINT_TWO = new Vector2d(3800, 36.0);
 
     // General Subsystem Members
     private double shooterSpeedMPS        = 0;
@@ -67,8 +61,9 @@ public class TurretSubsystem extends SubsystemBase {
     private double At    = 0;  // measured Turret angle
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
     private double targetRange = 0;  // Range to goal in mm
-    private Vector2d speedCoefs;
-    private Vector2d angleCoefs;
+
+    private double[] speedCoefs = {6.2, 0.609};                  // C, X
+    private double[] angleCoefs = {5.9, 9.916, -0.8794, 0.0225}; // C, X, X2, X3
 
     @Override
     public void init(boolean showTelemetry) {
@@ -83,9 +78,6 @@ public class TurretSubsystem extends SubsystemBase {
 
         magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "magnet");
         magnet.setMode(DigitalChannel.Mode.INPUT);
-
-        speedCoefs = calculateCoefs(SPEED_POINT_ONE, SPEED_POINT_TWO);
-        angleCoefs = calculateCoefs(ANGLE_POINT_ONE, ANGLE_POINT_TWO);
 
         // initialize all the subsystem
         // visionSubsystem.init(true);
@@ -257,7 +249,7 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     private void setTurretAngle(double newAngle) {
-        //  make sure the turret is kep within it's range of motion
+        //  make sure the turret is kept within it's range of motion
         double clampedAd = MathUtils.clamp(newAngle, MIN_TURRET_ANGLE, MAX_TURRET_ANGLE);
         aim.setTargetPosition(degreesToEncoder(clampedAd));
     }
@@ -279,15 +271,14 @@ public class TurretSubsystem extends SubsystemBase {
         shooterBackspinPercent = backspinPercent;
     }
 
-    private Vector2d calculateCoefs(Vector2d p1, Vector2d p2){
-        double m = (p2.y - p1.y) / (p2.x - p1.x);
-        double c = p1.y - (m * p1.x);
+    public double solve(double range, double[] coefs){
+        double sum = coefs[0];
+        for (int c=1 ; c < coefs.length; c++) {
+            sum += (range * coefs[c]);
+            range *= range; // Increase  range to next order.
+        }
 
-        return new Vector2d(m,c);
-    }
-
-    public double solve(double range, Vector2d coefs){
-        return (coefs.x * range) + coefs.y;
+        return sum;
     }
 
     // =============  Action methods  ========================
