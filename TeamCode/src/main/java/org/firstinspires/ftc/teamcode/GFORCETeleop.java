@@ -10,6 +10,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -31,6 +32,12 @@ import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 @TeleOp(name="GFORCE Teleop", group = "AA")
 public class GFORCETeleop extends LinearOpMode
 {
+    private static Pose2d  HOME_RIGHT = new Pose2d(new Vector2d(1600,-1016), 0);
+    private static Pose2d  HOME_LEFT  = new Pose2d(new Vector2d(1600,-1016), Math.PI);
+    private static Pose2d  HOME_UP    = new Pose2d(new Vector2d(0,0), 0);
+    private static Pose2d  HOME_DOWN  = new Pose2d(new Vector2d(0,0), 0);
+
+
     // get an instance of each of the subsystems
     AutoConfig autoConfig   = new AutoConfig(this);
 
@@ -88,9 +95,21 @@ public class GFORCETeleop extends LinearOpMode
             telemetry.addData("ROBOT", "%s - %s", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
 
             // Check to see if we need to home the subsystems
-            if (gamepad2.touchpad  || gamepad2.back) {
-
+            // B button assumes driving forward into wall. X Button assumes backing into wall
+            if (gamepad2.touchpad  || gamepad2.b) {
+                Pose2d newHome = HOME_RIGHT;
+                if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
+                    newHome = new Pose2d(newHome.position.x, -newHome.position.y, -newHome.heading.toDouble());
+                }
+                driveSubsystem.setPose(newHome);
+            } else if (gamepad2.touchpad  || gamepad2.x) {
+                Pose2d newHome = HOME_LEFT;
+                if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
+                    newHome = new Pose2d(newHome.position.x, -newHome.position.y, -newHome.heading.toDouble());
+                }
+                driveSubsystem.setPose(newHome);
             }
+
 
             // update the robot's position based on the odometry pods.
             driveSubsystem.updatePoseEstimate();
