@@ -564,7 +564,8 @@ public final class DriveSubsystem
 
     public void setPose (Pose2d newPose) {
         pose = newPose;
-        SharedOQ.setLocalizerPose(newPose);
+        SharedOQ.setLocalizerPose(pose);
+        headingSetpointDeg = Math.toDegrees(pose.heading.toDouble());
     }
 
     public void setHeadingDeg(double heading) {

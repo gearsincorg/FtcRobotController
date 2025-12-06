@@ -96,13 +96,15 @@ public class GFORCETeleop extends LinearOpMode
 
             // Check to see if we need to home the subsystems
             // B button assumes driving forward into wall. X Button assumes backing into wall
-            if (gamepad2.touchpad  || gamepad2.b) {
+            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.b) {
                 Pose2d newHome = HOME_RIGHT;
                 if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
                     newHome = new Pose2d(newHome.position.x, -newHome.position.y, -newHome.heading.toDouble());
                 }
                 driveSubsystem.setPose(newHome);
-            } else if (gamepad2.touchpad  || gamepad2.x) {
+            }
+
+            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.x) {
                 Pose2d newHome = HOME_LEFT;
                 if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
                     newHome = new Pose2d(newHome.position.x, -newHome.position.y, -newHome.heading.toDouble());
