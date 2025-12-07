@@ -156,21 +156,21 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action build_GoalShootAndCollect(){
 
         Action firstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-                .splineTo(mirror(-48, -32), mirror(45))
+                .splineTo(mirror(-24, -12), mirror(0))
                 .build();
 
-        Action collectPath1 = driveSubsystem.actionBuilder(mirror(-48, -32, 45))
+        Action collectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
                 .splineTo(mirror(-12, -30), mirror(-90))
-                .lineToY(mirrorY(-54), new TranslationalVelConstraint(10))
+                .lineToY(mirrorY(-55), new TranslationalVelConstraint(10))
                 .waitSeconds(1)
                 .build();
 
-        Action returnPath1 = driveSubsystem.actionBuilder(mirror(-12, -54, -90))
+        Action returnPath1 = driveSubsystem.actionBuilder(mirror(-12, -55, -90))
                 .setReversed(true)
-                .splineTo(mirror(-36, -36), mirror(-135))
+                .splineTo(mirror(-24, -12), mirror(-180))
                 .build();
 
-        Action collectPath2 = driveSubsystem.actionBuilder(mirror(-36, -36, 45))
+        Action collectPath2 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
                 .setReversed(false)
                 .splineTo(mirror(12, -30), mirror(-90))
                 .lineToY(mirrorY(-60), new TranslationalVelConstraint(10))
@@ -179,12 +179,12 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action returnPath2 = driveSubsystem.actionBuilder(mirror(12, -60, -90))
                 .setReversed(true)
-                .splineTo(mirror(-36, -36), mirror(-180))
+                .splineTo(mirror(-24, -12), mirror(-180))
                 .build();
 
-        Action movePath = driveSubsystem.actionBuilder(mirror(-36, -36, 0))
+        Action movePath = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
                 .setReversed(false)
-                .lineToX(0)
+                .lineToX(12)
                 .build();
 
         return new SequentialAction(

@@ -32,8 +32,8 @@ import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 @TeleOp(name="GFORCE Teleop", group = "AA")
 public class GFORCETeleop extends LinearOpMode
 {
-    private static Pose2d  HOME_RIGHT = new Pose2d(new Vector2d(1600,-1016), 0);
-    private static Pose2d  HOME_LEFT  = new Pose2d(new Vector2d(1600,-1016), Math.PI);
+    private static Pose2d  HOME_RIGHT = new Pose2d(new Vector2d(62, 39), 0);
+    private static Pose2d  HOME_LEFT  = new Pose2d(new Vector2d(62, 39), Math.PI);
     private static Pose2d  HOME_UP    = new Pose2d(new Vector2d(0,0), 0);
     private static Pose2d  HOME_DOWN  = new Pose2d(new Vector2d(0,0), 0);
 
@@ -41,7 +41,7 @@ public class GFORCETeleop extends LinearOpMode
     // get an instance of each of the subsystems
     AutoConfig autoConfig   = new AutoConfig(this);
 
-    // Declare OpMode members.
+    // Declare OpMode members.cvzx
     private DriveSubsystem     driveSubsystem     = new DriveSubsystem(this);
     private SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
     private TurretSubsystem    turretSubsystem    = new TurretSubsystem(this);
