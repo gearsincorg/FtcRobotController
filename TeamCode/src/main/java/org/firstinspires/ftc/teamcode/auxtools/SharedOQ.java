@@ -15,6 +15,7 @@ public class SharedOQ {
     private static final float OQ_IMU_SCALAR = (float)(360.0/348.66);
     private static final int OQ_PORT_X = 0;
     private static final int OQ_PORT_Y = 1;
+    private static final Pose2d  DEFAULT_START_HOME = new Pose2d(0,0,0);
 
     public static OctoQuad.LocalizerDataBlock OQlocalizer = new OctoQuad.LocalizerDataBlock();
     public static OctoQuad.EncoderDataBlock   OQencoder   = new OctoQuad.EncoderDataBlock();
@@ -28,6 +29,7 @@ public class SharedOQ {
             if (oq == null) {
                 oq = myOpMode.hardwareMap.get(OctoQuad.class, "octoquad");
                 intializeOctoQuad(oq);
+                setLocalizerPose(DEFAULT_START_HOME);  // only do this after the App has just started
             }
         }
     }

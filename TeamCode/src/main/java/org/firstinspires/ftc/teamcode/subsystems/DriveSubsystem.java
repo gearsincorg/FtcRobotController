@@ -154,7 +154,9 @@ public final class DriveSubsystem
         }
 
         SharedOQ.init(myOpMode);
-        setPose(pose);
+        if (pose != null) {
+            setPose(pose);
+        }
 
         voltageSensor = myOpMode.hardwareMap.voltageSensor.iterator().next();
         FlightRecorder.write("TANK_PARAMS", PARAMS);
@@ -162,9 +164,7 @@ public final class DriveSubsystem
         Globals.FORWARD_MOTION = true;
     }
 
-    /**
-     * Choose between Field Centric and Robot Centric based on Joystick priorit
-     */
+
     public void smartDrive() {
         double jsLeftX  = -myOpMode.gamepad1.left_stick_x;
         double jsLeftY  = -myOpMode.gamepad1.left_stick_y;
@@ -197,48 +197,6 @@ public final class DriveSubsystem
 
         // send axis powers to drive
         setDrivePowers(new PoseVelocity2d(new Vector2d(fwd, 0), rotateCCW));
-    }
-
-    /**
-     * Turn and move in the field centric direction of joystick
-     * @param fwd    Forward component of drive vector
-     * @param left   Left component of drive vector
-     */
-    public void driveFC (double fwd, double left) {
-        double commandMagnitude;
-        double commandAngle;
-        double error = 0;
-        double turnPower = 0;
-        double drivePower = 0;
-
-        // Convert Joystick values to Polar Coordinates.
-        commandAngle     = Math.atan2(left,fwd) * RAD2DEG;
-        commandMagnitude = Math.hypot(fwd,left);
-
-        headingSetpointDeg = commandAngle;  // save for Robot Centric Driving
-        headingLocked = false;              // save for Robot Centric Driving
-
-        // calculate error, and normalize at +/- 180 degrees
-        error = normalizeAngle(commandAngle - getHeadingDeg());
-
-        // see if driving backwards would be easier
-        if (Math.abs(error) > 90) {
-            error = normalizeAngle(error - 180);
-            commandMagnitude = -commandMagnitude;
-        }
-
-        // Apply proportional Gain
-        turnPower = error * HEADING_GAIN;
-
-        // Only drive forward if we are within heading tollerance (turn then drive)
-        if (Math.abs(error) < HEADING_TOLLERANCE) {
-            drivePower = commandMagnitude;
-        } else {
-            drivePower = commandMagnitude / 2.0;
-        }
-
-        // send axis powers to drive
-        driveRC(drivePower,turnPower);
     }
 
     /**

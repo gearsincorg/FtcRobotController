@@ -50,7 +50,7 @@ public class GFORCEAutonomous extends LinearOpMode
         telemetry.setMsTransmissionInterval(50);
         autoConfig.initialize();
 
-        driveSubsystem.init(new Pose2d(0,0,0), true);
+        driveSubsystem.init(null, true);
         spindexerSubsystem.init(true);
         spindexerSubsystem.preloadSequence();
         turretSubsystem.init(true);
@@ -64,15 +64,9 @@ public class GFORCEAutonomous extends LinearOpMode
                 Globals.ALLIANCE_COLOR = AllianceColor.RED;
             else
                 Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
-/*
-            // if Alliance color changes, or Auto mode changes, then load new auto and starting location.
-            if ((Globals.ALLIANCE_COLOR          != lastAllianceColor) ||
-                (autoConfig.autoOptions.autoMode != lastSelectedAuto)) {
-                selectedAuto = loadSelectedAuto(autoConfig.autoOptions.autoMode);
-            }
-*/
+
             // updated needed subsystem
-            driveSubsystem.updatePoseEstimate();
+            driveSubsystem.updatePoseEstimate(); // I don't think this is needed since we aren't using encoders anywhere. TEST
             turretSubsystem.update();
             spindexerSubsystem.update();
 

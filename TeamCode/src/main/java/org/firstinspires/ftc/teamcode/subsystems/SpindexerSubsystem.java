@@ -32,8 +32,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private boolean newArtifact = false;
 
     // Subsystem Constants
-    private final double INTAKE_POWER =  1.0;
-    private final double EJECT_POWER  = -0.5;
+    private final double INTAKE_POWER =  0.9;  // a bit slower TEST
+    private final double EJECT_POWER  = -0.7;  // a bit faster TEST
 
     // private final double PULSE_SCALE_FACTOR = 1.0 / 1620.0;  // CONVERTS 1620 DEG TO 1.0 range ??
     private final double PULSE_SCALE_FACTOR = 0.299 / 480.0;  // CONVERTS 960 DEG TO 0.595range ??
@@ -75,7 +75,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private int currentAutoSlot     = 0;
     private double lastSlotAngleFilled  = 0;  // Used during unjamming
     private int lastSlotFilled      = -1;
-    private double unjamRestoreAngle    = 0;
+    private boolean unjamForward    = false;
 
     private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
 
@@ -196,10 +196,12 @@ public class SpindexerSubsystem extends SubsystemBase {
             case INTAKING: {
                 if (myOpMode.gamepad1.right_trigger > 0.25) {
                     ejectIntake(); // Start UNJAM process
-                    unjamRestoreAngle = targetAngle;
                     sendToLastAngle(lastSlotAngleFilled, lastSlotFilled);
-                    setState(UNJAM);
+                    setState(BASIC_UNJAM);
                 } else if (myOpMode.gamepad1.left_trigger > 0.25) {
+                    ejectIntake(); // Start LUDICROUS UNJAM process
+                    setState(LUDICROUS_UNJAM);
+                } else if (myOpMode.gamepad1.left_bumper) {
                     stopIntake();  // Force shooting even without 3 artifacts
                     Globals.ROBOT_STATE = RobotStates.SHOOTING;
                     myOpMode.gamepad1.leftBumperWasPressed();  // forget any past button presses
@@ -222,7 +224,6 @@ public class SpindexerSubsystem extends SubsystemBase {
                     if (allArtifactsHeld == 3) {
                         stopIntake();
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
-                        myOpMode.gamepad1.leftBumperWasPressed();  // forget any past button presses
                         sendClostestColorToShooter(ArtifactColor.ANY);
                         // sendToShooter(0);                      // queue up first shot.
                         setState(SHOT_QUEUEING);
@@ -249,11 +250,13 @@ public class SpindexerSubsystem extends SubsystemBase {
             case READY_TO_SHOOT: {
                 if (myOpMode.gamepad1.right_trigger > 0.25) {
                     ejectIntake();
-                    unjamRestoreAngle = targetAngle;
                     sendToLastAngle(lastSlotAngleFilled, lastSlotFilled);
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
-                    setState(UNJAM);
-                } else if ((myOpMode.gamepad1.right_bumper || myOpMode.gamepad1.leftBumperWasPressed() || startAutoShoot) &&
+                    setState(BASIC_UNJAM);
+                } else if (myOpMode.gamepad1.left_trigger > 0.25) {
+                    ejectIntake(); // Start LUDICROUS UNJAM process
+                    setState(LUDICROUS_UNJAM);
+                } else if ((myOpMode.gamepad1.right_bumper || startAutoShoot) &&
                     Globals.SHOOTER_AT_SPEED && Globals.TURRET_ON_TARGET) {
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
@@ -292,11 +295,11 @@ public class SpindexerSubsystem extends SubsystemBase {
                 break;
             }
 
-            case UNJAM: {
+            case BASIC_UNJAM: {
                 if (myOpMode.gamepad1.right_trigger < 0.25){
+                    stopIntake();
                     if (allArtifactsHeld == 3) {
                         sendClostestColorToShooter(ArtifactColor.ANY);
-                        stopIntake();
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
                         setState(SHOT_QUEUEING);
                     } else {
@@ -306,6 +309,25 @@ public class SpindexerSubsystem extends SubsystemBase {
                 break;
             }
 
+            case LUDICROUS_UNJAM: {
+                if (myOpMode.gamepad1.left_trigger < 0.25){
+                    stopIntake();
+                    slotColors[0] = ArtifactColor.UNKNOWN;
+                    slotColors[1] = ArtifactColor.UNKNOWN;
+                    slotColors[2] = ArtifactColor.UNKNOWN;
+                    sendToIntake(0);
+                    Globals.ROBOT_STATE = RobotStates.INTAKING;
+                    setState(INTAKE_QUEUEING);
+                } else {
+                    // shake the ball loose
+                    if (timeInState(0.2)) {
+                        spindexer.setPosition(unjamForward ? 0.6 : 0.4);
+                        unjamForward = !unjamForward;
+                        setState(LUDICROUS_UNJAM);  // Start the state timer running again.
+                    }
+                }
+                break;
+            }
         }
 
         // Save current state in Globals for other subsystems
@@ -320,7 +342,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (Globals.IS_AUTO) {
             myOpMode.telemetry.addData("AUTO", "%s", startAutoShoot ? "Auto Shoot Active" : "idle");
         }
-
     }
 
     public void startIntaking() {

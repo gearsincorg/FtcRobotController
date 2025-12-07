@@ -34,8 +34,8 @@ public class GFORCETeleop extends LinearOpMode
 {
     private static Pose2d  HOME_RIGHT = new Pose2d(new Vector2d(62, 39), 0);
     private static Pose2d  HOME_LEFT  = new Pose2d(new Vector2d(62, 39), Math.PI);
-    private static Pose2d  HOME_UP    = new Pose2d(new Vector2d(0,0), 0);
-    private static Pose2d  HOME_DOWN  = new Pose2d(new Vector2d(0,0), 0);
+    private static Pose2d  HOME_UP    = new Pose2d(new Vector2d(0,0), Math.PI / 2.0);
+    private static Pose2d  HOME_DOWN  = new Pose2d(new Vector2d(0,0), -Math.PI / 2.0);
 
 
     // get an instance of each of the subsystems
@@ -54,6 +54,7 @@ public class GFORCETeleop extends LinearOpMode
     @Override public void runOpMode()
     {
         Globals.IS_AUTO = false;
+        Globals.OCTO_ERRORS = 0;
         telemetry.setMsTransmissionInterval(50);
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -67,9 +68,10 @@ public class GFORCETeleop extends LinearOpMode
         }
 
         // Initialize the drive hardware & Turn on telemetry
-        driveSubsystem.init(new Pose2d(0, 0, 0),true);
+        driveSubsystem.init(null,true);
         spindexerSubsystem.init(true);
         turretSubsystem.init(true);
+
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -84,10 +86,6 @@ public class GFORCETeleop extends LinearOpMode
             telemetry.update();
         }
 
-        // Reset pose and mechanisms
-        driveSubsystem.setPose(Globals.LAST_POSE);  // Will be 0,0,0 if auto not run.
-        Globals.OCTO_ERRORS = 0;
-
         spindexerSubsystem.startIntaking();
 
         while (opModeIsActive())
@@ -96,22 +94,10 @@ public class GFORCETeleop extends LinearOpMode
 
             // Check to see if we need to home the subsystems
             // B button assumes driving forward into wall. X Button assumes backing into wall
-            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.b) {
-                Pose2d newHome = HOME_RIGHT;
-                if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
-                    newHome = new Pose2d(newHome.position.x, -newHome.position.y, -newHome.heading.toDouble());
-                }
-                driveSubsystem.setPose(newHome);
-            }
-
-            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.x) {
-                Pose2d newHome = HOME_LEFT;
-                if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
-                    newHome = new Pose2d(newHome.position.x, -newHome.position.y, -newHome.heading.toDouble());
-                }
-                driveSubsystem.setPose(newHome);
-            }
-
+            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.b) { homeRobot(HOME_RIGHT); }
+            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.x) { homeRobot(HOME_LEFT); }
+            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.a) { homeRobot(HOME_DOWN); }
+            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.y) { homeRobot(HOME_UP); }
 
             // update the robot's position based on the odometry pods.
             driveSubsystem.updatePoseEstimate();
@@ -132,6 +118,13 @@ public class GFORCETeleop extends LinearOpMode
 
         // tell AUTO or TELEOP to home next time they run
         Globals.TURRET_HAS_HOMED = false;
+    }
+
+    private void homeRobot(Pose2d newHome){
+        if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
+            newHome = new Pose2d(newHome.position.x, -newHome.position.y, -newHome.heading.toDouble());
+        }
+        driveSubsystem.setPose(newHome);
     }
 
     private void showCycleTime() {
