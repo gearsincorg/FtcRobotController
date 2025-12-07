@@ -146,7 +146,6 @@ public class GFORCEAutonomous extends LinearOpMode
                 .build();
 
         return new SequentialAction(
-            turretSubsystem.actionSetupShooter(20, 9, 0),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             drivePath,
             spindexerSubsystem.actionStartAutoShooting()

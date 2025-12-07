@@ -21,7 +21,7 @@ import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
 
-    private boolean TEST_MODE = true;  //  <<---  set to true to play with shooter speed/angle
+    private boolean TEST_MODE = false;  //  <<---  set to true to play with shooter speed/angle
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -62,8 +62,8 @@ public class TurretSubsystem extends SubsystemBase {
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
     private double targetRange = 0;  // Range to goal in mm
 
-    private double[] speedCoefs = {6.2, 0.609};                  // C, X
-    private double[] angleCoefs = {5.9, 9.916, -0.8794, 0.0225}; // C, X, X2, X3
+    private double[] speedCoefs = {4.6647, 0.0021};                // C, X
+    private double[] angleCoefs = {-3.5333, 0.0193}; // C, X, X2, X3
 
     @Override
     public void init(boolean showTelemetry) {
@@ -272,11 +272,14 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     public double solve(double range, double[] coefs){
+
         double sum = coefs[0];
-        for (int c=1 ; c < coefs.length; c++) {
-            sum += (range * coefs[c]);
-            range *= range; // Increase  range to next order.
-        }
+        sum += range * coefs[1];
+
+        //for (int c=1 ; c < 4; c++) {
+        //    sum += (range * coefs[c]);
+        //    range *= range; // Increase  range to next order.
+        //}
 
         return sum;
     }
