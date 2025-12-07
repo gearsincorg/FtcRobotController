@@ -12,6 +12,7 @@ import com.acmerobotics.roadrunner.VelConstraint;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.DriveShim;
+import com.noahbres.meepmeep.roadrunner.DriveTrainType;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,68 +25,114 @@ public class MeepMeepTesting {
 
         // Configure the starting location for each Auto Mode
         Pose2d  atGoal =  new Pose2d(-58, -45, Math.toRadians(52));
-        Pose2d[] autoStartLocations = {atGoal, atGoal, atGoal, atGoal};
+        Pose2d  atWall =  new Pose2d( 62, -16, Math.toRadians(180));
+        Pose2d[] autoStartLocations = {atGoal, atWall};
 
-        RoadRunnerBotEntity myBot = new DefaultBotBuilder(meepMeep)
+        RoadRunnerBotEntity backBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(40, 60, Math.toRadians(90), Math.toRadians(180), 15)
+                .setDimensions(16,16)
+                .setDriveTrainType(DriveTrainType.TANK)
                 .build();
 
-        RoadRunnerBotEntity testBot = new  DefaultBotBuilder(meepMeep)
+        RoadRunnerBotEntity frontBot = new  DefaultBotBuilder(meepMeep)
                 .setConstraints(40, 60, Math.toRadians(90), Math.toRadians(180), 15)
+                .setDimensions(16,16)
+                .setDriveTrainType(DriveTrainType.TANK)
                 .build();
 
-        DriveShim driveSubsystem = myBot.getDrive();
+        DriveShim driveSubsystem = backBot.getDrive();
 
-        // ---------------------------------------------------------------------------------------
-
-        Action firstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+        //==  BACK BOT  =============================================================
+        Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
                 .splineTo(mirror(-24, -12), mirror(0))
+                .waitSeconds(2)
                 .build();
 
-        Action collectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
                 .splineTo(mirror(-12, -30), mirror(-90))
-                .lineToY(mirrorY(-55), new TranslationalVelConstraint(12))
+                .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
+                .waitSeconds(1)
                 .build();
 
-        Action returnPath1 = driveSubsystem.actionBuilder(mirror(-12, -55, -90))
+        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
                 .setReversed(true)
                 .splineTo(mirror(-24, -12), mirror(-180))
+                .waitSeconds(2)
                 .build();
 
-        Action collectPath2 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
                 .setReversed(false)
                 .splineTo(mirror(12, -30), mirror(-90))
-                .lineToY(mirrorY(-60), new TranslationalVelConstraint(12))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+                .waitSeconds(1)
                 .build();
 
-        Action returnPath2 = driveSubsystem.actionBuilder(mirror(12, -60, -90))
+        Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
                 .setReversed(true)
                 .splineTo(mirror(-24, -12), mirror(-180))
+                .waitSeconds(2)
                 .build();
 
-        Action movePath = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backMovePath = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
                 .setReversed(false)
                 .lineToX(12)
                 .build();
 
-        //===============================================================
-
-        Action test = driveSubsystem.actionBuilder(mirror(0,0,0))
-                .turnTo(mirror(180))
-                .turnTo(mirror(1))
+        //==  FRONT BOT  =============================================================
+        Action frontFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[1]))
+                .lineToX(54)
+                .waitSeconds(2)
                 .build();
 
-        myBot.runAction(new SequentialAction(
-                firstScore,
-                collectPath1,
-                returnPath1,
-                collectPath2,
-                returnPath2,
-                movePath
+        Action frontCollectPath1 = driveSubsystem.actionBuilder(mirror( 54, -16, 180))
+                .splineTo(mirror(36, -30), mirror(-90))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+                .build();
+
+        Action frontReturnPath1 = driveSubsystem.actionBuilder(mirror(36, -62, -90))
+                .setReversed(true)
+                .splineTo(mirror(54, -16), mirror(90))
+                .waitSeconds(2)
+                .build();
+
+        Action frontCollectPath2 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
+                .setReversed(false)
+                .splineTo(mirror(58, -50), mirror(-90))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+                .waitSeconds(1)
+                .build();
+
+        Action frontReturnPath2 = driveSubsystem.actionBuilder(mirror(58, -62, -90))
+                .setReversed(true)
+                .splineTo(mirror(54, -16), mirror(90))
+                .waitSeconds(2)
+                .build();
+
+        Action frontCollectPath3 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
+                .setReversed(false)
+                .splineTo(mirror(48, -50), mirror(-90))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+                .waitSeconds(1)
+                .build();
+        //===============================================================
+        backBot.runAction(new SequentialAction(
+                backFirstScore,
+                backCollectPath1,
+                backReturnPath1,
+                backCollectPath2,
+                backReturnPath2,
+                backMovePath
                 ) );
 
-        testBot.runAction(new SequentialAction(test, test, test));
+        frontBot.runAction(new SequentialAction(
+                frontFirstScore,
+                frontCollectPath1,
+                frontReturnPath1,
+                frontCollectPath2,
+                frontReturnPath2,
+                frontCollectPath3
+                ));
 
 
 
@@ -93,8 +140,8 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(myBot)
-                //.addEntity(testBot)
+                .addEntity(backBot)
+                .addEntity(frontBot)
                 .start();
     }
 

@@ -37,9 +37,10 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action selectedAuto  = null;
 
     // Configure the starting location for each Auto Mode
-    Pose2d  atGoal =  new Pose2d(-58, -45, Math.toRadians(52));
     Pose2d atOrigin = new Pose2d(0,0,0);
-    private final Pose2d[] autoStartLocations = {atGoal, atGoal, atOrigin, atGoal};
+    Pose2d atGoal   =  new Pose2d(-58, -45, Math.toRadians(52));
+    Pose2d atWall =  new Pose2d( 62, -16, Math.toRadians(180));
+    private final Pose2d[] autoStartLocations = {atOrigin, atGoal, atGoal, atGoal, atWall, atWall, atWall};
 
     // ############################################################################
 
@@ -105,43 +106,37 @@ public class GFORCEAutonomous extends LinearOpMode
     // ==========================================================================================
     // Place all auto builders here!
     // ==========================================================================================
-    private Action build_LeaveGoal() {
+    private Action build_TestAuto() {
         Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-                .splineTo(mirror(-48, -24), mirror(45))
+                .lineToX(24)
                 .build();
 
         return new SequentialAction(
-                // Score Specimen 1 then sweep 3 more, score 4
                 drivePath
         );
     }
 
     //===========================================================================================
-    private Action build_TestAuto() {
-        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-                .turn(Math.PI/2)
-                .waitSeconds(2)
-                .turn(Math.PI/2)
-                .waitSeconds(2)
-                .turn(Math.PI/2)
-                .waitSeconds(2)
-                .turn(Math.PI/2)
+    private Action build_GoalLeave() {
+        Action backLeaveGoalPath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+                .splineTo(mirror(-48, -24), mirror(45))
                 .build();
 
         return new SequentialAction(
-                drivePath
+                // Score Specimen 1 then sweep 3 more, score 4
+                backLeaveGoalPath
         );
     }
 
     // ==========================================================================================
     private Action build_GoalShoot(){
-        Action drivePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-                .splineTo(mirror(-48, -24), mirror(45))
+        Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+                .splineTo(mirror(-24, -12), mirror(0))
                 .build();
 
         return new SequentialAction(
             Globals.actionSetRobotState(RobotStates.SHOOTING),
-            drivePath,
+            backFirstScore,
             spindexerSubsystem.actionStartAutoShooting()
         );
     }
@@ -149,63 +144,146 @@ public class GFORCEAutonomous extends LinearOpMode
     //===========================================================================================
     private Action build_GoalShootAndCollect(){
 
-        Action firstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+        Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
                 .splineTo(mirror(-24, -12), mirror(0))
                 .build();
 
-        Action collectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
                 .splineTo(mirror(-12, -30), mirror(-90))
-                .lineToY(mirrorY(-55), new TranslationalVelConstraint(10))
+                .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
                 .waitSeconds(1)
                 .build();
 
-        Action returnPath1 = driveSubsystem.actionBuilder(mirror(-12, -55, -90))
+        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
                 .setReversed(true)
                 .splineTo(mirror(-24, -12), mirror(-180))
                 .build();
 
-        Action collectPath2 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
                 .setReversed(false)
                 .splineTo(mirror(12, -30), mirror(-90))
-                .lineToY(mirrorY(-60), new TranslationalVelConstraint(10))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
                 .waitSeconds(1)
                 .build();
 
-        Action returnPath2 = driveSubsystem.actionBuilder(mirror(12, -60, -90))
+        Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
                 .setReversed(true)
                 .splineTo(mirror(-24, -12), mirror(-180))
                 .build();
 
-        Action movePath = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backMovePath = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
                 .setReversed(false)
                 .lineToX(12)
                 .build();
 
         return new SequentialAction(
-                //turretSubsystem.actionSetupShooter(20, 9, 0),
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
-                firstScore,
+                backFirstScore,
                 spindexerSubsystem.actionStartAutoShooting(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-                collectPath1,
-                //turretSubsystem.actionSetupShooter(20, 10, 0),
+                backCollectPath1,
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
-                returnPath1,
+                backReturnPath1,
                 spindexerSubsystem.actionStartAutoShooting(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-                collectPath2,
-                //turretSubsystem.actionSetupShooter(20, 10, 0),
+                backCollectPath2,
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
-                returnPath2,
+                backReturnPath2,
                 spindexerSubsystem.actionStartAutoShooting(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-                movePath
+                backMovePath
         );
     }
 
+    //===========================================================================================
+    private Action build_FrontLeave() {
+        Action backLeavePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+                .lineToX(36)
+                .build();
+
+        return new SequentialAction(
+                backLeavePath
+        );
+    }
+
+    //===========================================================================================
+    private Action build_FrontShoot(){
+
+        Action frontFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+                .lineToX(54)
+                .build();
+
+        return new SequentialAction(
+                Globals.actionSetRobotState(RobotStates.SHOOTING),
+                frontFirstScore,
+                spindexerSubsystem.actionStartAutoShooting(),
+                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING)
+        );
+    }
+
+
+
+    //===========================================================================================
+    private Action build_FrontShootAndCollect(){
+
+        Action frontFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+                .lineToX(54)
+                .build();
+
+        Action frontCollectPath1 = driveSubsystem.actionBuilder(mirror( 54, -16, 180))
+                .splineTo(mirror(36, -30), mirror(-90))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+                .waitSeconds(1)
+                .build();
+
+        Action frontReturnPath1 = driveSubsystem.actionBuilder(mirror(36, -62, -90))
+                .setReversed(true)
+                .splineTo(mirror(54, -16), mirror(90))
+                .build();
+
+        Action frontCollectPath2 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
+                .setReversed(false)
+                .splineTo(mirror(58, -50), mirror(-90))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+                .waitSeconds(1)
+                .build();
+
+        Action frontReturnPath2 = driveSubsystem.actionBuilder(mirror(58, -62, -90))
+                .setReversed(true)
+                .splineTo(mirror(54, -16), mirror(90))
+                .build();
+
+        Action frontCollectPath3 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
+                .setReversed(false)
+                .splineTo(mirror(48, -50), mirror(-90))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+                .waitSeconds(2)
+                .build();
+
+        return new SequentialAction(
+                Globals.actionSetRobotState(RobotStates.SHOOTING),
+                frontFirstScore,
+                spindexerSubsystem.actionStartAutoShooting(),
+                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+
+                frontCollectPath1,
+                Globals.actionSetRobotState(RobotStates.SHOOTING),
+                frontReturnPath1,
+                spindexerSubsystem.actionStartAutoShooting(),
+                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+
+                frontCollectPath2,
+                Globals.actionSetRobotState(RobotStates.SHOOTING),
+                frontReturnPath2,
+                spindexerSubsystem.actionStartAutoShooting(),
+                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+
+                frontCollectPath3
+        );
+    }
     //===========================================================================================
     //===========================================================================================
 
@@ -268,19 +346,31 @@ public class GFORCEAutonomous extends LinearOpMode
         Action sequentialAction;
         switch (autoMode) {
             case 0:
-                sequentialAction = build_LeaveGoal();
+                sequentialAction = build_TestAuto();
                 break;
 
             case 1:
-                sequentialAction = build_GoalShoot();
+                sequentialAction = build_GoalLeave();
                 break;
 
             case 2:
-                sequentialAction = build_TestAuto();
+                sequentialAction = build_GoalShoot();
                 break;
 
             case 3:
                 sequentialAction = build_GoalShootAndCollect();
+                break;
+
+            case 4:
+                sequentialAction = build_FrontLeave();
+                break;
+
+            case 5:
+                sequentialAction = build_FrontShoot();
+                break;
+
+            case 6:
+                sequentialAction = build_FrontShootAndCollect();
                 break;
 
             default:
