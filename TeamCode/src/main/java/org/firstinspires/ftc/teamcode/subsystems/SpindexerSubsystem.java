@@ -35,7 +35,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double INTAKE_POWER =  1.0;
     private final double EJECT_POWER  = -0.5;
 
-    private final double PULSE_SCALE_FACTOR = 3.125e-3;  // CONVERTS 320 DEG TO 1.0 range ??
+    // private final double PULSE_SCALE_FACTOR = 1.0 / 1620.0;  // CONVERTS 1620 DEG TO 1.0 range ??
+    private final double PULSE_SCALE_FACTOR = 0.299 / 480.0;  // CONVERTS 960 DEG TO 0.595range ??
+    private final double CENTER_OFFSET = 0; // -3.24;  // used to adjust the spindexer so 0 deg is B centered
     private final double MIN_RANGE =  50; // was 50
     private final double MAX_RANGE = 120; // was 120
 
@@ -44,22 +46,23 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double FIRE_RETRACT   = 0.12;
 
     private final double FIRE_HOLD_TIME         = 0.25;
-    private final double ADVANCE_DELAY_TIME     = 0.20;  // was 0.15
+    private final double ADVANCE_DELAY_TIME     = 0.25;  // was 0.15
     private final double NEW_ARTIFACT_HOLD_TIME = 0.40;  // was 0.02
+
     // Spindexer Servo Positions (in degrees)
-    private final double   CENTER_OFFSET = 5.0;  // used to adjust the spindexer so 0 deg is B centered
     private final double[] SHOOT        = {-120,   0,  120};
-    private final double[] INTAKE_FRONT = { -30,  90, -150};
-    private final double[] INTAKE_BACK  = { 150, -90,   30};
+    private final double[] INTAKE_FRONT = { -30,  90,  210};
+    private final double[] INTAKE_BACK  = {-210, -90,   30};
     private final double[] HOME_ANGLES  = { 120,   0, -120};
     private final int[][]  AUTO_SLOTS   = {{2, 1, 0}, {0, 2, 1}, {0, 1, 2}};
+    private final double[] REFINED_POSITION = {0.577, 0.502, 0.421};
 
     // General Subsystem Members
     private double intakePower          =  0;
     private double targetAngle          = -1;
     private double currentAngle         =  0;
     private double estimatedTransitTime =  0;
-    private double lastSpindexerServoValue = 0;
+    private double spindexerServoValue = 0;
     private boolean lastDirectionForward = true;
     private ElapsedTime spinServoTimer  =  new ElapsedTime();
     private double sensorRange          =  0;
@@ -220,7 +223,8 @@ public class SpindexerSubsystem extends SubsystemBase {
                         stopIntake();
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
                         myOpMode.gamepad1.leftBumperWasPressed();  // forget any past button presses
-                        sendToShooter(0);                      // queue up first shot.
+                        sendClostestColorToShooter(ArtifactColor.ANY);
+                        // sendToShooter(0);                      // queue up first shot.
                         setState(SHOT_QUEUEING);
                     } else {
                         stopIntake();
@@ -311,7 +315,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
-        myOpMode.telemetry.addData("SPINDEX", "%s (s%d) -> %.1f %s (%.0f)", currentState, currentSlot, targetAngle, inPosition(), currentAngle);
+        myOpMode.telemetry.addData("SPINDEX", "%s (s%d)->%.1f %s (%.3f)", currentState, currentSlot, targetAngle, inPosition(), spindexerServoValue);
         myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
         if (Globals.IS_AUTO) {
             myOpMode.telemetry.addData("AUTO", "%s", startAutoShoot ? "Auto Shoot Active" : "idle");
@@ -412,7 +416,12 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void sendToShooter(int slot) {
         sendToAngle(SHOOT[slot]);
         currentSlot = slot;
+
+        // refine the servo position.
+        spindexerServoValue = REFINED_POSITION[slot];
+        spindexer.setPosition(spindexerServoValue);
     }
+
 
     public void sendToIntake(int slot){
         if (Globals.FORWARD_MOTION){
@@ -441,9 +450,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     private void sendToAngle(double newTargetAngle){
         // only process new targets
         if (newTargetAngle != targetAngle ) {
-            lastSpindexerServoValue = MathUtils.clamp(0.5 + ((newTargetAngle + CENTER_OFFSET) * PULSE_SCALE_FACTOR), 0, 1.0);
-            spindexer.setPosition(lastSpindexerServoValue);
-            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 360; // SWYFT torque servo .. 60 deg in .115 sec = 514 deg/s
+            spindexerServoValue = MathUtils.clamp(0.502 - ((newTargetAngle + CENTER_OFFSET) * PULSE_SCALE_FACTOR), 0, 1.0);
+            spindexer.setPosition(spindexerServoValue);
+            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 270; //
             spinServoTimer.reset();
             targetAngle = newTargetAngle ;
         }

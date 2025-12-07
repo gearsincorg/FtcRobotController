@@ -20,8 +20,8 @@ public class ShooterSubsystem extends SubsystemBase {
     // Subsystem Constants
     private final double SHOOTER_COUNTS_TO_MPS = 0.072 * Math.PI / 28;
     private final double SERVO_GEAR_RATIO        =  24.0 / 90.0;
-    public final double SHOOTER_ANGLE_MAX        =  40.0;
-    public final double SHOOTER_ANGLE_MIN        = -40.0;
+    public final double SHOOTER_ANGLE_MAX        =  38.0;
+    public final double SHOOTER_ANGLE_MIN        = -38.0;
     private final double PULSE_SCALE_FACTOR      =  1.8e-3;   // make this match the spindexer in 2 places once servo is reprogrammed
     private final double SHOOTER_SPEED_TOLERANCE =  0.5;
     private final double IDLE_MPS                =  0.0;
