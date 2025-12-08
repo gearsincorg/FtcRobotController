@@ -110,7 +110,7 @@ public class TurretSubsystem extends SubsystemBase {
      * Called every update() Cycle
      */
     public void runProcessing() {
-        if ((currentState == READY) && (Globals.ROBOT_STATE == RobotStates.SHOOTING)) {
+        if (myOpMode.opModeIsActive() && (currentState == READY) && (Globals.ROBOT_STATE == RobotStates.SHOOTING)) {
             if (TEST_MODE){
 
                 // if this is the first time through, setup initial values
@@ -149,10 +149,7 @@ public class TurretSubsystem extends SubsystemBase {
             }
             setTurretAngle(Ad);
         } else {
-            // power down the shooter if we're not shooting
-            if (!myOpMode.opModeIsActive()) {
-                 shooter.setVelocity(0,0);
-            }
+           shooter.setVelocity(0,0);
         }
     }
 
@@ -237,7 +234,7 @@ public class TurretSubsystem extends SubsystemBase {
         targetRange = Math.hypot(x,y);
         Aa = Math.toDegrees(Math.atan2(y, x));
         Ar = Math.toDegrees(SharedOQ.OQlocalizer.heading_rad);
-        Ad = Aa - Ar;
+        Ad = normalizeAngle(Aa - Ar);   // needed to stop bounce on 180/-180
     }
 
     private double encoderToDegrees(int encoder) {

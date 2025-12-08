@@ -33,6 +33,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     // Subsystem Constants
     private final double INTAKE_POWER =  0.9;  // a bit slower TEST
+    private final double HOLD_POWER   =  0.4;  // a bit slower TEST
     private final double EJECT_POWER  = -0.7;  // a bit faster TEST
 
     // private final double PULSE_SCALE_FACTOR = 1.0 / 1620.0;  // CONVERTS 1620 DEG TO 1.0 range ??
@@ -228,7 +229,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                         // sendToShooter(0);                      // queue up first shot.
                         setState(SHOT_QUEUEING);
                     } else {
-                        stopIntake();
+                        holdInIntake();
                         sendClostestEmptyToIntake();
                         setState(INTAKE_QUEUEING);
                     }
@@ -358,6 +359,11 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     public void runIntake(){
         intakePower = INTAKE_POWER;
+        intake.setPower(intakePower);
+    }
+
+    public void holdInIntake(){
+        intakePower = HOLD_POWER;
         intake.setPower(intakePower);
     }
 

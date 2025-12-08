@@ -24,7 +24,6 @@ public class ShooterSubsystem extends SubsystemBase {
     public final double SHOOTER_ANGLE_MIN        = -37.0;
     private final double PULSE_SCALE_FACTOR      =  1.8e-3;   // make this match the spindexer in 2 places once servo is reprogrammed
     private final double SHOOTER_SPEED_TOLERANCE =  0.5;
-    private final double IDLE_MPS                =  0.0;
     private final double MAX_MPS                 =  16.0;
     private final double SHOOTER_OFFSET          = -3.0;    // used to ensure that zero degrees is level.
 
@@ -90,8 +89,8 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void setVelocity(double frontVelocityMPS, double rearVelocityMPS){
-        targetFrontMPS = frontVelocityMPS;
-        targetRearMPS = rearVelocityMPS;
+        targetFrontMPS = MathUtils.clamp(frontVelocityMPS, 0, MAX_MPS);
+        targetRearMPS  = MathUtils.clamp(rearVelocityMPS,  0, MAX_MPS);
 
         myOpMode.telemetry.addData("SET VELOCITY",   "A: %5.2f  B: %5.2f %s Angle: %.0f", frontVelocityMPS, rearVelocityMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
 
