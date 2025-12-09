@@ -150,7 +150,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
             .splineTo(mirror(-12, -30), mirror(-90))
-            .lineToY(mirrorY(-56), new TranslationalVelConstraint(7))
+            .lineToY(mirrorY(-56), new TranslationalVelConstraint(5))
             .waitSeconds(1)
             .build();
 
@@ -162,7 +162,7 @@ public class GFORCEAutonomous extends LinearOpMode
         Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
             .setReversed(false)
             .splineTo(mirror(12, -30), mirror(-90))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(7))
+            .lineToY(mirrorY(-62), new TranslationalVelConstraint(5))
             .waitSeconds(1)
             .build();
 
@@ -250,7 +250,7 @@ public class GFORCEAutonomous extends LinearOpMode
         Action frontCollectPath2 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
             .setReversed(false)
             .lineToY(mirrorY(-54))
-            .splineTo(mirror(58, -62), mirror(-60), new TranslationalVelConstraint(10) )
+            .splineTo(mirror(58, -62), mirror(-60), new TranslationalVelConstraint(5) )
             .waitSeconds(1)
             .build();
 
@@ -262,7 +262,7 @@ public class GFORCEAutonomous extends LinearOpMode
         Action frontCollectPath3 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
             .setReversed(false)
             .splineTo(mirror(48, -50), mirror(-90))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(7))
+            .lineToY(mirrorY(-62), new TranslationalVelConstraint(5))
             .waitSeconds(2)
             .build();
 
