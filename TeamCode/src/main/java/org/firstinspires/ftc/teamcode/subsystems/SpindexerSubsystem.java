@@ -48,7 +48,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private final double FIRE_HOLD_TIME         = 0.25;
     private final double ADVANCE_DELAY_TIME     = 0.25;  // was 0.15
-    private final double NEW_ARTIFACT_HOLD_TIME = 0.40;  // was 0.02
+    private final double NEW_ARTIFACT_HOLD_TIME = 0.30;  // was 0.02
 
     // Spindexer Servo Positions (in degrees)
     private final double[] SHOOT        = {-120,   0,  120};
@@ -56,7 +56,10 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] INTAKE_BACK  = {-210, -90,   30};
     private final double[] HOME_ANGLES  = { 120,   0, -120};
     private final int[][]  AUTO_SLOTS   = {{2, 1, 0}, {0, 2, 1}, {0, 1, 2}};
-    private final double[] REFINED_POSITION = {0.577, 0.502, 0.421};
+
+    private final double[] REFINED_SHOOT = {0.577, 0.502, 0.421};
+    private final double[] REFINED_FRONT = {0.520, 0.442, 0.366};
+    private final double[] REFINED_BACK  = {0.630, 0.557, 0.480};
 
     // General Subsystem Members
     private double intakePower          =  0;
@@ -445,7 +448,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         currentSlot = slot;
 
         // refine the servo position.
-        spindexerServoValue = REFINED_POSITION[slot];
+        spindexerServoValue = REFINED_SHOOT[slot];
         spindexer.setPosition(spindexerServoValue);
     }
 
@@ -453,8 +456,14 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void sendToIntake(int slot){
         if (Globals.FORWARD_MOTION){
             sendToAngle(INTAKE_FRONT[slot]);
+            // refine the servo position.
+            spindexerServoValue = REFINED_FRONT[slot];
+            spindexer.setPosition(spindexerServoValue);
         } else {
             sendToAngle(INTAKE_BACK[slot]);
+            // refine the servo position.
+            spindexerServoValue = REFINED_BACK[slot];
+            spindexer.setPosition(spindexerServoValue);
         }
         currentSlot = slot;
     }
