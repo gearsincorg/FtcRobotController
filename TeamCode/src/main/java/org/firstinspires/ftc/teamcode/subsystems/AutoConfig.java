@@ -24,13 +24,14 @@ public class AutoConfig
 
     // these names MUST match the order found in Autonomous OpMode
     public String[] autoArray = new String[] {
-                                              "Auto TEST",    // 0
-                                              "GOAL leave",   // 1
-                                              "GOAL Shoot 3", // 2
-                                              "GOAL Shoot 9", // 3
-                                              "FRONT leave",  // 4
-                                              "FRONT Shoot 3",// 5
-                                              "FRONT Shoot 9" // 6
+                                              "Auto TEST",          // 0
+                                              "GOAL leave",         // 1
+                                              "GOAL Shoot 3",       // 2
+                                              "GOAL Shoot 9",       // 3
+                                              "FRONT leave",        // 4
+                                              "FRONT Shoot 3",      // 5
+                                              "FRONT Shoot 9",      // 6
+                                              "FRONT Atlee Special" // 7
                                               };
     int autoModes = autoArray.length;
     public static int MENU_ITEMS = 3;

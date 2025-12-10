@@ -41,6 +41,12 @@ public class MeepMeepTesting {
                 .setDriveTrainType(DriveTrainType.TANK)
                 .build();
 
+        RoadRunnerBotEntity cycleBot = new  DefaultBotBuilder(meepMeep)
+            .setConstraints(40, 60, Math.toRadians(90), Math.toRadians(180), 15)
+            .setDimensions(16,16)
+            .setDriveTrainType(DriveTrainType.TANK)
+            .build();
+
         DriveShim driveSubsystem = backBot.getDrive();
 
         //==  BACK BOT  =============================================================
@@ -121,6 +127,30 @@ public class MeepMeepTesting {
             .splineTo(mirror(54, -16), mirror(90))
             .build();
 
+        // cycle bot =========================================================================================
+        Action cycleFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[1]))
+            .lineToX(54)
+            .waitSeconds(2)
+            .build();
+
+        Action cycleTurnAndCollect = driveSubsystem.actionBuilder(mirror( 54, -16, 180))
+            .turnTo(mirror(-90))
+            .lineToY(mirrorY(-62))
+            .waitSeconds(2)
+            .build();
+
+        Action cycleShootPathOne = driveSubsystem.actionBuilder(mirror(54, -62, -90))
+            .setReversed(true)
+            .lineToY(mirrorY(-16))
+            .build();
+
+        Action cycleCollect = driveSubsystem.actionBuilder(mirror(54, -16, -90))
+            .setReversed(false)
+            .lineToY(-62)
+            .waitSeconds(2)
+            .build();
+
+
         //===============================================================
         backBot.runAction(new SequentialAction(
                 backFirstScore,
@@ -141,14 +171,26 @@ public class MeepMeepTesting {
                 frontReturnPath3
                 ));
 
+        cycleBot.runAction(new SequentialAction(
+                cycleFirstScore,
+                cycleTurnAndCollect,
+                cycleShootPathOne,
+                cycleCollect,
+                cycleShootPathOne,
+                cycleCollect,
+                cycleShootPathOne,
+                cycleCollect
+        ));
+
 
 
         // ---------------------------------------------------------------------------------------
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(backBot)
-                .addEntity(frontBot)
+                //.addEntity(backBot)
+                //.addEntity(frontBot)
+                .addEntity(cycleBot)
                 .start();
     }
 

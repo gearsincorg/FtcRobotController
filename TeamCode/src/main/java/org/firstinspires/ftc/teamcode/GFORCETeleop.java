@@ -138,7 +138,7 @@ public class GFORCETeleop extends LinearOpMode
 
     private void homeRobot(Vector2d homePosition, double headingDeg) {
         Pose2d newHome;
-        
+
         if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
             newHome = new Pose2d(homePosition.x, -homePosition.y, Math.toRadians(headingDeg));
         } else {
