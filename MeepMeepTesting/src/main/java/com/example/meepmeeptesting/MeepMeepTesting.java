@@ -185,11 +185,11 @@ public class MeepMeepTesting {
 
 
         // ---------------------------------------------------------------------------------------
-        meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)
+        meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                //.addEntity(backBot)
-                //.addEntity(frontBot)
+                .addEntity(backBot)
+                .addEntity(frontBot)
                 .addEntity(cycleBot)
                 .start();
     }
