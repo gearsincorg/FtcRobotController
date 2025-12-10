@@ -32,10 +32,7 @@ import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 @TeleOp(name="GFORCE Teleop", group = "AA")
 public class GFORCETeleop extends LinearOpMode
 {
-    private static Pose2d  HOME_RIGHT = new Pose2d(new Vector2d(62, 39), 0);
-    private static Pose2d  HOME_LEFT  = new Pose2d(new Vector2d(62, 39), Math.PI);
-    private static Pose2d  HOME_UP    = new Pose2d(new Vector2d(0,0), Math.PI / 2.0);
-    private static Pose2d  HOME_DOWN  = new Pose2d(new Vector2d(0,0), -Math.PI / 2.0);
+    private static Vector2d HOME_CALIBRATION = new Vector2d(38, 33);
 
 
     // get an instance of each of the subsystems
@@ -94,10 +91,29 @@ public class GFORCETeleop extends LinearOpMode
 
             // Check to see if we need to home the subsystems
             // B button assumes driving forward into wall. X Button assumes backing into wall
-            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.b) { homeRobot(HOME_RIGHT); }
-            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.x) { homeRobot(HOME_LEFT); }
-            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.a) { homeRobot(HOME_DOWN); }
-            if ((gamepad1.back || gamepad1.touchpad) && gamepad1.y) { homeRobot(HOME_UP); }
+            if (gamepad1.back || gamepad1.touchpad) {
+                if (Globals.ALLIANCE_COLOR == AllianceColor.BLUE){
+                    if (gamepad1.a) {
+                        homeRobot(HOME_CALIBRATION, 90);
+                    } else if (gamepad1.b) {
+                        homeRobot(HOME_CALIBRATION, 180);
+                    } else if (gamepad1.x) {
+                        homeRobot(HOME_CALIBRATION,  0);
+                    }else if (gamepad1.y) {
+                        homeRobot(HOME_CALIBRATION, -90);
+                    }
+                } else {
+                    if (gamepad1.a) {
+                        homeRobot(HOME_CALIBRATION, -90);
+                    } else if (gamepad1.b) {
+                        homeRobot(HOME_CALIBRATION, 0);
+                    } else if (gamepad1.x) {
+                        homeRobot(HOME_CALIBRATION, 180);
+                    } else if (gamepad1.y) {
+                        homeRobot(HOME_CALIBRATION, 90);
+                    }
+                }
+            }
 
             // update the robot's position based on the odometry pods.
             driveSubsystem.updatePoseEstimate();
@@ -120,9 +136,13 @@ public class GFORCETeleop extends LinearOpMode
         Globals.TURRET_HAS_HOMED = false;
     }
 
-    private void homeRobot(Pose2d newHome){
+    private void homeRobot(Vector2d homePosition, double headingDeg) {
+        Pose2d newHome;
+        
         if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
-            newHome = new Pose2d(newHome.position.x, -newHome.position.y, -newHome.heading.toDouble());
+            newHome = new Pose2d(homePosition.x, -homePosition.y, Math.toRadians(headingDeg));
+        } else {
+            newHome = new Pose2d(homePosition.x, homePosition.y, Math.toRadians(headingDeg));
         }
         driveSubsystem.setPose(newHome);
     }
