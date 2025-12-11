@@ -71,15 +71,15 @@ public class SpindexerSubsystem extends SubsystemBase {
     private ElapsedTime spinServoTimer  =  new ElapsedTime();
     private double sensorRange          =  0;
 
-    private boolean startAutoShoot  = false;
-    private boolean shootingPreloads = true;
-    private int patternID           = 2;
-    private int currentSlot         = 0;
-    private int allArtifactsHeld    = 0;
-    private int currentAutoSlot     = 0;
-    private double lastSlotAngleFilled  = 0;  // Used during unjamming
-    private int lastSlotFilled      = -1;
-    private boolean unjamForward    = false;
+    private boolean startAutoShoot      = false;
+    private boolean shootingPreloads    = true;
+    private int     patternID           = 2;
+    private int     currentSlot         = 0;
+    private int     allArtifactsHeld    = 0;
+    private int     currentAutoSlot     = 0;
+    private double  lastSlotAngleFilled = 0;  // Used during unjamming
+    private int     lastSlotFilled      = -1;
+    private boolean unjamForward        = false;
 
     private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
 
@@ -102,8 +102,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         distanceBack = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceBack");
 
         spinServoTimer.reset();
-
-        sendToShooter(1);
     }
 
     @Override
@@ -169,7 +167,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void runStateMachine() {
         switch ((SpindexerStates)currentState) {
             case INIT: {
-                //sendToShooter(1); //might be used
+                sendToIntake(0); //might be used
                 setState(HOME);
                 break;
             }
@@ -343,9 +341,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
         myOpMode.telemetry.addData("SPINDEX", "%s (s%d)->%.1f %s (%.3f)", currentState, currentSlot, targetAngle, inPosition(), spindexerServoValue);
         myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
-        if (Globals.IS_AUTO) {
-            myOpMode.telemetry.addData("AUTO", "%s", startAutoShoot ? "Auto Shoot Active" : "idle");
-        }
     }
 
     public void startIntaking() {
@@ -499,14 +494,9 @@ public class SpindexerSubsystem extends SubsystemBase {
      * @param angle
      * @return
      */
-    double normalizeAngle(double angle){
-        while (angle > 180) {
-            angle -= 360;
-        }
-        while (angle < -180) {
-            angle += 360;
-        }
-
+    private double normalizeAngle(double angle){
+        while (angle > 180) { angle -= 360; }
+        while (angle < -180) { angle += 360; }
         return angle;
     }
 
@@ -536,6 +526,16 @@ public class SpindexerSubsystem extends SubsystemBase {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 startAutoShoot = true;
+                return false;
+            }
+        };
+    }
+
+    public Action actionStopIntake(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                stopIntake();
                 return false;
             }
         };

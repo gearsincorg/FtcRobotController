@@ -27,11 +27,6 @@ public class ShooterSubsystem extends SubsystemBase {
     private final double MAX_MPS                 =  16.0;
     private final double SHOOTER_OFFSET          = -3.0;    // used to ensure that zero degrees is level.
 
-    // Subsystem Speed/Power constants
-    private final double SHOOTER_STEP = 1.0;
-
-    // Servo positions
-
     // General Subsystem Members
     private double  tiltAngle         = 0;
     private double  shooterServoValue = 0;
@@ -60,9 +55,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         hood = myOpMode.hardwareMap.get(Servo.class, "hood");
 
-        setAngle(0.0);
-
-        setState(ShooterStates.SPEEDING_UP);
+        // setAngle(0.0);
     }
 
     @Override
@@ -73,6 +66,12 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void runProcessing() {
+        shooterServoValue = MathUtils.clamp(0.5 - (tiltAngle * PULSE_SCALE_FACTOR / SERVO_GEAR_RATIO), 0.22, 0.78);  // make this match the spindexer in 2 places once servo is reprogrammed
+        hood.setPosition(shooterServoValue);
+
+        front.setVelocity(targetFrontMPS / SHOOTER_COUNTS_TO_MPS);
+        rear.setVelocity(targetRearMPS / SHOOTER_COUNTS_TO_MPS);
+
         atSpeed = ((Math.abs(targetFrontMPS - currentFrontMPS) < SHOOTER_SPEED_TOLERANCE) &&
                 (Math.abs(targetRearMPS - currentRearMPS) < SHOOTER_SPEED_TOLERANCE));
     }
@@ -84,8 +83,6 @@ public class ShooterSubsystem extends SubsystemBase {
 
     public void setAngle(double angle){
         tiltAngle = MathUtils.clamp(angle + SHOOTER_OFFSET, SHOOTER_ANGLE_MIN, SHOOTER_ANGLE_MAX);
-        shooterServoValue = MathUtils.clamp(0.5 - (tiltAngle * PULSE_SCALE_FACTOR / SERVO_GEAR_RATIO), 0.22, 0.78);  // make this match the spindexer in 2 places once servo is reprogrammed
-        hood.setPosition(shooterServoValue);
     }
 
     public void setVelocity(double frontVelocityMPS, double rearVelocityMPS){
@@ -93,8 +90,5 @@ public class ShooterSubsystem extends SubsystemBase {
         targetRearMPS  = MathUtils.clamp(rearVelocityMPS,  0, MAX_MPS);
 
         myOpMode.telemetry.addData("SET VELOCITY",   "A: %5.2f  B: %5.2f %s Angle: %.0f", frontVelocityMPS, rearVelocityMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
-
-        front.setVelocity(targetFrontMPS / SHOOTER_COUNTS_TO_MPS);
-        rear.setVelocity(targetRearMPS / SHOOTER_COUNTS_TO_MPS);
     }
 }

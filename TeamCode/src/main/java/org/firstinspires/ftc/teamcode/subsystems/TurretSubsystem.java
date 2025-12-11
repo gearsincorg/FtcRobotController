@@ -158,15 +158,11 @@ public class TurretSubsystem extends SubsystemBase {
         switch ((TurretStates) currentState) {
 
             case INIT: {
-                if (Globals.TURRET_HAS_HOMED && !Globals.IS_AUTO) {
+                aim.setPower(0.15);
+                if (!magnet.getState()) {
+                    // reset encoder, lock in current position and switch to RTP mode
+                    aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     setState(HOMING);
-                } else {
-                    aim.setPower(0.15);
-                    if (!magnet.getState()) {
-                        // reset encoder, lock in current position and switch to RTP mode
-                        aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                        setState(HOMING);
-                    }
                 }
                 break;
             }
@@ -182,7 +178,6 @@ public class TurretSubsystem extends SubsystemBase {
             }
 
             case READY: {
-
                 break;
             }
         }
@@ -201,18 +196,12 @@ public class TurretSubsystem extends SubsystemBase {
 
     /**
      * Convert any angle to a +/- 180  degree value.
-     *
      * @param angle
      * @return
      */
-    private double normalizeAngle(double angle) {
-        while (angle > 180) {
-            angle -= 360;
-        }
-        while (angle < -180) {
-            angle += 360;
-        }
-
+    private double normalizeAngle(double angle){
+        while (angle > 180) { angle -= 360; }
+        while (angle < -180) { angle += 360; }
         return angle;
     }
 

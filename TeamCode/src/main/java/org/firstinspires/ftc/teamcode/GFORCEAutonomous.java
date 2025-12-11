@@ -93,12 +93,14 @@ public class GFORCEAutonomous extends LinearOpMode
 
             if (selectedAuto != null) {
                 Actions.runBlocking(selectedAuto);
+                spindexerSubsystem.stopIntake();
             } else {
                 telemetry.addData("AUTO MODE",  "No valid mode selected");
                 telemetry.update();
             }
         }
 
+        spindexerSubsystem.stopIntake();
         Globals.LAST_POSE = driveSubsystem.getPose() ;
     }
 
@@ -137,7 +139,9 @@ public class GFORCEAutonomous extends LinearOpMode
         return new SequentialAction(
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             backFirstScore,
-            spindexerSubsystem.actionStartAutoShooting()
+            spindexerSubsystem.actionStartAutoShooting(),
+            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+            spindexerSubsystem.actionStopIntake()
         );
     }
 
@@ -225,6 +229,7 @@ public class GFORCEAutonomous extends LinearOpMode
             frontFirstScore,
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+            spindexerSubsystem.actionStopIntake(),
             frontLeavePath
         );
     }

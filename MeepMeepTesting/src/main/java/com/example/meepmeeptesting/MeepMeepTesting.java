@@ -190,7 +190,7 @@ public class MeepMeepTesting {
                 .setBackgroundAlpha(0.95f)
                 .addEntity(backBot)
                 .addEntity(frontBot)
-                .addEntity(cycleBot)
+//                .addEntity(cycleBot)
                 .start();
     }
 

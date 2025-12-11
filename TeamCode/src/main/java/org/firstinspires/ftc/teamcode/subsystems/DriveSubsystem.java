@@ -86,18 +86,14 @@ public final class DriveSubsystem
 
     public static Params PARAMS = new Params();
 
-    static final double DRIVE_DEADBAND      =  0.05;      // Dont start turning until we need to move position.
     static final double TURN_DEADBAND       =  0.05;      // Lock heading if JoyStick less than this
     static final double HEADING_GAIN        =  0.01;    // turn at full power of the error was .015
-    static final double HEADING_TOLLERANCE  = 30.0;      // Don't start driving until we are withing 30 Degrees
 
-    static final double FC_SPEED_SCALE      =  1.0;      // Safe FC speed
     static final double RC_SPEED_SCALE      =  1.0;      // Safe RC Speed
     static final double RC_TURN_SCALE       =  0.5;      // Safe RC Turn
 
     static final double INTAKE_HYSTERESIS   = 0.1 ;
     static final double MIN_ROTATE          = 1.0 ;
-    static final double RAD2DEG             = 180/Math.PI;
 
     public final TankKinematics kinematics = new TankKinematics(PARAMS.inPerTick * PARAMS.trackWidthTicks);
 
@@ -135,9 +131,6 @@ public final class DriveSubsystem
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        // TODO: make sure your config has motors with these names (or change them)
-        //   add additional motors on each side if you have them
-        //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         leftMotors  = Arrays.asList(myOpMode.hardwareMap.get(DcMotorEx.class, "front_left_drive"),
                                     myOpMode.hardwareMap.get(DcMotorEx.class, "back_left_drive"));
         rightMotors = Arrays.asList(myOpMode.hardwareMap.get(DcMotorEx.class, "front_right_drive"),
@@ -164,7 +157,6 @@ public final class DriveSubsystem
         Globals.FORWARD_MOTION = true;
     }
 
-
     public void smartDrive() {
         double jsLeftX  = -myOpMode.gamepad1.left_stick_x;
         double jsLeftY  = -myOpMode.gamepad1.left_stick_y;
@@ -173,7 +165,6 @@ public final class DriveSubsystem
 
         // Robot Centric driving (with joystick squaring)
         driveRC(lessSensitive(jsLeftY) * RC_SPEED_SCALE, lessSensitive(jsRightX) * RC_TURN_SCALE);
-
     }
 
     /**
@@ -204,14 +195,9 @@ public final class DriveSubsystem
      * @param angle
      * @return
      */
-    double normalizeAngle(double angle){
-        while (angle > 180) {
-            angle -= 360;
-        }
-        while (angle < -180) {
-            angle += 360;
-        }
-
+    private double normalizeAngle(double angle){
+        while (angle > 180) { angle -= 360; }
+        while (angle < -180) { angle += 360;  }
         return angle;
     }
 
@@ -360,9 +346,7 @@ public final class DriveSubsystem
      */
     public final class TurnAction implements Action {
         private final TimeTurn turn;
-
         private double beginTs = -1;
-
         public TurnAction(TimeTurn turn) {
             this.turn = turn;
         }
@@ -396,37 +380,9 @@ public final class DriveSubsystem
             myOpMode.telemetry.addData("TURN", "TA= %.1f, TV= %.1f", txWorldTarget.heading.value().toDouble(),txWorldTarget.heading.velocity().value());
 
             double rotateCCW = normalizeAngle(Math.toDegrees(txWorldTarget.heading.value().toDouble()) - getHeadingDeg()) * HEADING_GAIN;
+
             // send axis powers to drive
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), rotateCCW));
-
-            /*
-            PoseVelocity2dDual<Time> command = new PoseVelocity2dDual<>(
-                    Vector2dDual.constant(new Vector2d(0, 0), 3),
-                    txWorldTarget.heading.velocity().plus(
-                            PARAMS.turnGain * getPose().heading.minus(txWorldTarget.heading.value()) +
-                            PARAMS.turnVelGain * (robotVelRobot.angVel - txWorldTarget.heading.velocity().value())
-                    )
-            );
-
-            myOpMode.telemetry.addData("TURN", "TA= %.1f, TV= %.1f", txWorldTarget.heading.value().toDouble(),txWorldTarget.heading.velocity().value());
-
-            driveCommandWriter.write(new DriveCommandMessage(command));
-
-            TankKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
-            double voltage = voltageSensor.getVoltage();
-            final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
-                    PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
-            double leftPower = feedforward.compute(wheelVels.left) / voltage;
-            double rightPower = feedforward.compute(wheelVels.right) / voltage;
-            tankCommandWriter.write(new TankCommandMessage(voltage, leftPower, rightPower));
-
-            for (DcMotorEx m : leftMotors) {
-                m.setPower(leftPower);
-            }
-            for (DcMotorEx m : rightMotors) {
-                m.setPower(rightPower);
-            }
-            */
 
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);

@@ -75,9 +75,9 @@ public class GFORCETeleop extends LinearOpMode
             telemetry.addData("PLAYING", Globals.ALLIANCE_COLOR);
 
             // Read and display sensor data
-            driveSubsystem.updatePoseEstimate();    //  !!!!!!!!!!!!  TO DO  !!!!!!!!!!!!!!!!
-            spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
-            turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            driveSubsystem.updatePoseEstimate();
+            // spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
+            // turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             showCycleTime();
             telemetry.update();
