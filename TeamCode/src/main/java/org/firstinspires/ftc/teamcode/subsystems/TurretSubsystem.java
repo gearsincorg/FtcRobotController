@@ -60,8 +60,8 @@ public class TurretSubsystem extends SubsystemBase {
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
     private double targetRange = 0;  // Range to goal in mm
 
-    private double[] speedCoefs = {4.5429, 0.0022};                // C, X
-    private double[] angleCoefs = {-3.5333, 0.0193}; // C, X, X2, X3
+    private double[] speedCoefs = {4.5429, 0.0022};  // C, X  was {4.6647, 0.0021};
+    private double[] angleCoefs = {-3.5333, 0.0193}; // C, X
 
     @Override
     public void init(boolean showTelemetry) {

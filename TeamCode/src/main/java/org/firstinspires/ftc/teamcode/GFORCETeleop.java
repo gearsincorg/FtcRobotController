@@ -35,7 +35,6 @@ public class GFORCETeleop extends LinearOpMode
 {
     private static Vector2d HOME_CALIBRATION = new Vector2d(38, 33);
 
-
     // get an instance of each of the subsystems
     AutoConfig autoConfig   = new AutoConfig(this);
 
@@ -90,8 +89,14 @@ public class GFORCETeleop extends LinearOpMode
         {
             telemetry.addData("ROBOT", "%s - %s\n", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
 
+            // Check for a turret home request (because it's drifted.)
+            if (gamepad1.rightStickButtonWasPressed() && (turretSubsystem.currentState == TurretStates.READY)) {
+                turretSubsystem.setState(TurretStates.INIT);
+            }
+
+
             // Check to see if we need to home the subsystems
-            // B button assumes driving forward into wall. X Button assumes backing into wall
+            // Location reset based on Base square and direction of front of robot
             if (gamepad1.back || gamepad1.touchpad) {
                 if (Globals.ALLIANCE_COLOR == AllianceColor.BLUE){
                     if (gamepad1.a) {
