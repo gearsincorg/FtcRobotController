@@ -78,7 +78,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("SHOOTER",   "A: %5.2f  B: %.1f %s Angle: %.0f", currentFrontMPS, currentRearMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
+        myOpMode.telemetry.addData("SHOOTER",   "F=%4.2f  B=%4.2f %s Tilt= %.0f", currentFrontMPS, currentRearMPS, atSpeed ? "OK" : "SLOW", tiltAngle);
     }
 
     public void setAngle(double angle){
@@ -88,7 +88,6 @@ public class ShooterSubsystem extends SubsystemBase {
     public void setVelocity(double frontVelocityMPS, double rearVelocityMPS){
         targetFrontMPS = MathUtils.clamp(frontVelocityMPS, 0, MAX_MPS);
         targetRearMPS  = MathUtils.clamp(rearVelocityMPS,  0, MAX_MPS);
-
-        myOpMode.telemetry.addData("SET VELOCITY",   "A: %5.2f  B: %5.2f %s Angle: %.0f", frontVelocityMPS, rearVelocityMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
+        //  myOpMode.telemetry.addData("SET VELOCITY",   "A: %5.2f  B: %5.2f %s Angle: %.0f", frontVelocityMPS, rearVelocityMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
     }
 }

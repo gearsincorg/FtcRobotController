@@ -81,7 +81,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private int     lastSlotFilled      = -1;
     private boolean unjamForward        = false;
 
-    private ArtifactColor[] slotColors = {ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN, ArtifactColor.UNKNOWN};
+    private ArtifactColor[] slotColors = {ArtifactColor.EMPTY, ArtifactColor.EMPTY, ArtifactColor.EMPTY};
 
     @Override
     public void init (boolean showTelemetry) {
@@ -120,14 +120,14 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             // check contents if we are presenting an empty slot
-            if (inPosition() && (slotColors[currentSlot] == ArtifactColor.UNKNOWN)) {
+            if (inPosition() && (slotColors[currentSlot] == ArtifactColor.EMPTY)) {
                 // check the appropriate sensor based on travel direction
                 if (Globals.FORWARD_MOTION) {
                     sensorRange = distanceFront.getDistance(DistanceUnit.MM);
-                    myOpMode.telemetry.addData("distance front = %.0f", sensorRange);
+                    myOpMode.telemetry.addData("SENSOR","Front %.0f", sensorRange);
                 } else {
                     sensorRange = distanceBack.getDistance(DistanceUnit.MM);
-                    myOpMode.telemetry.addData("distance back = %.0f", sensorRange);
+                    myOpMode.telemetry.addData("SENSOR", "Back %.0f", sensorRange);
                 }
 
                 // see if we have an artifact
@@ -145,7 +145,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         // count number of slots with balls.
         allArtifactsHeld = 0;
         for (int b = 0; b < 3; b++) {
-            if (slotColors[b] != ArtifactColor.UNKNOWN) {
+            if (slotColors[b] != ArtifactColor.EMPTY) {
                 allArtifactsHeld++;
             }
         }
@@ -178,16 +178,16 @@ public class SpindexerSubsystem extends SubsystemBase {
                     if (allArtifactsHeld == 3) {
                         // sending the spindexer to the position needed fpr the first color of the obolisk pattern
                         sendToShooter(AUTO_SLOTS[patternID][currentAutoSlot++]);
-                        setState(SHOT_QUEUEING);
+                        setState(SHOOT_Q);
                     } else {
                         sendClostestEmptyToIntake();
-                        setState(INTAKE_QUEUEING);
+                        setState(INTAKE_Q);
                     }
                 }
                 break;
             }
 
-            case INTAKE_QUEUEING: {
+            case INTAKE_Q: {
                 newArtifact = false;  // reset this for next intake
                 if (inPosition())   {
                     runIntake();
@@ -201,80 +201,80 @@ public class SpindexerSubsystem extends SubsystemBase {
                     // Start UNJAM process
                     ejectIntake();
                     sendToLastAngle(lastSlotAngleFilled, lastSlotFilled);
-                    setState(BASIC_UNJAM);
+                    setState(UNJAM);
                 } else if (myOpMode.gamepad1.left_trigger > 0.25) {
                     // Start LUDICROUS UNJAM process
                     ejectIntake();
-                    setState(LUDICROUS_UNJAM);
+                    setState(KRAZY_UNJAM);
                 } else if (myOpMode.gamepad1.leftBumperWasPressed()) {
                     // Force shooting even without 3 artifacts
                     stopIntake();
                     Globals.ROBOT_STATE = RobotStates.SHOOTING;
                     sendClostestColorToShooter(ArtifactColor.ANY);                    // queue up first shot.
-                    setState(SHOT_QUEUEING);
+                    setState(SHOOT_Q);
                 } else if (newArtifact) {
                     // start timer to let ball settle
-                    setState(INTAKE_HOLD);
+                    setState(INTAKE_HLD);
                 } else if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
                     // switch to shooting (usually happens in auto)
                     stopIntake();
                     sendClostestColorToShooter(ArtifactColor.ANY);
-                    setState(SHOT_QUEUEING);
+                    setState(SHOOT_Q);
                 } else {
                     sendClostestEmptyToIntake();
                 }
                 break;
             }
 
-            case INTAKE_HOLD: {
+            case INTAKE_HLD: {
                 if (timeInState(NEW_ARTIFACT_HOLD_TIME)) {
                     if (allArtifactsHeld == 3) {
                         stopIntake();
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
                         sendClostestColorToShooter(ArtifactColor.ANY);
                         // sendToShooter(0);                      // queue up first shot.
-                        setState(SHOT_QUEUEING);
+                        setState(SHOOT_Q);
                     } else {
                         holdInIntake();
                         sendClostestEmptyToIntake();
-                        setState(INTAKE_QUEUEING);
+                        setState(INTAKE_Q);
                     }
                 }
                 break;
             }
 
-            case SHOT_QUEUEING: {
+            case SHOOT_Q: {
                 newArtifact = false;  // reset this for next intake
                 if (allArtifactsHeld == 0 ) {
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
-                    setState(INTAKE_QUEUEING);
+                    setState(INTAKE_Q);
                 } else if (inPosition())   {
-                    setState(READY_TO_SHOOT);
+                    setState(RDY_2_SHOOT);
                 }
                 break;
             }
 
-            case READY_TO_SHOOT: {
+            case RDY_2_SHOOT: {
                 if (myOpMode.gamepad1.right_trigger > 0.25) {
                     // Start Unjam
                     ejectIntake();
                     sendToLastAngle(lastSlotAngleFilled, lastSlotFilled);
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
-                    setState(BASIC_UNJAM);
+                    setState(UNJAM);
                 } else if (myOpMode.gamepad1.leftBumperWasPressed()) {
                     // Switch to intaking
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
                     sendClostestEmptyToIntake();
-                    setState(INTAKE_QUEUEING);
+                    setState(INTAKE_Q);
                 } else if (myOpMode.gamepad1.left_trigger > 0.25) {
                     // Start LUDICROUS UNJAM process
                     ejectIntake();
-                    setState(LUDICROUS_UNJAM);
+                    setState(KRAZY_UNJAM);
                 } else if ((myOpMode.gamepad1.right_bumper || startAutoShoot) &&
                     Globals.SHOOTER_AT_SPEED && Globals.TURRET_ON_TARGET) {
                     // Start shot
                     fire.setPosition(FIRE_SHOOT);
-                    slotColors[currentSlot] = ArtifactColor.UNKNOWN;
+                    slotColors[currentSlot] = ArtifactColor.EMPTY;
                     setState(SHOOTING);
                 }
                 break;
@@ -283,12 +283,12 @@ public class SpindexerSubsystem extends SubsystemBase {
             case SHOOTING: {
                 if (timeInState(FIRE_HOLD_TIME)) {
                     fire.setPosition(FIRE_RETRACT);
-                    setState(COCKING_SHOT);
+                    setState(COCK_SHOT);
                 }
                 break;
             }
 
-            case COCKING_SHOT: {
+            case COCK_SHOT: {
                 if (timeInState(ADVANCE_DELAY_TIME)) {
                     if (allArtifactsHeld > 0) {
                         // only run the preload sequence once.  Then just get the next available artifact
@@ -297,7 +297,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                         } else {
                             sendClostestColorToShooter(ArtifactColor.ANY);
                         }
-                        setState(SHOT_QUEUEING);
+                        setState(SHOOT_Q);
                     } else {
                         currentAutoSlot = 0; //after shooting if we intake three more it needs to reset
                         shootingPreloads = false;  // we are done with preloads.
@@ -310,36 +310,36 @@ public class SpindexerSubsystem extends SubsystemBase {
                 break;
             }
 
-            case BASIC_UNJAM: {
+            case UNJAM: {
                 if (myOpMode.gamepad1.right_trigger < 0.25){
                     stopIntake();
                     if (allArtifactsHeld == 3) {
                         sendClostestColorToShooter(ArtifactColor.ANY);
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
-                        setState(SHOT_QUEUEING);
+                        setState(SHOOT_Q);
                     } else {
-                        setState(INTAKE_QUEUEING);
+                        setState(INTAKE_Q);
                     }
                 }
                 break;
             }
 
-            case LUDICROUS_UNJAM: {
+            case KRAZY_UNJAM: {
                 if (myOpMode.gamepad1.left_trigger < 0.25){
                     stopIntake();
-                    slotColors[0] = ArtifactColor.UNKNOWN;
-                    slotColors[1] = ArtifactColor.UNKNOWN;
-                    slotColors[2] = ArtifactColor.UNKNOWN;
+                    slotColors[0] = ArtifactColor.EMPTY;
+                    slotColors[1] = ArtifactColor.EMPTY;
+                    slotColors[2] = ArtifactColor.EMPTY;
                     sendToIntake(0);
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
                     myOpMode.gamepad1.leftBumperWasPressed();  //  clear out shoot/intake switch button
-                    setState(INTAKE_QUEUEING);
+                    setState(INTAKE_Q);
                 } else {
                     // shake the ball loose
-                    if (timeInState(0.2)) {
+                    if (timeInState(0.15)) {
                         spindexer.setPosition(unjamForward ? 0.6 : 0.4);
                         unjamForward = !unjamForward;
-                        setState(LUDICROUS_UNJAM);  // Start the state timer running again.
+                        setState(KRAZY_UNJAM);  // Start the state timer running again.
                     }
                 }
                 break;
@@ -352,21 +352,21 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
-        myOpMode.telemetry.addData("SPINDEX", "%s (s%d)->%.1f %s (%.3f)", currentState, currentSlot, targetAngle, inPosition(), spindexerServoValue);
-        myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
+        // myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
+        myOpMode.telemetry.addData("SPINDEX", "%s -> %.0f (%.3f) %s ", currentState, targetAngle, spindexerServoValue, inPosition()? "GOOD" : "Move");
+        myOpMode.telemetry.addData("SLOTS", "%s %s %s\n", slotColors[0], slotColors[1], slotColors[2]);
     }
 
     public void startIntaking() {
         sendClostestEmptyToIntake();
         Globals.ROBOT_STATE = RobotStates.INTAKING;
-        setState(INTAKE_QUEUEING);
+        setState(INTAKE_Q);
     }
 
     public void startShooting() {
         sendClostestColorToShooter(ArtifactColor.ANY);
         Globals.ROBOT_STATE = RobotStates.SHOOTING;
-        setState(SHOT_QUEUEING);
+        setState(SHOOT_Q);
     }
 
     public void runIntake(){
@@ -401,7 +401,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (Globals.FORWARD_MOTION){
             destination = 90;
             for(int s = 0; s < 3; s++){
-                if (slotColors[s] == ArtifactColor.UNKNOWN) {
+                if (slotColors[s] == ArtifactColor.EMPTY) {
                     double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
                     if (angle < closestAngle) {
                         closestAngle = angle;
@@ -412,7 +412,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         } else {
             destination = -90;
             for(int s = 2; s >= 0; s--){
-                if (slotColors[s] == ArtifactColor.UNKNOWN) {
+                if (slotColors[s] == ArtifactColor.EMPTY) {
                     double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
                     if (angle < closestAngle) {
                         closestAngle = angle;
@@ -438,7 +438,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         // calculate how far the spindexer needs to turn for each full slot, and use the smallest angle.
         for (int s = 0; s < 3; s++) {
             // do a color match or a match all
-            if ((slotColors[s] == color) || ((color == ArtifactColor.ANY) && (slotColors[s] != ArtifactColor.UNKNOWN))) {
+            if ((slotColors[s] == color) || ((color == ArtifactColor.ANY) && (slotColors[s] != ArtifactColor.EMPTY))) {
                 double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
                 if (angle < closestAngle) {
                     closestAngle = angle;

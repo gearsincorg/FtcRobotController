@@ -5,13 +5,13 @@ import org.firstinspires.ftc.teamcode.auxtools.StateBase;
 public enum SpindexerStates implements StateBase {
     INIT,
     HOME,
-    INTAKE_QUEUEING,
+    INTAKE_Q,
     INTAKING,
-    INTAKE_HOLD,
-    SHOT_QUEUEING,
-    READY_TO_SHOOT,
-    COCKING_SHOT,
+    INTAKE_HLD,
+    SHOOT_Q,
+    RDY_2_SHOOT,
+    COCK_SHOT,
     SHOOTING,
-    BASIC_UNJAM,
-    LUDICROUS_UNJAM
+    UNJAM,
+    KRAZY_UNJAM
 }

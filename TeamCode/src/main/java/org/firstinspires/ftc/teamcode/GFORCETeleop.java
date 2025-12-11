@@ -73,7 +73,7 @@ public class GFORCETeleop extends LinearOpMode
 
         // Wait for driver to press start
         while(opModeInInit()) {
-            telemetry.addData("PLAYING", Globals.ALLIANCE_COLOR);
+            telemetry.addData("ROBOT", "%s - %s\n", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
 
             // Read and display sensor data
             driveSubsystem.updatePoseEstimate();
@@ -88,7 +88,7 @@ public class GFORCETeleop extends LinearOpMode
 
         while (opModeIsActive())
         {
-            telemetry.addData("ROBOT", "%s - %s", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
+            telemetry.addData("ROBOT", "%s - %s\n", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
 
             // Check to see if we need to home the subsystems
             // B button assumes driving forward into wall. X Button assumes backing into wall

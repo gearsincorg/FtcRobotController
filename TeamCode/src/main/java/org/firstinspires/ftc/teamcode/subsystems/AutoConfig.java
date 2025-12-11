@@ -109,6 +109,7 @@ public class AutoConfig
         myOpMode.telemetry.addData((currentMenuIndex == 0) ? "0 > ALLIANCE"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "BLUE");
         myOpMode.telemetry.addData((currentMenuIndex == 1) ? "1 > START DELAY"   : "1   Start Delay", autoOptions.delayStart);
         myOpMode.telemetry.addData((currentMenuIndex == 2) ? "2 > AUTO MODE"    : "2   Auto Mode", autoArray[autoOptions.autoMode]);
+        myOpMode.telemetry.addLine("---------------------------------------\n");
     }
 
     public void initialize() {

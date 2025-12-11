@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
 public enum ArtifactColor {
-    UNKNOWN,
+    EMPTY,
     GREEN,
     PURPLE,
     ANY

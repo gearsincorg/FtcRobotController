@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -12,7 +11,6 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
-import org.firstinspires.ftc.teamcode.auxtools.Target;
 
 import static org.firstinspires.ftc.teamcode.subsystems.TurretStates.*;
 
@@ -56,7 +54,7 @@ public class TurretSubsystem extends SubsystemBase {
     private double shooterSpeedMPS        = 0;
     private double shooterBackspinPercent = 0;
     private double shooterAngle           = 30;
-    private double Aa    = 0;
+    private double Ag = 0;
     private double Ar    = 0;
     private double At    = 0;  // measured Turret angle
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
@@ -189,10 +187,9 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("TURRET A", "%s At=%4.1f, Ad=%4.1f, Aa=%4.1f, Ar=%4.1f %s",
-                currentState, At, Ad, Aa, Ar, Globals.TURRET_ON_TARGET? "On target" : "BAD aim");
-        myOpMode.telemetry.addData("TURRET S", "R= %5.3f mm , A= %4.2f deg, S %4.1fMPS",
-                targetRange, shooterAngle, shooterSpeedMPS);
+        myOpMode.telemetry.addData("GOAL", "R=%5.0f Ag=%4.0f", targetRange, Ag);
+        myOpMode.telemetry.addData("TURRET", "%s Ar=%4.0f, Ad=%4.0f, At=%4.0f\n",
+                currentState, Ar, Ad, At, targetRange);
     }
 
     /**
@@ -223,9 +220,9 @@ public class TurretSubsystem extends SubsystemBase {
         double y = targetY - robotY;
 
         targetRange = Math.hypot(x,y);
-        Aa = Math.toDegrees(Math.atan2(y, x));
+        Ag = Math.toDegrees(Math.atan2(y, x));
         Ar = Math.toDegrees(SharedOQ.OQlocalizer.heading_rad);
-        Ad = normalizeAngle(Aa - Ar);   // needed to stop bounce on 180/-180
+        Ad = normalizeAngle(Ag - Ar);   // needed to stop bounce on 180/-180
     }
 
     private double encoderToDegrees(int encoder) {

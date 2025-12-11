@@ -158,10 +158,8 @@ public final class DriveSubsystem
     }
 
     public void smartDrive() {
-        double jsLeftX  = -myOpMode.gamepad1.left_stick_x;
         double jsLeftY  = -myOpMode.gamepad1.left_stick_y;
         double jsRightX = -myOpMode.gamepad1.right_stick_x;
-        double jsRightY = -myOpMode.gamepad1.right_stick_y;
 
         // Robot Centric driving (with joystick squaring)
         driveRC(lessSensitive(jsLeftY) * RC_SPEED_SCALE, lessSensitive(jsRightX) * RC_TURN_SCALE);
@@ -232,7 +230,7 @@ public final class DriveSubsystem
         }
 
         if (showTelemetry){
-            myOpMode.telemetry.addData("MOTION", "%s", Globals.FORWARD_MOTION ? "FORWARD" : "REVERSE");
+            // myOpMode.telemetry.addData("MOTION", "%s", Globals.FORWARD_MOTION ? "FORWARD" : "REVERSE");
         }
     }
 
@@ -306,38 +304,7 @@ public final class DriveSubsystem
             for (DcMotorEx m : rightMotors) {
                 m.setPower(rightPower);
             }
-
-            p.put("x", getPose().position.x);
-            p.put("y", getPose().position.y);
-            p.put("heading (deg)", Math.toDegrees(getPose().heading.toDouble()));
-
-            Pose2d error = txWorldTarget.value().minusExp(getPose());
-            p.put("xError", error.position.x);
-            p.put("yError", error.position.y);
-            p.put("headingError (deg)", Math.toDegrees(error.heading.toDouble()));
-
-            // only draw when active; only one drive action should be active at a time
-            Canvas c = p.fieldOverlay();
-            drawPoseHistory(c);
-
-            c.setStroke("#4CAF50");
-            Drawing.drawRobot(c, txWorldTarget.value());
-
-            c.setStroke("#3F51B5");
-            Drawing.drawRobot(c, getPose());
-
-            c.setStroke("#4CAF50FF");
-            c.setStrokeWidth(1);
-            c.strokePolyline(xPoints, yPoints);
-
             return true;
-        }
-
-        @Override
-        public void preview(Canvas c) {
-            c.setStroke("#4CAF507A");
-            c.setStrokeWidth(1);
-            c.strokePolyline(xPoints, yPoints);
         }
     }
 
@@ -384,25 +351,7 @@ public final class DriveSubsystem
             // send axis powers to drive
             setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), rotateCCW));
 
-            Canvas c = p.fieldOverlay();
-            drawPoseHistory(c);
-
-            c.setStroke("#4CAF50");
-            Drawing.drawRobot(c, txWorldTarget.value());
-
-            c.setStroke("#3F51B5");
-            Drawing.drawRobot(c, getPose());
-
-            c.setStroke("#7C4DFFFF");
-            c.fillCircle(turn.beginPose.position.x, turn.beginPose.position.y, 2);
-
             return true;
-        }
-
-        @Override
-        public void preview(Canvas c) {
-            c.setStroke("#7C4DFF7A");
-            c.fillCircle(turn.beginPose.position.x, turn.beginPose.position.y, 2);
         }
     }
 
@@ -410,20 +359,18 @@ public final class DriveSubsystem
      * Use localization from Octoquad to update robot position.
      * @return
      */
-
-
     public PoseVelocity2d updatePoseEstimate() {
         PoseVelocity2d poseVel = new PoseVelocity2d(new Vector2d(0, 0), 0);
 
         // Read localizer data AND encoder.  Process each if they are valid.
         SharedOQ.update();
         if (SharedOQ.OQlocalizer.isDataValid()) {
-            myOpMode.telemetry.addData("LOCATION", "%4.1f:%4.1f  %4.0f D %4.2f DPS",
+            myOpMode.telemetry.addData("LOCATION", "X=%5.1f  Y=%5.1f  H=%4.0f\n",
                     mmToInch(SharedOQ.OQlocalizer.posX_mm), mmToInch(SharedOQ.OQlocalizer.posY_mm),
-                    Math.toDegrees(SharedOQ.OQlocalizer.heading_rad), getTurnRateDPS());
+                    Math.toDegrees(SharedOQ.OQlocalizer.heading_rad));
 
-            myOpMode.telemetry.addData("VELOCITY", "L:%5.2f IPS A:%5.2f RPS",
-            mmToInch(Math.hypot(SharedOQ.OQlocalizer.velX_mmS, SharedOQ.OQlocalizer.velY_mmS)), SharedOQ.OQlocalizer.velHeading_radS);
+            // myOpMode.telemetry.addData("VELOCITY", "L:%5.2f IPS A:%5.2f RPS",
+            // mmToInch(Math.hypot(SharedOQ.OQlocalizer.velX_mmS, SharedOQ.OQlocalizer.velY_mmS)), SharedOQ.OQlocalizer.velHeading_radS);
 
             if (Globals.IS_AUTO && myOpMode.opModeIsActive()) {
                 myOpMode.telemetry.update();
@@ -437,23 +384,6 @@ public final class DriveSubsystem
         }
 
         return poseVel;
-    }
-
-    private void drawPoseHistory(Canvas c) {
-        double[] xPoints = new double[poseHistory.size()];
-        double[] yPoints = new double[poseHistory.size()];
-
-        int i = 0;
-        for (Pose2d t : poseHistory) {
-            xPoints[i] = t.position.x;
-            yPoints[i] = t.position.y;
-
-            i++;
-        }
-
-        c.setStrokeWidth(1);
-        c.setStroke("#3F51B5");
-        c.strokePolyline(xPoints, yPoints);
     }
 
     public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {
@@ -509,6 +439,4 @@ public final class DriveSubsystem
     private double lessSensitive(double joystick) {
         return (joystick * joystick * Math.signum(joystick));
     }
-
-
 }
