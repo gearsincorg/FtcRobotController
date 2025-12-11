@@ -167,6 +167,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void runStateMachine() {
         switch ((SpindexerStates)currentState) {
             case INIT: {
+                myOpMode.gamepad1.leftBumperWasPressed();  //  clear out shoot/intake switch button
                 sendToIntake(0); //might be used
                 setState(HOME);
                 break;
@@ -197,21 +198,25 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case INTAKING: {
                 if (myOpMode.gamepad1.right_trigger > 0.25) {
-                    ejectIntake(); // Start UNJAM process
+                    // Start UNJAM process
+                    ejectIntake();
                     sendToLastAngle(lastSlotAngleFilled, lastSlotFilled);
                     setState(BASIC_UNJAM);
                 } else if (myOpMode.gamepad1.left_trigger > 0.25) {
-                    ejectIntake(); // Start LUDICROUS UNJAM process
+                    // Start LUDICROUS UNJAM process
+                    ejectIntake();
                     setState(LUDICROUS_UNJAM);
-                } else if (myOpMode.gamepad1.left_bumper) {
-                    stopIntake();  // Force shooting even without 3 artifacts
+                } else if (myOpMode.gamepad1.leftBumperWasPressed()) {
+                    // Force shooting even without 3 artifacts
+                    stopIntake();
                     Globals.ROBOT_STATE = RobotStates.SHOOTING;
-                    myOpMode.gamepad1.leftBumperWasPressed();  // forget any past button presses
                     sendClostestColorToShooter(ArtifactColor.ANY);                    // queue up first shot.
                     setState(SHOT_QUEUEING);
                 } else if (newArtifact) {
+                    // start timer to let ball settle
                     setState(INTAKE_HOLD);
                 } else if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
+                    // switch to shooting (usually happens in auto)
                     stopIntake();
                     sendClostestColorToShooter(ArtifactColor.ANY);
                     setState(SHOT_QUEUEING);
@@ -251,15 +256,23 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case READY_TO_SHOOT: {
                 if (myOpMode.gamepad1.right_trigger > 0.25) {
+                    // Start Unjam
                     ejectIntake();
                     sendToLastAngle(lastSlotAngleFilled, lastSlotFilled);
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
                     setState(BASIC_UNJAM);
+                } else if (myOpMode.gamepad1.leftBumperWasPressed()) {
+                    // Switch to intaking
+                    Globals.ROBOT_STATE = RobotStates.INTAKING;
+                    sendClostestEmptyToIntake();
+                    setState(INTAKE_QUEUEING);
                 } else if (myOpMode.gamepad1.left_trigger > 0.25) {
-                    ejectIntake(); // Start LUDICROUS UNJAM process
+                    // Start LUDICROUS UNJAM process
+                    ejectIntake();
                     setState(LUDICROUS_UNJAM);
                 } else if ((myOpMode.gamepad1.right_bumper || startAutoShoot) &&
                     Globals.SHOOTER_AT_SPEED && Globals.TURRET_ON_TARGET) {
+                    // Start shot
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.UNKNOWN;
                     setState(SHOOTING);
@@ -319,6 +332,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     slotColors[2] = ArtifactColor.UNKNOWN;
                     sendToIntake(0);
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
+                    myOpMode.gamepad1.leftBumperWasPressed();  //  clear out shoot/intake switch button
                     setState(INTAKE_QUEUEING);
                 } else {
                     // shake the ball loose

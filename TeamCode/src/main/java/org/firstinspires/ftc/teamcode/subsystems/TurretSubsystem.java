@@ -158,22 +158,23 @@ public class TurretSubsystem extends SubsystemBase {
         switch ((TurretStates) currentState) {
 
             case INIT: {
+                aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 aim.setPower(0.15);
-                if (!magnet.getState()) {
-                    // reset encoder, lock in current position and switch to RTP mode
-                    aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    setState(HOMING);
-                }
+                setState(HOMING);
                 break;
             }
 
             case HOMING: {
-                aim.setPower(0.0);
-                aim.setTargetPosition(aim.getCurrentPosition());
-                aim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                aim.setPower(0.5);
-                setTurretAngle(0);
-                setState(READY);
+                if (!magnet.getState()) {
+                    // reset encoder, lock in current position and switch to RTP mode
+                    aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    aim.setPower(0.0);
+                    aim.setTargetPosition(aim.getCurrentPosition());
+                    aim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    aim.setPower(0.5);
+                    setTurretAngle(0);
+                    setState(READY);
+                }
                 break;
             }
 

@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.TurretStates;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 
 /*
@@ -145,6 +146,11 @@ public class GFORCETeleop extends LinearOpMode
             newHome = new Pose2d(homePosition.x, homePosition.y, Math.toRadians(headingDeg));
         }
         driveSubsystem.setPose(newHome);
+
+        // Also home the turret.
+        if (turretSubsystem.currentState == TurretStates.READY) {
+            turretSubsystem.setState(TurretStates.INIT);
+        }
     }
 
     private void showCycleTime() {
