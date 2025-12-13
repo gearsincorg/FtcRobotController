@@ -18,8 +18,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.auxtools.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
-import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretStates;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
@@ -30,8 +30,8 @@ import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
  * The IMU gyro is used to stabilize the heading when the operator is not requesting a turn.
  */
 
-@TeleOp(name="GFORCE Teleop", group = "AA")
-public class GFORCETeleop extends LinearOpMode
+@TeleOp(name="DEMO", group = "none")
+public class DEMO extends LinearOpMode
 {
     private final Vector2d HOME_CALIBRATION = new Vector2d(38, 33);
 
@@ -39,9 +39,9 @@ public class GFORCETeleop extends LinearOpMode
     AutoConfig autoConfig   = new AutoConfig(this);
 
     // Declare OpMode members.cvzx
-    private DriveSubsystem     driveSubsystem     = new DriveSubsystem(this);
+    private DriveSubsystem driveSubsystem     = new DriveSubsystem(this);
     private SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
-    private TurretSubsystem    turretSubsystem    = new TurretSubsystem(this);
+    private TurretSubsystem turretSubsystem    = new TurretSubsystem(this);
 
     private ElapsedTime cycleTimer = new ElapsedTime();
     private double avgCycle = 0;
@@ -76,8 +76,8 @@ public class GFORCETeleop extends LinearOpMode
 
             // Read and display sensor data
             driveSubsystem.updatePoseEstimate();
-            // spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
-            // turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
+            turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
             showCycleTime();
             telemetry.update();
@@ -93,7 +93,6 @@ public class GFORCETeleop extends LinearOpMode
             if (gamepad1.rightStickButtonWasPressed() && (turretSubsystem.currentState == TurretStates.READY)) {
                 turretSubsystem.setState(TurretStates.INIT);
             }
-
 
             // Check to see if we need to home the subsystems
             // Location reset based on Base square and direction of front of robot
@@ -127,15 +126,8 @@ public class GFORCETeleop extends LinearOpMode
             turretSubsystem.update();
 
             // use the smart manual drive feature of the DriveSubsystem
-            driveSubsystem.smartDrive();
+            driveSubsystem.updatePoseEstimate();
             showCycleTime();
-            telemetry.update();
-
-            // Update the dashboard.
-            TelemetryPacket packet = new TelemetryPacket();
-            packet.fieldOverlay().setStroke("#3F51B5");
-            Drawing.drawRobot(packet.fieldOverlay(), driveSubsystem.getPose());
-            FtcDashboard.getInstance().sendTelemetryPacket(packet);
         }
 
         // tell AUTO or TELEOP to home next time they run
