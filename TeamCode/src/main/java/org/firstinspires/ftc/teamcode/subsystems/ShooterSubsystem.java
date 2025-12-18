@@ -1,11 +1,14 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import static com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER;
+
 import androidx.core.math.MathUtils;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
@@ -26,6 +29,10 @@ public class ShooterSubsystem extends SubsystemBase {
     private final double SHOOTER_SPEED_TOLERANCE =  0.5;
     private final double MAX_MPS                 =  16.0;
 
+    private final double P_STEP                  =  1.0;
+    private final double F_STEP                  =  1.0;
+
+
     private final double SHOOTER_OFFSET          = -4.0;    // used to ensure that zero degrees is level.
 
     // General Subsystem Members
@@ -35,6 +42,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private double  currentRearMPS    = 0;
     private double  targetFrontMPS    = 0;
     private double  targetRearMPS     = 0;
+    private PIDFCoefficients shooterCoefs = new PIDFCoefficients(0,0,0,200);   /// 15-260
 
     public boolean  atSpeed = false;
 
@@ -48,11 +56,13 @@ public class ShooterSubsystem extends SubsystemBase {
 
         front = myOpMode.hardwareMap.get(DcMotorEx.class, "frontWheel");
         front.setDirection(DcMotorSimple.Direction.REVERSE);
-        front.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        front.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
+        front.setMode(RUN_USING_ENCODER);
 
         rear = myOpMode.hardwareMap.get(DcMotorEx.class, "rearWheel");
         rear.setDirection(DcMotorSimple.Direction.FORWARD);
-        rear.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rear.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
+        rear.setMode(RUN_USING_ENCODER);
 
         hood = myOpMode.hardwareMap.get(Servo.class, "hood");
 
@@ -67,6 +77,32 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void runProcessing() {
+
+        boolean changedPIDF = false;
+
+        // DETERMINE MANUAL shooter speed
+        if (myOpMode.gamepad2.dpadUpWasPressed()) {
+            shooterCoefs.f += F_STEP;
+            changedPIDF = true;
+        } else if (myOpMode.gamepad2.dpadDownWasPressed() && (shooterCoefs.f > 0)) {
+            shooterCoefs.f -= F_STEP;
+            changedPIDF = true;
+        }
+
+        // DETERMINE MANUAL shooter TILT
+        if (myOpMode.gamepad2.dpadRightWasPressed()) {
+            shooterCoefs.p += P_STEP;
+            changedPIDF = true;
+        } else if (myOpMode.gamepad2.dpadLeftWasPressed()  && (shooterCoefs.p > 0)) {
+            shooterCoefs.p -= P_STEP;
+            changedPIDF = true;
+        }
+
+        if (changedPIDF) {
+            front.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
+            rear.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
+        }
+
         shooterServoValue = MathUtils.clamp(0.5 - (tiltAngle * PULSE_SCALE_FACTOR / SERVO_GEAR_RATIO), 0.22, 0.78);  // make this match the spindexer in 2 places once servo is reprogrammed
         hood.setPosition(shooterServoValue);
 
@@ -80,6 +116,8 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         myOpMode.telemetry.addData("SHOOTER",   "F=%4.2f  B=%4.2f %s Tilt= %.0f", currentFrontMPS, currentRearMPS, atSpeed ? "OK" : "SLOW", tiltAngle);
+        myOpMode.telemetry.addData("SET VEL",   "F=%4.2f  B=%4.2f", targetFrontMPS, targetRearMPS);
+        myOpMode.telemetry.addData("PIDF",   "P=%4.2f  I=%4.2f  D=%4.2f  D=%4.2f", shooterCoefs.p, shooterCoefs.i, shooterCoefs.d, shooterCoefs.f );
     }
 
     public void setAngle(double angle){
@@ -89,6 +127,6 @@ public class ShooterSubsystem extends SubsystemBase {
     public void setVelocity(double frontVelocityMPS, double rearVelocityMPS){
         targetFrontMPS = MathUtils.clamp(frontVelocityMPS, 0, MAX_MPS);
         targetRearMPS  = MathUtils.clamp(rearVelocityMPS,  0, MAX_MPS);
-        //  myOpMode.telemetry.addData("SET VELOCITY",   "A: %5.2f  B: %5.2f %s Angle: %.0f", frontVelocityMPS, rearVelocityMPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
+        myOpMode.telemetry.addData("SET CPS",   "A: %5.0f  B: %5.0f %s Angle: %.0f", frontVelocityMPS / SHOOTER_COUNTS_TO_MPS, rearVelocityMPS / SHOOTER_COUNTS_TO_MPS, atSpeed ? "At Speed" : "SLOW", tiltAngle);
     }
 }

@@ -19,7 +19,7 @@ import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
 
-    private boolean TEST_MODE = false;  //  <<---  set to true to play with shooter speed/angle
+    private boolean TEST_MODE = true;  //  <<---  set to true to play with shooter speed/angle
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -46,7 +46,7 @@ public class TurretSubsystem extends SubsystemBase {
     private final double TURRET_OFFSET_ANGLE =  85;  // Adjust this  if the shooter is not centered on marks/
     private final double TURRET_OFFSET_DISTANCE = 78;  // this fixes the direction
 
-    private final double SHOOTER_STEP   = 0.25;
+    private final double SHOOTER_STEP   = 2.00;
     private final double MAX_MPS        = 30;
     private final double ANGLE_STEP     = 2;
 
