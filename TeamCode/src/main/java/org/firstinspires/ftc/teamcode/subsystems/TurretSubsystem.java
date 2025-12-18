@@ -19,7 +19,7 @@ import androidx.core.math.MathUtils;
 
 public class TurretSubsystem extends SubsystemBase {
 
-    private boolean TEST_MODE = true;  //  <<---  set to true to play with shooter speed/angle
+    private boolean TEST_MODE = false ;  //  <<---  set to true to play with shooter speed/angle
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -113,7 +113,7 @@ public class TurretSubsystem extends SubsystemBase {
 
                 // if this is the first time through, setup initial values
                 if (shooterSpeedMPS == 0) {
-                    setupShooter(36, 10, 0);  // Default manual settings
+                    setupShooter(20, 10, 0);  // Default manual settings
                 }
 
                 // DETERMINE MANUAL shooter speed

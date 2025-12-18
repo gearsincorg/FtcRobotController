@@ -26,12 +26,11 @@ public class ShooterSubsystem extends SubsystemBase {
     public final double SHOOTER_ANGLE_MAX        =  37.0;
     public final double SHOOTER_ANGLE_MIN        = -37.0;
     private final double PULSE_SCALE_FACTOR      =  1.8e-3;   // make this match the spindexer in 2 places once servo is reprogrammed
-    private final double SHOOTER_SPEED_TOLERANCE =  0.5;
+    private final double SHOOTER_SPEED_TOLERANCE =  0.25;
     private final double MAX_MPS                 =  16.0;
 
     private final double P_STEP                  =  1.0;
-    private final double F_STEP                  =  1.0;
-
+    private final double F_STEP                  =  0.1;
 
     private final double SHOOTER_OFFSET          = -4.0;    // used to ensure that zero degrees is level.
 
@@ -42,7 +41,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private double  currentRearMPS    = 0;
     private double  targetFrontMPS    = 0;
     private double  targetRearMPS     = 0;
-    private PIDFCoefficients shooterCoefs = new PIDFCoefficients(0,0,0,200);   /// 15-260
+    private PIDFCoefficients shooterCoefs = new PIDFCoefficients(42,0,0,11.6);   //
 
     public boolean  atSpeed = false;
 
@@ -58,15 +57,15 @@ public class ShooterSubsystem extends SubsystemBase {
         front.setDirection(DcMotorSimple.Direction.REVERSE);
         front.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
         front.setMode(RUN_USING_ENCODER);
+        front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         rear = myOpMode.hardwareMap.get(DcMotorEx.class, "rearWheel");
         rear.setDirection(DcMotorSimple.Direction.FORWARD);
         rear.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
         rear.setMode(RUN_USING_ENCODER);
+        rear.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         hood = myOpMode.hardwareMap.get(Servo.class, "hood");
-
-        // setAngle(0.0);
     }
 
     @Override
@@ -78,6 +77,7 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void runProcessing() {
 
+        /*  This code lets as tune the PF coefficients */
         boolean changedPIDF = false;
 
         // DETERMINE MANUAL shooter speed
@@ -103,11 +103,20 @@ public class ShooterSubsystem extends SubsystemBase {
             rear.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
         }
 
+
         shooterServoValue = MathUtils.clamp(0.5 - (tiltAngle * PULSE_SCALE_FACTOR / SERVO_GEAR_RATIO), 0.22, 0.78);  // make this match the spindexer in 2 places once servo is reprogrammed
         hood.setPosition(shooterServoValue);
 
-        front.setVelocity(targetFrontMPS / SHOOTER_COUNTS_TO_MPS);
-        rear.setVelocity(targetRearMPS / SHOOTER_COUNTS_TO_MPS);
+        if ((currentFrontMPS - targetFrontMPS) < 0.5) {
+            front.setVelocity(targetFrontMPS / SHOOTER_COUNTS_TO_MPS);
+        } else {
+            front.setVelocity(0);
+        }
+        if ((currentRearMPS - targetRearMPS) < 0.5) {
+            rear.setVelocity(targetRearMPS / SHOOTER_COUNTS_TO_MPS);
+        } else {
+            rear.setVelocity(0);
+        }
 
         atSpeed = ((Math.abs(targetFrontMPS - currentFrontMPS) < SHOOTER_SPEED_TOLERANCE) &&
                 (Math.abs(targetRearMPS - currentRearMPS) < SHOOTER_SPEED_TOLERANCE));
@@ -116,8 +125,8 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         myOpMode.telemetry.addData("SHOOTER",   "F=%4.2f  B=%4.2f %s Tilt= %.0f", currentFrontMPS, currentRearMPS, atSpeed ? "OK" : "SLOW", tiltAngle);
-        myOpMode.telemetry.addData("SET VEL",   "F=%4.2f  B=%4.2f", targetFrontMPS, targetRearMPS);
-        myOpMode.telemetry.addData("PIDF",   "P=%4.2f  I=%4.2f  D=%4.2f  D=%4.2f", shooterCoefs.p, shooterCoefs.i, shooterCoefs.d, shooterCoefs.f );
+        // myOpMode.telemetry.addData("SET VEL",   "F=%4.2f  B=%4.2f", targetFrontMPS, targetRearMPS);
+        // myOpMode.telemetry.addData("PIDF",   "P=%4.2f  I=%4.2f  D=%4.2f  F=%4.2f", shooterCoefs.p, shooterCoefs.i, shooterCoefs.d, shooterCoefs.f );
     }
 
     public void setAngle(double angle){
