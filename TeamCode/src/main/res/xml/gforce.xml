@@ -22,7 +22,7 @@
         </LynxModule>
 
         <ServoHub name="Servo Hub 2" port="2">
-            <Servo name="spindexer" port="0" />
+            <Servo name="spindexer" port="4" />
             <Servo name="fire" port="1" />
             <Servo name="test" port="2" />
         </ServoHub>

@@ -35,7 +35,7 @@ public class MeepMeepTesting {
                 .setDriveTrainType(DriveTrainType.TANK)
                 .build();
 
-        RoadRunnerBotEntity testingBot = new DefaultBotBuilder(meepMeep)
+        RoadRunnerBotEntity releaseBot = new DefaultBotBuilder(meepMeep)
             // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
             .setConstraints(60, 80, Math.toRadians(180), Math.toRadians(360), 15)
             .setDimensions(16,16)
@@ -68,7 +68,15 @@ public class MeepMeepTesting {
                 .waitSeconds(1)
                 .build();
 
-        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+        Action releaseReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(0, -36), mirror(90))
+            .setReversed(false)
+            .splineTo(mirror(-1, -56), mirror(-90))
+            .waitSeconds(1)
+            .build();
+
+        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-1, -56, -90))
                 .setReversed(true)
                 .splineTo(mirror(-24, -12), mirror(-180))
                 .waitSeconds(2)
@@ -185,14 +193,26 @@ public class MeepMeepTesting {
                 cycleCollect
         ));
 
+        releaseBot.runAction(new SequentialAction(
+            backFirstScore,
+            backCollectPath1,
+            releaseReturnPath1,
+            backReturnPath1,
+            backCollectPath2,
+            backReturnPath2
+        ) );
+
+
+        //======================================================================================================
 
 
         // ---------------------------------------------------------------------------------------
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(backBot)
-                .addEntity(frontBot)
+                .addEntity(releaseBot)
+                //.addEntity(backBot)
+                //.addEntity(frontBot)
 //                .addEntity(cycleBot)
                 .start();
     }

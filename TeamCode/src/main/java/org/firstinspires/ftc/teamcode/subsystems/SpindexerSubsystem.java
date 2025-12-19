@@ -57,7 +57,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] HOME_ANGLES  = { 120,   0, -120};
     private final int[][]  AUTO_SLOTS   = {{2, 1, 0}, {0, 2, 1}, {0, 1, 2}};
 
-    private final double[] REFINED_SHOOT = {0.577, 0.502, 0.421};
+    private final double[]  REFINED_SHOOT = {0.577, 0.502, 0.421};
     private final double[] REFINED_FRONT = {0.520, 0.442, 0.366};
     private final double[] REFINED_BACK  = {0.630, 0.557, 0.480};
 
