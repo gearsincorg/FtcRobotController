@@ -30,10 +30,17 @@ public class MeepMeepTesting {
 
         RoadRunnerBotEntity backBot = new DefaultBotBuilder(meepMeep)
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
-                .setConstraints(40, 60, Math.toRadians(90), Math.toRadians(180), 15)
+                .setConstraints(60, 80, Math.toRadians(180), Math.toRadians(360), 15)
                 .setDimensions(16,16)
                 .setDriveTrainType(DriveTrainType.TANK)
                 .build();
+
+        RoadRunnerBotEntity testingBot = new DefaultBotBuilder(meepMeep)
+            // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
+            .setConstraints(60, 80, Math.toRadians(180), Math.toRadians(360), 15)
+            .setDimensions(16,16)
+            .setDriveTrainType(DriveTrainType.TANK)
+            .build();
 
         RoadRunnerBotEntity frontBot = new  DefaultBotBuilder(meepMeep)
                 .setConstraints(40, 60, Math.toRadians(90), Math.toRadians(180), 15)
