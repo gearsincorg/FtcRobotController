@@ -76,14 +76,11 @@ public class MeepMeepTesting {
 
         Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
                 .setReversed(true)
-                .splineTo(mirror(-24, -12), mirror(-180))
+                .splineTo(mirror(-36, -12), mirror(-180))
                 .waitSeconds(2)
                 .build();
 
-        Action backMovePath = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
-                .setReversed(false)
-                .lineToX(12)
-                .build();
+
 
         //==  FRONT BOT  =============================================================
         Action frontFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[1]))
@@ -157,8 +154,7 @@ public class MeepMeepTesting {
                 backCollectPath1,
                 backReturnPath1,
                 backCollectPath2,
-                backReturnPath2,
-                backMovePath
+                backReturnPath2
                 ) );
 
         frontBot.runAction(new SequentialAction(

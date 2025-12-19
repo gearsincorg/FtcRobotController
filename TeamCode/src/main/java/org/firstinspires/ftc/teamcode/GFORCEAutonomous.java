@@ -155,7 +155,6 @@ public class GFORCEAutonomous extends LinearOpMode
         Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
             .splineTo(mirror(-12, -30), mirror(-90))
             .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
-            .waitSeconds(1)
             .build();
 
         Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
@@ -167,17 +166,11 @@ public class GFORCEAutonomous extends LinearOpMode
             .setReversed(false)
             .splineTo(mirror(12, -30), mirror(-90))
             .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
-            .waitSeconds(1)
             .build();
 
         Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
             .setReversed(true)
-            .splineTo(mirror(-24, -12), mirror(-180))
-            .build();
-
-        Action backMovePath = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
-            .setReversed(false)
-            .lineToX(12)
+            .splineTo(mirror(-36, -12), mirror(-180))
             .build();
 
         return new SequentialAction(
@@ -187,18 +180,18 @@ public class GFORCEAutonomous extends LinearOpMode
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             backCollectPath1,
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             backReturnPath1,
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             backCollectPath2,
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             backReturnPath2,
             spindexerSubsystem.actionStartAutoShooting(),
-            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
-
-            backMovePath
+            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING)
         );
     }
 
@@ -244,7 +237,6 @@ public class GFORCEAutonomous extends LinearOpMode
         Action frontCollectPath1 = driveSubsystem.actionBuilder(mirror( 54, -16, 180))
             .splineTo(mirror(36, -30), mirror(-90))
             .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
-            .waitSeconds(1)
             .build();
 
         Action frontReturnPath1 = driveSubsystem.actionBuilder(mirror(36, -62, -90))
@@ -256,7 +248,6 @@ public class GFORCEAutonomous extends LinearOpMode
             .setReversed(false)
             .lineToY(mirrorY(-54))
             .splineTo(mirror(58, -62), mirror(-60), new TranslationalVelConstraint(10) )
-            .waitSeconds(1)
             .build();
 
         Action frontReturnPath2 = driveSubsystem.actionBuilder(mirror(58, -62, -60))
@@ -268,7 +259,6 @@ public class GFORCEAutonomous extends LinearOpMode
             .setReversed(false)
             .splineTo(mirror(48, -50), mirror(-90))
             .lineToY(mirrorY(-62), new TranslationalVelConstraint(5))
-            .waitSeconds(2)
             .build();
 
         Action frontReturnPath3 = driveSubsystem.actionBuilder(mirror(48, -62, -90))
@@ -283,18 +273,21 @@ public class GFORCEAutonomous extends LinearOpMode
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             frontCollectPath1,
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             frontReturnPath1,
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             frontCollectPath2,
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             frontReturnPath2,
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             frontCollectPath3,
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             frontReturnPath3,
             spindexerSubsystem.actionStartAutoShooting(),
@@ -312,7 +305,6 @@ public class GFORCEAutonomous extends LinearOpMode
         Action cycleTurnAndCollect = driveSubsystem.actionBuilder(mirror(54, -16, 180))
             .turnTo(mirror(-90))
             .lineToY(mirrorY(-62))
-            .waitSeconds(2)
             .build();
 
         Action cycleShootPath1 = driveSubsystem.actionBuilder(mirror(54, -62, -90))
@@ -323,7 +315,6 @@ public class GFORCEAutonomous extends LinearOpMode
         Action cycleCollect1 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
             .setReversed(false)
             .lineToY(mirrorY(-62))
-            .waitSeconds(2)
             .build();
 
         Action cycleCollect2 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
@@ -338,26 +329,28 @@ public class GFORCEAutonomous extends LinearOpMode
             .build();
 
 
-
-
         return new SequentialAction (
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             cycleFirstScore,
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
-            cycleTurnAndCollect,
 
+            cycleTurnAndCollect,
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             cycleShootPath1,
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
-            cycleCollect1,
 
+            cycleCollect1,
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             cycleShootPath2,
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
-            cycleCollect2
+
+            cycleCollect2,
+            spindexerSubsystem.actionWaitForDoneCollecting(1)
         );
     }
 

@@ -66,7 +66,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double targetAngle          = -1;
     private double currentAngle         =  0;
     private double estimatedTransitTime =  0;
-    private double spindexerServoValue = 0;
+    private double spindexerServoValue  = 0;
     private boolean lastDirectionForward = true;
     private ElapsedTime spinServoTimer  =  new ElapsedTime();
     private double sensorRange          =  0;
@@ -80,6 +80,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double  lastSlotAngleFilled = 0;  // Used during unjamming
     private int     lastSlotFilled      = -1;
     private boolean unjamForward        = false;
+    private boolean isTiming            = false;
+    private ElapsedTime actionTime      = new ElapsedTime();
 
     private ArtifactColor[] slotColors = {ArtifactColor.EMPTY, ArtifactColor.EMPTY, ArtifactColor.EMPTY};
 
@@ -551,6 +553,24 @@ public class SpindexerSubsystem extends SubsystemBase {
             public boolean run(@NonNull TelemetryPacket packet){
                 stopIntake();
                 return false;
+            }
+        };
+    }
+
+    public Action actionWaitForDoneCollecting(double time){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                boolean runAgain = true;
+                if (!isTiming){
+                    isTiming = true;
+                    actionTime.reset();
+                } else {
+                    if ((actionTime.time() >= time) || (allArtifactsHeld == 3)){
+                        runAgain = false;
+                    }
+                }
+                return runAgain;
             }
         };
     }
