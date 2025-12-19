@@ -52,7 +52,7 @@ public class GFORCETeleop extends LinearOpMode
     {
         Globals.IS_AUTO = false;
         Globals.OCTO_ERRORS = 0;
-        telemetry.setMsTransmissionInterval(50);
+        telemetry.setMsTransmissionInterval(25); //  << make this 100 unless debugging
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         autoConfig.initialize();

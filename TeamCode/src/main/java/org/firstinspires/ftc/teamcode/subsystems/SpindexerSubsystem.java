@@ -40,7 +40,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double PULSE_SCALE_FACTOR = 0.299 / 480.0;  // CONVERTS 960 DEG TO 0.595range ??
     private final double CENTER_OFFSET = 0; // -3.24;  // used to adjust the spindexer so 0 deg is B centered
     private final double MIN_RANGE =  50; // was 50
-    private final double MAX_RANGE = 120; // was 120
+    private final double MAX_RANGE = 100; // was 120
 
     // Flipper Servo positions and times for shooting
     private final double FIRE_SHOOT     = 0.65;
@@ -104,6 +104,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         distanceBack = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceBack");
 
         spinServoTimer.reset();
+        targetAngle  = -1;
     }
 
     @Override
@@ -117,7 +118,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             // Watch for a direction change...  set new position if needed
             if (lastDirectionForward != Globals.FORWARD_MOTION ) {
-                sendClostestEmptyToIntake();
+                sendClosestEmptyToIntake();
                 lastDirectionForward =  Globals.FORWARD_MOTION;
             }
 
@@ -170,7 +171,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         switch ((SpindexerStates)currentState) {
             case INIT: {
                 myOpMode.gamepad1.leftBumperWasPressed();  //  clear out shoot/intake switch button
-                sendToIntake(0); //might be used
+                // sendToShooter(1); //might be used
                 setState(HOME);
                 break;
             }
@@ -182,7 +183,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                         sendToShooter(AUTO_SLOTS[patternID][currentAutoSlot++]);
                         setState(SHOOT_Q);
                     } else {
-                        sendClostestEmptyToIntake();
+                        sendClosestEmptyToIntake();
                         setState(INTAKE_Q);
                     }
                 }
@@ -223,7 +224,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     sendClostestColorToShooter(ArtifactColor.ANY);
                     setState(SHOOT_Q);
                 } else {
-                    sendClostestEmptyToIntake();
+                    sendClosestEmptyToIntake();
                 }
                 break;
             }
@@ -238,7 +239,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                         setState(SHOOT_Q);
                     } else {
                         holdInIntake();
-                        sendClostestEmptyToIntake();
+                        sendClosestEmptyToIntake();
                         setState(INTAKE_Q);
                     }
                 }
@@ -266,7 +267,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 } else if (myOpMode.gamepad1.leftBumperWasPressed()) {
                     // Switch to intaking
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
-                    sendClostestEmptyToIntake();
+                    sendClosestEmptyToIntake();
                     setState(INTAKE_Q);
                 } else if (myOpMode.gamepad1.left_trigger > 0.25) {
                     // Start LUDICROUS UNJAM process
@@ -355,12 +356,12 @@ public class SpindexerSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         // myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
-        myOpMode.telemetry.addData("SPINDEX", "%s -> %.0f (%.3f) %s ", currentState, targetAngle, spindexerServoValue, inPosition()? "GOOD" : "Move");
+        myOpMode.telemetry.addData("SPINDEX", "%s %.0f>%.0f (%.3f) %s ", currentState, currentAngle, targetAngle, spindexerServoValue, inPosition()? "GOOD" : "Move");
         myOpMode.telemetry.addData("SLOTS", "%s %s %s\n", slotColors[0], slotColors[1], slotColors[2]);
     }
 
     public void startIntaking() {
-        sendClostestEmptyToIntake();
+        sendClosestEmptyToIntake();
         Globals.ROBOT_STATE = RobotStates.INTAKING;
         setState(INTAKE_Q);
     }
@@ -395,7 +396,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     /**
      * sends the best empty slot to the intake by deciding on the smallest distance between the three.
      */
-    private void sendClostestEmptyToIntake(){
+    private void sendClosestEmptyToIntake(){
         double closestAngle = 360;
         int    closestSlot  =   -1;
         double destination;
@@ -499,9 +500,14 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (newTargetAngle != targetAngle ) {
             spindexerServoValue = MathUtils.clamp(0.502 - ((newTargetAngle + CENTER_OFFSET) * PULSE_SCALE_FACTOR), 0, 1.0);
             spindexer.setPosition(spindexerServoValue);
-            estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 270; //
-            spinServoTimer.reset();
+            if (targetAngle == -1) {
+                estimatedTransitTime = 1.0;  // Allow extra time for unknown start location.
+            } else {
+                estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 270; //
+            }
+
             targetAngle = newTargetAngle ;
+            spinServoTimer.reset();
         }
     }
 

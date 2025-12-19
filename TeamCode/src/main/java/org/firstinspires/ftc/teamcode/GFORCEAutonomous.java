@@ -54,6 +54,7 @@ public class GFORCEAutonomous extends LinearOpMode
         driveSubsystem.init(null, true);
         spindexerSubsystem.init(true);
         spindexerSubsystem.preloadSequence();
+        spindexerSubsystem.sendToShooter(1);
         turretSubsystem.init(true);
 
             // Wait for driver to press start
