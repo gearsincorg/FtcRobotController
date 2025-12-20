@@ -40,7 +40,7 @@ public class GFORCEAutonomous extends LinearOpMode
     Pose2d atOrigin = new Pose2d(0,0,0);
     Pose2d atGoal   = new Pose2d(-58, -45, Math.toRadians(52));
     Pose2d atWall   = new Pose2d( 62, -16, Math.toRadians(180));
-    private final Pose2d[] autoStartLocations = {atOrigin, atGoal, atGoal, atGoal, atWall, atWall, atWall, atWall, atGoal};
+    private final Pose2d[] autoStartLocations = {atOrigin, atGoal, atGoal, atGoal, atGoal, atGoal, atWall, atWall, atWall, atWall};
 
     // ############################################################################
 
@@ -112,14 +112,12 @@ public class GFORCEAutonomous extends LinearOpMode
 
     private Action build_Goal9ReleaseAuto() {
         Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-            .splineTo(mirror(-24, -12), mirror(0))
-            .waitSeconds(2)
+            .splineTo(mirror(-24, -14), mirror(0))
             .build();
 
-        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
             .splineTo(mirror(-12, -30), mirror(-90))
             .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
-            .waitSeconds(1)
             .build();
 
         Action releaseReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
@@ -132,21 +130,18 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-1, -56, -90))
             .setReversed(true)
-            .splineTo(mirror(-24, -12), mirror(-180))
-            .waitSeconds(2)
+            .splineTo(mirror(-24, -14), mirror(-180))
             .build();
 
-        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
             .setReversed(false)
             .splineTo(mirror(12, -30), mirror(-90))
             .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
-            .waitSeconds(1)
             .build();
 
         Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
             .setReversed(true)
-            .splineTo(mirror(-36, -12), mirror(-180))
-            .waitSeconds(2)
+            .splineTo(mirror(-36, -14), mirror(-180))
             .build();
 
         return new SequentialAction(
@@ -195,17 +190,68 @@ public class GFORCEAutonomous extends LinearOpMode
     }
 
     // ==========================================================================================
-    private Action build_GoalShoot(){
+    private Action build_GoalShoot6(){
         Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-            .splineTo(mirror(-24, -12), mirror(0))
+            .splineTo(mirror(-24, -14), mirror(0))
+            .build();
+
+        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
+            .splineTo(mirror(-12, -30), mirror(-90))
+            .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
+            .build();
+
+        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(-36, -14), mirror(-180))
             .build();
 
         return new SequentialAction(
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             backFirstScore,
             spindexerSubsystem.actionStartAutoShooting(),
-            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
-            spindexerSubsystem.actionStopIntake()
+
+            backCollectPath1,
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            backReturnPath1,
+            spindexerSubsystem.actionStartAutoShooting()
+        );
+    }
+
+    private Action build_GoalShoot6Release(){
+        Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+            .splineTo(mirror(-24, -14), mirror(0))
+            .build();
+
+        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
+            .splineTo(mirror(-12, -30), mirror(-90))
+            .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
+            .build();
+
+        Action releaseReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(0, -36), mirror(90))
+            .setReversed(false)
+            .splineTo(mirror(-1, -56), mirror(-90))
+            .waitSeconds(1)
+            .build();
+
+        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(-36, -14), mirror(-180))
+            .build();
+
+        return new SequentialAction(
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            backFirstScore,
+            spindexerSubsystem.actionStartAutoShooting(),
+
+            backCollectPath1,
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
+            releaseReturnPath1,
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            backReturnPath1,
+            spindexerSubsystem.actionStartAutoShooting()
         );
     }
 
@@ -213,20 +259,20 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action build_GoalShootAndCollect(){
 
         Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-            .splineTo(mirror(-24, -12), mirror(0))
+            .splineTo(mirror(-24, -14), mirror(0))
             .build();
 
-        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
             .splineTo(mirror(-12, -30), mirror(-90))
             .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
             .build();
 
         Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
             .setReversed(true)
-            .splineTo(mirror(-24, -12), mirror(-180))
+            .splineTo(mirror(-24, -14), mirror(-180))
             .build();
 
-        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
             .setReversed(false)
             .splineTo(mirror(12, -30), mirror(-90))
             .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
@@ -234,7 +280,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
             .setReversed(true)
-            .splineTo(mirror(-36, -12), mirror(-180))
+            .splineTo(mirror(-36, -14), mirror(-180))
             .build();
 
         return new SequentialAction(
@@ -487,30 +533,34 @@ public class GFORCEAutonomous extends LinearOpMode
                 break;
 
             case 2:
-                sequentialAction = build_GoalShoot();
+                sequentialAction = build_GoalShoot6();
                 break;
 
             case 3:
-                sequentialAction = build_GoalShootAndCollect();
+                sequentialAction = build_GoalShoot6Release();
                 break;
 
             case 4:
-                sequentialAction = build_Goal9ReleaseAuto();
+                sequentialAction = build_GoalShootAndCollect();
                 break;
 
             case 5:
-                sequentialAction = build_FrontLeave();
+                sequentialAction = build_Goal9ReleaseAuto();
                 break;
 
             case 6:
-                sequentialAction = build_FrontShoot();
+                sequentialAction = build_FrontLeave();
                 break;
 
             case 7:
-                sequentialAction = build_FrontShootAndCollect();
+                sequentialAction = build_FrontShoot();
                 break;
 
             case 8:
+                sequentialAction = build_FrontShootAndCollect();
+                break;
+
+            case 9:
                 sequentialAction = build_cycleShootAndCollect();
                 break;
 

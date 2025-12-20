@@ -58,11 +58,11 @@ public class MeepMeepTesting {
 
         //==  BACK BOT  =============================================================
         Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
-                .splineTo(mirror(-24, -12), mirror(0))
+                .splineTo(mirror(-24, -14), mirror(0))
                 .waitSeconds(2)
                 .build();
 
-        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
                 .splineTo(mirror(-12, -30), mirror(-90))
                 .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
                 .waitSeconds(1)
@@ -78,11 +78,11 @@ public class MeepMeepTesting {
 
         Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-1, -56, -90))
                 .setReversed(true)
-                .splineTo(mirror(-24, -12), mirror(-180))
+                .splineTo(mirror(-24, -14), mirror(-180))
                 .waitSeconds(2)
                 .build();
 
-        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -12, 0))
+        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
                 .setReversed(false)
                 .splineTo(mirror(12, -30), mirror(-90))
                 .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
@@ -91,7 +91,7 @@ public class MeepMeepTesting {
 
         Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
                 .setReversed(true)
-                .splineTo(mirror(-36, -12), mirror(-180))
+                .splineTo(mirror(-36, -14), mirror(-180))
                 .waitSeconds(2)
                 .build();
 

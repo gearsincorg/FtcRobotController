@@ -26,13 +26,14 @@ public class AutoConfig
     public String[] autoArray = new String[] {
                                               "Auto TEST",                // 0
                                               "GOAL leave",               // 1
-                                              "GOAL Shoot 3",             // 2
-                                              "GOAL Shoot 9",             // 3
-                                              "GOAL shoot 9 and Release", // 4
-                                              "FRONT leave",              // 5
-                                              "FRONT Shoot 3",            // 6
-                                              "FRONT Shoot 9",            // 7
-                                              "FRONT Atlee Special"       // 8
+                                              "GOAL Shoot 6",             // 2
+                                              "GOAL Shoot 6 and Release", // 3
+                                              "GOAL Shoot 9",             // 4
+                                              "GOAL Shoot 9 and Release", // 5
+                                              "FRONT leave",              // 6
+                                              "FRONT Shoot 3",            // 7
+                                              "FRONT Shoot 9",            // 8
+                                              "FRONT Atlee Special"       // 9
                                               };
     int autoModes = autoArray.length;
     public static int MENU_ITEMS = 3;

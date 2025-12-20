@@ -238,7 +238,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                         // sendToShooter(0);                      // queue up first shot.
                         setState(SHOOT_Q);
                     } else {
-                        holdInIntake();
+                        stopIntake();
                         sendClosestEmptyToIntake();
                         setState(INTAKE_Q);
                     }
