@@ -46,9 +46,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double FIRE_SHOOT     = 0.65;
     private final double FIRE_RETRACT   = 0.12;
 
-    private final double FIRE_HOLD_TIME         = 0.25;
-    private final double ADVANCE_DELAY_TIME     = 0.25;  // was 0.15
-    private final double NEW_ARTIFACT_HOLD_TIME = 0.30;  // was 0.02
+    private final double FIRE_HOLD_TIME         = 0.20;  // was 0.25
+    private final double ADVANCE_DELAY_TIME     = 0.00;  // was 0.25
+    private final double NEW_ARTIFACT_HOLD_TIME = 0.05;  // was 0.30
 
     // Spindexer Servo Positions (in degrees)
     private final double[] SHOOT        = {-120,   0,  120};
@@ -62,14 +62,14 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] REFINED_BACK  = {0.630, 0.557, 0.480};
 
     // General Subsystem Members
-    private double intakePower          =  0;
-    private double targetAngle          = -1;
-    private double currentAngle         =  0;
-    private double estimatedTransitTime =  0;
-    private double spindexerServoValue  = 0;
-    private boolean lastDirectionForward = true;
-    private ElapsedTime spinServoTimer  =  new ElapsedTime();
-    private double sensorRange          =  0;
+    private double intakePower           =  0;
+    private double targetAngle           = -1;
+    private double currentAngle          =  0;
+    private double estimatedTransitTime  =  0;
+    private double spindexerServoValue   =  0;
+    private boolean lastDirectionForward =  true;
+    private ElapsedTime spinServoTimer   =  new ElapsedTime();
+    private double sensorRange           =  0;
 
     private boolean startAutoShoot      = false;
     private boolean shootingPreloads    = true;

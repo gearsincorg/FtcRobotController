@@ -122,13 +122,13 @@ public class GFORCEAutonomous extends LinearOpMode
 
         Action releaseReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
             .setReversed(true)
-            .splineTo(mirror(0, -36), mirror(90))
+            .splineTo(mirror(-6, -36), mirror(90))
             .setReversed(false)
-            .splineTo(mirror(-1, -56), mirror(-90))
+            .splineTo(mirror(-4, -56), mirror(-90))
             .waitSeconds(1)
             .build();
 
-        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-1, -56, -90))
+        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-4, -56, -90))
             .setReversed(true)
             .splineTo(mirror(-24, -14), mirror(-180))
             .build();

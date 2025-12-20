@@ -59,7 +59,7 @@ public class MeepMeepTesting {
         //==  BACK BOT  =============================================================
         Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
                 .splineTo(mirror(-24, -14), mirror(0))
-                .waitSeconds(2)
+                .waitSeconds(1.7)
                 .build();
 
         Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
@@ -70,16 +70,16 @@ public class MeepMeepTesting {
 
         Action releaseReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
             .setReversed(true)
-            .splineTo(mirror(0, -36), mirror(90))
+            .splineTo(mirror(-6, -36), mirror(90))
             .setReversed(false)
-            .splineTo(mirror(-1, -56), mirror(-90))
+            .splineTo(mirror(-4, -56), mirror(-90))
             .waitSeconds(1)
             .build();
 
-        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-1, -56, -90))
+        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-4, -56, -90))
                 .setReversed(true)
                 .splineTo(mirror(-24, -14), mirror(-180))
-                .waitSeconds(2)
+                .waitSeconds(1.7)
                 .build();
 
         Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
@@ -92,9 +92,21 @@ public class MeepMeepTesting {
         Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
                 .setReversed(true)
                 .splineTo(mirror(-36, -14), mirror(-180))
-                .waitSeconds(2)
+                .waitSeconds(1.7)
                 .build();
 
+        Action backCollectPath3 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
+            .setReversed(false)
+            .splineTo(mirror(36, -30), mirror(-90))
+            .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+            .waitSeconds(1)
+            .build();
+
+        Action backReturnPath3 = driveSubsystem.actionBuilder(mirror(36, -62, -90))
+            .setReversed(true)
+            .splineTo(mirror(-36, -14), mirror(-180))
+            .waitSeconds(1.7)
+            .build();
 
 
         //==  FRONT BOT  =============================================================
@@ -200,6 +212,8 @@ public class MeepMeepTesting {
             backReturnPath1,
             backCollectPath2,
             backReturnPath2
+           // backCollectPath3,
+           // backReturnPath3
         ) );
 
 
