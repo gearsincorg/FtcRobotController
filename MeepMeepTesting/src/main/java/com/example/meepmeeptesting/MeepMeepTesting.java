@@ -18,8 +18,6 @@ import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 import org.jetbrains.annotations.NotNull;
 
 public class MeepMeepTesting {
-    static int autoMode = 3;
-
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
@@ -57,12 +55,13 @@ public class MeepMeepTesting {
         DriveShim driveSubsystem = backBot.getDrive();
 
         //==  BACK BOT  =============================================================
-        Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
-                .splineTo(mirror(-40, -25), mirror(045))
-                .waitSeconds(1.7)
+        Action goalScorePreloads = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
+                .lineToY(mirrorY(-24))
+                .waitSeconds(1)
                 .build();
 
-        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-40, -25, 45))
+        Action backCollectRow1 = driveSubsystem.actionBuilder(mirror(-42, -24, 52))
+                //.turnTo(mirror(0))
                 .splineTo(mirror(-12, -30), mirror(-90))
                 .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
                 .waitSeconds(1)
@@ -76,24 +75,31 @@ public class MeepMeepTesting {
             .waitSeconds(1)
             .build();
 
-        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
-                .setReversed(true)
-                .lineToY(mirrorY(-24))
-                .waitSeconds(1.7)
-                .build();
+        Action backReturnRow1Final = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(-40, -24), mirror(150))
+            .waitSeconds(1.7)
+            .build();
 
-        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
-                .setReversed(false)
-                .splineTo(mirror(12, -30), mirror(-90))
-                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
-                .waitSeconds(1)
-                .build();
+        Action backReturnRow1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+            .setReversed(true)
+            .lineToY(mirrorY(-20))
+            .waitSeconds(1.7)
+            .build();
 
-        Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
-                .setReversed(true)
-                .splineTo(mirror(-36, -14), mirror(-180))
-                .waitSeconds(1.7)
-                .build();
+        Action backCollectRow2 = driveSubsystem.actionBuilder(mirror(-12, -20, -90))
+            .setReversed(false)
+            .turnTo(mirror(0))
+            .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(30))
+            .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+            .waitSeconds(1)
+            .build();
+
+        Action backReturnRow2Final = driveSubsystem.actionBuilder(mirror(12, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(-24, -24), mirror(170))
+            .build();
+
 
         Action backCollectPath3 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
             .setReversed(false)
@@ -177,11 +183,11 @@ public class MeepMeepTesting {
 
         //===============================================================
         backBot.runAction(new SequentialAction(
-                backFirstScore,
-                backCollectPath1,
-                backReturnPath1,
-                backCollectPath2,
-                backReturnPath2
+                goalScorePreloads,
+                backCollectRow1,
+                backReturnRow1,
+                backCollectRow2,
+                backReturnRow2Final
                 ) );
 
         frontBot.runAction(new SequentialAction(
@@ -206,12 +212,12 @@ public class MeepMeepTesting {
         ));
 
         releaseBot.runAction(new SequentialAction(
-            backFirstScore,
-            backCollectPath1,
+            goalScorePreloads,
+            backCollectRow1,
             releaseReturnPath1,
-            backReturnPath1,
-            backCollectPath2,
-            backReturnPath2
+            backReturnRow1,
+            backCollectRow2
+           // backReturnPath2
            // backCollectPath3,
            // backReturnPath3
         ) );
@@ -221,7 +227,7 @@ public class MeepMeepTesting {
 
 
         // ---------------------------------------------------------------------------------------
-        meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_LIGHT)
+        meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
                 //.addEntity(releaseBot)
