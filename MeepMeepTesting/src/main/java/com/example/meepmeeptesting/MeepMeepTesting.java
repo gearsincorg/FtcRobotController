@@ -58,11 +58,11 @@ public class MeepMeepTesting {
 
         //==  BACK BOT  =============================================================
         Action backFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[0]))
-                .splineTo(mirror(-24, -14), mirror(0))
+                .splineTo(mirror(-40, -25), mirror(045))
                 .waitSeconds(1.7)
                 .build();
 
-        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
+        Action backCollectPath1 = driveSubsystem.actionBuilder(mirror(-40, -25, 45))
                 .splineTo(mirror(-12, -30), mirror(-90))
                 .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
                 .waitSeconds(1)
@@ -76,9 +76,9 @@ public class MeepMeepTesting {
             .waitSeconds(1)
             .build();
 
-        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-4, -56, -90))
+        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
                 .setReversed(true)
-                .splineTo(mirror(-24, -14), mirror(-180))
+                .lineToY(mirrorY(-24))
                 .waitSeconds(1.7)
                 .build();
 
@@ -224,10 +224,10 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(releaseBot)
-                //.addEntity(backBot)
+                //.addEntity(releaseBot)
+                .addEntity(backBot)
                 //.addEntity(frontBot)
-//                .addEntity(cycleBot)
+                //.addEntity(cycleBot)
                 .start();
     }
 
