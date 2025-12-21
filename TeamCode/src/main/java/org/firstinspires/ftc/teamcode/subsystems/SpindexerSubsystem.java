@@ -36,8 +36,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double HOLD_POWER   =  0.4;  // a bit slower TEST
     private final double EJECT_POWER  = -0.7;  // a bit faster TEST
 
-    // private final double PULSE_SCALE_FACTOR = 1.0 / 1620.0;  // CONVERTS 1620 DEG TO 1.0 range ??
-    private final double PULSE_SCALE_FACTOR = 0.299 / 480.0;  // CONVERTS 960 DEG TO 0.595range ??
+    private final double PULSE_SCALE_FACTOR = 0.299 / 480.0;  // CONVERTS 480 DEG TO 0.299 servo range
     private final double CENTER_OFFSET = 0; // -3.24;  // used to adjust the spindexer so 0 deg is B centered
     private final double MIN_RANGE =  50; // was 50
     private final double MAX_RANGE = 100; // was 120
@@ -57,7 +56,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] HOME_ANGLES  = { 120,   0, -120};
     private final int[][]  AUTO_SLOTS   = {{2, 1, 0}, {0, 2, 1}, {0, 1, 2}};
 
-    private final double[]  REFINED_SHOOT = {0.577, 0.502, 0.421};
+    private final double[] REFINED_SHOOT = {0.577, 0.502, 0.421};
     private final double[] REFINED_FRONT = {0.520, 0.442, 0.366};
     private final double[] REFINED_BACK  = {0.630, 0.557, 0.480};
 
@@ -503,7 +502,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             if (targetAngle == -1) {
                 estimatedTransitTime = 1.0;  // Allow extra time for unknown start location.
             } else {
-                estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 270; //
+                estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 260; //
             }
 
             targetAngle = newTargetAngle ;
