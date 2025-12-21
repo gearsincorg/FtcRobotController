@@ -71,13 +71,13 @@ public final class DriveSubsystem
         public double kA = 0.00;
 
         // path profile parameters (in inches)
-        public double maxWheelVel     =  60;
+        public double maxWheelVel     =  50;
         public double minProfileAccel = -60;
         public double maxProfileAccel =  80;
 
         // turn profile parameters (in radians)
-        public double maxAngVel   = Math.PI / 2.0; // shared with path was:   PI
-        public double maxAngAccel = Math.PI;  // was PI*2
+        public double maxAngVel   = Math.PI / 1.5; // shared with path was:   PI / 2
+        public double maxAngAccel = Math.PI * 1.5;  // was PI*2
 
         // path controller gains
         public double ramseteBBar = 2.0; // Like P gain (was 2)
