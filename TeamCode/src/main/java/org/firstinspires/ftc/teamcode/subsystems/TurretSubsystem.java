@@ -20,6 +20,7 @@ import androidx.core.math.MathUtils;
 public class TurretSubsystem extends SubsystemBase {
 
     private boolean TEST_MODE = false ;  //  <<---  set to true to play with shooter speed/angle
+    private double CYCLE_TIME = 0.025 ;  // To anticipate motion
 
     public TurretSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -213,16 +214,18 @@ public class TurretSubsystem extends SubsystemBase {
             targetY = BLUE_Y;
         }
 
-        double robotX = SharedOQ.OQlocalizer.posX_mm + (TURRET_OFFSET_DISTANCE * Math.sin(SharedOQ.OQlocalizer.heading_rad));
-        double robotY = SharedOQ.OQlocalizer.posY_mm - (TURRET_OFFSET_DISTANCE * Math.cos(SharedOQ.OQlocalizer.heading_rad));
+        // calculate robot-Turret pose with predicted motion
+        double robotH = SharedOQ.OQlocalizer.heading_rad + (SharedOQ.OQlocalizer.velHeading_radS * CYCLE_TIME);
+        double robotX = SharedOQ.OQlocalizer.posX_mm + (TURRET_OFFSET_DISTANCE * Math.sin(robotH)) + (SharedOQ.OQlocalizer.velX_mmS * CYCLE_TIME);
+        double robotY = SharedOQ.OQlocalizer.posY_mm - (TURRET_OFFSET_DISTANCE * Math.cos(robotH)) + (SharedOQ.OQlocalizer.velY_mmS * CYCLE_TIME);
 
         double x = targetX - robotX;
         double y = targetY - robotY;
 
         targetRange = Math.hypot(x,y);
         Ag = Math.toDegrees(Math.atan2(y, x));
-        Ar = Math.toDegrees(SharedOQ.OQlocalizer.heading_rad);
-        Ad = normalizeAngle(Ag - Ar);   // needed to stop bounce on 180/-180
+        Ar = Math.toDegrees(robotH);
+        Ad = normalizeAngle(Ag - Ar);   
     }
 
     private double encoderToDegrees(int encoder) {
@@ -257,15 +260,8 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     public double solve(double range, double[] coefs){
-
         double sum = coefs[0];
         sum += range * coefs[1];
-
-        //for (int c=1 ; c < 4; c++) {
-        //    sum += (range * coefs[c]);
-        //    range *= range; // Increase  range to next order.
-        //}
-
         return sum;
     }
 
