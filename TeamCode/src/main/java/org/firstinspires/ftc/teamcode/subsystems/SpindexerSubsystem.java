@@ -38,8 +38,8 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private final double PULSE_SCALE_FACTOR = 0.299 / 480.0;  // CONVERTS 480 DEG TO 0.299 servo range
     private final double CENTER_OFFSET = 0; // -3.24;  // used to adjust the spindexer so 0 deg is B centered
-    private final double MIN_RANGE =  50; // was 50
-    private final double MAX_RANGE = 100; // was 120
+    private final double MIN_RANGE =  10; // was 50
+    private final double MAX_RANGE =  90; // was 100
 
     // Flipper Servo positions and times for shooting
     private final double FIRE_SHOOT     = 0.65;
