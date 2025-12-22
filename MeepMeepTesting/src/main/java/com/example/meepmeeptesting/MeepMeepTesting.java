@@ -62,13 +62,8 @@ public class MeepMeepTesting {
                 .build();
 
         Action backCollectRow1 = driveSubsystem.actionBuilder(mirror(-39, -20, 52))
-                .turnTo(mirror(0))
-                .splineTo(mirror(-12, -42), mirror(-90), new TranslationalVelConstraint(25))
-                .lineToY(mirrorY(-56), new TranslationalVelConstraint(15))
-
-
-                //.splineTo(mirror(-12, -30), mirror(-90), new TranslationalVelConstraint(30))
-                //.lineToY(mirrorY(-56), new TranslationalVelConstraint(15))
+                .splineTo(mirror(-12, -42), mirror(-90), new TranslationalVelConstraint(20))
+                .lineToY(mirrorY(-56), new TranslationalVelConstraint(12))
                 .waitSeconds(1)
                 .build();
 
@@ -95,8 +90,8 @@ public class MeepMeepTesting {
         Action backCollectRow2 = driveSubsystem.actionBuilder(mirror(-12, -20, -90))
             .setReversed(false)
             .turnTo(mirror(0))
-            .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(25))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(15))
+            .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(20))
+            .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
             .waitSeconds(1)
             .build();
 

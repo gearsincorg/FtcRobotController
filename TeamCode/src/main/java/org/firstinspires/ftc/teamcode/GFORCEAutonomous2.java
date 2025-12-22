@@ -54,7 +54,7 @@ public class GFORCEAutonomous2 extends LinearOpMode
         driveSubsystem.init(null, true);
         spindexerSubsystem.init(true);
         spindexerSubsystem.preloadSequence();
-        spindexerSubsystem.sendToShooter(1);
+        spindexerSubsystem.sendToShooter(1);   /// change to 0 for no-move auto
         turretSubsystem.init(true);
 
             // Wait for driver to press start
@@ -118,11 +118,15 @@ public class GFORCEAutonomous2 extends LinearOpMode
             .build();
     }
 
-    private Action backCollectRow1() {
+    private Action turnToZero() {
         return driveSubsystem.actionBuilder(mirror(-39, -20, 52))
             .turnTo(mirror(0))
-            .splineTo(mirror(-12, -42), mirror(-90), new TranslationalVelConstraint(25))
-            .lineToY(mirrorY(-56), new TranslationalVelConstraint(15))
+            .build();
+    }
+    private Action backCollectRow1() {
+        return driveSubsystem.actionBuilder(mirror(-39, -20, 0))
+            .splineTo(mirror(-12, -42), mirror(-90), new TranslationalVelConstraint(20))
+            .lineToY(mirrorY(-56), new TranslationalVelConstraint(12))
             .build();
     }
 
@@ -144,8 +148,8 @@ public class GFORCEAutonomous2 extends LinearOpMode
         return driveSubsystem.actionBuilder(mirror(-12, -20, -90))
             .setReversed(false)
             .turnTo(mirror(0))
-            .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(25))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(15))
+            .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(20))
+            .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
             .build();
     }
 
@@ -165,10 +169,11 @@ public class GFORCEAutonomous2 extends LinearOpMode
     // ==========================================================================================
     private Action build_Goal_3(){
         return new SequentialAction(
-                Globals.actionSetRobotState(RobotStates.SHOOTING),
-                goalScorePreloads(),
-                spindexerSubsystem.actionStartAutoShooting(),
-                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING)
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            goalScorePreloads(),
+            spindexerSubsystem.actionStartAutoShooting(),
+            turnToZero(),
+            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING)
         );
     }
 
@@ -176,16 +181,17 @@ public class GFORCEAutonomous2 extends LinearOpMode
     private Action build_Goal_6(){
 
         return new SequentialAction(
-                Globals.actionSetRobotState(RobotStates.SHOOTING),
-                goalScorePreloads(),
-                spindexerSubsystem.actionStartAutoShooting(),
-                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            goalScorePreloads(),
+            spindexerSubsystem.actionStartAutoShooting(),
+            turnToZero(),
+            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-                backCollectRow1(),
-                spindexerSubsystem.actionWaitForDoneCollecting(1),
-                Globals.actionSetRobotState(RobotStates.SHOOTING),
-                backReturnRow1Final(),
-                spindexerSubsystem.actionStartAutoShooting()
+            backCollectRow1(),
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            backReturnRow1Final(),
+            spindexerSubsystem.actionStartAutoShooting()
         );
     }
 
@@ -224,24 +230,25 @@ public class GFORCEAutonomous2 extends LinearOpMode
     private Action build_Goal_9(){
 
         return new SequentialAction(
-                Globals.actionSetRobotState(RobotStates.SHOOTING),
-                goalScorePreloads(),
-                spindexerSubsystem.actionStartAutoShooting(),
-                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            goalScorePreloads(),
+            spindexerSubsystem.actionStartAutoShooting(),
+            turnToZero(),
+            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-                backCollectRow1(),
-                spindexerSubsystem.actionWaitForDoneCollecting(1),
-                Globals.actionSetRobotState(RobotStates.SHOOTING),
-                backReturnRow1(),
-                spindexerSubsystem.actionStartAutoShooting(),
-                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+            backCollectRow1(),
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            backReturnRow1(),
+            spindexerSubsystem.actionStartAutoShooting(),
+            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-                backCollectRow2(),
-                spindexerSubsystem.actionWaitForDoneCollecting(1),
-                Globals.actionSetRobotState(RobotStates.SHOOTING),
-                backReturnRow2Final(),
-                spindexerSubsystem.actionStartAutoShooting(),
-                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING)
+            backCollectRow2(),
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            backReturnRow2Final(),
+            spindexerSubsystem.actionStartAutoShooting(),
+            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING)
         );
     }
 
