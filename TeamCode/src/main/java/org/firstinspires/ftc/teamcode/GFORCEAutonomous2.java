@@ -40,7 +40,7 @@ public class GFORCEAutonomous2 extends LinearOpMode
     Pose2d atOrigin = new Pose2d(0,0,0);
     Pose2d atGoal   = new Pose2d(-58, -45, Math.toRadians(52));
     Pose2d atWall   = new Pose2d( 62, -16, Math.toRadians(180));
-    private final Pose2d[] autoStartLocations = {atGoal, atGoal, atGoal, atGoal, atGoal, atGoal, atWall, atWall, atWall, atWall, atOrigin};
+    private final Pose2d[] autoStartLocations = {atGoal, atGoal, atGoal, atGoal, atGoal, atGoal, atWall, atWall, atWall, atOrigin};
 
     // ############################################################################
 
@@ -54,7 +54,7 @@ public class GFORCEAutonomous2 extends LinearOpMode
         driveSubsystem.init(null, true);
         spindexerSubsystem.init(true);
         spindexerSubsystem.preloadSequence();
-        spindexerSubsystem.sendToIntake(0);
+        spindexerSubsystem.sendToShooter(1);
         turretSubsystem.init(true);
 
             // Wait for driver to press start
@@ -113,15 +113,16 @@ public class GFORCEAutonomous2 extends LinearOpMode
     // create methods for each individual path
     private Action goalScorePreloads() {
         return driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-            .lineToY(mirrorY(-24))
+            .lineToY(mirrorY(-20))
             .waitSeconds(0.25)
             .build();
     }
 
     private Action backCollectRow1() {
-        return driveSubsystem.actionBuilder(mirror(-42, -24, 52))
-            .splineTo(mirror(-12, -30), mirror(-90))
-            .lineToY(mirrorY(-56), new TranslationalVelConstraint(10))
+        return driveSubsystem.actionBuilder(mirror(-39, -20, 52))
+            .turnTo(mirror(0))
+            .splineTo(mirror(-12, -42), mirror(-90), new TranslationalVelConstraint(25))
+            .lineToY(mirrorY(-56), new TranslationalVelConstraint(15))
             .build();
     }
 
@@ -143,15 +144,17 @@ public class GFORCEAutonomous2 extends LinearOpMode
         return driveSubsystem.actionBuilder(mirror(-12, -20, -90))
             .setReversed(false)
             .turnTo(mirror(0))
-            .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(30))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+            .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(25))
+            .lineToY(mirrorY(-62), new TranslationalVelConstraint(15))
             .build();
     }
 
     private Action backReturnRow2Final() {
         return driveSubsystem.actionBuilder(mirror(12, -56, -90))
             .setReversed(true)
-            .splineTo(mirror(-24, -24), mirror(170))
+            .lineToY(mirrorY(-48))
+            .splineTo(mirror(-12, -24), mirror(180))
+            .lineToX(-48)
             .build();
     }
 
@@ -351,13 +354,15 @@ public class GFORCEAutonomous2 extends LinearOpMode
 
 
     //===========================================================================================
-    private Action build_FrontLeave() {
-        Action frontLeavePath = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-            .lineToX(36)
+    private Action build_SteerTest() {
+        Action test = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+            .lineToX(48)
+            .splineTo(mirror(72, 24), mirror(90))
+            .lineToY(mirrorY(72))
             .build();
 
         return new SequentialAction(
-            frontLeavePath
+            test
         );
     }
 
@@ -603,6 +608,10 @@ public class GFORCEAutonomous2 extends LinearOpMode
 
             case 8:
                 sequentialAction = build_Front_3_C_6();
+                break;
+
+            case 9:
+                sequentialAction = build_SteerTest();
                 break;
 
             default:

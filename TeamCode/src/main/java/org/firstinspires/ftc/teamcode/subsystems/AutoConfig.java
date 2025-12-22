@@ -32,7 +32,8 @@ public class AutoConfig
                                               "GOAL Shoot 12",              // 5
                                               "FRONT Shoot 3",              // 6
                                               "FRONT Shoot 6 C 3",          // 7
-                                              "FRONT Shoot 3 C 6"           // 8
+                                              "FRONT Shoot 3 C 6",           // 8
+                                              "STEER test"                  // 9
                                               };
     int autoModes = autoArray.length;
     public static int MENU_ITEMS = 3;
