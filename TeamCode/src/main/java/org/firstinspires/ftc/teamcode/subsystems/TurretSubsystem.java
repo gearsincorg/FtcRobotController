@@ -75,7 +75,7 @@ public class TurretSubsystem extends SubsystemBase {
         aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         aim.setPositionPIDFCoefficients(26);
 
-        magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "magnet");
+        magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "turret_magnet");
         magnet.setMode(DigitalChannel.Mode.INPUT);
 
         // initialize all the subsystem

@@ -6,6 +6,7 @@ import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -27,6 +28,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private DcMotor intake;
     private Servo fire;
     private Servo spindexer;
+    private DigitalChannel magnet;
     private Rev2mDistanceSensor distanceFront;
     private Rev2mDistanceSensor distanceBack;
     private boolean newArtifact = false;
@@ -39,7 +41,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double PULSE_SCALE_FACTOR = 0.299 / 480.0;  // CONVERTS 480 DEG TO 0.299 servo range
     private final double CENTER_OFFSET = 0; // -3.24;  // used to adjust the spindexer so 0 deg is B centered
     private final double MIN_RANGE =  10; // was 50
-    private final double MAX_RANGE =  90; // was 100
+    private final double MAX_RANGE =  110; // was 100
 
     // Flipper Servo positions and times for shooting
     private final double FIRE_SHOOT     = 0.65;
@@ -56,6 +58,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] HOME_ANGLES  = { 120,   0, -120};
     private final int[][]  AUTO_SLOTS   = {{2, 1, 0}, {0, 2, 1}, {0, 1, 2}};
 
+    // 5 Turn Torque servo
     private final double[] REFINED_SHOOT = {0.577, 0.502, 0.421};
     private final double[] REFINED_FRONT = {0.520, 0.442, 0.366};
     private final double[] REFINED_BACK  = {0.630, 0.557, 0.480};
@@ -80,6 +83,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private int     lastSlotFilled      = -1;
     private boolean unjamForward        = false;
     private boolean isTiming            = false;
+    private boolean shotCentered        = false;
     private ElapsedTime actionTime      = new ElapsedTime();
 
     private ArtifactColor[] slotColors = {ArtifactColor.EMPTY, ArtifactColor.EMPTY, ArtifactColor.EMPTY};
@@ -102,6 +106,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         distanceFront = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceFront");
         distanceBack = myOpMode.hardwareMap.get(Rev2mDistanceSensor.class, "distanceBack");
 
+        magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "spindexer_magnet");
+        magnet.setMode(DigitalChannel.Mode.INPUT);
+
         spinServoTimer.reset();
         targetAngle  = -1;
     }
@@ -112,6 +119,8 @@ public class SpindexerSubsystem extends SubsystemBase {
      * Called every Update() cycle;
      */
     public void readSensors() {
+        shotCentered = !magnet.getState();
+
         // process the artifact range sensors if we are INTAKING
         if (currentState == INTAKING) {
 
@@ -251,7 +260,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 if (allArtifactsHeld == 0 ) {
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
                     setState(INTAKE_Q);
-                } else if (inPosition())   {
+                } else if (inPosition()  && shotCentered)   {
                     setState(RDY_2_SHOOT);
                 }
                 break;
@@ -356,7 +365,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     public void showStatus() {
         // myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
         myOpMode.telemetry.addData("SPINDEX", "%s %.0f>%.0f (%.3f) %s ", currentState, currentAngle, targetAngle, spindexerServoValue, inPosition()? "GOOD" : "Move");
-        myOpMode.telemetry.addData("SLOTS", "%s %s %s\n", slotColors[0], slotColors[1], slotColors[2]);
+        myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
+        myOpMode.telemetry.addData("CENTERED", "%s\n", shotCentered ? "YES" : "NO");
     }
 
     public void startIntaking() {
@@ -502,7 +512,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             if (targetAngle == -1) {
                 estimatedTransitTime = 1.0;  // Allow extra time for unknown start location.
             } else {
-                estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 260; //
+                estimatedTransitTime = Math.abs((newTargetAngle - targetAngle)) / 300; // was 260 but now we don't need to wait for shooting
             }
 
             targetAngle = newTargetAngle ;

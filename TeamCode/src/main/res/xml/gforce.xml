@@ -18,7 +18,8 @@
             <OctoQuadFTC name="octoquad" port="0" bus="1" />
             <REV_VL53L0X_RANGE_SENSOR name="distanceFront" port="0" bus="3" />
             <REV_VL53L0X_RANGE_SENSOR name="distanceBack" port="0" bus="2" />
-            <DigitalDevice  name="magnet" port="6" />
+            <DigitalDevice  name="turret_magnet" port="6" />
+            <DigitalDevice  name="spindexer_magnet" port="2" />
         </LynxModule>
 
         <ServoHub name="Servo Hub 2" port="2">
