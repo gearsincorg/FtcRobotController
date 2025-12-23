@@ -579,6 +579,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 } else {
                     if ((actionTime.time() >= time) || (allArtifactsHeld == 3)){
                         runAgain = false;
+                        isTiming = false;
                     }
                 }
                 return runAgain;
