@@ -32,9 +32,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     private boolean newArtifact = false;
 
     // Subsystem Constants
-    private final double INTAKE_POWER =  0.9;  // a bit slower TEST
-    private final double HOLD_POWER   =  0.4;  // a bit slower TEST
-    private final double EJECT_POWER  = -0.7;  // a bit faster TEST
+    private final double INTAKE_POWER =  0.9;  //
+    private final double CLEAR_POWER  = -0.2;  //
+    private final double EJECT_POWER  = -1.0;  //
 
     private final double PULSE_SCALE_FACTOR = 0.299 / 480.0;  // CONVERTS 480 DEG TO 0.299 servo range
     private final double CENTER_OFFSET = 0; // -3.24;  // used to adjust the spindexer so 0 deg is B centered
@@ -205,7 +205,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     sendToLastAngle(lastSlotAngleFilled, lastSlotFilled);
                     setState(UNJAM);
                 } else if (myOpMode.gamepad1.left_trigger > 0.25) {
-                    // Start LUDICROUS UNJAM process
+                    // Start KRAZY UNJAM process
                     ejectIntake();
                     setState(KRAZY_UNJAM);
                 } else if (myOpMode.gamepad1.leftBumperWasPressed()) {
@@ -216,6 +216,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     setState(SHOOT_Q);
                 } else if (newArtifact) {
                     // start timer to let ball settle
+                    clearInIntake();
                     setState(INTAKE_HLD);
                 } else if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
                     // switch to shooting (usually happens in auto)
@@ -266,6 +267,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 } else if (myOpMode.gamepad1.leftBumperWasPressed()) {
                     // Switch to intaking
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
+                    setSpindexerToEmpty();
                     sendClosestEmptyToIntake();
                     setState(INTAKE_Q);
                 } else if (myOpMode.gamepad1.left_trigger > 0.25) {
@@ -329,10 +331,8 @@ public class SpindexerSubsystem extends SubsystemBase {
             case KRAZY_UNJAM: {
                 if (myOpMode.gamepad1.left_trigger < 0.25){
                     stopIntake();
-                    slotColors[0] = ArtifactColor.EMPTY;
-                    slotColors[1] = ArtifactColor.EMPTY;
-                    slotColors[2] = ArtifactColor.EMPTY;
-                    sendToIntake(0);
+                    setSpindexerToEmpty();
+                    sendClosestEmptyToIntake();
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
                     myOpMode.gamepad1.leftBumperWasPressed();  //  clear out shoot/intake switch button
                     setState(INTAKE_Q);
@@ -376,8 +376,8 @@ public class SpindexerSubsystem extends SubsystemBase {
         intake.setPower(intakePower);
     }
 
-    public void holdInIntake(){
-        intakePower = HOLD_POWER;
+    public void clearInIntake(){
+        intakePower = CLEAR_POWER;
         intake.setPower(intakePower);
     }
 
@@ -525,6 +525,12 @@ public class SpindexerSubsystem extends SubsystemBase {
         slotColors[0] = ArtifactColor.PURPLE;
         slotColors[1] = ArtifactColor.PURPLE;
         slotColors[2] = ArtifactColor.GREEN;
+    }
+
+    public void setSpindexerToEmpty(){
+        slotColors[0] = ArtifactColor.EMPTY;
+        slotColors[1] = ArtifactColor.EMPTY;
+        slotColors[2] = ArtifactColor.EMPTY;
     }
 
     public void setPatternID (int id){
