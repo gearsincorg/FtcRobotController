@@ -105,7 +105,6 @@ public class GFORCEAutonomous extends LinearOpMode
         Globals.LAST_POSE = driveSubsystem.getPose() ;
     }
 
-
     // ==========================================================================================
     // Place all Back-Side paths here!
     // ==========================================================================================
@@ -205,6 +204,74 @@ public class GFORCEAutonomous extends LinearOpMode
             .splineTo(mirror(12, -20), mirror(180))
             .lineToX(-36)
             .build();
+    }
+
+    // ==========================================================================================
+    // Place all Front-side paths here!
+    // ==========================================================================================
+
+    private Action frontScorePreloads() {
+        return driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+                .lineToX(54)
+                .build();
+    }
+
+    private Action frontLeave() {
+        return  driveSubsystem.actionBuilder(mirror(54, -13, 180))
+                .lineToX(36)
+                .build();
+    }
+
+    private Action frontCollectRow3() {
+        return driveSubsystem.actionBuilder(mirror(54, -16, 180))
+                .splineTo(mirror(36, -30), mirror(-90))
+                .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
+                .build();
+    }
+
+    private Action frontReturnRow3() {
+        return driveSubsystem.actionBuilder(mirror(36, -62, -90))
+                .setReversed(true)
+                .splineTo(mirror(54, -16), mirror(90))
+                .build();
+    }
+
+    private Action frontTurnToMinus90() {
+        return driveSubsystem.actionBuilder(mirror(54, -16, 180))
+                .turnTo(mirror(-90))
+                .build();
+    }
+
+    private Action frontCollectCycle() {
+        return driveSubsystem.actionBuilder(mirror(54, -16, -90))
+                .lineToY(mirrorY(-56))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .build();
+    }
+
+    private Action frontReturnCycle() {
+        return driveSubsystem.actionBuilder(mirror(54, -62, -90))
+                .setReversed(true)
+                .lineToY(mirrorY(-18))
+                .lineToY(mirrorY(-16), new TranslationalVelConstraint(12))
+                .waitSeconds(0.33)
+                .build();
+    }
+
+    private Action frontCollectMoreCycle() {
+        return driveSubsystem.actionBuilder(mirror(54, -16, -90))
+                .splineTo(mirror(38, -56), mirror(-90))
+                .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .build();
+    }
+
+    private Action frontReturnMoreCycle() {
+        return driveSubsystem.actionBuilder(mirror(38, -62, -90))
+                .setReversed(true)
+                .splineTo(mirror(54, -18), mirror(90))
+                .lineToY(mirrorY(-16), new TranslationalVelConstraint(12))
+                .waitSeconds(0.33)
+                .build();
     }
 
     // ==========================================================================================
@@ -339,73 +406,6 @@ public class GFORCEAutonomous extends LinearOpMode
         );
     }
 
-    // ==========================================================================================
-    // Place all Front-side paths here!
-    // ==========================================================================================
-
-    private Action frontScorePreloads() {
-        return driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-                .lineToX(54)
-                .build();
-    }
-
-    private Action frontLeave() {
-       return  driveSubsystem.actionBuilder(mirror(54, -13, 180))
-        .lineToX(36)
-        .build();
-    }
-
-    private Action frontCollectRow3() {
-        return driveSubsystem.actionBuilder(mirror(54, -16, 180))
-            .splineTo(mirror(36, -30), mirror(-90))
-            .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
-            .build();
-    }
-
-    private Action frontReturnRow3() {
-        return driveSubsystem.actionBuilder(mirror(36, -62, -90))
-            .setReversed(true)
-            .splineTo(mirror(54, -16), mirror(90))
-            .build();
-    }
-
-    private Action frontTurnToMinus90() {
-        return driveSubsystem.actionBuilder(mirror(54, -16, 180))
-            .turnTo(mirror(-90))
-            .build();
-    }
-
-    private Action frontCollectCycle() {
-        return driveSubsystem.actionBuilder(mirror(54, -16, -90))
-            .lineToY(mirrorY(-56))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
-            .build();
-    }
-
-    private Action frontReturnCycle() {
-        return driveSubsystem.actionBuilder(mirror(54, -62, -90))
-            .setReversed(true)
-            .lineToY(mirrorY(-18))
-            .lineToY(mirrorY(-16), new TranslationalVelConstraint(12))
-            .waitSeconds(0.33)
-            .build();
-    }
-
-    private Action frontCollectMoreCycle() {
-        return driveSubsystem.actionBuilder(mirror(54, -16, -90))
-            .splineTo(mirror(30, -56), mirror(-90))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
-            .build();
-    }
-
-    private Action frontReturnMoreCycle() {
-        return driveSubsystem.actionBuilder(mirror(38, -62, -90))
-            .setReversed(true)
-            .splineTo(mirror(54, -18), mirror(90))
-            .lineToY(mirrorY(-16), new TranslationalVelConstraint(12))
-            .waitSeconds(0.33)
-            .build();
-    }
 
     // ==========================================================================================
     // Place all FRONT Auto builders here!
@@ -458,7 +458,6 @@ public class GFORCEAutonomous extends LinearOpMode
     //===========================================================================================
 
     Action build_Front_3_C_6() {
-
         return new SequentialAction (
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             frontScorePreloads(),
@@ -473,10 +472,10 @@ public class GFORCEAutonomous extends LinearOpMode
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-            frontCollectMoreCycle(),
+            frontCollectCycle(),
             spindexerSubsystem.actionWaitForDoneCollecting(1.5),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
-            frontReturnMoreCycle(),
+            frontReturnCycle(),
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
@@ -487,7 +486,7 @@ public class GFORCEAutonomous extends LinearOpMode
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-            frontCollectMoreCycle()
+            frontCollectCycle()
             );
     }
 
@@ -516,7 +515,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return headingRad;
     }
 
-    private static double mirrorY(double lineToY){
+    private double mirrorY(double lineToY){
         if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
             lineToY = -lineToY;
         }
