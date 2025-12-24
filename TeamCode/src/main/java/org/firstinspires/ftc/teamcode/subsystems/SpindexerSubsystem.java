@@ -82,9 +82,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double  lastSlotAngleFilled = 0;  // Used during unjamming
     private int     lastSlotFilled      = -1;
     private boolean unjamForward        = false;
-    private boolean isTiming            = false;
     private boolean shotCentered        = false;
     private ElapsedTime actionTime      = new ElapsedTime();
+    private boolean isTiming            = false;
 
     private ArtifactColor[] slotColors = {ArtifactColor.EMPTY, ArtifactColor.EMPTY, ArtifactColor.EMPTY};
 

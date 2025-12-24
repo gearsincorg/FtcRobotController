@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.auxtools.Drawing;
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
@@ -59,6 +60,10 @@ public final class DriveSubsystem
 
     private boolean     headingLocked = false;
     private double      headingSetpointDeg = 0;
+
+    private ElapsedTime actionTime      = new ElapsedTime();
+    private boolean isTiming            = false;
+
 
     public static class Params {
         // drive model parameters (Tick is 1 mm)
@@ -278,7 +283,6 @@ public final class DriveSubsystem
             DualNum<Time> x = timeTrajectory.profile.get(t);
 
             Pose2dDual<Arclength> txWorldTarget = timeTrajectory.path.get(x.value(), 3);
-
             updatePoseEstimate();
 
             PoseVelocity2dDual<Time> command = new RamseteController(kinematics.trackWidth, PARAMS.ramseteZeta, PARAMS.ramseteBBar)
