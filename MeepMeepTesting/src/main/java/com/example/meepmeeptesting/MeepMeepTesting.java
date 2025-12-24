@@ -49,6 +49,7 @@ public class MeepMeepTesting {
         return driveSubsystem.actionBuilder(mirror(-39, -20, 0))
                 .splineTo(mirror(-12, -42), mirror(-90), new TranslationalVelConstraint(20))
                 .lineToY(mirrorY(-56), new TranslationalVelConstraint(12))
+                .waitSeconds(0.5)
                 .build();
     }
 
@@ -66,6 +67,7 @@ public class MeepMeepTesting {
         return driveSubsystem.actionBuilder(mirror(-4, -56, -90))
                 .setReversed(true)
                 .splineTo(mirror(-12, -20), mirror(90))
+                .waitSeconds(1.7)
                 .build();
     }
 
@@ -80,6 +82,7 @@ public class MeepMeepTesting {
         return driveSubsystem.actionBuilder(mirror(-12, -56, -90))
                 .setReversed(true)
                 .lineToY(mirrorY(-20))
+                .waitSeconds(1.7)
                 .build();
     }
 
@@ -89,6 +92,7 @@ public class MeepMeepTesting {
                 .turnTo(mirror(0))
                 .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(20))
                 .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .waitSeconds(0.5)
                 .build();
     }
 
@@ -98,6 +102,7 @@ public class MeepMeepTesting {
                 .lineToY(mirrorY(-48))
                 .splineTo(mirror(-12, -24), mirror(180))
                 .lineToX(-40)
+                .waitSeconds(1.7)
                 .build();
     }
 
@@ -107,6 +112,7 @@ public class MeepMeepTesting {
                 .lineToY(mirrorY(-44))
                 .splineTo(mirror(-12, -20), mirror(180))
                 .lineToX(-12)
+                .waitSeconds(1.7)
                 .build();
     }
 
@@ -116,7 +122,7 @@ public class MeepMeepTesting {
                 .lineToX(12)
                 .splineTo(mirror(36, -42), mirror(-90), new TranslationalVelConstraint(20))
                 .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
-                .waitSeconds(1)
+                .waitSeconds(0.5)
                 .build();
     }
 
@@ -125,6 +131,7 @@ public class MeepMeepTesting {
                 .lineToY(mirrorY(-44))
                 .splineTo(mirror(12, -20), mirror(180))
                 .lineToX(-36)
+                .waitSeconds(1.7)
                 .build();
     }
 
@@ -148,6 +155,7 @@ public class MeepMeepTesting {
         return driveSubsystem.actionBuilder(mirror(54, -16, 180))
                 .splineTo(mirror(36, -30), mirror(-90))
                 .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
+                .waitSeconds(0.5)
                 .build();
     }
 
@@ -155,6 +163,7 @@ public class MeepMeepTesting {
         return driveSubsystem.actionBuilder(mirror(36, -62, -90))
                 .setReversed(true)
                 .splineTo(mirror(54, -16), mirror(90))
+                .waitSeconds(1.7)
                 .build();
     }
 
@@ -168,6 +177,7 @@ public class MeepMeepTesting {
         return driveSubsystem.actionBuilder(mirror(54, -16, -90))
                 .lineToY(mirrorY(-56))
                 .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .waitSeconds(0.5)
                 .build();
     }
 
@@ -177,6 +187,7 @@ public class MeepMeepTesting {
                 .lineToY(mirrorY(-18))
                 .lineToY(mirrorY(-16), new TranslationalVelConstraint(12))
                 .waitSeconds(0.33)
+                .waitSeconds(1.7)
                 .build();
     }
 
@@ -184,6 +195,7 @@ public class MeepMeepTesting {
         return driveSubsystem.actionBuilder(mirror(54, -16, -90))
                 .splineTo(mirror(38, -56), mirror(-90))
                 .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .waitSeconds(0.5)
                 .build();
     }
 
@@ -193,6 +205,7 @@ public class MeepMeepTesting {
                 .splineTo(mirror(54, -18), mirror(90))
                 .lineToY(mirrorY(-16), new TranslationalVelConstraint(12))
                 .waitSeconds(0.33)
+                .waitSeconds(1.7)
                 .build();
     }
 
@@ -254,6 +267,7 @@ public class MeepMeepTesting {
 
         Bot3.runAction(new SequentialAction(
                 goalScorePreloads(),
+                turnToZero(),
                 backCollectRow1(),
                 backReleaseAfterRow1(),
                 backReturnAfterRelease(),
