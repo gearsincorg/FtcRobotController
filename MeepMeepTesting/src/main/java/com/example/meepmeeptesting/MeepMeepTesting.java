@@ -68,12 +68,14 @@ public class MeepMeepTesting {
             .waitSeconds(1)
             .build();
 
-        Action releaseReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+        Action backReleaseAndReturnAfterRow1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
             .setReversed(true)
-            .splineTo(mirror(-6, -36), mirror(90))
+            .splineTo(mirror(-6, -40), mirror(90))
             .setReversed(false)
             .splineTo(mirror(-4, -56), mirror(-90))
             .waitSeconds(1)
+            .setReversed(true)
+            .splineTo(mirror(-12, -20), mirror(90))
             .build();
 
         Action backReturnRow1Final = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
@@ -204,11 +206,9 @@ public class MeepMeepTesting {
                 //test
                 goalScorePreloads,
                 backCollectRow1,
-                backReturnRow1,
+                backReleaseAndReturnAfterRow1,
                 backCollectRow2,
-                backReturnRow2,
-                backCollectRow3,
-                backReturnRow3Final
+                backReturnRow2Final
                 ) );
 
         frontBot.runAction(new SequentialAction(
@@ -235,7 +235,7 @@ public class MeepMeepTesting {
         releaseBot.runAction(new SequentialAction(
             goalScorePreloads,
             backCollectRow1,
-            releaseReturnPath1,
+            //releaseReturnPath1,
             backReturnRow1,
             backCollectRow2
            // backReturnPath2

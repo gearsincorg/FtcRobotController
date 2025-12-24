@@ -107,7 +107,7 @@ public class GFORCEAutonomous2 extends LinearOpMode
 
 
     // ==========================================================================================
-    // Place all paths here!
+    // Place all Back-Side paths here!
     // ==========================================================================================
 
     // create methods for each individual path
@@ -123,10 +123,28 @@ public class GFORCEAutonomous2 extends LinearOpMode
             .turnTo(mirror(0))
             .build();
     }
+
     private Action backCollectRow1() {
         return driveSubsystem.actionBuilder(mirror(-39, -20, 0))
             .splineTo(mirror(-12, -42), mirror(-90), new TranslationalVelConstraint(20))
             .lineToY(mirrorY(-56), new TranslationalVelConstraint(12))
+            .build();
+    }
+
+    private Action backReleaseAfterRow1() {
+        return driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(-6, -36), mirror(90))
+            .setReversed(false)
+            .splineTo(mirror(-4, -56), mirror(-90))
+            .waitSeconds(1)
+            .build();
+    }
+
+    private Action backReturnAfterRelease() {
+        return driveSubsystem.actionBuilder(mirror(-4, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(-12, -20), mirror(90))
             .build();
     }
 
@@ -190,10 +208,9 @@ public class GFORCEAutonomous2 extends LinearOpMode
     }
 
     // ==========================================================================================
-    // Place all auto builders here!
+    // Place all BACK Auto builders here!
     // ==========================================================================================
 
-    // ==========================================================================================
     private Action build_Goal_3(){
         return new SequentialAction(
             Globals.actionSetRobotState(RobotStates.SHOOTING),
@@ -224,20 +241,6 @@ public class GFORCEAutonomous2 extends LinearOpMode
 
     //===========================================================================================
     private Action build_Goal_3_R_3(){
-
-        Action releaseReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
-                .setReversed(true)
-                .splineTo(mirror(-6, -36), mirror(90))
-                .setReversed(false)
-                .splineTo(mirror(-4, -56), mirror(-90))
-                .waitSeconds(1)
-                .build();
-
-        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-4, -56, -90))
-                .setReversed(true)
-                .splineTo(mirror(-36, -14), mirror(-180))
-                .build();
-
         return new SequentialAction(
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
                 goalScorePreloads(),
@@ -246,9 +249,9 @@ public class GFORCEAutonomous2 extends LinearOpMode
 
                 backCollectRow1(),
                 spindexerSubsystem.actionWaitForDoneCollecting(1),
-                releaseReturnPath1,
+                backReleaseAfterRow1(),
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
-                backReturnPath1,
+                backReturnAfterRelease(),
                 spindexerSubsystem.actionStartAutoShooting()
         );
     }
@@ -281,30 +284,6 @@ public class GFORCEAutonomous2 extends LinearOpMode
 
     //===========================================================================================
     private Action build_Goal_3_R_6() {
-        Action releaseReturnPath1 = driveSubsystem.actionBuilder(mirror(-12, -56, -90))
-                .setReversed(true)
-                .splineTo(mirror(-6, -36), mirror(90))
-                .setReversed(false)
-                .splineTo(mirror(-4, -56), mirror(-90))
-                .waitSeconds(1)
-                .build();
-
-        Action backReturnPath1 = driveSubsystem.actionBuilder(mirror(-4, -56, -90))
-                .setReversed(true)
-                .splineTo(mirror(-24, -14), mirror(-180))
-                .build();
-
-        Action backCollectPath2 = driveSubsystem.actionBuilder(mirror(-24, -14, 0))
-                .setReversed(false)
-                .splineTo(mirror(12, -30), mirror(-90))
-                .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
-                .build();
-
-        Action backReturnPath2 = driveSubsystem.actionBuilder(mirror(12, -62, -90))
-                .setReversed(true)
-                .splineTo(mirror(-36, -14), mirror(-180))
-                .build();
-
         return new SequentialAction(
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
                 goalScorePreloads(),
@@ -313,16 +292,16 @@ public class GFORCEAutonomous2 extends LinearOpMode
 
                 backCollectRow1(),
                 spindexerSubsystem.actionWaitForDoneCollecting(1),
-                releaseReturnPath1,
+                backReleaseAfterRow1(),
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
-                backReturnPath1,
+                backReturnAfterRelease(),
                 spindexerSubsystem.actionStartAutoShooting(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-                backCollectPath2,
+                backCollectRow2(),
                 spindexerSubsystem.actionWaitForDoneCollecting(1),
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
-                backReturnPath2,
+                backReturnRow2Final(),
                 spindexerSubsystem.actionStartAutoShooting(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING)
         );
@@ -360,165 +339,157 @@ public class GFORCEAutonomous2 extends LinearOpMode
         );
     }
 
+    // ==========================================================================================
+    // Place all Front-side paths here!
+    // ==========================================================================================
 
-    //===========================================================================================
-    private Action build_SteerTest() {
-        Action test = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-            .lineToX(48)
-            .splineTo(mirror(72, 24), mirror(90))
-            .lineToY(mirrorY(72))
-            .build();
-
-        return new SequentialAction(
-            test
-        );
+    private Action frontScorePreloads() {
+        return driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+                .lineToX(54)
+                .build();
     }
 
-    //===========================================================================================
-    private Action build_Front_3(){
-
-        Action frontFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-            .lineToX(54)
-            .build();
-
-        Action frontLeavePath = driveSubsystem.actionBuilder(mirror(54, -16, 180))
-            .lineToX(36)
-            .build();
-
-        return new SequentialAction(
-            Globals.actionSetRobotState(RobotStates.SHOOTING),
-            frontFirstScore,
-            spindexerSubsystem.actionStartAutoShooting(),
-            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
-            spindexerSubsystem.actionStopIntake(),
-            frontLeavePath
-        );
+    private Action frontLeave() {
+       return  driveSubsystem.actionBuilder(mirror(54, -16, 180))
+        .lineToX(36)
+        .build();
     }
+
+    private Action frontCollectRow3() {
+        return driveSubsystem.actionBuilder(mirror(54, -16, 180))
+            .splineTo(mirror(36, -30), mirror(-90))
+            .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
+            .build();
+    }
+
+    private Action frontReturnRow3() {
+        return driveSubsystem.actionBuilder(mirror(36, -62, -90))
+            .setReversed(true)
+            .splineTo(mirror(54, -16), mirror(90))
+            .build();
+    }
+
+    /*
+    private Action frontCollectLoading() {
+        return driveSubsystem.actionBuilder(mirror(54, -16, -90))
+            .setReversed(false)
+            .lineToY(mirrorY(-54))
+            .splineTo(mirror(58, -62), mirror(-60), new TranslationalVelConstraint(10))
+            .build();
+    }
+
+    private Action frontReturnLoading() {
+        return driveSubsystem.actionBuilder(mirror(58, -62, -60))
+            .setReversed(true)
+            .splineTo(mirror(54, -16), mirror(90))
+            .build();
+    }
+    */
+
+    private Action frontTurnToMinus90() {
+        return driveSubsystem.actionBuilder(mirror(54, -16, 180))
+            .turnTo(mirror(-90))
+            .build();
+    }
+
+    private Action frontCollectCycle() {
+        return driveSubsystem.actionBuilder(mirror(54, -16, -90))
+            .lineToY(mirrorY(-62))
+            .build();
+    }
+
+    private Action frontReturnCycle() {
+        return driveSubsystem.actionBuilder(mirror(54, -62, -90))
+            .setReversed(true)
+            .lineToY(mirrorY(-16))
+            .build();
+    }
+
+    // ==========================================================================================
+    // Place all FRONT Auto builders here!
+    // ==========================================================================================
+
+    private Action build_Front_3() {
+        return new SequentialAction(
+                Globals.actionSetRobotState(RobotStates.SHOOTING),
+                frontScorePreloads(),
+                spindexerSubsystem.actionStartAutoShooting(),
+                spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+                spindexerSubsystem.actionStopIntake(),
+                frontLeave()
+        );    }
 
     //===========================================================================================
     private Action build_Front_6_C_3(){
 
-        Action frontFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-            .lineToX(54)
-            .build();
-
-        Action frontCollectPath1 = driveSubsystem.actionBuilder(mirror( 54, -16, 180))
-            .splineTo(mirror(36, -30), mirror(-90))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(10))
-            .build();
-
-        Action frontReturnPath1 = driveSubsystem.actionBuilder(mirror(36, -62, -90))
-            .setReversed(true)
-            .splineTo(mirror(54, -16), mirror(90))
-            .build();
-
-        Action frontCollectPath2 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
-            .setReversed(false)
-            .lineToY(mirrorY(-54))
-            .splineTo(mirror(58, -62), mirror(-60), new TranslationalVelConstraint(10) )
-            .build();
-
-        Action frontReturnPath2 = driveSubsystem.actionBuilder(mirror(58, -62, -60))
-            .setReversed(true)
-            .splineTo(mirror(54, -16), mirror(90))
-            .build();
-
-        Action frontCollectPath3 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
-            .setReversed(false)
-            .splineTo(mirror(48, -50), mirror(-90))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(5))
-            .build();
-
-        Action frontReturnPath3 = driveSubsystem.actionBuilder(mirror(48, -62, -90))
-            .setReversed(true)
-            .splineTo(mirror(54, -16), mirror(90))
-            .build();
-
         return new SequentialAction(
             Globals.actionSetRobotState(RobotStates.SHOOTING),
-            frontFirstScore,
+            frontScorePreloads(),
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-            frontCollectPath1,
+            frontCollectRow3(),
             spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
-            frontReturnPath1,
+            frontReturnRow3(),
+            spindexerSubsystem.actionStartAutoShooting(),
+            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+            frontTurnToMinus90(),
+
+            frontCollectCycle(),
+            spindexerSubsystem.actionWaitForDoneCollecting(1),
+            Globals.actionSetRobotState(RobotStates.SHOOTING),
+            frontReturnCycle(),
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-            frontCollectPath2,
-            spindexerSubsystem.actionWaitForDoneCollecting(1),
-            Globals.actionSetRobotState(RobotStates.SHOOTING),
-            frontReturnPath2,
-            spindexerSubsystem.actionStartAutoShooting(),
-            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
-
-            frontCollectPath3,
-            spindexerSubsystem.actionWaitForDoneCollecting(1),
-            Globals.actionSetRobotState(RobotStates.SHOOTING),
-            frontReturnPath3,
-            spindexerSubsystem.actionStartAutoShooting(),
-            spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING)
+            frontCollectCycle(),
+            spindexerSubsystem.actionWaitForDoneCollecting(1)
         );
     }
     //===========================================================================================
 
     Action build_Front_3_C_6() {
 
-        Action cycleFirstScore = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
-            .lineToX(54)
-            .build();
-
-        Action cycleTurnAndCollect = driveSubsystem.actionBuilder(mirror(54, -16, 180))
-            .turnTo(mirror(-90))
-            .lineToY(mirrorY(-62))
-            .build();
-
-        Action cycleShootPath1 = driveSubsystem.actionBuilder(mirror(54, -62, -90))
-            .setReversed(true)
-            .lineToY(mirrorY(-16))
-            .build();
-
-        Action cycleCollect1 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
-            .setReversed(false)
-            .lineToY(mirrorY(-62))
-            .build();
-
-        Action cycleCollect2 = driveSubsystem.actionBuilder(mirror(54, -16, -90))
-            .setReversed(false)
-            .lineToY(mirrorY(-62))
-            .waitSeconds(2)
-            .build();
-
-        Action cycleShootPath2 = driveSubsystem.actionBuilder(mirror(54, -62, -90))
-            .setReversed(true)
-            .lineToY(mirrorY(-16))
-            .build();
-
 
         return new SequentialAction (
             Globals.actionSetRobotState(RobotStates.SHOOTING),
-            cycleFirstScore,
+            frontScorePreloads(),
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
+            frontTurnToMinus90(),
 
-            cycleTurnAndCollect,
+            frontCollectCycle(),
             spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
-            cycleShootPath1,
+            frontReturnCycle(),
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-            cycleCollect1,
+            frontCollectCycle(),
             spindexerSubsystem.actionWaitForDoneCollecting(1),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
-            cycleShootPath2,
+            frontReturnCycle(),
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
-            cycleCollect2,
+            frontCollectCycle(),
             spindexerSubsystem.actionWaitForDoneCollecting(1)
+        );
+    }
+
+    //===========================================================================================
+    //   Build test sequence
+    //===========================================================================================
+    private Action build_SteerTest() {
+        Action test = driveSubsystem.actionBuilder(mirror(autoStartLocations[autoMode]))
+                .lineToX(48)
+                .splineTo(mirror(72, 24), mirror(90))
+                .lineToY(mirrorY(72))
+                .build();
+
+        return new SequentialAction(
+                test
         );
     }
 
