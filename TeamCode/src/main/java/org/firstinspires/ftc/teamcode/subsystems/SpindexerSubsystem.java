@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -28,9 +29,11 @@ public class SpindexerSubsystem extends SubsystemBase {
     private DcMotor intake;
     private Servo fire;
     private Servo spindexer;
+    private Servo cameraServo;
     private DigitalChannel magnet;
     private Rev2mDistanceSensor distanceFront;
     private Rev2mDistanceSensor distanceBack;
+    private VisionSubsystem  visionSubsystem = new VisionSubsystem(myOpMode);
     private boolean newArtifact = false;
 
     // Subsystem Constants
@@ -62,6 +65,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] REFINED_SHOOT = {0.577, 0.502, 0.421};
     private final double[] REFINED_FRONT = {0.520, 0.442, 0.366};
     private final double[] REFINED_BACK  = {0.630, 0.557, 0.480};
+
+    private final double CAMERA_UP = 0.9;
+    private final double CAMERA_DOWN = 0.1;
 
     // General Subsystem Members
     private double intakePower           =  0;
@@ -109,8 +115,16 @@ public class SpindexerSubsystem extends SubsystemBase {
         magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "spindexer_magnet");
         magnet.setMode(DigitalChannel.Mode.INPUT);
 
+        cameraServo = myOpMode.hardwareMap.get(Servo.class, "cameraServo");
+        cameraServo.setPosition(CAMERA_DOWN);
+
         spinServoTimer.reset();
-        targetAngle  = -1;
+        targetAngle = -1;
+
+        // only initialize if we need to process the obelisk
+        if (Globals.DO_MOTIF){
+            visionSubsystem.init(true);
+        }
     }
 
     @Override
@@ -367,6 +381,9 @@ public class SpindexerSubsystem extends SubsystemBase {
         myOpMode.telemetry.addData("SPINDEX", "%s %.0f>%.0f (%.3f) %s ", currentState, currentAngle, targetAngle, spindexerServoValue, inPosition()? "GOOD" : "Move");
         myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
         myOpMode.telemetry.addData("CENTERED", "%s\n", shotCentered ? "YES" : "NO");
+        if (Globals.IS_AUTO){
+            myOpMode.telemetry.addData("VISION", "%d", patternID);
+        }
     }
 
     public void startIntaking() {
@@ -562,6 +579,8 @@ public class SpindexerSubsystem extends SubsystemBase {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
+                sendToShooter(AUTO_SLOTS[patternID][0]);
+                setState(SHOOT_Q);
                 startAutoShoot = true;
                 return false;
             }
@@ -593,6 +612,18 @@ public class SpindexerSubsystem extends SubsystemBase {
                     }
                 }
                 return runAgain;
+            }
+        };
+    }
+
+    public Action actionMotif(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                cameraServo.setPosition(CAMERA_UP);
+                patternID = visionSubsystem.getPatternId();
+                cameraServo.setPosition(CAMERA_DOWN);
+                return false;
             }
         };
     }

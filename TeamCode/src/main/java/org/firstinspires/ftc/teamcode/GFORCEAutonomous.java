@@ -67,6 +67,8 @@ public class GFORCEAutonomous extends LinearOpMode
             else
                 Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
 
+            Globals.DO_MOTIF = autoConfig.autoOptions.doMotif;
+
             // updated needed subsystem
             driveSubsystem.updatePoseEstimate(); // I don't think this is needed since we aren't using encoders anywhere. TEST
             turretSubsystem.update();
@@ -115,6 +117,21 @@ public class GFORCEAutonomous extends LinearOpMode
             .lineToY(mirrorY(-20))
             .waitSeconds(0.25)
             .build();
+    }
+
+    private Action goalSmartMotifTurn(){
+        if (Globals.DO_MOTIF){
+            return new SequentialAction(
+                turnToZero(),
+                spindexerSubsystem.actionMotif(),
+                spindexerSubsystem.actionStartAutoShooting()
+            );
+        } else {
+            return new SequentialAction(
+                spindexerSubsystem.actionStartAutoShooting(),
+                turnToZero()
+            );
+        }
     }
 
     private Action turnToZero() {
@@ -282,8 +299,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return new SequentialAction(
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             goalScorePreloads(),
-            spindexerSubsystem.actionStartAutoShooting(),
-            turnToZero(),
+            goalSmartMotifTurn(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING)
         );
     }
@@ -294,8 +310,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return new SequentialAction(
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             goalScorePreloads(),
-            spindexerSubsystem.actionStartAutoShooting(),
-            turnToZero(),
+            goalSmartMotifTurn(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             backCollectRow1(),
@@ -311,7 +326,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return new SequentialAction(
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
                 goalScorePreloads(),
-                spindexerSubsystem.actionStartAutoShooting(),
+                goalSmartMotifTurn(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
                 backCollectRow1(),
@@ -329,8 +344,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return new SequentialAction(
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             goalScorePreloads(),
-            spindexerSubsystem.actionStartAutoShooting(),
-            turnToZero(),
+            goalSmartMotifTurn(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             backCollectRow1(),
@@ -354,7 +368,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return new SequentialAction(
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
                 goalScorePreloads(),
-                spindexerSubsystem.actionStartAutoShooting(),
+                goalSmartMotifTurn(),
                 spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
                 backCollectRow1(),
@@ -379,26 +393,22 @@ public class GFORCEAutonomous extends LinearOpMode
         return new SequentialAction(
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             goalScorePreloads(),
-            spindexerSubsystem.actionStartAutoShooting(),
-            turnToZero(),
+            goalSmartMotifTurn(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             backCollectRow1(),
-            //spindexerSubsystem.actionWaitForDoneCollecting(0.25),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             backReturnRow1(),
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             backCollectRow2(),
-            //spindexerSubsystem.actionWaitForDoneCollecting(0.25),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             backReturnRow2(),
             spindexerSubsystem.actionStartAutoShooting(),
             spindexerSubsystem.actionWaitForState(SpindexerStates.INTAKING),
 
             backCollectRow3(),
-            //spindexerSubsystem.actionWaitForDoneCollecting(0.25),
             Globals.actionSetRobotState(RobotStates.SHOOTING),
             backReturnRow3Final(),
             spindexerSubsystem.actionStartAutoShooting(),

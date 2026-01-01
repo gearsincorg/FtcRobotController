@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
@@ -20,6 +21,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     private final int BLUE_GOAL_ID = 20;
     private final int RED_GOAL_ID  = 24;
+    private final int OBELESK_TO_PATTERN_ID = 21;
 
     private VisionPortal visionPortal = null;        // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
@@ -80,6 +82,26 @@ public class VisionSubsystem extends SubsystemBase {
         }
 
         return target;
+    }
+
+    public int getPatternId() {
+        int patternid = 2;
+        ElapsedTime timer = new ElapsedTime();
+        if (subsystemEnabled){
+            while (timer.time() < 1.0) {
+                List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+                if (currentDetections != null) {
+                    for (AprilTagDetection detection : currentDetections) {
+                        if ((detection != null) && (detection.metadata != null)){
+                            patternid = detection.metadata.id - OBELESK_TO_PATTERN_ID;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return patternid;
     }
 
     /**

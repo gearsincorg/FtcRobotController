@@ -20,6 +20,7 @@ public class Globals {
     public static int       OCTO_ERRORS      = 0;
     public static boolean   TURRET_HAS_HOMED = false;
     public static boolean   FORWARD_MOTION   = true;
+    public static boolean   DO_MOTIF         = false;
 
     public static boolean   SHOOTER_AT_SPEED = false;
     public static boolean   TURRET_ON_TARGET = false;

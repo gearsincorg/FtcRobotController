@@ -27,12 +27,10 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     // subsystem devices
-    //private VisionSubsystem  visionSubsystem = new VisionSubsystem(myOpMode);
     private ShooterSubsystem shooter = new ShooterSubsystem(myOpMode);
 
     private DcMotorEx aim;
     private DigitalChannel magnet;
-    // private Target target = new Target();
 
     // Subsystem Constants
     private final double COUNTS_PER_DEGREES = 145.1 * 135 / 21 / 360;
@@ -79,7 +77,6 @@ public class TurretSubsystem extends SubsystemBase {
         magnet.setMode(DigitalChannel.Mode.INPUT);
 
         // initialize all the subsystem
-        // visionSubsystem.init(true);
         shooter.init(true);
     }
 
@@ -100,8 +97,6 @@ public class TurretSubsystem extends SubsystemBase {
 
         calculate_Ad_and_Range();
         Globals.SHOOTER_AT_SPEED = shooter.atSpeed;
-
-        //target = visionSubsystem.findTarget();
     }
 
     /**
