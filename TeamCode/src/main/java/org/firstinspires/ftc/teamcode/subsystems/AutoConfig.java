@@ -36,12 +36,13 @@ public class AutoConfig
                                               "STEER test"                  // 9
                                               };
     int autoModes = autoArray.length;
-    public static int MENU_ITEMS = 3;
+    public static int MENU_ITEMS = 4;
 
     public class Param {
       public boolean redAlliance    = false;
       public int delayStart         = 0;
       public int autoMode           = 0;
+      public boolean motif          = false;
     }
 
     public int currentMenuIndex;
@@ -73,6 +74,7 @@ public class AutoConfig
                 outputStreamWriter.write(Boolean.toString(autoOptions.redAlliance)   + "\n");
                 outputStreamWriter.write(Integer.toString(autoOptions.delayStart)   + "\n");
                 outputStreamWriter.write(Integer.toString(autoOptions.autoMode)   + "\n");
+                outputStreamWriter.write(Boolean.toString(autoOptions.motif)   + "\n");
 
               outputStreamWriter.close();
         }
@@ -95,6 +97,7 @@ public class AutoConfig
         autoOptions.redAlliance = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.delayStart = Integer.valueOf(bufferedReader.readLine());
         autoOptions.autoMode = Integer.valueOf(bufferedReader.readLine());
+        autoOptions.motif = Boolean.valueOf(bufferedReader.readLine());
         if (autoOptions.autoMode >= autoModes) {
             autoOptions.autoMode = 0;
         }
@@ -111,6 +114,7 @@ public class AutoConfig
         myOpMode.telemetry.addData((currentMenuIndex == 0) ? "0 > ALLIANCE"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "BLUE");
         myOpMode.telemetry.addData((currentMenuIndex == 1) ? "1 > START DELAY"   : "1   Start Delay", autoOptions.delayStart);
         myOpMode.telemetry.addData((currentMenuIndex == 2) ? "2 > AUTO MODE"    : "2   Auto Mode", autoArray[autoOptions.autoMode]);
+        myOpMode.telemetry.addData((currentMenuIndex == 3) ? "3 > MOTIF"   : "3   Motif", autoOptions.motif ? "YES" : "NO");
         myOpMode.telemetry.addLine("---------------------------------------\n");
     }
 
@@ -168,6 +172,10 @@ public class AutoConfig
                     } else if (autoOptions.autoMode > 0) {
                         autoOptions.autoMode--;
                     }
+                    break;
+
+                case 3:
+                    autoOptions.motif = !autoOptions.motif;
                     break;
             }
             saveConfig();
