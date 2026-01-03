@@ -1,52 +1,47 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.Prism.Color;
 import org.firstinspires.ftc.teamcode.Prism.GoBildaPrismDriver;
 import org.firstinspires.ftc.teamcode.Prism.PrismAnimations;
-import org.firstinspires.ftc.teamcode.auxtools.StateBase;
+import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
-public class PrismSubsystem {
-    public LinearOpMode     myOpMode;
-    public StateBase currentState;
-    public boolean          showTelemetry = false;
-    public boolean          subsystemEnabled = false;
-    ElapsedTime             stateTime = new ElapsedTime();
+public class PrismSubsystem extends SubsystemBase {
 
-
-
-    public PrismSubsystem(LinearOpMode myOpMode) {
-        this.myOpMode = myOpMode;
-    }
-
+    // subsystem devices
     private GoBildaPrismDriver prism;
-
     PrismAnimations.Solid solidBlue = new PrismAnimations.Solid(Color.BLUE);
     PrismAnimations.RainbowSnakes rainbowSnakes = new PrismAnimations.RainbowSnakes();
+    // Subsystem Constants
 
-    public void init (boolean showTelemetry) {
-        this.showTelemetry = showTelemetry;
-        this.subsystemEnabled = true;
-        prism = myOpMode.hardwareMap.get(GoBildaPrismDriver.class, "prism");
+    // Subsystem Speed/Power constants
+
+    // Servo positions
+
+    // General Subsystem Members
+
+    public PrismSubsystem(LinearOpMode myOpMode) {
+        super(myOpMode);
     }
 
-    public void update(){
-        if (subsystemEnabled) {
-            readSensors();
-            runProcessing();
-            runStateMachine();
-            if (showTelemetry) {
-                showStatus();
-            }
-        }
+    // subsystem devices
+
+    // Subsystem Constants
+
+    // Subsystem Speed/Power constants
+
+    // Servo positions
+
+    // General Subsystem Members
+
+    @Override
+    public void init(boolean showTelemetry) {
+        super.init(showTelemetry);  // do not remove
+
     }
 
+    @Override
     public void runProcessing() {
         if (myOpMode.gamepad1.right_bumper){
             prism.clearAllAnimations();
@@ -57,35 +52,19 @@ public class PrismSubsystem {
         }
     }
 
-    public void runStateMachine() {}
+    @Override
+    public void readSensors() {
 
-    public void setState(StateBase newState) {
-        currentState = newState;
-        stateTime.reset();
     }
 
-    public boolean timeInState(double waitTime){
-        return (stateTime.time() >= waitTime);
+    @Override
+    public void runStateMachine() {
+
     }
 
-    public boolean isEnabled() {
-        return subsystemEnabled;
+    @Override
+    public void showStatus() {
+
     }
 
-    public void readSensors() { }
-    public void showStatus() { }
-
-    //-------------------------------------------------------------------------
-    // ACTION  methods
-    //-------------------------------------------------------------------------
-
-    public Action actionUpdate(){
-        return new Action() {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet){
-                update();
-                return true;
-            }
-        };
-    }
 }
