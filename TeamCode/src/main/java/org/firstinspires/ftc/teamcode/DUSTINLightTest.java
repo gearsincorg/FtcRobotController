@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 
-@TeleOp(name="Dustins light test", group="Linear OpMode")
+@TeleOp(name="Dustin light test", group="Linear OpMode")
 
 public class DUSTINLightTest extends LinearOpMode{
     private PrismSubsystem prism = new PrismSubsystem(this);
@@ -14,8 +14,9 @@ public class DUSTINLightTest extends LinearOpMode{
    @Override public void runOpMode(){
        prism.init(true);
 
-       while (opModeIsActive()) {
+       while (opModeInInit()) {
            prism.update();
+           sleep(100);
        }
    }
 }
