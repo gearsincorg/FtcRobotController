@@ -49,7 +49,7 @@ public class VisionSubsystem extends SubsystemBase {
         getCameraSetting();
         myExposure =  Math.min(3, minExposure);
         myGain     =  20;
-        setManualExposure(myExposure, myGain);
+        //setManualExposure(myExposure, myGain);
     }
 
     /**
@@ -115,7 +115,7 @@ public class VisionSubsystem extends SubsystemBase {
         // Create the WEBCAM vision portal by using a builder.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .setCameraResolution(new Size(640, 480 ))
+                .setCameraResolution(new Size(1280, 720 ))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .addProcessor(aprilTag)
                 .build();

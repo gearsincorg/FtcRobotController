@@ -64,6 +64,8 @@ public class GFORCETeleop extends LinearOpMode
             Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
         }
 
+        Globals.DO_MOTIF = autoConfig.autoOptions.doMotif;
+
         // Initialize the drive hardware & Turn on telemetry
         driveSubsystem.init(null,true);
         spindexerSubsystem.init(true);

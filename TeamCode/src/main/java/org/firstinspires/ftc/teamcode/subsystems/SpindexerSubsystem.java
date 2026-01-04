@@ -66,8 +66,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] REFINED_FRONT = {0.520, 0.442, 0.366};
     private final double[] REFINED_BACK  = {0.630, 0.557, 0.480};
 
-    private final double CAMERA_UP = 0.9;
-    private final double CAMERA_DOWN = 0.1;
+    private final double CAMERA_UP = 1.0;
+    private final double CAMERA_DOWN = 0.15;
 
     // General Subsystem Members
     private double intakePower           =  0;
