@@ -42,8 +42,9 @@ public class TurretSubsystem extends SubsystemBase {
     private final double MIN_TURRET_ANGLE    = -91;
     private final double MAX_TURRET_ANGLE    =  91;
     private final double AIM_MARGIN          =   2;
-    private final double TURRET_OFFSET_ANGLE =  85;  // Adjust this  if the shooter is not centered on marks/
-    private final double TURRET_OFFSET_DISTANCE = 78;  // this fixes the direction
+    private final double TURRET_OFFSET_ANGLE =  93.5;    // Adjust this if the shooter is not centered on marks at 0 deg/
+    private final double TURRET_OFFSET_DISTANCE = 78;  // this is har far the Turret is from the center of the robot
+    private final double AIM_PROP_GAIN       =   34;   // was 26
 
     private final double SHOOTER_STEP   = 2.00;
     private final double MAX_MPS        = 30;
@@ -71,7 +72,7 @@ public class TurretSubsystem extends SubsystemBase {
         aim.setDirection(DcMotorSimple.Direction.REVERSE);
         aim.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        aim.setPositionPIDFCoefficients(26);
+        aim.setPositionPIDFCoefficients(AIM_PROP_GAIN);
 
         magnet = myOpMode.hardwareMap.get(DigitalChannel.class, "turret_magnet");
         magnet.setMode(DigitalChannel.Mode.INPUT);
@@ -105,6 +106,7 @@ public class TurretSubsystem extends SubsystemBase {
      */
     public void runProcessing() {
         if (myOpMode.opModeIsActive() && (currentState == READY) && (Globals.ROBOT_STATE == RobotStates.SHOOTING)) {
+            // we want to point the shooter and get wheels up to speed.
             if (TEST_MODE){
 
                 // if this is the first time through, setup initial values
@@ -144,6 +146,22 @@ public class TurretSubsystem extends SubsystemBase {
             setTurretAngle(Ad);
         } else {
            shooter.setVelocity(0,0);
+
+            /*
+            // we just want to point the shooter if we are in Auto Init.
+            if (Globals.IS_AUTO && myOpMode.opModeIsActive() && (currentState == READY)){
+               solveTrajectory();
+
+               // DETERMINE and set: Turret angle, Shooter angle
+               if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
+                   Ad = normalizeAngle(Ad - 180);
+                   shooter.setAngle(-shooterAngle);
+               } else {
+                   shooter.setAngle(shooterAngle);
+               }
+               setTurretAngle(Ad);
+           }*/
+
         }
     }
 
