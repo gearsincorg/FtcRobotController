@@ -147,9 +147,8 @@ public class TurretSubsystem extends SubsystemBase {
         } else {
            shooter.setVelocity(0,0);
 
-            /*
             // we just want to point the shooter if we are in Auto Init.
-            if (Globals.IS_AUTO && myOpMode.opModeIsActive() && (currentState == READY)){
+            if (Globals.IS_AUTO && myOpMode.opModeInInit() && (currentState == READY)){
                solveTrajectory();
 
                // DETERMINE and set: Turret angle, Shooter angle
@@ -160,8 +159,7 @@ public class TurretSubsystem extends SubsystemBase {
                    shooter.setAngle(shooterAngle);
                }
                setTurretAngle(Ad);
-           }*/
-
+           }
         }
     }
 

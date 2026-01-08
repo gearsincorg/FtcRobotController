@@ -74,17 +74,20 @@ public class GFORCEAutonomous extends LinearOpMode
             turretSubsystem.update();
             spindexerSubsystem.update();
 
+            autoMode = autoConfig.autoOptions.autoMode;
+            selectedAuto = loadSelectedAuto();
+
             telemetry.addLine("\n Touch Play to run Auto");
             telemetry.update();
         }
 
         Globals.OCTO_ERRORS = 0;
-        autoMode = autoConfig.autoOptions.autoMode;
+
 
         // Run Auto if stop was not pressed.
         if (opModeIsActive())
         {
-            selectedAuto = loadSelectedAuto();
+            // selectedAuto = loadSelectedAuto();
 
             // Do a count down if these is a delayed start,
             for (int sec = autoConfig.autoOptions.delayStart; sec > 0; sec--) {
