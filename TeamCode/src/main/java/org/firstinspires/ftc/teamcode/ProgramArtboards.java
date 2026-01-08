@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 
 @TeleOp(name="Dustin light test", group="Linear OpMode")
 
-public class DUSTINLightTest extends LinearOpMode{
+public class ProgramArtboards extends LinearOpMode{
     private PrismSubsystem prism = new PrismSubsystem(this);
 
    @Override public void runOpMode(){

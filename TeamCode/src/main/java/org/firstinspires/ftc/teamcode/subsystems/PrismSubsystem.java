@@ -44,30 +44,38 @@ public class PrismSubsystem extends SubsystemBase {
 
     // General Subsystem Members
 
+    private LEDMode currentLEDMode = LEDMode.INTAKE_FRONT;
+
     @Override
     public void init(boolean showTelemetry) {
         super.init(showTelemetry);  // do not remove
         prism = myOpMode.hardwareMap.get(GoBildaPrismDriver.class,"prism");
         prism.setDefaultBootArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_0);
-        prism.setStripLength(12);
+        prism.setStripLength(30);
     }
 
     @Override
     public void runProcessing() {
-        if (myOpMode.gamepad1.rightBumperWasPressed()){
-            if (prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, rainbowSnakes)) {
-                myOpMode.telemetry.addLine("rainbow OK");
+        if(myOpMode.opModeInInit()) {
+            if (Globals.ALLIANCE_COLOR == AllianceColor.RED) {
+                setLEDMode(LEDMode.ALLIANCE_RED);
             } else {
-                myOpMode.telemetry.addLine("rainbow FAIL");
+                setLEDMode(LEDMode.ALLIANCE_BLUE);
             }
-            myOpMode.telemetry.update();
-        } else if (myOpMode.gamepad1.leftBumperWasPressed()) {
-            if (prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, solidBlue)) {
-                myOpMode.telemetry.addLine("blue OK");
+        } else if (Globals.ROBOT_STATE == RobotStates.INTAKING){
+            if (Globals.INTAKE_JAMMED) {
+                setLEDMode(LEDMode.INTAKE_JAMMED);
+            } else if (Globals.FORWARD_MOTION){
+                setLEDMode(LEDMode.INTAKE_FRONT);
             } else {
-                myOpMode.telemetry.addLine("blue FAIL");
+                setLEDMode(LEDMode.INTAKE_BACK);
             }
-            myOpMode.telemetry.update();
+        } else {
+            if (Globals.SHOOTER_AT_SPEED && Globals.TURRET_ON_TARGET && Globals.SPINDEXER_SHOT_CENTERED){
+                setLEDMode(LEDMode.SHOOTER_READY);
+            } else {
+                setLEDMode(LEDMode.SHOOTER_NOT_READY);
+            }
         }
     }
 
@@ -84,6 +92,11 @@ public class PrismSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
 
+    }
+
+    void setLEDMode(LEDMode newMode){
+        currentLEDMode = newMode;
+        prism.loadAnimationsFromArtboard(currentLEDMode.artboardValue);
     }
 
 }
