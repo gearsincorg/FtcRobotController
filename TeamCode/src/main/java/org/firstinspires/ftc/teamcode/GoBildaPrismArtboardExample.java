@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 @TeleOp(name="Prism Artboard Example", group="Linear OpMode")
-//@Disabled
+@Disabled
 
 public class GoBildaPrismArtboardExample extends LinearOpMode {
 
