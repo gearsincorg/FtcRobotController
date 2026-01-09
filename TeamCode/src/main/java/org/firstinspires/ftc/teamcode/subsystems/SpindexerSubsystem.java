@@ -88,7 +88,6 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double  lastSlotAngleFilled = 0;  // Used during unjamming
     private int     lastSlotFilled      = -1;
     private boolean unjamForward        = false;
-    private boolean shotCentered        = false;
     private ElapsedTime actionTime      = new ElapsedTime();
     private boolean isTiming            = false;
 
@@ -133,7 +132,7 @@ public class SpindexerSubsystem extends SubsystemBase {
      * Called every Update() cycle;
      */
     public void readSensors() {
-        shotCentered = !magnet.getState();
+        Globals.SPINDEXER_SHOT_CENTERED = !magnet.getState();
 
         // process the artifact range sensors if we are INTAKING
         if (currentState == INTAKING) {
@@ -274,7 +273,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 if (allArtifactsHeld == 0 ) {
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
                     setState(INTAKE_Q);
-                } else if (inPosition()  && shotCentered)   {
+                } else if (inPosition()  && Globals.SPINDEXER_SHOT_CENTERED)   {
                     setState(RDY_2_SHOOT);
                 }
                 break;
@@ -380,7 +379,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         // myOpMode.telemetry.addData("INTAKE", "Pwr %.1f", intakePower);
         myOpMode.telemetry.addData("SPINDEX", "%s %.0f>%.0f (%.3f) %s ", currentState, currentAngle, targetAngle, spindexerServoValue, inPosition()? "GOOD" : "Move");
         myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
-        myOpMode.telemetry.addData("CENTERED", "%s\n", shotCentered ? "YES" : "NO");
+        myOpMode.telemetry.addData("CENTERED", "%s\n", Globals.SPINDEXER_SHOT_CENTERED ? "YES" : "NO");
         if (Globals.IS_AUTO){
             myOpMode.telemetry.addData("VISION", "%d", patternID);
         }

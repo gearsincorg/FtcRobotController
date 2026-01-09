@@ -25,6 +25,10 @@ public class Globals {
     public static boolean   SHOOTER_AT_SPEED = false;
     public static boolean   TURRET_ON_TARGET = false;
 
+    public static boolean   INTAKE_JAMMED = false;
+
+    public static boolean   SPINDEXER_SHOT_CENTERED = false;
+
     public static RobotStates       ROBOT_STATE     = RobotStates.INACTIVE;
     public static SpindexerStates   SPINDEXER_STATE = SpindexerStates.INIT;
     public static TurretStates      TURRET_STATE    = TurretStates.INIT;
