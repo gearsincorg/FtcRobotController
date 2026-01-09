@@ -9,38 +9,15 @@ import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
 public class PrismSubsystem extends SubsystemBase {
 
-    //THING TO DO
-    /*
-    ALIANCE COLORS
-    GREEN FOR COLLECTING
-    yellow flashing for collecting
-    red = bad
-     */
-
-    // subsystem devices
+        // subsystem devices
     private GoBildaPrismDriver prism;
     PrismAnimations.Solid solidBlue = new PrismAnimations.Solid(Color.BLUE);
     PrismAnimations.RainbowSnakes rainbowSnakes = new PrismAnimations.RainbowSnakes();
 
-    // Subsystem Constants
-
-    // Subsystem Speed/Power constants
-
-    // Servo positions
-
-    // General Subsystem Members
 
     public PrismSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
     }
-
-    // subsystem devices
-
-    // Subsystem Constants
-
-    // Subsystem Speed/Power constants
-
-    // Servo positions
 
     // General Subsystem Members
 
