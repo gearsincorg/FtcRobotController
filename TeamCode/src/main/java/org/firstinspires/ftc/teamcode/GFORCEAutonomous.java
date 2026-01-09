@@ -146,7 +146,7 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action backCollectRow1() {
         return driveSubsystem.actionBuilder(mirror(-39, -20, 0))
             .splineTo(mirror(-12, -42), mirror(-90), new TranslationalVelConstraint(20))
-            .lineToY(mirrorY(-56), new TranslationalVelConstraint(12))
+            .lineToY(mirrorY(-58), new TranslationalVelConstraint(12))
             .build();
     }
 
@@ -167,10 +167,17 @@ public class GFORCEAutonomous extends LinearOpMode
             .build();
     }
 
+    private Action backReturnAfterReleaseFinal() {
+        return driveSubsystem.actionBuilder(mirror(-4, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(-44, -24), mirror(180))
+            .build();
+    }
+
     private Action backReturnRow1Final() {
         return driveSubsystem.actionBuilder(mirror(-12, -56, -90))
             .setReversed(true)
-            .splineTo(mirror(-40, -24), mirror(150))
+            .splineTo(mirror(-44, -24), mirror(150))
             .build();
     }
 
@@ -186,7 +193,7 @@ public class GFORCEAutonomous extends LinearOpMode
             .setReversed(false)
             .turnTo(mirror(0))
             .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(20))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+            .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
             .build();
     }
 
@@ -195,7 +202,7 @@ public class GFORCEAutonomous extends LinearOpMode
             .setReversed(true)
             .lineToY(mirrorY(-48))
             .splineTo(mirror(-12, -24), mirror(180))
-            .lineToX(-40)
+            .lineToX(-44)
             .build();
     }
 
@@ -213,7 +220,7 @@ public class GFORCEAutonomous extends LinearOpMode
             .setReversed(false)
             .lineToX(12)
             .splineTo(mirror(36, -42), mirror(-90), new TranslationalVelConstraint(20))
-            .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+            .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
             .waitSeconds(1)
             .build();
     }
@@ -222,7 +229,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return driveSubsystem.actionBuilder(mirror(36, -62, -90))
             .lineToY(mirrorY(-44))
             .splineTo(mirror(12, -20), mirror(180))
-            .lineToX(-36)
+            .lineToX(-44)
             .build();
     }
 
@@ -265,7 +272,7 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action frontCollectCycle() {
         return driveSubsystem.actionBuilder(mirror(54, -16, -90))
                 .lineToY(mirrorY(-56))
-                .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
                 .build();
     }
 
@@ -281,7 +288,7 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action frontCollectMoreCycle() {
         return driveSubsystem.actionBuilder(mirror(54, -16, -90))
                 .splineTo(mirror(38, -56), mirror(-90))
-                .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
                 .build();
     }
 
@@ -336,7 +343,7 @@ public class GFORCEAutonomous extends LinearOpMode
                 spindexerSubsystem.actionWaitForDoneCollecting(1),
                 backReleaseAfterRow1(),
                 Globals.actionSetRobotState(RobotStates.SHOOTING),
-                backReturnAfterRelease(),
+                backReturnAfterReleaseFinal(),
                 spindexerSubsystem.actionStartAutoShooting()
         );
     }

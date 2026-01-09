@@ -48,7 +48,7 @@ public class MeepMeepTesting {
     private static Action backCollectRow1() {
         return driveSubsystem.actionBuilder(mirror(-39, -20, 0))
                 .splineTo(mirror(-12, -42), mirror(-90), new TranslationalVelConstraint(20))
-                .lineToY(mirrorY(-56), new TranslationalVelConstraint(12))
+                .lineToY(mirrorY(-58), new TranslationalVelConstraint(12))
                 .waitSeconds(0.5)
                 .build();
     }
@@ -74,8 +74,15 @@ public class MeepMeepTesting {
     private static Action backReturnRow1Final() {
         return driveSubsystem.actionBuilder(mirror(-12, -56, -90))
                 .setReversed(true)
-                .splineTo(mirror(-40, -24), mirror(150))
+                .splineTo(mirror(-44, -24), mirror(150))
                 .build();
+    }
+
+    private static Action backReturnAfterReleaseFinal() {
+        return driveSubsystem.actionBuilder(mirror(-4, -56, -90))
+            .setReversed(true)
+            .splineTo(mirror(-44, -24), mirror(180))
+            .build();
     }
 
     private static Action backReturnRow1() {
@@ -91,7 +98,7 @@ public class MeepMeepTesting {
                 .setReversed(false)
                 .turnTo(mirror(0))
                 .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(20))
-                .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
                 .waitSeconds(0.5)
                 .build();
     }
@@ -101,7 +108,7 @@ public class MeepMeepTesting {
                 .setReversed(true)
                 .lineToY(mirrorY(-48))
                 .splineTo(mirror(-12, -24), mirror(180))
-                .lineToX(-40)
+                .lineToX(-44)
                 .waitSeconds(1.7)
                 .build();
     }
@@ -121,7 +128,7 @@ public class MeepMeepTesting {
                 .setReversed(false)
                 .lineToX(12)
                 .splineTo(mirror(36, -42), mirror(-90), new TranslationalVelConstraint(20))
-                .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
                 .waitSeconds(0.5)
                 .build();
     }
@@ -130,7 +137,7 @@ public class MeepMeepTesting {
         return driveSubsystem.actionBuilder(mirror(36, -62, -90))
                 .lineToY(mirrorY(-44))
                 .splineTo(mirror(12, -20), mirror(180))
-                .lineToX(-36)
+                .lineToX(-44)
                 .waitSeconds(1.7)
                 .build();
     }
@@ -176,7 +183,7 @@ public class MeepMeepTesting {
     private static Action frontCollectCycle() {
         return driveSubsystem.actionBuilder(mirror(54, -16, -90))
                 .lineToY(mirrorY(-56))
-                .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
                 .waitSeconds(0.5)
                 .build();
     }
@@ -194,7 +201,7 @@ public class MeepMeepTesting {
     private static Action frontCollectMoreCycle() {
         return driveSubsystem.actionBuilder(mirror(54, -16, -90))
                 .splineTo(mirror(38, -56), mirror(-90))
-                .lineToY(mirrorY(-62), new TranslationalVelConstraint(12))
+                .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
                 .waitSeconds(0.5)
                 .build();
     }
@@ -270,9 +277,9 @@ public class MeepMeepTesting {
                 turnToZero(),
                 backCollectRow1(),
                 backReleaseAfterRow1(),
-                backReturnAfterRelease(),
-                backCollectRow2(),
-                backReturnRow2Final()
+                backReturnAfterReleaseFinal()
+                //backCollectRow2(),
+                //backReturnRow2Final()
         ));
 
         Bot4.runAction(new SequentialAction(
