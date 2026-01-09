@@ -115,7 +115,7 @@ public class VisionSubsystem extends SubsystemBase {
         // Create the WEBCAM vision portal by using a builder.
         visionPortal = new VisionPortal.Builder()
                 .setCamera(myOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .setCameraResolution(new Size(1280, 720 ))
+                .setCameraResolution(new Size(800, 600 ))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .addProcessor(aprilTag)
                 .build();
