@@ -6,14 +6,14 @@ import org.firstinspires.ftc.teamcode.Prism.Color;
 import org.firstinspires.ftc.teamcode.Prism.GoBildaPrismDriver;
 import org.firstinspires.ftc.teamcode.Prism.PrismAnimations;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
-
+/*
+ *  This Subsystem assumes that Art Boards have been setup in the Prism driver
+ *    See LEDMode.java for the function/names of the artboards
+ */
 public class PrismSubsystem extends SubsystemBase {
 
-        // subsystem devices
+    // subsystem devices
     private GoBildaPrismDriver prism;
-    PrismAnimations.Solid solidBlue = new PrismAnimations.Solid(Color.BLUE);
-    PrismAnimations.RainbowSnakes rainbowSnakes = new PrismAnimations.RainbowSnakes();
-
 
     public PrismSubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
@@ -56,24 +56,17 @@ public class PrismSubsystem extends SubsystemBase {
         }
     }
 
-    @Override
-    public void readSensors() {
-
-    }
-
-    @Override
-    public void runStateMachine() {
-
-    }
 
     @Override
     public void showStatus() {
-
+        myOpMode.telemetry.addData("LED", currentLEDMode);
     }
 
-    void setLEDMode(LEDMode newMode){
-        currentLEDMode = newMode;
-        prism.loadAnimationsFromArtboard(currentLEDMode.artboardValue);
+    public void setLEDMode(LEDMode newMode){
+        // Only send the command if the LED mode changes.
+        if (newMode != currentLEDMode) {
+            currentLEDMode = newMode;
+            prism.loadAnimationsFromArtboard(currentLEDMode.artboardValue);
+        }
     }
-
 }

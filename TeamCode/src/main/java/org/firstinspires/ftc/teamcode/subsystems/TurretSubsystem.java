@@ -27,7 +27,7 @@ public class TurretSubsystem extends SubsystemBase {
     }
 
     // subsystem devices
-    private ShooterSubsystem shooter = new ShooterSubsystem(myOpMode);
+    private ShooterSubsystem shooterSubsystem = new ShooterSubsystem(myOpMode);
 
     private DcMotorEx aim;
     private DigitalChannel magnet;
@@ -42,9 +42,9 @@ public class TurretSubsystem extends SubsystemBase {
     private final double MIN_TURRET_ANGLE    = -91;
     private final double MAX_TURRET_ANGLE    =  91;
     private final double AIM_MARGIN          =   2;
-    private final double TURRET_OFFSET_ANGLE =  93.5;    // Adjust this if the shooter is not centered on marks at 0 deg/
+    private final double TURRET_OFFSET_ANGLE =  93.5;  // Adjust this if the shooter is not centered on marks at 0 deg/
     private final double TURRET_OFFSET_DISTANCE = 78;  // this is har far the Turret is from the center of the robot
-    private final double AIM_PROP_GAIN       =   34;   // was 26
+    private final double AIM_PROP_GAIN       =   26;   // was 26 (30 too high?)
 
     private final double SHOOTER_STEP   = 2.00;
     private final double MAX_MPS        = 30;
@@ -78,13 +78,13 @@ public class TurretSubsystem extends SubsystemBase {
         magnet.setMode(DigitalChannel.Mode.INPUT);
 
         // initialize all the subsystem
-        shooter.init(true);
+        shooterSubsystem.init(true);
     }
 
     @Override
     public void update() {
         super.update();  // do not remove
-        shooter.update();
+        shooterSubsystem.update();
     }
 
     @Override
@@ -97,7 +97,7 @@ public class TurretSubsystem extends SubsystemBase {
         Globals.TURRET_ON_TARGET = (Math.abs(Ad - At) < AIM_MARGIN);
 
         calculate_Ad_and_Range();
-        Globals.SHOOTER_AT_SPEED = shooter.atSpeed;
+        Globals.SHOOTER_AT_SPEED = shooterSubsystem.atSpeed;
     }
 
     /**
@@ -122,9 +122,9 @@ public class TurretSubsystem extends SubsystemBase {
                 }
 
                 // DETERMINE MANUAL shooter TILT
-                if (myOpMode.gamepad1.dpadRightWasPressed() && (shooterAngle <= shooter.SHOOTER_ANGLE_MAX)) {
+                if (myOpMode.gamepad1.dpadRightWasPressed() && (shooterAngle <= shooterSubsystem.SHOOTER_ANGLE_MAX)) {
                     shooterAngle += ANGLE_STEP;
-                } else if (myOpMode.gamepad1.dpadLeftWasPressed() && (shooterAngle >= shooter.SHOOTER_ANGLE_MIN)) {
+                } else if (myOpMode.gamepad1.dpadLeftWasPressed() && (shooterAngle >= shooterSubsystem.SHOOTER_ANGLE_MIN)) {
                     shooterAngle -= ANGLE_STEP;
                 }
             } else  {
@@ -135,17 +135,17 @@ public class TurretSubsystem extends SubsystemBase {
             // DETERMINE and set: Turret angle, Shooter angle and individual velocities
             if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
                 Ad = normalizeAngle(Ad - 180);
-                shooter.setAngle(-shooterAngle);
-                shooter.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
+                shooterSubsystem.setAngle(-shooterAngle);
+                shooterSubsystem.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
                         shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)));
             } else {
-                shooter.setAngle(shooterAngle);
-                shooter.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
+                shooterSubsystem.setAngle(shooterAngle);
+                shooterSubsystem.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
                         shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
             }
             setTurretAngle(Ad);
         } else {
-           shooter.setVelocity(0,0);
+           shooterSubsystem.setVelocity(0,0);
 
             // we just want to point the shooter if we are in Auto Init.
             if (Globals.IS_AUTO && myOpMode.opModeInInit() && (currentState == READY)){
@@ -154,9 +154,9 @@ public class TurretSubsystem extends SubsystemBase {
                // DETERMINE and set: Turret angle, Shooter angle
                if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
                    Ad = normalizeAngle(Ad - 180);
-                   shooter.setAngle(-shooterAngle);
+                   shooterSubsystem.setAngle(-shooterAngle);
                } else {
-                   shooter.setAngle(shooterAngle);
+                   shooterSubsystem.setAngle(shooterAngle);
                }
                setTurretAngle(Ad);
            }

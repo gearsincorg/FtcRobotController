@@ -20,6 +20,8 @@ import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
+import org.firstinspires.ftc.teamcode.subsystems.LEDMode;
+import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.RobotStates;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerStates;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
@@ -28,10 +30,11 @@ import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 @Autonomous(name="GFORCE Autonomous", group = "AA" ,  preselectTeleOp="GFORCE Teleop")
 public class GFORCEAutonomous extends LinearOpMode
 {
-    DriveSubsystem  driveSubsystem          = new DriveSubsystem( this);
-    SpindexerSubsystem spindexerSubsystem   = new SpindexerSubsystem(this);
-    TurretSubsystem turretSubsystem         = new TurretSubsystem(this);
-    AutoConfig      autoConfig              = new AutoConfig(this);
+    private DriveSubsystem  driveSubsystem          = new DriveSubsystem( this);
+    private SpindexerSubsystem spindexerSubsystem   = new SpindexerSubsystem(this);
+    private TurretSubsystem turretSubsystem         = new TurretSubsystem(this);
+    private PrismSubsystem  prismSubsystem          = new PrismSubsystem(this);
+    private AutoConfig      autoConfig              = new AutoConfig(this);
 
     private int    autoMode                 = 0;
     private Action selectedAuto             = null;
@@ -56,6 +59,7 @@ public class GFORCEAutonomous extends LinearOpMode
         spindexerSubsystem.preloadSequence();
         spindexerSubsystem.sendToShooter(0);   /// change to 0 for no-move auto
         turretSubsystem.init(true);
+        prismSubsystem.init(true);
 
             // Wait for driver to press start
         while(opModeInInit()) {
@@ -69,13 +73,15 @@ public class GFORCEAutonomous extends LinearOpMode
 
             Globals.DO_MOTIF = autoConfig.autoOptions.doMotif;
 
+            // Set the Auto Mode and load the path sequence and Starting Location.
+            autoMode = autoConfig.autoOptions.autoMode;
+            selectedAuto = loadSelectedAuto();
+
             // updated needed subsystem
             driveSubsystem.updatePoseEstimate(); // I don't think this is needed since we aren't using encoders anywhere. TEST
             turretSubsystem.update();
             spindexerSubsystem.update();
-
-            autoMode = autoConfig.autoOptions.autoMode;
-            selectedAuto = loadSelectedAuto();
+            prismSubsystem.update();
 
             telemetry.addLine("\n Touch Play to run Auto");
             telemetry.update();
@@ -108,6 +114,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
         spindexerSubsystem.stopIntake();
         Globals.LAST_POSE = driveSubsystem.getPose() ;
+        prismSubsystem.setLEDMode(LEDMode.POWER_UP);
     }
 
     // ==========================================================================================
@@ -125,8 +132,9 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action goalSmartMotifTurn(){
         if (Globals.DO_MOTIF){
             return new SequentialAction(
+                spindexerSubsystem.actionCameraUp(),
                 turnToZero(),
-                spindexerSubsystem.actionMotif(),
+                spindexerSubsystem.actionReadMotif(),
                 spindexerSubsystem.actionStartAutoShooting()
             );
         } else {

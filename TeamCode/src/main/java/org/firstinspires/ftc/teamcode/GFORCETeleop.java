@@ -20,6 +20,8 @@ import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.LEDMode;
+import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretStates;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
@@ -42,6 +44,7 @@ public class GFORCETeleop extends LinearOpMode
     private DriveSubsystem     driveSubsystem     = new DriveSubsystem(this);
     private SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
     private TurretSubsystem    turretSubsystem    = new TurretSubsystem(this);
+    private PrismSubsystem     prismSubsystem     = new PrismSubsystem(this);
 
     private ElapsedTime cycleTimer = new ElapsedTime();
     private double avgCycle = 0;
@@ -70,21 +73,28 @@ public class GFORCETeleop extends LinearOpMode
         driveSubsystem.init(null,true);
         spindexerSubsystem.init(true);
         turretSubsystem.init(true);
-
+        prismSubsystem.init(true);
 
         // Wait for driver to press start
         while(opModeInInit()) {
             telemetry.addData("ROBOT", "%s - %s\n", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
 
+            if (gamepad1.dpad_up) {
+                spindexerSubsystem.cameraUp();
+            } else if (gamepad1.dpad_down) {
+                spindexerSubsystem.cameraDown();
+            }
             // Read and display sensor data
             driveSubsystem.updatePoseEstimate();
             // spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
             // turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            prismSubsystem.update();
 
             showCycleTime();
             telemetry.update();
         }
 
+        spindexerSubsystem.cameraDown();
         spindexerSubsystem.startIntaking();
 
         while (opModeIsActive())
@@ -95,7 +105,6 @@ public class GFORCETeleop extends LinearOpMode
             if (gamepad1.rightStickButtonWasPressed() && (turretSubsystem.currentState == TurretStates.READY)) {
                 turretSubsystem.setState(TurretStates.INIT);
             }
-
 
             // Check to see if we need to home the subsystems
             // Location reset based on Base square and direction of front of robot
@@ -127,6 +136,7 @@ public class GFORCETeleop extends LinearOpMode
             driveSubsystem.updatePoseEstimate();
             spindexerSubsystem.update();
             turretSubsystem.update();
+            prismSubsystem.update();
 
             // use the smart manual drive feature of the DriveSubsystem
             driveSubsystem.smartDrive();
@@ -142,6 +152,7 @@ public class GFORCETeleop extends LinearOpMode
 
         // tell AUTO or TELEOP to home next time they run
         Globals.TURRET_HAS_HOMED = false;
+        prismSubsystem.setLEDMode(LEDMode.POWER_UP);
     }
 
     private void homeRobot(Vector2d homePosition, double headingDeg) {
@@ -169,5 +180,3 @@ public class GFORCETeleop extends LinearOpMode
         telemetry.addData("Cycle Time", "%.1f mS", avgCycle);
     }
 }
-
-

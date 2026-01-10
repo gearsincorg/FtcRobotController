@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.SequentialAction;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -67,7 +66,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] REFINED_BACK  = {0.630, 0.557, 0.480};
 
     private final double CAMERA_UP = 1.0;
-    private final double CAMERA_DOWN = 0.15;
+    private final double CAMERA_DOWN = 0.07;
 
     // General Subsystem Members
     private double intakePower           =  0;
@@ -563,6 +562,14 @@ public class SpindexerSubsystem extends SubsystemBase {
         patternID = id;
     }
 
+    public void cameraUp(){
+        cameraServo.setPosition(CAMERA_UP);
+    }
+
+    public void cameraDown(){
+        cameraServo.setPosition(CAMERA_DOWN);
+    }
+
     // =============  Action methods  ========================
 
     public Action actionWaitForState(SpindexerStates state){
@@ -615,13 +622,22 @@ public class SpindexerSubsystem extends SubsystemBase {
         };
     }
 
-    public Action actionMotif(){
+    public Action actionCameraUp(){
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                cameraServo.setPosition(CAMERA_UP);
+                cameraUp();
+                return false;
+            }
+        };
+    }
+    public Action actionReadMotif(){
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet){
+                cameraUp();
                 patternID = visionSubsystem.getPatternId();
-                cameraServo.setPosition(CAMERA_DOWN);
+                cameraDown();
                 return false;
             }
         };
