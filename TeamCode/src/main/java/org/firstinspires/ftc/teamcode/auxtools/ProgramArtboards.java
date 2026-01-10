@@ -16,13 +16,68 @@ import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 public class ProgramArtboards extends LinearOpMode{
     GoBildaPrismDriver prism;
 
-    PrismAnimations.Solid solid = new PrismAnimations.Solid(Color.BLUE);
-    PrismAnimations.RainbowSnakes rainbowSnakes = new PrismAnimations.RainbowSnakes();
+    @Override public void runOpMode(){
+        prism = hardwareMap.get(GoBildaPrismDriver.class,"prism");
+        prism.setStripLength(30);  //  0-11, 12-17, 18-29
+        prism.setDefaultBootArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_0);
+        prism.enableDefaultBootArtboard(true);
 
-   @Override public void runOpMode(){
-       prism = hardwareMap.get(GoBildaPrismDriver.class,"prism");
-       prism.setStripLength(30);
+        // ================================================================================================
+        // build all the animations
+        // To see what each Artboard should be doing, look at LEDMode.java
+        // ================================================================================================
+        telemetry.addLine("Creating Animations");
+        telemetry.update();
 
-       // load the three animations into each artboard.
-   }
+        // setup the animations
+        PrismAnimations.Solid  cameraLight = new PrismAnimations.Solid(Color.WHITE);
+        cameraLight.setStartIndex(12);
+        cameraLight.setStopIndex(17);
+        cameraLight.setBrightness(50);
+
+        PrismAnimations.DroidScan  teamColors = new PrismAnimations.DroidScan();
+        teamColors.setStartIndex(0);
+        teamColors.setStopIndex(29);
+        teamColors.setBrightness(50);
+        teamColors.setPrimaryColor(Color.YELLOW);
+        teamColors.setDroidScanStyle(PrismAnimations.DroidScan.DroidScanStyle.BOTH_TAIL);
+        teamColors.setTrailWidth(2);
+        teamColors.setSpeed(0.1f);
+
+        PrismAnimations.Snakes  redAlliance = new PrismAnimations.Snakes();
+        redAlliance.setStartIndex(0);
+        redAlliance.setStopIndex(29);
+        redAlliance.setBrightness(50);
+        teamColors.setPrimaryColor(Color.RED);
+        // set up the rest of the snake pattern
+
+        //  keep going
+
+        // ================================================================================================
+        // load the animations into each artboard.
+        // To see what each Artboard should be doing, look at LEDMode.java
+        // ================================================================================================
+        telemetry.addLine("Loading Artboards");
+        telemetry.update();
+
+        prism.clearAllAnimations();
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, teamColors);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
+        prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_0);
+        sleep(1000);
+
+        prism.clearAllAnimations();
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, redAlliance);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
+        prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_1);
+
+        prism.clearAllAnimations();
+        //  Insert Animations here
+        prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_2);
+
+        // Keep going
+        
+        telemetry.addLine("Loading Complete");
+        telemetry.update();
+    }
 }
