@@ -155,7 +155,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
                 // see if we have an artifact
                 if ((sensorRange > MIN_RANGE) && (sensorRange < MAX_RANGE)) {
-                    slotColors[currentSlot] = ArtifactColor.PURPLE;
+                    slotColors[currentSlot] = visionSubsystem.getColor();  // rolls over to Purple if no vision.
 
                     lastSlotFilled = currentSlot;
                     lastSlotAngleFilled = targetAngle; // Save current location

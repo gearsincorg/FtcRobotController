@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import static org.firstinspires.ftc.vision.opencv.PredominantColorProcessor.Swatch.ARTIFACT_GREEN;
+
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -13,6 +15,8 @@ import org.firstinspires.ftc.teamcode.auxtools.Target;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.opencv.ImageRegion;
+import org.firstinspires.ftc.vision.opencv.PredominantColorProcessor;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +29,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     private VisionPortal visionPortal = null;        // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
+    PredominantColorProcessor colorSensor;           // used for reading Artifact color
 
     private int     myExposure  ;
     private int     minExposure ;
@@ -43,45 +48,13 @@ public class VisionSubsystem extends SubsystemBase {
         super.init(showTelemetry);
 
         // Initialize the Apriltag Detection process
-        initAprilTag();
+        initProcessors();
 
         // Establish Min and Max Gains and Exposure.  Then set a low exposure with high gain
         getCameraSetting();
         myExposure =  Math.min(3, minExposure);
         myGain     =  20;
         //setManualExposure(myExposure, myGain);
-    }
-
-    /**
-     * Read any sensor for this subsystem and calculate any derived values
-     * Called every Update() cycle;
-     */
-    public Target findTarget() {
-        int targetTagID = (Globals.ALLIANCE_COLOR == AllianceColor.RED) ? RED_GOAL_ID : BLUE_GOAL_ID;
-        Target target = new Target();
-
-        if (subsystemEnabled) {
-            List<AprilTagDetection> currentDetections = aprilTag.getFreshDetections();
-
-            // Step through the list of detections see if the desired goal is visible
-            if (currentDetections != null) {
-                for (AprilTagDetection detection : currentDetections) {
-
-                    if ((detection != null) && (detection.metadata != null) && (detection.metadata.id == targetTagID)) {
-                        target = new Target(detection.ftcPose.range, detection.ftcPose.bearing);
-
-                        if (showTelemetry) {
-                            if (detection.metadata != null) {
-                                myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                                myOpMode.telemetry.addLine(String.format("Range %6.1f in, Bearing %6.1f deg.", target.range, target.bearing));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return target;
     }
 
     public int getPatternId() {
@@ -99,18 +72,48 @@ public class VisionSubsystem extends SubsystemBase {
                     }
                 }
             }
+
+            // Switch to Color Sensing
+            visionPortal.setProcessorEnabled(aprilTag, false);
+            visionPortal.setProcessorEnabled(colorSensor, true);
         }
 
         return patternid;
     }
 
+    public ArtifactColor getColor() {
+        if (subsystemEnabled) {
+            PredominantColorProcessor.Result result = colorSensor.getAnalysis();
+            if (result.closestSwatch == ARTIFACT_GREEN) {
+                return ArtifactColor.GREEN;
+            } else {
+                return ArtifactColor.PURPLE;
+            }
+        } else {
+            return ArtifactColor.PURPLE;
+        }
+    }
+
     /**
      * Initialize the AprilTag processor.
      */
-    private void initAprilTag() {
+    private void initProcessors() {
         // Create the AprilTag processor by using a builder.
         aprilTag = new AprilTagProcessor.Builder().build();
         aprilTag.setDecimation(2);
+
+        PredominantColorProcessor colorSensor = new PredominantColorProcessor.Builder()
+            .setRoi(ImageRegion.asUnityCenterCoordinates(0.2, 0.9, 0.7, 0.5))
+            .setSwatches(
+                    ARTIFACT_GREEN,
+                    PredominantColorProcessor.Swatch.ARTIFACT_PURPLE,
+                    PredominantColorProcessor.Swatch.RED,
+                    PredominantColorProcessor.Swatch.BLUE,
+                    PredominantColorProcessor.Swatch.YELLOW,
+                    PredominantColorProcessor.Swatch.BLACK,
+                    PredominantColorProcessor.Swatch.WHITE)
+            .build();
+
 
         // Create the WEBCAM vision portal by using a builder.
         visionPortal = new VisionPortal.Builder()
@@ -118,7 +121,11 @@ public class VisionSubsystem extends SubsystemBase {
                 .setCameraResolution(new Size(800, 600 ))
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .addProcessor(aprilTag)
+                .addProcessor(colorSensor)
                 .build();
+
+        visionPortal.setProcessorEnabled(aprilTag, true);
+        visionPortal.setProcessorEnabled(colorSensor, false);
     }
 
     public boolean cameraReady() {
