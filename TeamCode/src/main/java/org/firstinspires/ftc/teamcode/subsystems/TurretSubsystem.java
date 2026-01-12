@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 import org.firstinspires.ftc.teamcode.auxtools.SharedOQ;
@@ -59,6 +60,8 @@ public class TurretSubsystem extends SubsystemBase {
     private double At    = 0;  // measured Turret angle
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
     private double targetRange = 0;  // Range to goal in mm
+
+    private ElapsedTime stateTime = new ElapsedTime();
 
     private double[] speedCoefs = {4.5429, 0.0022};  // C, X  was {4.6647, 0.0021};
     private double[] angleCoefs = {-3.5333, 0.0193}; // C, X
@@ -170,6 +173,7 @@ public class TurretSubsystem extends SubsystemBase {
             case INIT: {
                 aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 aim.setPower(0.15);
+                shooterSubsystem.setAngle(30);
                 setState(HOMING);
                 break;
             }
@@ -183,6 +187,13 @@ public class TurretSubsystem extends SubsystemBase {
                     aim.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     aim.setPower(0.5);
                     setTurretAngle(0);
+                    setState(ALMOST_READY);
+                }
+                break;
+            }
+
+            case ALMOST_READY: {
+                if (timeInState(0.5)){
                     setState(READY);
                 }
                 break;

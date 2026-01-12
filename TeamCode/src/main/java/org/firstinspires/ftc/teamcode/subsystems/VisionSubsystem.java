@@ -102,7 +102,7 @@ public class VisionSubsystem extends SubsystemBase {
         aprilTag = new AprilTagProcessor.Builder().build();
         aprilTag.setDecimation(2);
 
-        PredominantColorProcessor colorSensor = new PredominantColorProcessor.Builder()
+        colorSensor = new PredominantColorProcessor.Builder()
             .setRoi(ImageRegion.asUnityCenterCoordinates(0.2, 0.9, 0.7, 0.5))
             .setSwatches(
                     ARTIFACT_GREEN,

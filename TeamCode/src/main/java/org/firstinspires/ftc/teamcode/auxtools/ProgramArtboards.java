@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.Prism.PrismAnimations;
 import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 
 @TeleOp(name="Dustin Artboard Loader", group="Linear OpMode")
-@Disabled
+//@Disabled
 
 public class ProgramArtboards extends LinearOpMode{
     GoBildaPrismDriver prism;
@@ -37,7 +37,7 @@ public class ProgramArtboards extends LinearOpMode{
 
         PrismAnimations.DroidScan  teamColors = new PrismAnimations.DroidScan();
         teamColors.setStartIndex(0);
-        teamColors.setStopIndex(29);
+        teamColors.setStopIndex(11);
         teamColors.setBrightness(50);
         teamColors.setPrimaryColor(Color.YELLOW);
         teamColors.setDroidScanStyle(PrismAnimations.DroidScan.DroidScanStyle.BOTH_TAIL);
@@ -46,14 +46,14 @@ public class ProgramArtboards extends LinearOpMode{
 
         PrismAnimations.Snakes  redAlliance = new PrismAnimations.Snakes();
         redAlliance.setStartIndex(0);
-        redAlliance.setStopIndex(29);
+        redAlliance.setStopIndex(11);
         redAlliance.setBrightness(50);
         redAlliance.setColors(Color.RED);
 
         PrismAnimations.Snakes  blueAlliance = new PrismAnimations.Snakes();
-        redAlliance.setStartIndex(0);
-        redAlliance.setStopIndex(29);
-        redAlliance.setBrightness(50);
+        blueAlliance.setStartIndex(0);
+        blueAlliance.setStopIndex(11);
+        blueAlliance.setBrightness(50);
         blueAlliance.setColors(Color.BLUE);
 
         PrismAnimations.Solid   intakeFront = new PrismAnimations.Solid(Color.GREEN);
@@ -67,14 +67,20 @@ public class ProgramArtboards extends LinearOpMode{
         PrismAnimations.Blink    jammed = new PrismAnimations.Blink(Color.RED);
         jammed.setIndexes(0, 29);
         jammed.setBrightness(100);
+        jammed.setSecondaryColor(Color.TRANSPARENT);
+        jammed.setPrimaryColorPeriod(20);
+        jammed.setPeriod(70);
 
         PrismAnimations.Solid    shooterReady = new PrismAnimations.Solid(Color.YELLOW);
-        shooterReady.setIndexes(0, 29);
+        shooterReady.setIndexes(18, 29);
         shooterReady.setBrightness(50);
 
         PrismAnimations.Blink    shooterNotReady = new PrismAnimations.Blink(Color.PURPLE);
-        shooterNotReady.setIndexes(0, 29);
+        shooterNotReady.setIndexes(0, 11);
         shooterNotReady.setBrightness(50);
+        shooterNotReady.setSecondaryColor(Color.TRANSPARENT);
+        shooterNotReady.setPrimaryColorPeriod(20);
+        shooterNotReady.setPeriod(70);
 
         // set up the rest of the snake pattern
 
@@ -128,24 +134,26 @@ public class ProgramArtboards extends LinearOpMode{
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
         prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_7);
 
-        waitForStart();
+        prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_0);
 
-        if (gamepad1.dpadDownWasPressed()){
-            prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_0);
-        } else if (gamepad1.dpadLeftWasPressed()){
-            prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_1);
-        } else if (gamepad1.dpadUpWasPressed()){
-            prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_2);
-        } else if (gamepad1.dpadRightWasPressed()){
-            prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_3);
-        } else if (gamepad1.aWasPressed()){
-            prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_4);
-        } else if (gamepad1.bWasPressed()){
-            prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_5);
-        } else if (gamepad1.xWasPressed()){
-            prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_6);
-        } else if (gamepad1.yWasPressed()){
-            prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_7);
+        while (opModeInInit()) {
+            if (gamepad1.dpadDownWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_0);
+            } else if (gamepad1.dpadLeftWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_1);
+            } else if (gamepad1.dpadUpWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_2);
+            } else if (gamepad1.dpadRightWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_3);
+            } else if (gamepad1.aWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_4);
+            } else if (gamepad1.bWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_5);
+            } else if (gamepad1.xWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_6);
+            } else if (gamepad1.yWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_7);
+            }
         }
 
         // Keep going

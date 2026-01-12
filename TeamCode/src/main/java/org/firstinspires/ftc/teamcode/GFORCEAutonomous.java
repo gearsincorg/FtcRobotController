@@ -44,6 +44,8 @@ public class GFORCEAutonomous extends LinearOpMode
     Pose2d atGoal   = new Pose2d(-58, -45, Math.toRadians(52));
     Pose2d atWall   = new Pose2d( 62, -15, Math.toRadians(180));
     private final Pose2d[] autoStartLocations = {atGoal, atGoal, atGoal, atGoal, atGoal, atGoal, atWall, atWall, atWall, atOrigin};
+    private AllianceColor lastAllianceColor = AllianceColor.UNKNOWN;
+    private int lastAutoMode = -1;
 
     // ############################################################################
 
@@ -75,10 +77,16 @@ public class GFORCEAutonomous extends LinearOpMode
 
             // Set the Auto Mode and load the path sequence and Starting Location.
             autoMode = autoConfig.autoOptions.autoMode;
-            selectedAuto = loadSelectedAuto();
+            if ((lastAutoMode != autoMode) && (lastAllianceColor != Globals.ALLIANCE_COLOR)) {
+                selectedAuto = loadSelectedAuto();
+                driveSubsystem.updatePoseEstimate();
+
+                lastAllianceColor = Globals.ALLIANCE_COLOR;
+                lastAutoMode = autoMode;
+            }
 
             // updated needed subsystem
-            driveSubsystem.updatePoseEstimate(); // I don't think this is needed since we aren't using encoders anywhere. TEST
+
             turretSubsystem.update();
             spindexerSubsystem.update();
             prismSubsystem.update();
@@ -642,6 +650,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return  new ParallelAction(
                 turretSubsystem.actionUpdate(),
                 spindexerSubsystem.actionUpdate(),
+                prismSubsystem.actionUpdate(),
                 sequentialAction,
                 turretSubsystem.actionTelemetryUpdate()  // just update telemetry
         );

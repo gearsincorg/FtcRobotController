@@ -5,5 +5,6 @@ import org.firstinspires.ftc.teamcode.auxtools.StateBase;
 public enum TurretStates implements StateBase {
     INIT,
     HOMING,
+    ALMOST_READY,
     READY
 }
