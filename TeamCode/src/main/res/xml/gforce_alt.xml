@@ -1,11 +1,6 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <Robot type="FirstInspires-FTC">
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
-        <ServoHub name="Servo Hub 2" port="2">
-            <Servo name="fire" port="1"/>
-            <Servo name="test" port="2"/>
-            <Servo name="spindexer" port="4"/>
-        </ServoHub>
         <LynxModule name="Expansion Hub 3" port="3">
             <goBILDA5202SeriesMotor name="aim" port="0"/>
             <goBILDA5202SeriesMotor name="rearWheel" port="1"/>
@@ -26,6 +21,8 @@
             <OctoQuadFTC name="octoquad" port="0" bus="1"/>
             <REV_VL53L0X_RANGE_SENSOR name="distanceFront" port="0" bus="3"/>
             <REV_VL53L0X_RANGE_SENSOR name="distanceBack" port="0" bus="2"/>
+            <Servo name="fire" port="1"/>
+            <Servo name="spindexer" port="0"/>
         </LynxModule>
     </LynxUsbDevice>
     <Webcam name="Webcam 1" serialNumber="2020032501"/>
