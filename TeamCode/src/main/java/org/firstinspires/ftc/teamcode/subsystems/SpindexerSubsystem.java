@@ -59,6 +59,9 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] INTAKE_BACK  = {-210, -90,   30};
     private final double[] HOME_ANGLES  = { 120,   0, -120};
     private final int[][]  AUTO_SLOTS   = {{2, 1, 0}, {0, 2, 1}, {0, 1, 2}};
+    private final ArtifactColor[][]  AUTO_COLORS  = {{ArtifactColor.GREEN, ArtifactColor.PURPLE, ArtifactColor.PURPLE},
+                                                     {ArtifactColor.PURPLE, ArtifactColor.GREEN, ArtifactColor.PURPLE},
+                                                     {ArtifactColor.PURPLE, ArtifactColor.PURPLE, ArtifactColor.GREEN}};
 
     // 5 Turn Torque servo
     private final double[] REFINED_SHOOT = {0.577, 0.502, 0.421};
@@ -79,16 +82,21 @@ public class SpindexerSubsystem extends SubsystemBase {
     private double sensorRange           =  0;
 
     private boolean startAutoShoot      = false;
-    private boolean shootingPreloads    = true;
     private int     patternID           = 2;
     private int     currentSlot         = 0;
-    private int     allArtifactsHeld    = 0;
-    private int     currentAutoSlot     = 0;
+    private int     currentAutoShot     = 0;
+    private int     totalArtifactsHeld  = 0;
+    private int     greenArtifactsHeld  = 0;
+    private int     purpleArtifactsHeld = 0;
     private double  lastSlotAngleFilled = 0;  // Used during unjamming
     private int     lastSlotFilled      = -1;
     private boolean unjamForward        = false;
     private ElapsedTime actionTime      = new ElapsedTime();
     private boolean isTiming            = false;
+
+    private ArtifactColor requestedColor = ArtifactColor.ANY;
+    private ArtifactColor chosenColor   = ArtifactColor.ANY;
+
 
     private ArtifactColor[] slotColors = {ArtifactColor.EMPTY, ArtifactColor.EMPTY, ArtifactColor.EMPTY};
 
@@ -118,6 +126,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
         spinServoTimer.reset();
         targetAngle = -1;
+        currentAutoShot = 0;
 
         // only initialize if we need to process the obelisk
         if (Globals.DO_MOTIF){
@@ -165,11 +174,17 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
         }
 
-        // count number of slots with balls.
-        allArtifactsHeld = 0;
+        // count number of slots with each color artifact.
+        purpleArtifactsHeld = 0;
+        greenArtifactsHeld = 0;
+        totalArtifactsHeld = 0;
         for (int b = 0; b < 3; b++) {
-            if (slotColors[b] != ArtifactColor.EMPTY) {
-                allArtifactsHeld++;
+            if (slotColors[b] == ArtifactColor.PURPLE) {
+                purpleArtifactsHeld++;
+                totalArtifactsHeld++;
+            } else if (slotColors[b] == ArtifactColor.GREEN) {
+                greenArtifactsHeld++;
+                totalArtifactsHeld++;
             }
         }
     }
@@ -198,9 +213,9 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case HOME: {
                 if (myOpMode.opModeIsActive()) {
-                    if (allArtifactsHeld == 3) {
-                        // sending the spindexer to the position needed fpr the first color of the obolisk pattern
-                        sendToShooter(AUTO_SLOTS[patternID][currentAutoSlot++]);
+                    if (totalArtifactsHeld == 3) {
+                        // sending the spindexer to the position needed for the first color of the obolisk pattern
+                        sendNextColorToShooter();
                         setState(SHOOT_Q);
                     } else {
                         sendClosestEmptyToIntake();
@@ -233,7 +248,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     // Force shooting even without 3 artifacts
                     stopIntake();
                     Globals.ROBOT_STATE = RobotStates.SHOOTING;
-                    sendClostestColorToShooter(ArtifactColor.ANY);                    // queue up first shot.
+                    sendNextColorToShooter();
                     setState(SHOOT_Q);
                 } else if (newArtifact) {
                     // start timer to let ball settle
@@ -242,7 +257,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 } else if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
                     // switch to shooting (usually happens in auto)
                     stopIntake();
-                    sendClostestColorToShooter(ArtifactColor.ANY);
+                    sendNextColorToShooter();
                     setState(SHOOT_Q);
                 } else {
                     sendClosestEmptyToIntake();
@@ -252,11 +267,10 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case INTAKE_HLD: {
                 if (timeInState(NEW_ARTIFACT_HOLD_TIME)) {
-                    if (allArtifactsHeld == 3) {
+                    if (totalArtifactsHeld == 3) {
                         stopIntake();
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
-                        sendClostestColorToShooter(ArtifactColor.ANY);
-                        // sendToShooter(0);                      // queue up first shot.
+                        sendNextColorToShooter();
                         setState(SHOOT_Q);
                     } else {
                         stopIntake();
@@ -269,7 +283,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case SHOOT_Q: {
                 newArtifact = false;  // reset this for next intake
-                if (allArtifactsHeld == 0 ) {
+                if (totalArtifactsHeld == 0 ) {
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
                     setState(INTAKE_Q);
                 } else if (inPosition()  && Globals.SPINDEXER_SHOT_CENTERED)   {
@@ -315,17 +329,11 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case COCK_SHOT: {
                 if (timeInState(ADVANCE_DELAY_TIME)) {
-                    if (allArtifactsHeld > 0) {
-                        // only run the preload sequence once.  Then just get the next available artifact
-                        if (Globals.IS_AUTO && shootingPreloads) {
-                            sendToShooter(AUTO_SLOTS[patternID][currentAutoSlot++]);
-                        } else {
-                            sendClostestColorToShooter(ArtifactColor.ANY);
-                        }
+                    if (totalArtifactsHeld > 0) {
+                        // only run the MOTIF in auto.
+                        sendNextColorToShooter();
                         setState(SHOOT_Q);
                     } else {
-                        currentAutoSlot = 0; //after shooting if we intake three more it needs to reset
-                        shootingPreloads = false;  // we are done with preloads.
                         startAutoShoot = false;
                         runIntake();
                         Globals.ROBOT_STATE = RobotStates.INTAKING;
@@ -338,8 +346,8 @@ public class SpindexerSubsystem extends SubsystemBase {
             case UNJAM: {
                 if (myOpMode.gamepad1.right_trigger < 0.25){
                     stopIntake();
-                    if (allArtifactsHeld == 3) {
-                        sendClostestColorToShooter(ArtifactColor.ANY);
+                    if (totalArtifactsHeld == 3) {
+                        sendNextColorToShooter();
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
                         setState(SHOOT_Q);
                     } else {
@@ -380,7 +388,10 @@ public class SpindexerSubsystem extends SubsystemBase {
         myOpMode.telemetry.addData("SLOTS", "%s %s %s", slotColors[0], slotColors[1], slotColors[2]);
         myOpMode.telemetry.addData("CENTERED", "%s\n", Globals.SPINDEXER_SHOT_CENTERED ? "YES" : "NO");
         if (Globals.IS_AUTO){
-            myOpMode.telemetry.addData("VISION", "%d", patternID);
+            myOpMode.telemetry.addData("VISION", "PID %d (%d) Req %s, Sel %s", patternID, currentAutoShot,
+                    requestedColor == ArtifactColor.PURPLE ? "Purple" : "Green",
+                    chosenColor    == ArtifactColor.PURPLE ? "Purple" : "Green"
+                );
         }
     }
 
@@ -391,7 +402,7 @@ public class SpindexerSubsystem extends SubsystemBase {
     }
 
     public void startShooting() {
-        sendClostestColorToShooter(ArtifactColor.ANY);
+        sendNextColorToShooter();
         Globals.ROBOT_STATE = RobotStates.SHOOTING;
         setState(SHOOT_Q);
     }
@@ -454,18 +465,39 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
     }
 
+    private void sendNextColorToShooter () {
+        if (Globals.IS_AUTO) {
+            sendClostestColorToShooter(AUTO_COLORS[patternID][currentAutoShot++]);
+            // make sure we wrap the shot counter
+            currentAutoShot %= 3;  // wrap the shot index
+        } else {
+            sendClostestColorToShooter(ArtifactColor.ANY);
+        }
+    }
+
     /**
      * sends the best full slot to the intake by deciding on the smallest distance between the three.
      */
-    private void sendClostestColorToShooter(ArtifactColor color){
+    private void sendClostestColorToShooter(ArtifactColor desiredColor){
         double closestAngle = 360;
         int    closestSlot  =  -1;
         double destination  =   0;  // can be simplified
 
+        // dave color values for telemetry
+        requestedColor = desiredColor;
+
+        // look to make swe have some of the desired color
+        if (((desiredColor == ArtifactColor.GREEN) && (greenArtifactsHeld == 0)) ||
+            ((desiredColor == ArtifactColor.PURPLE) && (purpleArtifactsHeld == 0))) {
+            desiredColor = ArtifactColor.ANY;
+        }
+
+        chosenColor = desiredColor;
+
         // calculate how far the spindexer needs to turn for each full slot, and use the smallest angle.
         for (int s = 0; s < 3; s++) {
             // do a color match or a match all
-            if ((slotColors[s] == color) || ((color == ArtifactColor.ANY) && (slotColors[s] != ArtifactColor.EMPTY))) {
+            if ((slotColors[s] == desiredColor) || ((desiredColor == ArtifactColor.ANY) && (slotColors[s] != ArtifactColor.EMPTY))) {
                 double angle = Math.abs(destination - currentAngle - HOME_ANGLES[s]);
                 if (angle < closestAngle) {
                     closestAngle = angle;
@@ -477,6 +509,7 @@ public class SpindexerSubsystem extends SubsystemBase {
         if (closestSlot >= 0){
             sendToShooter(closestSlot);
         }
+
     }
 
     public void sendToShooter(int slot) {
@@ -487,7 +520,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         spindexerServoValue = REFINED_SHOOT[slot];
         spindexer.setPosition(spindexerServoValue);
     }
-
 
     public void sendToIntake(int slot){
         if (Globals.FORWARD_MOTION){
@@ -585,8 +617,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
-                sendToShooter(AUTO_SLOTS[patternID][0]);
-                setState(SHOOT_Q);
                 startAutoShoot = true;
                 return false;
             }
@@ -612,7 +642,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     isTiming = true;
                     actionTime.reset();
                 } else {
-                    if ((actionTime.time() >= time) || (allArtifactsHeld == 3)){
+                    if ((actionTime.time() >= time) || (totalArtifactsHeld == 3)){
                         runAgain = false;
                         isTiming = false;
                     }

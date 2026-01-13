@@ -77,7 +77,7 @@ public class GFORCEAutonomous extends LinearOpMode
 
             // Set the Auto Mode and load the path sequence and Starting Location.
             autoMode = autoConfig.autoOptions.autoMode;
-            if ((lastAutoMode != autoMode) && (lastAllianceColor != Globals.ALLIANCE_COLOR)) {
+            if ((lastAutoMode != autoMode) || (lastAllianceColor != Globals.ALLIANCE_COLOR)) {
                 selectedAuto = loadSelectedAuto();
                 driveSubsystem.updatePoseEstimate();
 

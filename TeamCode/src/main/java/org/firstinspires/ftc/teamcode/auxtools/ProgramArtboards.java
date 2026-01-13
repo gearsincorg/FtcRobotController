@@ -82,10 +82,6 @@ public class ProgramArtboards extends LinearOpMode{
         shooterNotReady.setPrimaryColorPeriod(20);
         shooterNotReady.setPeriod(70);
 
-        // set up the rest of the snake pattern
-
-        //  keep going
-
         // ================================================================================================
         // load the animations into each artboard.
         // To see what each Artboard should be doing, look at LEDMode.java

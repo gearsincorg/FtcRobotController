@@ -152,16 +152,23 @@ public class TurretSubsystem extends SubsystemBase {
 
             // we just want to point the shooter if we are in Auto Init.
             if (Globals.IS_AUTO && myOpMode.opModeInInit() && (currentState == READY)){
-               solveTrajectory();
 
-               // DETERMINE and set: Turret angle, Shooter angle
-               if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
-                   Ad = normalizeAngle(Ad - 180);
-                   shooterSubsystem.setAngle(-shooterAngle);
-               } else {
-                   shooterSubsystem.setAngle(shooterAngle);
+                // check for diagnostic home request
+                if (myOpMode.gamepad1.touchpad) {
+                    setTurretAngle(0);
+                    shooterSubsystem.setAngle(0);
+                } else {
+                   solveTrajectory();
+
+                   // DETERMINE and set: Turret angle, Shooter angle
+                   if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
+                       Ad = normalizeAngle(Ad - 180);
+                       shooterSubsystem.setAngle(-shooterAngle);
+                   } else {
+                       shooterSubsystem.setAngle(shooterAngle);
+                   }
+                   setTurretAngle(Ad);
                }
-               setTurretAngle(Ad);
            }
         }
     }
@@ -173,7 +180,7 @@ public class TurretSubsystem extends SubsystemBase {
             case INIT: {
                 aim.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 aim.setPower(0.15);
-                shooterSubsystem.setAngle(30);
+                shooterSubsystem.setAngle(30);  // keep the wires out of the way while homing.
                 setState(HOMING);
                 break;
             }
@@ -210,7 +217,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("GOAL", "R=%5.0f Ag=%4.0f", targetRange, Ag);
+        myOpMode.telemetry.addData("GOAL", "Rng=%5.0f Ag=%4.0f", targetRange, Ag);
         myOpMode.telemetry.addData("TURRET", "%s Ar=%4.0f, Ad=%4.0f, At=%4.0f\n",
                 currentState, Ar, Ad, At, targetRange);
     }
