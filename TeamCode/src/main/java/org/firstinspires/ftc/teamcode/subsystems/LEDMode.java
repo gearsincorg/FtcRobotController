@@ -18,9 +18,3 @@ public enum LEDMode {
     }
 }
 
-/*
-    Artboard       Front 12 (0-11)    MID 6 (12-17)      Back (18-29)
-        0           Yellow Droid         White (Sat 0)   Yellow Droid   Hue  32,  Saturation 1, Brightness 100, speed 0.1)
-        1           Red Snake            White (Sat 0)   Red Snake      Hue   0,  Saturation 1, Brightness 100, speed 0.4)
-        2           Blue Snake           White (Sat 0)   Blue Snake     Hue 240,  Saturation 1, Brightness 100, speed 0.4)
- */

@@ -128,10 +128,16 @@ public class SpindexerSubsystem extends SubsystemBase {
         targetAngle = -1;
         currentAutoShot = 0;
 
-        // only initialize if we need to process the obelisk
-        if (Globals.DO_MOTIF){
-            visionSubsystem.init(true);
+    }
+
+    public void enableVision() {
+        if (!visionSubsystem.isEnabled()) {
+            visionSubsystem.init(showTelemetry);
         }
+    }
+
+    public void disableVision(){
+        visionSubsystem.disableProcessing();
     }
 
     @Override
@@ -592,6 +598,8 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     public void setPatternID (int id){
         patternID = id;
+        sendClostestColorToShooter(AUTO_COLORS[patternID][0]);
+        setState(SHOOT_Q);
     }
 
     public void cameraUp(){
@@ -666,7 +674,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
                 cameraUp();
-                patternID = visionSubsystem.getPatternId();
+                setPatternID(visionSubsystem.getPatternId());
                 cameraDown();
                 return false;
             }

@@ -108,50 +108,44 @@ public class TurretSubsystem extends SubsystemBase {
      * Called every update() Cycle
      */
     public void runProcessing() {
-        if (myOpMode.opModeIsActive() && (currentState == READY) && (Globals.ROBOT_STATE == RobotStates.SHOOTING)) {
-            // we want to point the shooter and get wheels up to speed.
-            if (TEST_MODE){
-
-                // if this is the first time through, setup initial values
-                if (shooterSpeedMPS == 0) {
-                    setupShooter(20, 10, 0);  // Default manual settings
+        if ((currentState == READY) && myOpMode.opModeIsActive()) {
+            //  we are in PLAY mode
+            if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
+                // we want to point the shooter and get wheels up to speed.
+                if (TEST_MODE) {
+                    // Use the gamepad to modify the shooter speed and tilt
+                    setShooterManually();
+                } else {
+                     // calculate automatic shooter trajectory (speed and tilt)
+                     solveTrajectory();
                 }
 
-                // DETERMINE MANUAL shooter speed
-                if (myOpMode.gamepad1.dpadUpWasPressed() && (shooterSpeedMPS <= MAX_MPS)) {
-                    shooterSpeedMPS += SHOOTER_STEP;
-                } else if (myOpMode.gamepad1.dpadDownWasPressed() && (shooterSpeedMPS >= SHOOTER_STEP)) {
-                    shooterSpeedMPS -= SHOOTER_STEP;
+                // DETERMINE and set: Turret angle, Shooter angle and individual velocities
+                if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
+                    Ad = normalizeAngle(Ad - 180);
+                    shooterSubsystem.setAngle(-shooterAngle);
+                    shooterSubsystem.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
+                                                 shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)));
+                } else {
+                    shooterSubsystem.setAngle(shooterAngle);
+                    shooterSubsystem.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
+                                                 shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
                 }
+                setTurretAngle(Ad);
 
-                // DETERMINE MANUAL shooter TILT
-                if (myOpMode.gamepad1.dpadRightWasPressed() && (shooterAngle <= shooterSubsystem.SHOOTER_ANGLE_MAX)) {
-                    shooterAngle += ANGLE_STEP;
-                } else if (myOpMode.gamepad1.dpadLeftWasPressed() && (shooterAngle >= shooterSubsystem.SHOOTER_ANGLE_MIN)) {
-                    shooterAngle -= ANGLE_STEP;
-                }
-            } else  {
-                // calculate automatic shooter trajectory (speed and tilt)
-                solveTrajectory();
+             } else {
+                // put turret in neutral position
+                setTurretAngle(0);
+                shooterSubsystem.setAngle(0);
             }
 
-            // DETERMINE and set: Turret angle, Shooter angle and individual velocities
-            if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
-                Ad = normalizeAngle(Ad - 180);
-                shooterSubsystem.setAngle(-shooterAngle);
-                shooterSubsystem.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
-                        shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)));
-            } else {
-                shooterSubsystem.setAngle(shooterAngle);
-                shooterSubsystem.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
-                        shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
-            }
-            setTurretAngle(Ad);
-        } else {
-           shooterSubsystem.setVelocity(0,0);
+        } else if ((currentState == READY) && myOpMode.opModeInInit()) {
+            //  we are in INIT mode
 
-            // we just want to point the shooter if we are in Auto Init.
-            if (Globals.IS_AUTO && myOpMode.opModeInInit() && (currentState == READY)){
+           shooterSubsystem.setVelocity(0,0);  // never run the shooter in init
+
+            // If we are in auto, we just want to point the shooter
+            if (Globals.IS_AUTO){
 
                 // check for diagnostic home request
                 if (myOpMode.gamepad1.touchpad) {
@@ -294,12 +288,35 @@ public class TurretSubsystem extends SubsystemBase {
         return sum;
     }
 
+    // test mode
+    void setShooterManually() {
+        // if this is the first time through, setup initial values
+        if (shooterSpeedMPS == 0) {
+            setupShooter(20, 10, 0);  // Default manual settings
+        }
+
+        // DETERMINE MANUAL shooter speed
+        if (myOpMode.gamepad1.dpadUpWasPressed() && (shooterSpeedMPS <= MAX_MPS)) {
+            shooterSpeedMPS += SHOOTER_STEP;
+        } else if (myOpMode.gamepad1.dpadDownWasPressed() && (shooterSpeedMPS >= SHOOTER_STEP)) {
+            shooterSpeedMPS -= SHOOTER_STEP;
+        }
+
+        // DETERMINE MANUAL shooter TILT
+        if (myOpMode.gamepad1.dpadRightWasPressed() && (shooterAngle <= shooterSubsystem.SHOOTER_ANGLE_MAX)) {
+            shooterAngle += ANGLE_STEP;
+        } else if (myOpMode.gamepad1.dpadLeftWasPressed() && (shooterAngle >= shooterSubsystem.SHOOTER_ANGLE_MIN)) {
+            shooterAngle -= ANGLE_STEP;
+        }
+    }
+
     // =============  Action methods  ========================
 
     public Action actionTelemetryUpdate(){
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet){
+                myOpMode.telemetry.addData("ROBOT", "%s - %s", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
                 myOpMode.telemetry.update();
                 myOpMode.telemetry.addData("ROBOT", "%s - %s", Globals.ROBOT_STATE, Globals.ALLIANCE_COLOR);
                 return false;

@@ -58,10 +58,10 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     public int getPatternId() {
-        int patternid = 2;
+        int patternid = -1;
         ElapsedTime timer = new ElapsedTime();
         if (subsystemEnabled){
-            while (timer.time() < 1.0) {
+            while ((patternid < 0) && (timer.time() < 2.0)) {
                 List<AprilTagDetection> currentDetections = aprilTag.getDetections();
                 if (currentDetections != null) {
                     for (AprilTagDetection detection : currentDetections) {
@@ -78,7 +78,11 @@ public class VisionSubsystem extends SubsystemBase {
             visionPortal.setProcessorEnabled(colorSensor, true);
         }
 
-        return patternid;
+        if (patternid >= 0) {
+            return patternid;
+        } else {
+            return 2;  // fastest
+        }
     }
 
     public ArtifactColor getColor() {
@@ -90,7 +94,7 @@ public class VisionSubsystem extends SubsystemBase {
                 return ArtifactColor.PURPLE;
             }
         } else {
-            return ArtifactColor.PURPLE;
+            return ArtifactColor.ANY;
         }
     }
 
@@ -105,7 +109,7 @@ public class VisionSubsystem extends SubsystemBase {
         colorSensor = new PredominantColorProcessor.Builder()
             .setRoi(ImageRegion.asUnityCenterCoordinates(0.2, 0.9, 0.7, 0.5))
             .setSwatches(
-                    ARTIFACT_GREEN,
+                    PredominantColorProcessor.Swatch.ARTIFACT_GREEN,
                     PredominantColorProcessor.Swatch.ARTIFACT_PURPLE,
                     PredominantColorProcessor.Swatch.RED,
                     PredominantColorProcessor.Swatch.BLUE,
@@ -125,7 +129,14 @@ public class VisionSubsystem extends SubsystemBase {
                 .build();
 
         visionPortal.setProcessorEnabled(aprilTag, true);
-        visionPortal.setProcessorEnabled(colorSensor, false);
+        visionPortal.setProcessorEnabled(colorSensor, true);
+    }
+
+    public void disableProcessing() {
+        if (isEnabled()) {
+            visionPortal.setProcessorEnabled(aprilTag, false);
+            visionPortal.setProcessorEnabled(colorSensor, false);
+        }
     }
 
     public boolean cameraReady() {

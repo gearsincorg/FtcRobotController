@@ -74,6 +74,9 @@ public class GFORCEAutonomous extends LinearOpMode
                 Globals.ALLIANCE_COLOR = AllianceColor.BLUE;
 
             Globals.DO_MOTIF = autoConfig.autoOptions.doMotif;
+            if (Globals.DO_MOTIF){
+                spindexerSubsystem.enableVision();  // this only does anything if it's not enabled
+            }
 
             // Set the Auto Mode and load the path sequence and Starting Location.
             autoMode = autoConfig.autoOptions.autoMode;
@@ -103,12 +106,16 @@ public class GFORCEAutonomous extends LinearOpMode
         {
             // selectedAuto = loadSelectedAuto();
 
-            // Do a count down if these is a delayed start,
+            // Do a count down if there is a delayed start,
             for (int sec = autoConfig.autoOptions.delayStart; sec > 0; sec--) {
                 telemetry.addData("AUTO MODE",  "%s", autoConfig.autoArray[autoConfig.autoOptions.autoMode]);
                 telemetry.addData("COUNTDOWN",  "%d  %d  %d  %d", sec, sec, sec, sec);
                 telemetry.update();
                 sleep(1000);
+            }
+
+            if (Globals.DO_MOTIF) {
+                spindexerSubsystem.cameraUp();
             }
 
             if (selectedAuto != null) {
@@ -186,14 +193,14 @@ public class GFORCEAutonomous extends LinearOpMode
     private Action backReturnAfterReleaseFinal() {
         return driveSubsystem.actionBuilder(mirror(-4, -56, -90))
             .setReversed(true)
-            .splineTo(mirror(-44, -24), mirror(180))
+            .splineTo(mirror(-40, -20), mirror(180))
             .build();
     }
 
     private Action backReturnRow1Final() {
         return driveSubsystem.actionBuilder(mirror(-12, -56, -90))
             .setReversed(true)
-            .splineTo(mirror(-44, -24), mirror(150))
+            .splineTo(mirror(-40, -20), mirror(150))
             .build();
     }
 
@@ -217,8 +224,8 @@ public class GFORCEAutonomous extends LinearOpMode
         return driveSubsystem.actionBuilder(mirror(12, -56, -90))
             .setReversed(true)
             .lineToY(mirrorY(-48))
-            .splineTo(mirror(-12, -24), mirror(180))
-            .lineToX(-44)
+            .splineTo(mirror(-12, -20), mirror(180))
+            .lineToX(-40)
             .build();
     }
 
@@ -245,7 +252,7 @@ public class GFORCEAutonomous extends LinearOpMode
         return driveSubsystem.actionBuilder(mirror(36, -62, -90))
             .lineToY(mirrorY(-44))
             .splineTo(mirror(12, -20), mirror(180))
-            .lineToX(-44)
+            .lineToX(-40)
             .build();
     }
 

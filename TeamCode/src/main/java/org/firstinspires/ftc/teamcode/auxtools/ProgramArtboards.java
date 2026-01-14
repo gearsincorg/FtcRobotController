@@ -13,6 +13,16 @@ import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 @TeleOp(name="Dustin Artboard Loader", group="Linear OpMode")
 //@Disabled
 
+/*
+    POWER_UP(GoBildaPrismDriver.Artboard.ARTBOARD_0),
+    ALLIANCE_RED(GoBildaPrismDriver.Artboard.ARTBOARD_1),
+    ALLIANCE_BLUE(GoBildaPrismDriver.Artboard.ARTBOARD_2),
+    INTAKE_FRONT(GoBildaPrismDriver.Artboard.ARTBOARD_3),
+    INTAKE_BACK(GoBildaPrismDriver.Artboard.ARTBOARD_4),
+    SHOOTER_READY(GoBildaPrismDriver.Artboard.ARTBOARD_5),
+    SHOOTER_NOT_READY(GoBildaPrismDriver.Artboard.ARTBOARD_6),
+    INTAKE_JAMMED(GoBildaPrismDriver.Artboard.ARTBOARD_7);
+ */
 public class ProgramArtboards extends LinearOpMode{
     GoBildaPrismDriver prism;
 
@@ -82,6 +92,14 @@ public class ProgramArtboards extends LinearOpMode{
         shooterNotReady.setPrimaryColorPeriod(20);
         shooterNotReady.setPeriod(70);
 
+        PrismAnimations.Solid   markFront = new PrismAnimations.Solid(Color.GREEN);
+        markFront.setIndexes(5, 6);
+        markFront.setBrightness(50);
+
+        PrismAnimations.Solid   markBack = new PrismAnimations.Solid(Color.RED);
+        markBack.setIndexes(23, 24);
+        markBack.setBrightness(50);
+
         // ================================================================================================
         // load the animations into each artboard.
         // To see what each Artboard should be doing, look at LEDMode.java
@@ -93,68 +111,92 @@ public class ProgramArtboards extends LinearOpMode{
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, teamColors);
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
         prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_0);
-        sleep(1000);
+        sleep(100);
 
         prism.clearAllAnimations();
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, redAlliance);
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
         prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_1);
+        sleep(100);
 
         prism.clearAllAnimations();
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, blueAlliance);
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
         prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_2);
+        sleep(100);
 
         prism.clearAllAnimations();
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, intakeFront);
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_2, markFront);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_3, markBack);
         prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_3);
+        sleep(100);
 
         prism.clearAllAnimations();
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, intakeBack);
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_2, markFront);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_3, markBack);
         prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_4);
+        sleep(100);
 
         prism.clearAllAnimations();
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, shooterReady);
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_2, markFront);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_3, markBack);
         prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_5);
+        sleep(100);
 
         prism.clearAllAnimations();
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, shooterNotReady);
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_2, markFront);
+        prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_3, markBack);
         prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_6);
+        sleep(100);
 
         prism.clearAllAnimations();
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_0, jammed);
         prism.insertAndUpdateAnimation(GoBildaPrismDriver.LayerHeight.LAYER_1, cameraLight);
         prism.saveCurrentAnimationsToArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_7);
+        sleep(100);
 
         prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_0);
+        sleep(100);
+
+        telemetry.addLine("Loading Complete");
+        telemetry.addLine("Press button to select artboard\n");
+
+        telemetry.addLine("Up:    POWER_UP");
+        telemetry.addLine("Right: ALLIANCE_RED");
+        telemetry.addLine("Down:  ALLIANCE_BLUE");
+        telemetry.addLine("Left:  INTAKE_FRONT");
+        telemetry.addLine("Y:     INTAKE_BACK");
+        telemetry.addLine("B:     SHOOTER_READY");
+        telemetry.addLine("A:     SHOOTER_NOT_READY");
+        telemetry.addLine("X:     INTAKE_JAMMED");
+        telemetry.update();
 
         while (opModeInInit()) {
-            if (gamepad1.dpadDownWasPressed()) {
+            if (gamepad1.dpadUpWasPressed()) {
                 prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_0);
-            } else if (gamepad1.dpadLeftWasPressed()) {
-                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_1);
-            } else if (gamepad1.dpadUpWasPressed()) {
-                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_2);
             } else if (gamepad1.dpadRightWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_1);
+            } else if (gamepad1.dpadDownWasPressed()) {
+                prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_2);
+            } else if (gamepad1.dpadLeftWasPressed()) {
                 prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_3);
-            } else if (gamepad1.aWasPressed()) {
+            } else if (gamepad1.yWasPressed()) {
                 prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_4);
             } else if (gamepad1.bWasPressed()) {
                 prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_5);
-            } else if (gamepad1.xWasPressed()) {
+            } else if (gamepad1.aWasPressed()) {
                 prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_6);
-            } else if (gamepad1.yWasPressed()) {
+            } else if (gamepad1.xWasPressed()) {
                 prism.loadAnimationsFromArtboard(GoBildaPrismDriver.Artboard.ARTBOARD_7);
             }
         }
-
-        // Keep going
-        
-        telemetry.addLine("Loading Complete");
-        telemetry.update();
     }
 }
