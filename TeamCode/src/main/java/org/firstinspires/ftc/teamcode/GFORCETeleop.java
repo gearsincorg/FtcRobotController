@@ -57,7 +57,7 @@ public class GFORCETeleop extends LinearOpMode
     {
         Globals.IS_AUTO = false;
         Globals.OCTO_ERRORS = 0;
-        telemetry.setMsTransmissionInterval(25); //  << make this 100 unless debugging
+        telemetry.setMsTransmissionInterval(50); //  << make this 100 unless debugging
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         autoConfig.initialize();
@@ -76,7 +76,7 @@ public class GFORCETeleop extends LinearOpMode
         spindexerSubsystem.init(true);
         turretSubsystem.init(true);
         prismSubsystem.init(true);
-        //  loggingSubsystem.init(true);  // enable this line to do datalogging.
+        // loggingSubsystem.init(true);  // enable this line to do datalogging.
 
         // Wait for driver to press start
         while(opModeInInit()) {

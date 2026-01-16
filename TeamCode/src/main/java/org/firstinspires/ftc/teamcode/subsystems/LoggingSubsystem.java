@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
 public class LoggingSubsystem extends SubsystemBase {
 
-    static LoggingSubsystem.Datalog datalog;
+    static LoggingSubsystem.Datalog datalog = null;
     VoltageSensor battery;
 
     public LoggingSubsystem(LinearOpMode myOpMode) {
@@ -49,13 +49,17 @@ public class LoggingSubsystem extends SubsystemBase {
 
     }
 
-    public void updateCycle(double cycle) {
-        datalog.cycle.set("%.1f", cycle);
+    public static void updateCycle(double cycle) {
+        if (datalog != null) {
+            datalog.cycle.set("%.1f", cycle);
+        }
     }
 
     public static void updateWheelSpeed(double front, double back) {
-        datalog.frontWheel.set(front);
-        datalog.backWheel.set(back);
+        if (datalog != null) {
+            datalog.frontWheel.set(front);
+            datalog.backWheel.set(back);
+        }
     }
 
     /*

@@ -49,8 +49,8 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double FIRE_SHOOT     = 0.65;
     private final double FIRE_RETRACT   = 0.12;
 
-    private final double FIRE_HOLD_TIME         = 0.20;  // was 0.25
-    private final double ADVANCE_DELAY_TIME     = 0.00;  // was 0.25
+    private final double SPIN_PAUSE_TIME        = 0.05;  // These two go together to set the FIRE time
+    private final double FIRE_HOLD_TIME         = 0.15;  // ^^^^
     private final double NEW_ARTIFACT_HOLD_TIME = 0.05;  // was 0.30
 
     // Spindexer Servo Positions (in degrees)
@@ -320,6 +320,19 @@ public class SpindexerSubsystem extends SubsystemBase {
                     // Start shot
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.EMPTY;
+                    setState(SPIN_PAUSE);
+                }
+                break;
+            }
+
+            case SPIN_PAUSE: {
+                if (timeInState(SPIN_PAUSE_TIME)) {
+                    // decide where to send the spindexer
+                    if (totalArtifactsHeld > 0) {
+                        sendNextColorToShooter();
+                    } else {
+                        sendClosestEmptyToIntake();
+                    }
                     setState(SHOOTING);
                 }
                 break;
@@ -334,17 +347,12 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
 
             case COCK_SHOT: {
-                if (timeInState(ADVANCE_DELAY_TIME)) {
-                    if (totalArtifactsHeld > 0) {
-                        // only run the MOTIF in auto.
-                        sendNextColorToShooter();
-                        setState(SHOOT_Q);
-                    } else {
-                        startAutoShoot = false;
-                        runIntake();
-                        Globals.ROBOT_STATE = RobotStates.INTAKING;
-                        setState(INTAKING);
-                    }
+                if (totalArtifactsHeld > 0) {
+                    setState(SHOOT_Q);
+                } else {
+                    startAutoShoot = false;
+                    Globals.ROBOT_STATE = RobotStates.INTAKING;
+                    setState(INTAKE_Q);
                 }
                 break;
             }

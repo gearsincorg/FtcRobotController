@@ -10,6 +10,7 @@ public enum SpindexerStates implements StateBase {
     INTAKE_HLD,
     SHOOT_Q,
     RDY_2_SHOOT,
+    SPIN_PAUSE,
     COCK_SHOT,
     SHOOTING,
     UNJAM,

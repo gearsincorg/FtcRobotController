@@ -26,7 +26,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public final double SHOOTER_ANGLE_MAX        =  37.0;
     public final double SHOOTER_ANGLE_MIN        = -37.0;
     private final double PULSE_SCALE_FACTOR      =  1.8e-3;   // make this match the spindexer in 2 places once servo is reprogrammed
-    private final double SHOOTER_SPEED_TOLERANCE =  0.2;
+    private final double SHOOTER_SPEED_TOLERANCE =  0.3;
     private final double MAX_MPS                 =  16.0;
 
     private final double P_STEP                  =  1.0;
@@ -41,7 +41,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private double  currentRearMPS    = 0;
     private double  targetFrontMPS    = 0;
     private double  targetRearMPS     = 0;
-    private PIDFCoefficients shooterCoefs = new PIDFCoefficients(32,0,0,11.6);   //
+    private PIDFCoefficients shooterCoefs = new PIDFCoefficients(32,0,0,12.0);   // 32,0,0,11.6
 
     public boolean  atSpeed = false;
 
@@ -120,8 +120,11 @@ public class ShooterSubsystem extends SubsystemBase {
             rear.setVelocity(0);
         }
 
-        atSpeed = ((Math.abs(targetFrontMPS - currentFrontMPS) < SHOOTER_SPEED_TOLERANCE) &&
-                (Math.abs(targetRearMPS - currentRearMPS) < SHOOTER_SPEED_TOLERANCE));
+        // Assume we aren't using any backspin.
+        double speedError = Math.abs(targetFrontMPS - ((currentFrontMPS + currentRearMPS) / 2.0));
+        atSpeed = (speedError < SHOOTER_SPEED_TOLERANCE);
+
+        // LoggingSubsystem.updateCycle(speedError);
     }
 
     @Override
@@ -129,7 +132,7 @@ public class ShooterSubsystem extends SubsystemBase {
         myOpMode.telemetry.addData("SHOOTER",   "F=%4.2f  B=%4.2f %s Tilt= %.0f", currentFrontMPS, currentRearMPS, atSpeed ? "OK" : "SLOW", tiltAngle);
         LoggingSubsystem.updateWheelSpeed(currentFrontMPS, currentRearMPS);
 
-        // myOpMode.telemetry.addData("SET VEL",   "F=%4.2f  B=%4.2f", targetFrontMPS, targetRearMPS);
+        //myOpMode.telemetry.addData("SET VEL",   "F=%4.2f  B=%4.2f", targetFrontMPS, targetRearMPS);
         // myOpMode.telemetry.addData("PIDF",   "P=%4.2f  I=%4.2f  D=%4.2f  F=%4.2f", shooterCoefs.p, shooterCoefs.i, shooterCoefs.d, shooterCoefs.f );
     }
 

@@ -63,7 +63,7 @@ public class TurretSubsystem extends SubsystemBase {
 
     private ElapsedTime stateTime = new ElapsedTime();
 
-    private double[] speedCoefs = {4.5429, 0.0022};  // C, X  was {4.6647, 0.0021};
+    private double[] speedCoefs = { 4.5429, 0.0022}; // C, X  was {4.5429, 0.0022};
     private double[] angleCoefs = {-3.5333, 0.0193}; // C, X
 
     @Override
