@@ -94,7 +94,7 @@ public class VisionSubsystem extends SubsystemBase {
                 return ArtifactColor.PURPLE;
             }
         } else {
-            return ArtifactColor.ANY;
+            return ArtifactColor.PURPLE;
         }
     }
 
@@ -136,6 +136,13 @@ public class VisionSubsystem extends SubsystemBase {
         if (isEnabled()) {
             visionPortal.setProcessorEnabled(aprilTag, false);
             visionPortal.setProcessorEnabled(colorSensor, false);
+        }
+    }
+
+    public void enableTeleopProcessing() {
+        if (isEnabled()) {
+            visionPortal.setProcessorEnabled(aprilTag, false);
+            visionPortal.setProcessorEnabled(colorSensor, true);
         }
     }
 

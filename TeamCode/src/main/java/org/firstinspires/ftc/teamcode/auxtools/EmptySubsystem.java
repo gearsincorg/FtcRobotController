@@ -8,25 +8,9 @@ public class EmptySubsystem extends SubsystemBase {
 
     // Subsystem Constants
 
-    // Subsystem Speed/Power constants
-
-    // Servo positions
-
-    // General Subsystem Members
-
     public EmptySubsystem(LinearOpMode myOpMode) {
         super(myOpMode);
     }
-
-    // subsystem devices
-
-    // Subsystem Constants
-
-    // Subsystem Speed/Power constants
-
-    // Servo positions
-
-    // General Subsystem Members
 
     @Override
     public void init(boolean showTelemetry) {
@@ -40,6 +24,11 @@ public class EmptySubsystem extends SubsystemBase {
     }
 
     @Override
+    public void runProcessing() {
+
+    }
+
+    @Override
     public void runStateMachine() {
 
     }
@@ -48,4 +37,7 @@ public class EmptySubsystem extends SubsystemBase {
     public void showStatus() {
 
     }
+
+    // General Subsystem Members
+
 }

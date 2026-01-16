@@ -41,7 +41,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private double  currentRearMPS    = 0;
     private double  targetFrontMPS    = 0;
     private double  targetRearMPS     = 0;
-    private PIDFCoefficients shooterCoefs = new PIDFCoefficients(42,0,0,11.6);   //
+    private PIDFCoefficients shooterCoefs = new PIDFCoefficients(32,0,0,11.6);   //
 
     public boolean  atSpeed = false;
 
@@ -77,7 +77,8 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void runProcessing() {
 
-        /*  This code lets as tune the PF coefficients */
+        /*
+        //  This code lets us tune the PF coefficients
         boolean changedPIDF = false;
 
         // DETERMINE MANUAL shooter speed
@@ -102,11 +103,12 @@ public class ShooterSubsystem extends SubsystemBase {
             front.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
             rear.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
         }
-
+        */
 
         shooterServoValue = MathUtils.clamp(0.5 - (tiltAngle * PULSE_SCALE_FACTOR / SERVO_GEAR_RATIO), 0.22, 0.78);  // make this match the spindexer in 2 places once servo is reprogrammed
         hood.setPosition(shooterServoValue);
 
+        // slam on the breaks if we are just too fast
         if ((currentFrontMPS - targetFrontMPS) < 0.5) {
             front.setVelocity(targetFrontMPS / SHOOTER_COUNTS_TO_MPS);
         } else {
@@ -125,6 +127,8 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void showStatus() {
         myOpMode.telemetry.addData("SHOOTER",   "F=%4.2f  B=%4.2f %s Tilt= %.0f", currentFrontMPS, currentRearMPS, atSpeed ? "OK" : "SLOW", tiltAngle);
+        LoggingSubsystem.updateWheelSpeed(currentFrontMPS, currentRearMPS);
+
         // myOpMode.telemetry.addData("SET VEL",   "F=%4.2f  B=%4.2f", targetFrontMPS, targetRearMPS);
         // myOpMode.telemetry.addData("PIDF",   "P=%4.2f  I=%4.2f  D=%4.2f  F=%4.2f", shooterCoefs.p, shooterCoefs.i, shooterCoefs.d, shooterCoefs.f );
     }

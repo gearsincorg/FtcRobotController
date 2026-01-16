@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.LEDMode;
+import org.firstinspires.ftc.teamcode.subsystems.LoggingSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretStates;
@@ -45,9 +46,10 @@ public class GFORCETeleop extends LinearOpMode
     private SpindexerSubsystem spindexerSubsystem = new SpindexerSubsystem(this);
     private TurretSubsystem    turretSubsystem    = new TurretSubsystem(this);
     private PrismSubsystem     prismSubsystem     = new PrismSubsystem(this);
+    private LoggingSubsystem   loggingSubsystem   = new LoggingSubsystem(this);
 
     private ElapsedTime cycleTimer = new ElapsedTime();
-    private double avgCycle = 0;
+    private double cycleMS = 0;
     private double lastCycle = 0;
     private double sampleCount = 0;
 
@@ -74,6 +76,7 @@ public class GFORCETeleop extends LinearOpMode
         spindexerSubsystem.init(true);
         turretSubsystem.init(true);
         prismSubsystem.init(true);
+        //  loggingSubsystem.init(true);  // enable this line to do datalogging.
 
         // Wait for driver to press start
         while(opModeInInit()) {
@@ -84,13 +87,11 @@ public class GFORCETeleop extends LinearOpMode
             } else if (gamepad1.dpad_down) {
                 spindexerSubsystem.cameraDown();
             }
-            // Read and display sensor data
-            driveSubsystem.updatePoseEstimate();
-            // spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
-            // turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            prismSubsystem.update();
 
+            driveSubsystem.updatePoseEstimate();
+            prismSubsystem.update();
             showCycleTime();
+            loggingSubsystem.update();
             telemetry.update();
         }
 
@@ -141,6 +142,8 @@ public class GFORCETeleop extends LinearOpMode
             // use the smart manual drive feature of the DriveSubsystem
             driveSubsystem.smartDrive();
             showCycleTime();
+
+            loggingSubsystem.update();
             telemetry.update();
 
             // Update the dashboard.
@@ -172,11 +175,10 @@ public class GFORCETeleop extends LinearOpMode
     }
 
     private void showCycleTime() {
-        if ((++sampleCount % 10) == 0) {
-            double now = cycleTimer.time();
-            avgCycle = (now - lastCycle) * 100;
-            lastCycle = now;
-        }
-        telemetry.addData("Cycle Time", "%.1f mS", avgCycle);
+        double now = cycleTimer.time();
+        cycleMS = (now - lastCycle) * 1000;
+        lastCycle = now;
+        telemetry.addData("Cycle Time", "%.1f mS", cycleMS);
+        loggingSubsystem.updateCycle(cycleMS);
     }
 }
