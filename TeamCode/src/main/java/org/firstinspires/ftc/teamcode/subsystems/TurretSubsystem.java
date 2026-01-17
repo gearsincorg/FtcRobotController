@@ -121,16 +121,14 @@ public class TurretSubsystem extends SubsystemBase {
                 }
 
                 // DETERMINE and set: Turret angle, Shooter angle and individual velocities
+                // Eliminate Backspin math
                 if (Ad > MAX_TURRET_ANGLE || Ad < MIN_TURRET_ANGLE) {
                     Ad = normalizeAngle(Ad - 180);
                     shooterSubsystem.setAngle(-shooterAngle);
-                    shooterSubsystem.setVelocity(shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)),
-                                                 shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)));
                 } else {
                     shooterSubsystem.setAngle(shooterAngle);
-                    shooterSubsystem.setVelocity(shooterSpeedMPS * (1.0 + (shooterBackspinPercent / 100)),
-                                                 shooterSpeedMPS * (1.0 - (shooterBackspinPercent / 100)));
                 }
+                shooterSubsystem.setVelocity(shooterSpeedMPS,shooterSpeedMPS);
                 setTurretAngle(Ad);
 
              } else {

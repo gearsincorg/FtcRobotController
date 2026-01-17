@@ -6,16 +6,12 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.auxtools.Drawing;
 import org.firstinspires.ftc.teamcode.subsystems.AllianceColor;
 import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
@@ -26,12 +22,6 @@ import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.TurretStates;
 import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
-
-/*
- * This OpMode illustrates a teleop OpMode for an Omni robot using Essential Mecanum functions.
- * An external "EssentialMecanumRobot" class is used to manage all motor/sensor interfaces, and to assist driving functions.
- * The IMU gyro is used to stabilize the heading when the operator is not requesting a turn.
- */
 
 @TeleOp(name="GFORCE Teleop", group = "AA")
 public class GFORCETeleop extends LinearOpMode
@@ -49,9 +39,6 @@ public class GFORCETeleop extends LinearOpMode
     private LoggingSubsystem   loggingSubsystem   = new LoggingSubsystem(this);
 
     private ElapsedTime cycleTimer = new ElapsedTime();
-    private double cycleMS = 0;
-    private double lastCycle = 0;
-    private double sampleCount = 0;
 
     @Override public void runOpMode()
     {
@@ -59,7 +46,6 @@ public class GFORCETeleop extends LinearOpMode
         Globals.OCTO_ERRORS = 0;
         telemetry.setMsTransmissionInterval(50); //  << make this 100 unless debugging
 
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         autoConfig.initialize();
 
         // Set GLOBAL flags based on menu choices.
@@ -145,12 +131,6 @@ public class GFORCETeleop extends LinearOpMode
 
             loggingSubsystem.update();
             telemetry.update();
-
-            // Update the dashboard.
-            TelemetryPacket packet = new TelemetryPacket();
-            packet.fieldOverlay().setStroke("#3F51B5");
-            Drawing.drawRobot(packet.fieldOverlay(), driveSubsystem.getPose());
-            FtcDashboard.getInstance().sendTelemetryPacket(packet);
         }
 
         // tell AUTO or TELEOP to home next time they run
@@ -175,9 +155,7 @@ public class GFORCETeleop extends LinearOpMode
     }
 
     private void showCycleTime() {
-        double now = cycleTimer.time();
-        cycleMS = (now - lastCycle) * 1000;
-        lastCycle = now;
+        double cycleMS = cycleTimer.milliseconds();
         telemetry.addData("Cycle Time", "%.1f mS", cycleMS);
         loggingSubsystem.updateCycle(cycleMS);
     }

@@ -41,6 +41,8 @@ public class ShooterSubsystem extends SubsystemBase {
     private double  currentRearMPS    = 0;
     private double  targetFrontMPS    = 0;
     private double  targetRearMPS     = 0;
+    private double  lastTargetFrontMPS = 100;  // invalid values
+    private double  lastTargetRearMPS  = 100;  // invalid values
     private PIDFCoefficients shooterCoefs = new PIDFCoefficients(32,0,0,12.0);   // 32,0,0,11.6
 
     public boolean  atSpeed = false;
