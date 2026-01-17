@@ -99,6 +99,7 @@ public class TurretSubsystem extends SubsystemBase {
         At = encoderToDegrees(aim.getCurrentPosition());
         Globals.TURRET_ON_TARGET = (Math.abs(Ad - At) < AIM_MARGIN);
 
+
         calculate_Ad_and_Range();
         Globals.SHOOTER_AT_SPEED = shooterSubsystem.atSpeed;
     }

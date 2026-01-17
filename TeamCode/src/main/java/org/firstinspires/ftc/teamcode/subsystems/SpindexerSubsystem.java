@@ -274,7 +274,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             case INTAKE_HLD: {
                 if (timeInState(NEW_ARTIFACT_HOLD_TIME)) {
                     if (totalArtifactsHeld == 3) {
-                        stopIntake();
+                        ejectIntake(); // clear any extra balls, stopped by shot q
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
                         sendNextColorToShooter();
                         setState(SHOOT_Q);
@@ -293,6 +293,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     Globals.ROBOT_STATE = RobotStates.INTAKING;
                     setState(INTAKE_Q);
                 } else if (inPosition()  && Globals.SPINDEXER_SHOT_CENTERED)   {
+                    stopIntake();
                     setState(RDY_2_SHOOT);
                 }
                 break;

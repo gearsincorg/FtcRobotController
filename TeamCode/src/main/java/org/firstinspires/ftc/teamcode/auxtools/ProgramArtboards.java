@@ -85,12 +85,9 @@ public class ProgramArtboards extends LinearOpMode{
         shooterReady.setIndexes(18, 29);
         shooterReady.setBrightness(50);
 
-        PrismAnimations.Blink    shooterNotReady = new PrismAnimations.Blink(Color.PURPLE);
+        PrismAnimations.Solid    shooterNotReady = new PrismAnimations.Solid(Color.PURPLE);
         shooterNotReady.setIndexes(0, 11);
         shooterNotReady.setBrightness(50);
-        shooterNotReady.setSecondaryColor(Color.TRANSPARENT);
-        shooterNotReady.setPrimaryColorPeriod(20);
-        shooterNotReady.setPeriod(70);
 
         PrismAnimations.Solid   markFront = new PrismAnimations.Solid(Color.GREEN);
         markFront.setIndexes(5, 6);

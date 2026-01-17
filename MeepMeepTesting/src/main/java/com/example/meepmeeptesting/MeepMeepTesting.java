@@ -97,14 +97,14 @@ public class MeepMeepTesting {
         return driveSubsystem.actionBuilder(mirror(-12, -20, -90))
                 .setReversed(false)
                 .turnTo(mirror(0))
-                .splineTo(mirror(12, -42), mirror(-90), new TranslationalVelConstraint(20))
+                .splineTo(mirror(16, -42), mirror(-90), new TranslationalVelConstraint(20))
                 .lineToY(mirrorY(-64), new TranslationalVelConstraint(12))
                 .waitSeconds(0.5)
                 .build();
     }
 
     private static Action backReturnRow2Final() {
-        return driveSubsystem.actionBuilder(mirror(12, -56, -90))
+        return driveSubsystem.actionBuilder(mirror(16, -56, -90))
                 .setReversed(true)
                 .lineToY(mirrorY(-48))
                 .splineTo(mirror(-12, -20), mirror(180))
@@ -114,7 +114,7 @@ public class MeepMeepTesting {
     }
 
     private static Action backReturnRow2() {
-        return driveSubsystem.actionBuilder(mirror(12, -56, -90))
+        return driveSubsystem.actionBuilder(mirror(16, -56, -90))
                 .setReversed(true)
                 .lineToY(mirrorY(-44))
                 .splineTo(mirror(-12, -20), mirror(180))

@@ -156,7 +156,8 @@ public class GFORCETeleop extends LinearOpMode
 
     private void showCycleTime() {
         double cycleMS = cycleTimer.milliseconds();
-        telemetry.addData("Cycle Time", "%.1f mS", cycleMS);
+        cycleTimer.reset();
+         telemetry.addData("Cycle Time", "%.1f mS", cycleMS);
         loggingSubsystem.updateCycle(cycleMS);
     }
 }

@@ -48,7 +48,7 @@ public class PrismSubsystem extends SubsystemBase {
                 setLEDMode(LEDMode.INTAKE_BACK);
             }
         } else {
-            if (Globals.SHOOTER_AT_SPEED && Globals.TURRET_ON_TARGET && Globals.SPINDEXER_SHOT_CENTERED){
+            if (Globals.SHOOTER_AT_SPEED && Globals.TURRET_ON_TARGET){
                 setLEDMode(LEDMode.SHOOTER_READY);
             } else {
                 setLEDMode(LEDMode.SHOOTER_NOT_READY);
