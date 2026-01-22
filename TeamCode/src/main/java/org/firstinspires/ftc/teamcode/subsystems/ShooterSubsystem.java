@@ -27,11 +27,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public final double SHOOTER_ANGLE_MIN        = -37.0;
     private final double PULSE_SCALE_FACTOR      =  1.8e-3;   // make this match the spindexer in 2 places once servo is reprogrammed
     private final double SHOOTER_SPEED_TOLERANCE =  0.3;
-    private final double SHOOTER_SPEED_TOLERANCE_LIGHTS = 0.3 ;
     private final double MAX_MPS                 =  16.0;
-
-    private final double P_STEP                  =  1.0;
-    private final double F_STEP                  =  0.1;
 
     private final double SHOOTER_OFFSET          = -4.0;    // used to ensure that zero degrees is level.
 
@@ -42,8 +38,6 @@ public class ShooterSubsystem extends SubsystemBase {
     private double  currentRearMPS    = 0;
     private double  targetFrontMPS    = 0;
     private double  targetRearMPS     = 0;
-    private double  lastTargetFrontMPS = 100;  // invalid values
-    private double  lastTargetRearMPS  = 100;  // invalid values
     private PIDFCoefficients shooterCoefs = new PIDFCoefficients(32,0,0,12.0);   // 32,0,0,11.6
 
     public boolean  atSpeed = false;
@@ -80,33 +74,7 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void runProcessing() {
 
-        /*
-        //  This code lets us tune the PF coefficients
-        boolean changedPIDF = false;
 
-        // DETERMINE MANUAL shooter speed
-        if (myOpMode.gamepad2.dpadUpWasPressed()) {
-            shooterCoefs.f += F_STEP;
-            changedPIDF = true;
-        } else if (myOpMode.gamepad2.dpadDownWasPressed() && (shooterCoefs.f > 0)) {
-            shooterCoefs.f -= F_STEP;
-            changedPIDF = true;
-        }
-
-        // DETERMINE MANUAL shooter TILT
-        if (myOpMode.gamepad2.dpadRightWasPressed()) {
-            shooterCoefs.p += P_STEP;
-            changedPIDF = true;
-        } else if (myOpMode.gamepad2.dpadLeftWasPressed()  && (shooterCoefs.p > 0)) {
-            shooterCoefs.p -= P_STEP;
-            changedPIDF = true;
-        }
-
-        if (changedPIDF) {
-            front.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
-            rear.setPIDFCoefficients(RUN_USING_ENCODER, shooterCoefs);
-        }
-        */
 
         shooterServoValue = MathUtils.clamp(0.5 - (tiltAngle * PULSE_SCALE_FACTOR / SERVO_GEAR_RATIO), 0.22, 0.78);  // make this match the spindexer in 2 places once servo is reprogrammed
         hood.setPosition(shooterServoValue);
@@ -134,9 +102,6 @@ public class ShooterSubsystem extends SubsystemBase {
     public void showStatus() {
         myOpMode.telemetry.addData("SHOOTER",   "F=%4.2f  B=%4.2f %s Tilt= %.0f", currentFrontMPS, currentRearMPS, atSpeed ? "OK" : "SLOW", tiltAngle);
         LoggingSubsystem.updateWheelSpeed(currentFrontMPS, currentRearMPS);
-
-        //myOpMode.telemetry.addData("SET VEL",   "F=%4.2f  B=%4.2f", targetFrontMPS, targetRearMPS);
-        // myOpMode.telemetry.addData("PIDF",   "P=%4.2f  I=%4.2f  D=%4.2f  F=%4.2f", shooterCoefs.p, shooterCoefs.i, shooterCoefs.d, shooterCoefs.f );
     }
 
     public void setAngle(double angle){

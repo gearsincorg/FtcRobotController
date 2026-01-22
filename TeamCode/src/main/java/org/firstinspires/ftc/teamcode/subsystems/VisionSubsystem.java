@@ -22,9 +22,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class VisionSubsystem extends SubsystemBase {
-
-    private final int BLUE_GOAL_ID = 20;
-    private final int RED_GOAL_ID  = 24;
     private final int OBELESK_TO_PATTERN_ID = 21;
 
     private VisionPortal visionPortal = null;        // Used to manage the video source.

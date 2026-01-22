@@ -58,7 +58,6 @@ public class SpindexerSubsystem extends SubsystemBase {
     private final double[] INTAKE_FRONT = { -30,  90,  210};
     private final double[] INTAKE_BACK  = {-210, -90,   30};
     private final double[] HOME_ANGLES  = { 120,   0, -120};
-    private final int[][]  AUTO_SLOTS   = {{2, 1, 0}, {0, 2, 1}, {0, 1, 2}};
     private final ArtifactColor[][]  AUTO_COLORS  = {{ArtifactColor.GREEN, ArtifactColor.PURPLE, ArtifactColor.PURPLE},
                                                      {ArtifactColor.PURPLE, ArtifactColor.GREEN, ArtifactColor.PURPLE},
                                                      {ArtifactColor.PURPLE, ArtifactColor.PURPLE, ArtifactColor.GREEN}};
@@ -416,12 +415,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         setState(INTAKE_Q);
     }
 
-    public void startShooting() {
-        sendNextColorToShooter();
-        Globals.ROBOT_STATE = RobotStates.SHOOTING;
-        setState(SHOOT_Q);
-    }
-
     public void runIntake(){
         intakePower = INTAKE_POWER;
         intake.setPower(intakePower);
@@ -582,17 +575,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         }
     }
 
-    /**
-     * Convert any angle to a +/- 180  degree value.
-     * @param angle
-     * @return
-     */
-    private double normalizeAngle(double angle){
-        while (angle > 180) { angle -= 360; }
-        while (angle < -180) { angle += 360; }
-        return angle;
-    }
-
     public void preloadSequence(){
         slotColors[0] = ArtifactColor.PURPLE;
         slotColors[1] = ArtifactColor.PURPLE;
@@ -678,6 +660,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             }
         };
     }
+
     public Action actionReadMotif(){
         return new Action() {
             @Override

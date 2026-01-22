@@ -277,13 +277,15 @@ public class MeepMeepTesting {
                 turnToZero(),
                 backCollectRow1(),
                 backReleaseAfterRow1(),
-                backReturnAfterReleaseFinal()
-                //backCollectRow2(),
-                //backReturnRow2Final()
+                backReturnAfterRelease(),
+                backCollectRow2(),
+                backReturnRow2Final()
         ));
 
         Bot4.runAction(new SequentialAction(
                 frontScorePreloads(),
+                frontCollectRow3(),
+                frontReturnRow3(),
                 frontTurnToMinus90(),
                 frontCollectCycle(),
                 frontReturnCycle(),
@@ -299,7 +301,7 @@ public class MeepMeepTesting {
 
 
         // ---------------------------------------------------------------------------------------
-        meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_DARK)
+        meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_JUICE_LIGHT)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
                 .addEntity(Bot1)

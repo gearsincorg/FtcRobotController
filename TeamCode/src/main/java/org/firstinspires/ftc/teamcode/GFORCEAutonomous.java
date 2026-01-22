@@ -563,13 +563,6 @@ public class GFORCEAutonomous extends LinearOpMode
         return lineToY;
     }
 
-    private Vector2d mirror(Vector2d positionXY){
-        if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
-            positionXY = new Vector2d(positionXY.x, -positionXY.y);
-        }
-        return positionXY;
-    }
-
     private Vector2d mirror(double x, double y){
         if (Globals.ALLIANCE_COLOR == AllianceColor.RED){
             return new Vector2d(x, -y);
