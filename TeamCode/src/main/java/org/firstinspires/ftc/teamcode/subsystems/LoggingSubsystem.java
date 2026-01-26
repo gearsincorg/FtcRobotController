@@ -6,6 +6,11 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.teamcode.auxtools.Datalogger;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
+// ... inside your activity or method
+
 public class LoggingSubsystem extends SubsystemBase {
 
     static LoggingSubsystem.Datalog datalog = null;
@@ -24,8 +29,15 @@ public class LoggingSubsystem extends SubsystemBase {
         // Get devices from the hardwareMap.
         battery = myOpMode.hardwareMap.voltageSensor.get("Control Hub");
 
+        // Get the current time without a specific time zone
+        LocalTime currentTime = LocalTime.now();
+
+        // Format the time into a readable string
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM_dd-HH_mm_ss");
+        String formattedTime = currentTime.format(formatter);
+
         // Initialize the datalog
-        datalog = new LoggingSubsystem.Datalog("datalog_01.csv");
+        datalog = new LoggingSubsystem.Datalog("datalog_" + formattedTime + ".txt");
     }
 
     @Override
@@ -35,6 +47,7 @@ public class LoggingSubsystem extends SubsystemBase {
         datalog.robot.set(Globals.ROBOT_STATE.toString());
         datalog.spindexer.set(Globals.SPINDEXER_STATE.toString());
         datalog.turret.set(Globals.TURRET_STATE.toString());
+
         datalog.battery.set(battery.getVoltage());
     }
 
@@ -62,6 +75,17 @@ public class LoggingSubsystem extends SubsystemBase {
         }
     }
 
+    public static void updateColorSelection(int patternID, int currentAutoShot, ArtifactColor seeking,
+                                            int green, int purple) {
+        if (datalog != null) {
+            datalog.patternID.set(patternID);
+            datalog.currentAutoShot.set(currentAutoShot);
+            datalog.seeking.set(seeking.toString());
+            datalog.green.set(green);
+            datalog.purple.set(purple);
+        }
+    }
+
     /*
      * This class encapsulates all the fields that will go into the datalog.
      */
@@ -82,6 +106,11 @@ public class LoggingSubsystem extends SubsystemBase {
         public Datalogger.GenericField frontWheel   = new Datalogger.GenericField("Front Wheel");
         public Datalogger.GenericField backWheel    = new Datalogger.GenericField("Back Wheel");
 
+        public Datalogger.GenericField patternID    = new Datalogger.GenericField("patternID");
+        public Datalogger.GenericField currentAutoShot = new Datalogger.GenericField("currentAutoShot");
+        public Datalogger.GenericField seeking      = new Datalogger.GenericField("seeking");
+        public Datalogger.GenericField green        = new Datalogger.GenericField("green");
+        public Datalogger.GenericField purple       = new Datalogger.GenericField("purple");
 
         public Datalog(String name)
         {
@@ -103,6 +132,11 @@ public class LoggingSubsystem extends SubsystemBase {
                     opModeStatus,
                     robot,
                     spindexer,
+                    patternID,
+                    currentAutoShot,
+                    seeking,
+                    green,
+                    purple,
                     turret,
                     frontWheel,
                     backWheel,

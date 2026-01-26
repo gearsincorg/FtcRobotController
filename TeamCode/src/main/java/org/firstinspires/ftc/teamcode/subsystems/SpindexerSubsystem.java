@@ -126,7 +126,6 @@ public class SpindexerSubsystem extends SubsystemBase {
         spinServoTimer.reset();
         targetAngle = -1;
         currentAutoShot = 0;
-
     }
 
     public void enableVision() {
@@ -178,7 +177,10 @@ public class SpindexerSubsystem extends SubsystemBase {
                 }
             }
         }
+        countColors();
+    }
 
+    private void countColors() {
         // count number of slots with each color artifact.
         purpleArtifactsHeld = 0;
         greenArtifactsHeld = 0;
@@ -320,6 +322,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                     // Start shot
                     fire.setPosition(FIRE_SHOOT);
                     slotColors[currentSlot] = ArtifactColor.EMPTY;
+                    countColors();
                     setState(SPIN_PAUSE);
                 }
                 break;
@@ -475,9 +478,13 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private void sendNextColorToShooter () {
         if (Globals.IS_AUTO) {
-            sendClostestColorToShooter(AUTO_COLORS[patternID][currentAutoShot++]);
+            ArtifactColor seeking = AUTO_COLORS[patternID][currentAutoShot];
+            sendClostestColorToShooter(seeking);
+
+            LoggingSubsystem.updateColorSelection(patternID, currentAutoShot, seeking, greenArtifactsHeld, purpleArtifactsHeld);
+
             // make sure we wrap the shot counter
-            currentAutoShot %= 3;  // wrap the shot index
+            currentAutoShot = (currentAutoShot + 1) % 3;  // wrap the shot index
         } else {
             sendClostestColorToShooter(ArtifactColor.ANY);
         }
