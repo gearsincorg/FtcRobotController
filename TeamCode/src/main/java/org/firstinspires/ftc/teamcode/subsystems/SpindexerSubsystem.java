@@ -179,18 +179,22 @@ public class SpindexerSubsystem extends SubsystemBase {
 
     private void countColors() {
         // count number of slots with each color artifact.
-        purpleArtifactsHeld = 0;
-        greenArtifactsHeld = 0;
-        totalArtifactsHeld = 0;
+        int purpleArtifacts = 0;
+        int greenArtifacts = 0;
+        int totalArtifacts = 0;
         for (int b = 0; b < 3; b++) {
             if (slotColors[b] == ArtifactColor.PURPLE) {
-                purpleArtifactsHeld++;
-                totalArtifactsHeld++;
+                purpleArtifacts++;
+                totalArtifacts++;
             } else if (slotColors[b] == ArtifactColor.GREEN) {
-                greenArtifactsHeld++;
-                totalArtifactsHeld++;
+                greenArtifacts++;
+                totalArtifacts++;
             }
         }
+
+        purpleArtifactsHeld = purpleArtifacts;
+        greenArtifactsHeld  = greenArtifacts;
+        totalArtifactsHeld  = totalArtifacts;
     }
 
     @Override
@@ -257,6 +261,7 @@ public class SpindexerSubsystem extends SubsystemBase {
                 } else if (newArtifact) {
                     // start timer to let ball settle
                     clearInIntake();
+                    // slotColors[lastSlotFilled] = visionSubsystem.getColor();  // re-read color after pause
                     setState(INTAKE_HLD);
                 } else if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
                     // switch to shooting (usually happens in auto)
@@ -272,6 +277,7 @@ public class SpindexerSubsystem extends SubsystemBase {
             case INTAKE_HLD: {
                 if (timeInState(NEW_ARTIFACT_HOLD_TIME)) {
                     slotColors[lastSlotFilled] = visionSubsystem.getColor();  // read color after pause
+                    countColors();
                     if (totalArtifactsHeld == 3) {
                         ejectIntake(); // clear any extra balls, stopped by shot q
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;
