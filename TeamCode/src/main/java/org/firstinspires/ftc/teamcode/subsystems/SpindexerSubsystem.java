@@ -168,11 +168,8 @@ public class SpindexerSubsystem extends SubsystemBase {
 
                 // see if we have an artifact
                 if ((sensorRange > MIN_RANGE) && (sensorRange < MAX_RANGE)) {
-                    slotColors[currentSlot] = visionSubsystem.getColor();  // rolls over to Purple if no vision.
-
                     lastSlotFilled = currentSlot;
                     lastSlotAngleFilled = targetAngle; // Save current location
-
                     newArtifact = true;
                 }
             }
@@ -274,6 +271,7 @@ public class SpindexerSubsystem extends SubsystemBase {
 
             case INTAKE_HLD: {
                 if (timeInState(NEW_ARTIFACT_HOLD_TIME)) {
+                    slotColors[lastSlotFilled] = visionSubsystem.getColor();  // read color after pause
                     if (totalArtifactsHeld == 3) {
                         ejectIntake(); // clear any extra balls, stopped by shot q
                         Globals.ROBOT_STATE = RobotStates.SHOOTING;

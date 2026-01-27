@@ -49,8 +49,6 @@ public class DEMO extends LinearOpMode
     {
         Globals.IS_AUTO = false;
         Globals.OCTO_ERRORS = 0;
-        telemetry.setMsTransmissionInterval(50);
-
         autoConfig.initialize();
 
         // Set GLOBAL flags based on menu choices.
@@ -72,8 +70,8 @@ public class DEMO extends LinearOpMode
 
             // Read and display sensor data
             driveSubsystem.updatePoseEstimate();
-            spindexerSubsystem.update();            //  INHIBIT any motion during TELEOP INIT
-            turretSubsystem.update();               //  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            spindexerSubsystem.update();
+            turretSubsystem.update();
 
             showCycleTime();
             telemetry.update();

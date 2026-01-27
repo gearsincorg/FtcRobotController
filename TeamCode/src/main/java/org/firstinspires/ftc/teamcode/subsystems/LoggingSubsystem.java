@@ -6,8 +6,10 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.teamcode.auxtools.Datalogger;
 import org.firstinspires.ftc.teamcode.auxtools.SubsystemBase;
 
-import java.time.LocalTime;
+import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.Locale;
 
 // ... inside your activity or method
 
@@ -29,15 +31,17 @@ public class LoggingSubsystem extends SubsystemBase {
         // Get devices from the hardwareMap.
         battery = myOpMode.hardwareMap.voltageSensor.get("Control Hub");
 
-        // Get the current time without a specific time zone
-        LocalTime currentTime = LocalTime.now();
+        // Define the desired format pattern
+        SimpleDateFormat sdf = new SimpleDateFormat("MM_dd_HH_mm_ss", Locale.getDefault());
 
-        // Format the time into a readable string
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM_dd-HH_mm_ss");
-        String formattedTime = currentTime.format(formatter);
+        // Get the current time without a specific time zone
+        Date now = new Date();
+
+        // Format the date into a string
+        String formattedTime = sdf.format(now);
 
         // Initialize the datalog
-        datalog = new LoggingSubsystem.Datalog("datalog_" + formattedTime + ".txt");
+        datalog = new LoggingSubsystem.Datalog("datalog_" + formattedTime + ".csv");
     }
 
     @Override

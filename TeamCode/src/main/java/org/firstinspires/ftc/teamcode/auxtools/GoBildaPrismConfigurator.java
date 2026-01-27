@@ -24,6 +24,7 @@ package org.firstinspires.ftc.teamcode.auxtools;
 
 import static org.firstinspires.ftc.teamcode.Prism.GoBildaPrismDriver.LayerHeight;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -49,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  * I²C) only has to happen once!
  *
  */
-
+@Disabled
 @TeleOp(name="Prism Configurator", group="Linear OpMode")
 
 

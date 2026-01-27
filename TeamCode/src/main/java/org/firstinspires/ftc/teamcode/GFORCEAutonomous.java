@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.subsystems.AutoConfig;
 import org.firstinspires.ftc.teamcode.subsystems.DriveSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.Globals;
 import org.firstinspires.ftc.teamcode.subsystems.LEDMode;
+import org.firstinspires.ftc.teamcode.subsystems.LoggingSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.RobotStates;
 import org.firstinspires.ftc.teamcode.subsystems.SpindexerStates;
@@ -35,6 +36,8 @@ public class GFORCEAutonomous extends LinearOpMode
     private TurretSubsystem turretSubsystem         = new TurretSubsystem(this);
     private PrismSubsystem  prismSubsystem          = new PrismSubsystem(this);
     private AutoConfig      autoConfig              = new AutoConfig(this);
+    private LoggingSubsystem loggingSubsystem   = new LoggingSubsystem(this);
+
 
     private int    autoMode                 = 0;
     private Action selectedAuto             = null;
@@ -62,8 +65,10 @@ public class GFORCEAutonomous extends LinearOpMode
         spindexerSubsystem.sendToShooter(0);   /// change to 0 for no-move auto
         turretSubsystem.init(true);
         prismSubsystem.init(true);
+        loggingSubsystem.init(true);  // enable this line to do datalogging.
 
-            // Wait for driver to press start
+
+        // Wait for driver to press start
         while(opModeInInit()) {
 
             autoConfig.runMenuUI(); // Run menu system
@@ -649,6 +654,8 @@ public class GFORCEAutonomous extends LinearOpMode
                 turretSubsystem.actionUpdate(),
                 spindexerSubsystem.actionUpdate(),
                 prismSubsystem.actionUpdate(),
+                loggingSubsystem.actionUpdate(),
+
                 sequentialAction,
                 turretSubsystem.actionTelemetryUpdate()  // just update telemetry
         );

@@ -58,7 +58,7 @@ public class VisionSubsystem extends SubsystemBase {
         int patternid = -1;
         ElapsedTime timer = new ElapsedTime();
         if (subsystemEnabled){
-            while ((patternid < 0) && (timer.time() < 2.0)) {
+            while ((patternid < 0) && (timer.time() < 1.0)) {
                 List<AprilTagDetection> currentDetections = aprilTag.getDetections();
                 if (currentDetections != null) {
                     for (AprilTagDetection detection : currentDetections) {
@@ -104,15 +104,11 @@ public class VisionSubsystem extends SubsystemBase {
         aprilTag.setDecimation(2);
 
         colorSensor = new PredominantColorProcessor.Builder()
-            .setRoi(ImageRegion.asUnityCenterCoordinates(0.2, 0.9, 0.7, 0.5))
+            .setRoi(ImageRegion.asUnityCenterCoordinates(0.25, 0.9, 0.75, 0.45))
             .setSwatches(
                     PredominantColorProcessor.Swatch.ARTIFACT_GREEN,
-                    PredominantColorProcessor.Swatch.ARTIFACT_PURPLE,
-                    PredominantColorProcessor.Swatch.RED,
-                    PredominantColorProcessor.Swatch.BLUE,
-                    PredominantColorProcessor.Swatch.YELLOW,
-                    PredominantColorProcessor.Swatch.BLACK,
-                    PredominantColorProcessor.Swatch.WHITE)
+                    PredominantColorProcessor.Swatch.ARTIFACT_PURPLE
+)
             .build();
 
 

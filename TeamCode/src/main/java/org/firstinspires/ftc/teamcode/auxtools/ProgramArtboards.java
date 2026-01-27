@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.Prism.PrismAnimations;
 import org.firstinspires.ftc.teamcode.subsystems.PrismSubsystem;
 
 @TeleOp(name="Dustin Artboard Loader", group="Linear OpMode")
-//@Disabled
+@Disabled
 
 /*
     POWER_UP(GoBildaPrismDriver.Artboard.ARTBOARD_0),

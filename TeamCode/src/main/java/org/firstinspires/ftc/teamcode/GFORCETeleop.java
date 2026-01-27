@@ -62,7 +62,7 @@ public class GFORCETeleop extends LinearOpMode
         spindexerSubsystem.init(true);
         turretSubsystem.init(true);
         prismSubsystem.init(true);
-        loggingSubsystem.init(true);  // enable this line to do datalogging.
+        //  loggingSubsystem.init(true);  // enable this line to do datalogging.
 
         // Wait for driver to press start
         while(opModeInInit()) {
