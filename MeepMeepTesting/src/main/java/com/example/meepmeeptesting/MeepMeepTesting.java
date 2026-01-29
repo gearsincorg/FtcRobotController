@@ -54,7 +54,7 @@ public class MeepMeepTesting {
     }
 
     private static Action backReleaseAfterRow1() {
-        return driveSubsystem.actionBuilder(mirror(-12, -56, -90))
+        return driveSubsystem.actionBuilder(mirror(-12, -58, -90))
                 .setReversed(true)
                 .splineTo(mirror(-6, -36), mirror(90))
                 .setReversed(false)
