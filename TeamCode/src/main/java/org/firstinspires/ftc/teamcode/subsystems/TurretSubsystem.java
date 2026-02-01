@@ -44,7 +44,7 @@ public class TurretSubsystem extends SubsystemBase {
     private final double MAX_TURRET_ANGLE    =  91;
     private final double AIM_MARGIN          =   2;
     private final double TURRET_OFFSET_ANGLE =  93.5;  // Adjust this if the shooter is not centered on marks at 0 deg/
-    private final double TURRET_OFFSET_DISTANCE = 78;  // this is har far the Turret is from the center of the robot
+    private final double TURRET_OFFSET_DISTANCE = 78;  // this is how far the Turret is from the center of the robot
     private final double AIM_PROP_GAIN       =   26;   // was 26 (30 too high?)
 
     private final double SHOOTER_STEP   = 2.00;

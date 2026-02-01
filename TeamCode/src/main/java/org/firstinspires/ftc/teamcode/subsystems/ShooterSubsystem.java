@@ -26,10 +26,10 @@ public class ShooterSubsystem extends SubsystemBase {
     public final double SHOOTER_ANGLE_MAX        =  37.0;
     public final double SHOOTER_ANGLE_MIN        = -37.0;
     private final double PULSE_SCALE_FACTOR      =  1.8e-3;   // make this match the spindexer in 2 places once servo is reprogrammed
-    private final double SHOOTER_SPEED_TOLERANCE_PC =  0.02;
+    private final double SHOOTER_SPEED_TOLERANCE_PC =  0.025;
     private final double MAX_MPS                 =  16.0;
 
-    private final double SHOOTER_OFFSET          = -4.0;    // used to ensure that zero degrees is level.
+    private final double SHOOTER_OFFSET          = -2.0;    // used to ensure that zero degrees is level.
 
     // General Subsystem Members
     private double  tiltAngle         = 0;
