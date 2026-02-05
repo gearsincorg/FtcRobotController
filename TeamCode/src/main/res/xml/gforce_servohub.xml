@@ -1,11 +1,18 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
 <Robot type="FirstInspires-FTC">
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
+        <ServoHub name="Servo Hub 2" port="2">
+            <Servo name="fire" port="1"/>
+            <Servo name="test" port="2"/>
+            <Servo name="spindexer" port="4"/>
+        </ServoHub>
         <LynxModule name="Expansion Hub 3" port="3">
             <goBILDA5202SeriesMotor name="aim" port="0"/>
             <goBILDA5202SeriesMotor name="rearWheel" port="1"/>
             <goBILDA5202SeriesMotor name="frontWheel" port="2"/>
             <goBILDA5202SeriesMotor name="intake" port="3"/>
+            <Servo name="hood" port="0"/>
+            <Servo name="cameraServo" port="1"/>
             <goBILDAPrism name="prism" port="0" bus="1"/>
         </LynxModule>
         <LynxModule name="Control Hub" port="173">
@@ -14,15 +21,11 @@
             <goBILDA5202SeriesMotor name="front_right_drive" port="2"/>
             <goBILDA5202SeriesMotor name="front_left_drive" port="3"/>
             <DigitalDevice name="spindexer_magnet" port="2"/>
-            <DigitalDevice name="turret_magnet" port="6"/> 
+            <DigitalDevice name="turret_magnet" port="6"/>
             <LynxEmbeddedIMU name="imu" port="0" bus="0"/>
             <OctoQuadFTC name="octoquad" port="0" bus="1"/>
             <REV_VL53L0X_RANGE_SENSOR name="distanceFront" port="0" bus="3"/>
             <REV_VL53L0X_RANGE_SENSOR name="distanceBack" port="0" bus="2"/>
-            <Servo name="fire" port="0"/>
-            <Servo name="spindexer" port="2"/>
-            <Servo name="cameraServo" port="4"/>
-            <Servo name="hood" port="5"/>
         </LynxModule>
     </LynxUsbDevice>
     <Webcam name="Webcam 1" serialNumber="2020032501"/>
