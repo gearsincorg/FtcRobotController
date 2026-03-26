@@ -35,10 +35,10 @@ public class TurretSubsystem extends SubsystemBase {
 
     // Subsystem Constants
     private final double COUNTS_PER_DEGREES = 145.1 * 135 / 21 / 360;
-    private final double RED_X =  -1828.8;
-    private final double RED_Y =   1828.8;
-    private final double BLUE_X = -1828.8;
-    private final double BLUE_Y = -1828.8;
+    private final double RED_X =   400.0;
+    private final double RED_Y =   0.0;
+    private final double BLUE_X =  400.0;
+    private final double BLUE_Y =  0.0;
 
     private final double MIN_TURRET_ANGLE    = -91;
     private final double MAX_TURRET_ANGLE    =  91;

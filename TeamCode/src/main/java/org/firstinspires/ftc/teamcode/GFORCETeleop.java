@@ -26,7 +26,7 @@ import org.firstinspires.ftc.teamcode.subsystems.TurretSubsystem;
 @TeleOp(name="GFORCE Teleop", group = "AA")
 public class GFORCETeleop extends LinearOpMode
 {
-    private final Vector2d HOME_CALIBRATION = new Vector2d(38, 33);
+    private final Vector2d HOME_CALIBRATION = new Vector2d(0, 0);
 
     // get an instance of each of the subsystems
     AutoConfig autoConfig   = new AutoConfig(this);
@@ -95,28 +95,8 @@ public class GFORCETeleop extends LinearOpMode
 
             // Check to see if we need to home the subsystems
             // Location reset based on Base square and direction of front of robot
-            if (gamepad1.back || gamepad1.touchpad) {
-                if (Globals.ALLIANCE_COLOR == AllianceColor.BLUE){
-                    if (gamepad1.a) {
-                        homeRobot(HOME_CALIBRATION, 90);
-                    } else if (gamepad1.b) {
-                        homeRobot(HOME_CALIBRATION, 180);
-                    } else if (gamepad1.x) {
-                        homeRobot(HOME_CALIBRATION,  0);
-                    }else if (gamepad1.y) {
-                        homeRobot(HOME_CALIBRATION, -90);
-                    }
-                } else {
-                    if (gamepad1.a) {
-                        homeRobot(HOME_CALIBRATION, -90);
-                    } else if (gamepad1.b) {
-                        homeRobot(HOME_CALIBRATION, 0);
-                    } else if (gamepad1.x) {
-                        homeRobot(HOME_CALIBRATION, 180);
-                    } else if (gamepad1.y) {
-                        homeRobot(HOME_CALIBRATION, 90);
-                    }
-                }
+            if (gamepad1.touchpad) {
+               homeRobot(HOME_CALIBRATION,  0);
             }
 
             // update the robot's position based on the odometry pods.
