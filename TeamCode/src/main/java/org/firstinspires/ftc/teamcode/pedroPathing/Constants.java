@@ -24,7 +24,10 @@ public class Constants {
         .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
         .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
         .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-        .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD);
+        .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+        .xVelocity(68.9)
+        .yVelocity(62.79)
+        ;
 
     public static DriveEncoderConstants localizerConstants = new DriveEncoderConstants()
         .rightFrontMotorName("rightfront")

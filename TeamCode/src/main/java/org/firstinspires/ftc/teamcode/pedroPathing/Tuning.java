@@ -44,7 +44,8 @@ import java.util.List;
 @TeleOp(name = "Tuning", group = "Pedro Pathing")
 public class Tuning extends SelectableOpMode {
     public static Follower follower;
-
+    private final double fieldOrigin = 0.0;
+    
     @IgnoreConfigurable
     static PoseHistory poseHistory;
 
@@ -366,7 +367,7 @@ class ForwardVelocityTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0,0 ));
     }
 
     /** This initializes the drive motors as well as the cache of velocities and the Panels telemetry. */
@@ -412,7 +413,7 @@ class ForwardVelocityTuner extends OpMode {
 
 
         if (!end) {
-            if (Math.abs(follower.getPose().getX()) > (DISTANCE + 72)) {
+            if (Math.abs(follower.getPose().getX()) > (DISTANCE)) {
                 end = true;
                 stopRobot();
             } else {
@@ -474,7 +475,7 @@ class LateralVelocityTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     /**
@@ -483,7 +484,7 @@ class LateralVelocityTuner extends OpMode {
      */
     @Override
     public void init_loop() {
-        telemetryM.debug("The robot will run at 1 power until it reaches " + DISTANCE + " inches to the right.");
+        telemetryM.debug("The robot will run at 1 power until it reaches " + DISTANCE + " inches to the LEFT.");
         telemetryM.debug("Make sure you have enough room, since the robot has inertia after cutting power.");
         telemetryM.debug("After running the distance, the robot will cut power from the drivetrain and display the strafe velocity.");
         telemetryM.debug("Press B on Gamepad 1 to stop.");
@@ -520,7 +521,7 @@ class LateralVelocityTuner extends OpMode {
         drawCurrentAndHistory();
 
         if (!end) {
-            if (Math.abs(follower.getPose().getY()) > (DISTANCE + 72)) {
+            if (Math.abs(follower.getPose().getY()) > (DISTANCE) ) {
                 end = true;
                 stopRobot();
             } else {
@@ -578,7 +579,7 @@ class ForwardZeroPowerAccelerationTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     /** This initializes the drive motors as well as the Panels telemetryM. */
@@ -682,7 +683,7 @@ class LateralZeroPowerAccelerationTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     /** This initializes the drive motors as well as the Panels telemetry. */
@@ -959,7 +960,7 @@ class TranslationalTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     /** This initializes the Follower and creates the forward and backward Paths. */
@@ -977,9 +978,9 @@ class TranslationalTuner extends OpMode {
     public void start() {
         follower.deactivateAllPIDFs();
         follower.activateTranslational();
-        forwards = new Path(new BezierLine(new Pose(72,72), new Pose(DISTANCE + 72,72)));
+        forwards = new Path(new BezierLine(new Pose(0,0), new Pose(DISTANCE,0)));
         forwards.setConstantHeadingInterpolation(0);
-        backwards = new Path(new BezierLine(new Pose(DISTANCE + 72,72), new Pose(72,72)));
+        backwards = new Path(new BezierLine(new Pose(DISTANCE, 0), new Pose(0,0)));
         backwards.setConstantHeadingInterpolation(0);
         follower.followPath(forwards);
     }
@@ -1028,7 +1029,7 @@ class HeadingTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     /**
@@ -1049,9 +1050,9 @@ class HeadingTuner extends OpMode {
     public void start() {
         follower.deactivateAllPIDFs();
         follower.activateHeading();
-        forwards = new Path(new BezierLine(new Pose(72,72), new Pose(DISTANCE + 72,72)));
+        forwards = new Path(new BezierLine(new Pose(0,0), new Pose(DISTANCE,0)));
         forwards.setConstantHeadingInterpolation(0);
-        backwards = new Path(new BezierLine(new Pose(DISTANCE + 72,72), new Pose(72,72)));
+        backwards = new Path(new BezierLine(new Pose(DISTANCE,0), new Pose(0, 0)));
         backwards.setConstantHeadingInterpolation(0);
         follower.followPath(forwards);
     }
@@ -1100,7 +1101,7 @@ class DriveTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     /**
@@ -1124,13 +1125,13 @@ class DriveTuner extends OpMode {
 
         forwards = follower.pathBuilder()
                 .setGlobalDeceleration()
-                .addPath(new BezierLine(new Pose(72,72), new Pose(DISTANCE + 72,72)))
+                .addPath(new BezierLine(new Pose(0,0), new Pose(DISTANCE, 0)))
                 .setConstantHeadingInterpolation(0)
                 .build();
 
         backwards = follower.pathBuilder()
                 .setGlobalDeceleration()
-                .addPath(new BezierLine(new Pose(DISTANCE + 72,72), new Pose(72,72)))
+                .addPath(new BezierLine(new Pose(DISTANCE, 0), new Pose(0,0)))
                 .setConstantHeadingInterpolation(0)
                 .build();
 
@@ -1182,7 +1183,7 @@ class Line extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     /** This initializes the Follower and creates the forward and backward Paths. */
@@ -1199,9 +1200,9 @@ class Line extends OpMode {
     @Override
     public void start() {
         follower.activateAllPIDFs();
-        forwards = new Path(new BezierLine(new Pose(72,72), new Pose(DISTANCE + 72,72)));
+        forwards = new Path(new BezierLine(new Pose(0,0), new Pose(DISTANCE ,0)));
         forwards.setConstantHeadingInterpolation(0);
-        backwards = new Path(new BezierLine(new Pose(DISTANCE + 72,72), new Pose(72,72)));
+        backwards = new Path(new BezierLine(new Pose(DISTANCE,0), new Pose(0, 0)));
         backwards.setConstantHeadingInterpolation(0);
         follower.followPath(forwards);
     }
@@ -1249,7 +1250,7 @@ class CentripetalTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     /**
@@ -1269,8 +1270,8 @@ class CentripetalTuner extends OpMode {
     @Override
     public void start() {
         follower.activateAllPIDFs();
-        forwards = new Path(new BezierCurve(new Pose(72,72), new Pose(Math.abs(DISTANCE) + 72,72), new Pose(Math.abs(DISTANCE) + 72,DISTANCE + 72)));
-        backwards = new Path(new BezierCurve(new Pose(Math.abs(DISTANCE) + 72,DISTANCE + 72), new Pose(Math.abs(DISTANCE) + 72,72), new Pose(72,72)));
+        forwards = new Path(new BezierCurve(new Pose(0, 0), new Pose(Math.abs(DISTANCE), 0 ), new Pose(Math.abs(DISTANCE),DISTANCE )));
+        backwards = new Path(new BezierCurve(new Pose(Math.abs(DISTANCE) ,DISTANCE), new Pose(Math.abs(DISTANCE),0), new Pose(0, 0)));
 
         backwards.setTangentHeadingInterpolation();
         backwards.reverseHeadingInterpolation();
@@ -1311,9 +1312,9 @@ class CentripetalTuner extends OpMode {
  */
 class Triangle extends OpMode {
 
-    private final Pose startPose = new Pose(72, 72, Math.toRadians(0));
-    private final Pose interPose = new Pose(24 + 72, -24 + 72, Math.toRadians(90));
-    private final Pose endPose = new Pose(24 + 72, 24 + 72, Math.toRadians(45));
+    private final Pose startPose = new Pose(0,0, Math.toRadians(0));
+    private final Pose interPose = new Pose(24, -24, Math.toRadians(90));
+    private final Pose endPose = new Pose(24 , 24 , Math.toRadians(45));
 
     private PathChain triangle;
 
@@ -1333,7 +1334,7 @@ class Triangle extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     @Override
@@ -1380,14 +1381,14 @@ class Circle extends OpMode {
 
     public void start() {
         circle = follower.pathBuilder()
-                .addPath(new BezierCurve(new Pose(72, 72), new Pose(RADIUS + 72, 72), new Pose(RADIUS + 72, RADIUS + 72)))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(72, RADIUS + 72))
-                .addPath(new BezierCurve(new Pose(RADIUS + 72, RADIUS + 72), new Pose(RADIUS + 72, (2 * RADIUS) + 72), new Pose(72, (2 * RADIUS) + 72)))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(72, RADIUS + 72))
-                .addPath(new BezierCurve(new Pose(72, (2 * RADIUS) + 72), new Pose(-RADIUS + 72, (2 * RADIUS) + 72), new Pose(-RADIUS + 72, RADIUS + 72)))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(72, RADIUS + 72))
-                .addPath(new BezierCurve(new Pose(-RADIUS + 72, RADIUS + 72), new Pose(-RADIUS + 72, 72), new Pose(72, 72)))
-                .setHeadingInterpolation(HeadingInterpolator.facingPoint(72, RADIUS + 72))
+                .addPath(new BezierCurve(new Pose(0, 0), new Pose(RADIUS + 0, 0), new Pose(RADIUS, RADIUS)))
+                .setHeadingInterpolation(HeadingInterpolator.facingPoint(0, RADIUS ))
+                .addPath(new BezierCurve(new Pose(RADIUS, RADIUS), new Pose(RADIUS , (2 * RADIUS)), new Pose(0, (2 * RADIUS))))
+                .setHeadingInterpolation(HeadingInterpolator.facingPoint(0, RADIUS))
+                .addPath(new BezierCurve(new Pose(0, (2 * RADIUS)), new Pose(-RADIUS, (2 * RADIUS) ), new Pose(-RADIUS, RADIUS)))
+                .setHeadingInterpolation(HeadingInterpolator.facingPoint(0, RADIUS ))
+                .addPath(new BezierCurve(new Pose(-RADIUS, RADIUS), new Pose(-RADIUS, 0), new Pose(0, 0)))
+                .setHeadingInterpolation(HeadingInterpolator.facingPoint(0, RADIUS))
                 .build();
         follower.followPath(circle);
     }
@@ -1404,7 +1405,7 @@ class Circle extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(new Pose(0, 0));
     }
 
     /**
@@ -1611,7 +1612,7 @@ class SwerveTurnTest extends OpMode {
 class OffsetsTuner extends OpMode {
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72,72));
+        follower.setStartingPose(new Pose(0,0));
         follower.update();
         drawCurrent();
     }
@@ -1637,8 +1638,8 @@ class OffsetsTuner extends OpMode {
         telemetryM.debug("Total Angle: " + follower.getTotalHeading());
 
         telemetryM.debug("The following values are the offsets in inches that should be applied to your localizer.");
-        telemetryM.debug("strafeX: " + ((72.0-follower.getPose().getX()) / 2.0));
-        telemetryM.debug("forwardY: " + ((72.0-follower.getPose().getY()) / 2.0));
+        telemetryM.debug("strafeX: " + ((0-follower.getPose().getX()) / 2.0));
+        telemetryM.debug("forwardY: " + ((0-follower.getPose().getY()) / 2.0));
         telemetryM.update(telemetry);
 
         drawCurrentAndHistory();
