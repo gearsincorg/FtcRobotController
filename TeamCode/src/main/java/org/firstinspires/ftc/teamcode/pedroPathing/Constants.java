@@ -10,6 +10,8 @@ import com.pedropathing.paths.PathConstraints;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
+
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants();
 
@@ -29,28 +31,27 @@ public class Constants {
         .yVelocity(62.79)
         ;
 
-    public static DriveEncoderConstants localizerConstants = new DriveEncoderConstants()
-        .rightFrontMotorName("rightfront")
-        .rightRearMotorName("rightback")
-        .leftRearMotorName("leftback")
-        .leftFrontMotorName("leftfront")
-        .leftFrontEncoderDirection(Encoder.REVERSE)
-        .leftRearEncoderDirection(Encoder.REVERSE)
-        .rightFrontEncoderDirection(Encoder.FORWARD)
-        .rightRearEncoderDirection(Encoder.FORWARD)
-        .robotWidth(15)
-        .robotLength(12)
-        .forwardTicksToInches(0.00572)
-        .strafeTicksToInches(0.00582)
-        .turnTicksToInches(0.0112)
-        ;
+    public static OctoQuadConstants localizerConstants = new OctoQuadConstants()
+        .name("octoquad")
+        .deadwheelPortX(0)
+        .deadwheelPortY(1)
+        .deadwheelXDir(OctoQuad.EncoderDirection.FORWARD)
+        .deadwheelYDir(OctoQuad.EncoderDirection.FORWARD)
+        .deadwheelXTicksPerMM(1)
+        .deadwheelYTicksPerMM(1)
+        .tcpOffsetXMM(1)
+        .tcpOffsetXMM(1)
+        .imuScalar(1.0f)
+         ;
 
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
-            .driveEncoderLocalizer(localizerConstants)
+            .o
             .pathConstraints(pathConstraints)
             .mecanumDrivetrain(driveConstants)
             .build();
     }
 }
+
+
