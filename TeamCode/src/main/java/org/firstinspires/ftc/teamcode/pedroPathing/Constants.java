@@ -4,13 +4,12 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
-import com.pedropathing.ftc.localization.Encoder;
-import com.pedropathing.ftc.localization.constants.DriveEncoderConstants;
+import com.pedropathing.ftc.localization.constants.OctoQuadConstants;
+import com.pedropathing.ftc.localization.localizers.OctoQuadLocalizer;
 import com.pedropathing.paths.PathConstraints;
+import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
-import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants();
@@ -47,7 +46,7 @@ public class Constants {
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
-            .o
+            .setLocalizer(new OctoQuadLocalizer(hardwareMap, localizerConstants, OctoQuadLocalizer.InitMode.INITIALIZE_OCTOQUAD))
             .pathConstraints(pathConstraints)
             .mecanumDrivetrain(driveConstants)
             .build();
