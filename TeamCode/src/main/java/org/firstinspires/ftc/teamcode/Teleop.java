@@ -29,138 +29,119 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import static com.pedropathing.math.MathFunctions.normalizeAngleSigned;
+
+import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.HeadingInterpolator;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathChain;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
-/*
- * This file contains an example of a Linear "OpMode".
- * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
- * The names of OpModes appear on the menu of the FTC Driver Station.
- * When a selection is made from the menu, the corresponding OpMode is executed.
- *
- * This particular OpMode illustrates driving a 4-motor Omni-Directional (or Holonomic) robot.
- * This code will work with either a Mecanum-Drive or an X-Drive train.
- * Both of these drives are illustrated at https://gm0.org/en/latest/docs/robot-design/drivetrains/holonomic.html
- * Note that a Mecanum drive must display an X roller-pattern when viewed from above.
- *
- * Also note that it is critical to set the correct rotation direction for each motor.  See details below.
- *
- * Holonomic drives provide the ability for the robot to move in three axes (directions) simultaneously.
- * Each motion axis is controlled by one Joystick axis.
- *
- * 1) Axial:    Driving forward and backward               Left-joystick Forward/Backward
- * 2) Lateral:  Strafing right and left                     Left-joystick Right and Left
- * 3) Yaw:      Rotating Clockwise and counter clockwise    Right-joystick Right and Left
- *
- * This code is written assuming that the right-side motors need to be reversed for the robot to drive forward.
- * When you first test your robot, if it moves backward when you push the left stick forward, then you must flip
- * the direction of all 4 motors (see code below).
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
- */
+import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@TeleOp(name="Teleop", group="Linear OpMode")
-//@Disabled
-public class Teleop extends LinearOpMode {
+import java.util.function.Supplier;
 
-    // Declare OpMode members for each of the 4 motors.
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftFrontDrive = null;
-    private DcMotor leftBackDrive = null;
-    private DcMotor rightFrontDrive = null;
-    private DcMotor rightBackDrive = null;
+@Configurable
+@TeleOp(name = "G-FORCE TELEOP", group = "Sensor")
+public class Teleop extends OpMode {
+
+    public static Pose startingPose; //See ExampleAuto to understand how to use this
+
+    private Follower            follower;
+    private boolean             automatedDrive;
+    private Supplier<PathChain> pathChain;
+    private TelemetryManager    telemetryM;
+    private boolean             slowMode = false;
+
+    private boolean             headingLocked = false;
+    private double              headingSetpoint = 0;
 
     @Override
-    public void runOpMode() {
+    public void init() {
+        follower = Constants.createFollower(hardwareMap);
+        follower.setStartingPose(startingPose == null ? new Pose() : startingPose);
+        follower.update();
+        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+        pathChain = () -> follower.pathBuilder() //Lazy Curve Generation
+                .addPath(new Path(new BezierLine(follower::getPose, new Pose(36, -12))))
+                .setHeadingInterpolation(HeadingInterpolator.linearFromPoint(follower::getHeading, Math.toRadians(45), 0.8))
+                .build();
+        //Lazy curve generation might look a little different to how we usually make paths,
+        //This is because we are using a Lambda expression instead of calling follower.pathbuilder()
+        //To use this though, we declare this as a Supplier<PathChain>. And we to call the path chain we instead do pathChain.get()
+    }
+    @Override
+    public void start() {
+        //The parameter controls whether the Follower should use break mode on the motors (using it is recommended).
+        //In order to use float mode, add .useBrakeModeInTeleOp(true); to your Drivetrain Constants in Constant.java (for Mecanum)
+        //If you don't pass anything in, it uses the default (false)
+        follower.startTeleopDrive(true);
+    }
+    @Override
+    public void loop() {
+        //Call this once per loop
+        follower.update();
+        telemetryM.update();
 
-        // Initialize the hardware variables. Note that the strings used here must correspond
-        // to the names assigned during the robot configuration step on the DS or RC devices.
-        leftFrontDrive = hardwareMap.get(DcMotor.class, "leftfront");
-        leftBackDrive = hardwareMap.get(DcMotor.class, "leftback");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "rightfront");
-        rightBackDrive = hardwareMap.get(DcMotor.class, "rightback");
+        // mode controls =================================
 
-        // ########################################################################################
-        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
-        // ########################################################################################
-        // Most robots need the motors on one side to be reversed to drive forward.
-        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
-        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
-        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
-        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
-        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
-        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        // Home the pose (location and heading)
+        if (gamepad1.touchpadWasPressed()){
+            follower.setPose(new Pose());
+            headingSetpoint = 0.0;
+        }
 
-        // Wait for the game to start (driver presses START)
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
+        //Slow Mode
+        if (gamepad1.rightBumperWasPressed()) {
+            slowMode = !slowMode;
+        }
 
-        waitForStart();
-        runtime.reset();
+        //Automated PathFollowing
+        if (gamepad1.aWasPressed()) {
+            follower.followPath(pathChain.get());
+            automatedDrive = true;
+        }
 
-        // run until the end of the match (driver presses STOP)
-        while (opModeIsActive()) {
-            double max;
+        //Stop automated following if the follower is done
+        if (automatedDrive && (gamepad1.aWasPressed() || !follower.isBusy())) {
+            headingSetpoint = follower.getHeading();
+            follower.startTeleopDrive();
+            automatedDrive = false;
+        }
 
-            // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-            double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-            double lateral =  gamepad1.left_stick_x;
-            double yaw     =  gamepad1.right_stick_x;
+        // Manual driving ===================================
+        final double SLOW_MULTIPLIER = 0.5;
+        final double HEADING_GAIN    = 1.0;
+        final double MIN_ROTATE      = 0.1;
 
-            // Combine the joystick requests for each axis-motion to determine each wheel's power.
-            // Set up a variable for each drive wheel to save the power level for telemetry.
-            double frontLeftPower  = axial + lateral + yaw;
-            double frontRightPower = axial - lateral - yaw;
-            double backLeftPower   = axial - lateral + yaw;
-            double backRightPower  = axial + lateral - yaw;
+        if (!automatedDrive) {
+            double axial    = -gamepad1.left_stick_y * (slowMode ? SLOW_MULTIPLIER : 1.0);
+            double lateral  = -gamepad1.left_stick_x * (slowMode ? SLOW_MULTIPLIER : 1.0);
+            double yaw      = -gamepad1.right_stick_x * (slowMode ? SLOW_MULTIPLIER : 1.0);
 
-            // Normalize the values so no wheel power exceeds 100%
-            // This ensures that the robot maintains the desired motion.
-            max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
-            max = Math.max(max, Math.abs(backLeftPower));
-            max = Math.max(max, Math.abs(backRightPower));
-
-            if (max > 1.0) {
-                frontLeftPower  /= max;
-                frontRightPower /= max;
-                backLeftPower   /= max;
-                backRightPower  /= max;
+            // Lock heading if we aren't trying to turn.
+            if (yaw == 0 ) {
+                if (headingLocked) {
+                    yaw = normalizeAngleSigned(headingSetpoint - follower.getHeading()) * HEADING_GAIN;
+                } else if (Math.abs(follower.getAngularVelocity()) < MIN_ROTATE) {
+                    headingSetpoint = follower.getHeading();
+                    headingLocked = true;
+                }
+            } else {
+                headingLocked = false;
             }
 
-            // This is test code:
-            //
-            // Uncomment the following code to test your motor directions.
-            // Each button should make the corresponding motor run FORWARD.
-            //   1) First get all the motors to take to correct positions on the robot
-            //      by adjusting your Robot Configuration if necessary.
-            //   2) Then make sure they run in the correct direction by modifying the
-            //      the setDirection() calls above.
-            // Once the correct motors move in the correct direction re-comment this code.
-
-            /*
-            frontLeftPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
-            backLeftPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
-            frontRightPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
-            backRightPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
-            */
-
-            // Send calculated power to wheels
-            leftFrontDrive.setPower(frontLeftPower);
-            rightFrontDrive.setPower(frontRightPower);
-            leftBackDrive.setPower(backLeftPower);
-            rightBackDrive.setPower(backRightPower);
-
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
-            telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
-            telemetry.update();
+            follower.setTeleOpDrive(axial, lateral, yaw, false);
         }
-    }}
+
+        telemetryM.debug("position", follower.getPose());
+        telemetryM.debug("velocity", follower.getVelocity());
+        telemetryM.debug("automatedDrive", automatedDrive);
+    }
+}
