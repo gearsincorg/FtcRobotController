@@ -50,6 +50,8 @@ public class TurretSubsystem extends SubsystemBase {
     private final double SHOOTER_STEP   = 2.00;
     private final double MAX_MPS        = 30;
     private final double ANGLE_STEP     = 2;
+    private final double TURRET_STEP    = 2;
+    private final int    MANUAL_MENU_ITEMS = 3;
 
     // General Subsystem Members
     private double shooterSpeedMPS        = 0;
@@ -60,6 +62,9 @@ public class TurretSubsystem extends SubsystemBase {
     private double At    = 0;  // measured Turret angle
     private double Ad    = 0;  // desired Turret angle (assuming +/- 180 range)
     private double targetRange = 0;  // Range to goal in mm
+
+    private boolean manualMode = false;   // driver-toggled: true = manual aim, false = auto-aim
+    private int manualMenuIndex = 0;      // 0=Turret Angle, 1=Hood Angle, 2=Speed
 
     private ElapsedTime stateTime = new ElapsedTime();
 
@@ -99,8 +104,9 @@ public class TurretSubsystem extends SubsystemBase {
         At = encoderToDegrees(aim.getCurrentPosition());
         Globals.TURRET_ON_TARGET = (Math.abs(Ad - At) < AIM_MARGIN);
 
-
-        calculate_Ad_and_Range();
+        if (!manualMode) {
+            calculate_Ad_and_Range();
+        }
         Globals.SHOOTER_AT_SPEED = shooterSubsystem.atSpeed;
     }
 
@@ -111,9 +117,18 @@ public class TurretSubsystem extends SubsystemBase {
     public void runProcessing() {
         if ((currentState == READY) && myOpMode.opModeIsActive()) {
             //  we are in PLAY mode
+
+            // Driver can toggle manual aim control on/off at any time.
+            if (myOpMode.gamepad1.leftStickButtonWasPressed()) {
+                manualMode = !manualMode;
+            }
+
             if (Globals.ROBOT_STATE == RobotStates.SHOOTING) {
                 // we want to point the shooter and get wheels up to speed.
-                if (TEST_MODE) {
+                if (manualMode) {
+                    // Driver controls turret angle, hood angle and speed via the on-screen menu.
+                    runManualControl();
+                } else if (TEST_MODE) {
                     // Use the gamepad to modify the shooter speed and tilt
                     setShooterManually();
                 } else {
@@ -210,9 +225,19 @@ public class TurretSubsystem extends SubsystemBase {
 
     @Override
     public void showStatus() {
-        myOpMode.telemetry.addData("GOAL", "Rng=%5.0f Ag=%4.0f", targetRange, Ag);
-        myOpMode.telemetry.addData("TURRET", "%s Ar=%4.0f, Ad=%4.0f, At=%4.0f\n",
-                currentState, Ar, Ad, At, targetRange);
+        myOpMode.telemetry.addData("AIM MODE", manualMode
+                ? "MANUAL  (Lstick=auto, Dpad U/D=select L/R=adjust)"
+                : "AUTO    (Lstick=manual)");
+
+        if (manualMode) {
+            myOpMode.telemetry.addData((manualMenuIndex == 0) ? ">Turret" : " Turret", "%4.0f deg", Ad);
+            myOpMode.telemetry.addData((manualMenuIndex == 1) ? ">Hood"   : " Hood",   "%4.0f deg", shooterAngle);
+            myOpMode.telemetry.addData((manualMenuIndex == 2) ? ">Speed"  : " Speed",  "%4.1f m/s", shooterSpeedMPS);
+        } else {
+            myOpMode.telemetry.addData("GOAL", "Rng=%5.0f Ag=%4.0f", targetRange, Ag);
+            myOpMode.telemetry.addData("TURRET", "%s Ar=%4.0f, Ad=%4.0f, At=%4.0f\n",
+                    currentState, Ar, Ad, At, targetRange);
+        }
     }
 
     /**
@@ -306,6 +331,44 @@ public class TurretSubsystem extends SubsystemBase {
             shooterAngle += ANGLE_STEP;
         } else if (myOpMode.gamepad1.dpadLeftWasPressed() && (shooterAngle >= shooterSubsystem.SHOOTER_ANGLE_MIN)) {
             shooterAngle -= ANGLE_STEP;
+        }
+    }
+
+    /**
+     * Lets the driver manually set turret angle, hood angle and shooter speed
+     * via the on-screen telemetry menu. Dpad up/down selects which value is being
+     * adjusted; dpad left/right steps it down/up. Values persist across cycles so
+     * adjustments accumulate, and carry over unchanged if the driver switches back
+     * to AUTO and then back to MANUAL.
+     */
+    private void runManualControl() {
+        // Navigate which parameter is selected
+        if (myOpMode.gamepad1.dpadUpWasPressed()) {
+            manualMenuIndex = (manualMenuIndex + MANUAL_MENU_ITEMS - 1) % MANUAL_MENU_ITEMS;
+        } else if (myOpMode.gamepad1.dpadDownWasPressed()) {
+            manualMenuIndex = (manualMenuIndex + 1) % MANUAL_MENU_ITEMS;
+        }
+
+        // Adjust the selected parameter
+        double step = 0;
+        if (myOpMode.gamepad1.dpadRightWasPressed()) {
+            step = 1;
+        } else if (myOpMode.gamepad1.dpadLeftWasPressed()) {
+            step = -1;
+        }
+
+        if (step != 0) {
+            switch (manualMenuIndex) {
+                case 0:
+                    Ad = MathUtils.clamp(Ad + (step * TURRET_STEP), MIN_TURRET_ANGLE, MAX_TURRET_ANGLE);
+                    break;
+                case 1:
+                    shooterAngle = MathUtils.clamp(shooterAngle + (step * ANGLE_STEP), shooterSubsystem.SHOOTER_ANGLE_MIN, shooterSubsystem.SHOOTER_ANGLE_MAX);
+                    break;
+                case 2:
+                    shooterSpeedMPS = MathUtils.clamp(shooterSpeedMPS + (step * SHOOTER_STEP), 0, shooterSubsystem.MAX_MPS);
+                    break;
+            }
         }
     }
 
