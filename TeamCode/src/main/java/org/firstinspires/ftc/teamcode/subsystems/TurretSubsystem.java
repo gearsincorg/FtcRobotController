@@ -47,10 +47,10 @@ public class TurretSubsystem extends SubsystemBase {
     private final double TURRET_OFFSET_DISTANCE = 78;  // this is how far the Turret is from the center of the robot
     private final double AIM_PROP_GAIN       =   26;   // was 26 (30 too high?)
 
-    private final double SHOOTER_STEP   = 2.00;
+    private final double SHOOTER_STEP   = 0.5;
     private final double MAX_MPS        = 30;
     private final double ANGLE_STEP     = 2;
-    private final double TURRET_STEP    = 2;
+    private final double TURRET_STEP    = -5;
     private final int    MANUAL_MENU_ITEMS = 3;
 
     // General Subsystem Members
