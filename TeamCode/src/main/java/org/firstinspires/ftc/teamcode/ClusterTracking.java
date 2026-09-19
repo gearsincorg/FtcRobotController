@@ -67,11 +67,7 @@ public class ClusterTracking extends LinearOpMode
     private boolean areWeRed = false;        // Save which alliance color you are tracking
     private AprilTagClusterDetection targetCluster; // holds the detected cluster.
 
-    private boolean targetFound  = false;    // Set to true when an AprilTag/Cluster target is detected
-    private String targetName    = "none";
-    private double targetRange   = 0;
     private double targetBearing = 0;
-    private double targetYaw     = 0;
 
     @Override public void runOpMode()
     {
@@ -118,10 +114,7 @@ public class ClusterTracking extends LinearOpMode
                         Math.abs(clusterDet.ftcPose.roll) < 90) {
                         // Yes, we want to use this tag.
                         targetCluster = clusterDet;
-                        targetName    = clusterDet.metadata.shortName;
-                        targetRange   = clusterDet.ftcPose.range;
-                        targetBearing = clusterDet.ftcPose.bearing;
-                        targetYaw     = clusterDet.ftcPose.yaw;
+                        targetBearing = targetCluster.ftcPose.bearing;  // save the bearing to the cluster origin
                         break;  // don't look any further.
                     }
                 }
@@ -129,8 +122,7 @@ public class ClusterTracking extends LinearOpMode
 
             // Tell the driver what we see, and what to do.
             if (targetCluster != null) {
-                telemetry.addData("\n>","HOLD Left-Bumper to Point to Target\n");
-                telemetry.addData("Found", "%s", targetCluster.metadata.shortName);
+                telemetry.addData(">","HOLD Left-Bumper to Point to Target");
 
                 telemetry.addLine(String.format("\n==== Tag Cluster (%s)", targetCluster.metadata.name));
                 telemetry.addLine(String.format("Percent tags found: %d", targetCluster.percentClusterFound));
@@ -141,14 +133,13 @@ public class ClusterTracking extends LinearOpMode
                 // Add "key" information to telemetry
                 telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
                 telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
-                telemetry.addLine("RBE = Range, Bearing & Elevation");
+                telemetry.addLine("RBE = Range, Bearing & Elevation\n");
             } else {
                 telemetry.addData("\n>","Drive using joysticks to find valid target\n");
             }
-            telemetry.update();
 
             // If Left Bumper is being pressed, AND we have found the desired target, Point directly at it.
-            if (gamepad1.left_bumper && targetFound) {
+            if (gamepad1.left_bumper && (targetCluster != null)) {
 
                 // We want targetBearing to be 0, so use it as the "error" term to set the turn power.  Clip the result
                 turn   = Range.clip(targetBearing * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
