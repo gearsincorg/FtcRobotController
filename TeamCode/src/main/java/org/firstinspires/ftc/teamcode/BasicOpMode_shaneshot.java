@@ -50,18 +50,14 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Muskapult", group="Linear OpMode")
-public class BasicOpMode_muskapult extends LinearOpMode {
+@TeleOp(name="Shayne Shot", group="Linear OpMode")
+public class BasicOpMode_shaneshot extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotorEx muskapult = null;
+    private DcMotorEx shaneshot = null;
     private double power = 0.1;
-    private double muskapultPower = 0;
-    private boolean shooting = false;
-    private ElapsedTime shoottimer = new ElapsedTime();
-    private double shootTime = 0.1;
-    private double retractTime = 1.0;
+    private double shayneshotPower = 0;
 
     @Override
     public void runOpMode() {
@@ -71,11 +67,9 @@ public class BasicOpMode_muskapult extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        muskapult = hardwareMap.get(DcMotorEx.class, "muskapult");
-        muskapult.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        muskapult.setDirection(DcMotor.Direction.REVERSE);
-        muskapult.setTargetPosition(0);
-        muskapult.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shaneshot = hardwareMap.get(DcMotorEx.class, "flywheel");
+        shaneshot.setDirection(DcMotor.Direction.REVERSE);
+        shaneshot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Wait for the game to start (driver presses START)
         waitForStart();
@@ -86,31 +80,25 @@ public class BasicOpMode_muskapult extends LinearOpMode {
 
             // POV Mode uses left stick to go forward, and right stick to turn.
             // - This uses basic math to combine motions and is easier to drive straight.
-            final int targetPosition = 150;
             if (gamepad1.dpadUpWasPressed()){
                 power = power + 0.05;
             } else if (gamepad1.dpadDownWasPressed()){
                 power = power - 0.05;
             }
-            muskapultPower = Range.clip(power, 0.0, 1.0);
-            shootTime = 0.07  / power; //calculate the time needed to shoot
 
-            if (gamepad1.leftBumperWasPressed() && !shooting) { // firing the shooter
-                shoottimer.reset();
-                muskapult.setPower(muskapultPower);
-                shooting = true;
+            shayneshotPower = Range.clip(power, 0.0, 1.0);
+            //   muskapult.setPower(muskapultPower);
+
+            if (gamepad1.leftBumperWasPressed()) {
+                shaneshot.setPower(shayneshotPower);
                 //muskapult.setTargetPosition(targetPosition);
-            } else if (shoottimer.time() > (retractTime + shootTime) && shooting){ // stopping the shooter
-                muskapult.setPower(0);
-                shooting = false;
-            } else if (shoottimer.time() > shootTime && shooting){ // retracting the shooter
-                muskapult.setPower(-0.2);
+            } else if (gamepad1.rightBumperWasPressed()){
+                shaneshot.setPower(0.0);
             }
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Muskapult", "Power (%.2f)", muskapultPower);
-            telemetry.addData("Positon", "Position (%3d)", muskapult.getCurrentPosition());
+            telemetry.addData("flywheel", "Power (%.2f)", shayneshotPower);
             telemetry.update();
         }
     }
