@@ -56,12 +56,12 @@ public class BasicOpMode_muskapult extends LinearOpMode {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotorEx muskapult = null;
-    private double power = 0.1;
+    private double power        = 0.5;
     private double muskapultPower = 0;
-    private boolean shooting = false;
+    private boolean shooting    = false;
     private ElapsedTime shoottimer = new ElapsedTime();
-    private double shootTime = 0.1;
-    private double retractTime = 1.0;
+    private double shootTime    = 0.1;
+    private double retractTime  = 1.0;
 
     @Override
     public void runOpMode() {

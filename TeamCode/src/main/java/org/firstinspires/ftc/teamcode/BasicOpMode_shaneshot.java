@@ -53,11 +53,14 @@ import com.qualcomm.robotcore.util.Range;
 @TeleOp(name="Shayne Shot", group="Linear OpMode")
 public class BasicOpMode_shaneshot extends LinearOpMode {
 
+    private final double MAX_VELOCITY = 3000;
+
     // Declare OpMode members.
-    private ElapsedTime runtime = new ElapsedTime();
-    private DcMotorEx shaneshot = null;
-    private double power = 0.1;
-    private double shayneshotPower = 0;
+    private ElapsedTime runtime     = new ElapsedTime();
+    private DcMotorEx shaneshot1    = null;
+    private double targetVelocity   = 1500;
+    private double power            = 0.5;
+    private boolean shooting        = false;
 
     @Override
     public void runOpMode() {
@@ -67,9 +70,9 @@ public class BasicOpMode_shaneshot extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        shaneshot = hardwareMap.get(DcMotorEx.class, "flywheel");
-        shaneshot.setDirection(DcMotor.Direction.REVERSE);
-        shaneshot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shaneshot1 = hardwareMap.get(DcMotorEx.class, "flywheel1");
+        shaneshot1.setDirection(DcMotor.Direction.FORWARD);
+        shaneshot1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Wait for the game to start (driver presses START)
         waitForStart();
@@ -78,27 +81,40 @@ public class BasicOpMode_shaneshot extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
+            double velocity = shaneshot1.getVelocity();
+
             // POV Mode uses left stick to go forward, and right stick to turn.
             // - This uses basic math to combine motions and is easier to drive straight.
             if (gamepad1.dpadUpWasPressed()){
-                power = power + 0.05;
+                targetVelocity += 20;
             } else if (gamepad1.dpadDownWasPressed()){
-                power = power - 0.05;
+                targetVelocity -= 20;
             }
-
-            shayneshotPower = Range.clip(power, 0.0, 1.0);
-            //   muskapult.setPower(muskapultPower);
+            targetVelocity = Range.clip(targetVelocity, 0.0, MAX_VELOCITY);
 
             if (gamepad1.leftBumperWasPressed()) {
-                shaneshot.setPower(shayneshotPower);
-                //muskapult.setTargetPosition(targetPosition);
+                shooting = true;
             } else if (gamepad1.rightBumperWasPressed()){
-                shaneshot.setPower(0.0);
+                shooting = false;
             }
 
+            if (shooting) {
+                if (velocity >= targetVelocity ) {
+                    // power = 0;
+                    power = (targetVelocity / MAX_VELOCITY);
+                } else {
+                    power = 1.0;
+                }
+            } else {
+                power = 0;
+            }
+
+            shaneshot1.setPower(power);
+
             // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("flywheel", "Power (%.2f)", shayneshotPower);
+            telemetry.addData("D-Pad", "Faster: UP, Slower: DOWN");
+            telemetry.addData("Bumper", "Run: LEFT, Stop: RIGHT\n");
+            telemetry.addData("SPEED CPS", "Target (%.0f), Measured (%.0f) ", targetVelocity, velocity);
             telemetry.update();
         }
     }
