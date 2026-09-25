@@ -17,5 +17,6 @@ dependencies {
 
     implementation 'com.pedropathing:revhub:3.0.1'  // For PedroPathing 3.0
     implementation 'com.pedropathing:tuning:1.0.0'  // For PedroPathing 3.0
+    implementation 'com.pedropathing.ivy:pedro:1.1.1' // for PedroPathing 3.0
 }
 

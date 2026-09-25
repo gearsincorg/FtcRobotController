@@ -56,13 +56,7 @@ public class Teleop extends OpMode {
 
     @Override
     public void init() {
-        follower = Constants.createFollower(hardwareMap);
-        follower.setPose(startingPose == null ? Pose.zero() : startingPose);
-        follower.update();
 
-        // Lazy path generation: the path starts from wherever the robot is when it is requested.
-        path = () -> Paths.line(follower.pose(), new Pose(36, -12))
-                .linear(follower.pose().heading(), Math.toRadians(45));
     }
 
     @Override
