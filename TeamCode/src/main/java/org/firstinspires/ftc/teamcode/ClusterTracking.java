@@ -219,7 +219,7 @@ public class ClusterTracking extends LinearOpMode
         visionPortal = new VisionPortal.Builder()
             .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
             .setCameraResolution(new Size(800, 600))
-            .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
+            .setStreamFormat(VisionPortal.StreamFormat.MJPEG)  // For goBILDA Global Shutter Camera.
             .addProcessor(aprilTag)
             .build();
     }
