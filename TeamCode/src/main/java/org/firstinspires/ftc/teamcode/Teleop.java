@@ -30,7 +30,9 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.pedropathing.api.Paths;
+import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.utils.Angle;
@@ -56,14 +58,11 @@ public class Teleop extends OpMode {
 
     @Override
     public void init() {
-
+        follower = Constants.create(hardwareMap);
     }
 
     @Override
     public void loop() {
-        //Call this once per loop
-        follower.update();
-
         // mode controls =================================
 
         // Home the pose (location and heading)
@@ -114,13 +113,20 @@ public class Teleop extends OpMode {
                 headingLocked = false;
             }
 
+            DrivePowers powers = ManualDrive.fieldCentric(
+                axial, lateral, yaw, follower.pose().heading()
+            );
+
             // Robot-centric drive
-            follower.manual(axial, lateral, yaw);
+            follower.manual(powers);
         }
 
-        telemetry.addData("position", follower.pose());
-        telemetry.addData("velocity", follower.velocity());
-        telemetry.addData("automatedDrive", automatedDrive);
+        //
+        follower.update();
+
+        telemetry.addData("pos X: Y", "%5.1f : %5.1f", follower.pose().x(), follower.pose().y());
+        telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", follower.velocity().vx,  follower.velocity().vy,  follower.velocity().omega);
+        telemetry.addData("Auto", automatedDrive);
         telemetry.update();
     }
 }
