@@ -46,15 +46,8 @@ public class ClusterDisplay extends LinearOpMode {
 
             telemetryAprilTag();
 
-            // Save CPU resources; can resume streaming when needed.
-            if (gamepad1.dpad_down) {
-                visionPortal.stopStreaming();
-            } else if (gamepad1.dpad_up) {
-                visionPortal.resumeStreaming();
-            }
-
             // Share the CPU.
-            sleep(20);
+            sleep(10);
         }
 
         // Save more CPU resources when camera is no longer needed.
