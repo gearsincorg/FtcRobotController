@@ -7,9 +7,11 @@ import org.firstinspires.ftc.teamcode.pedro.Constants;
 import com.pedropathing.ivy.Scheduler;
 
 import static com.pedropathing.ivy.Scheduler.schedule;
+import static com.pedropathing.ivy.commands.Commands.waitMs;
+import static com.pedropathing.ivy.groups.Groups.sequential;
 
 @Autonomous
-public class ExampleAuto extends OpMode {
+public class Auto extends OpMode {
     private Follower follower; // you added this before
     private OurPaths ourPaths;
 
@@ -22,7 +24,12 @@ public class ExampleAuto extends OpMode {
 
     @Override
     public void start() {
-        schedule(ourPaths.PathToFlower());
+        schedule(
+            sequential(
+                ourPaths.pathToFlower1(),
+                waitMs(3000),
+                ourPaths.pathToShoot()
+            ));
     }
 
     @Override
