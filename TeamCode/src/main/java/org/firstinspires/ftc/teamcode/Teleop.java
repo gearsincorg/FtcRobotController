@@ -38,7 +38,11 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.pedropathing.ivy.Scheduler;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+import org.firstinspires.ftc.teamcode.Subsystems.FlowerIntake;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 import java.util.function.Supplier;
@@ -47,6 +51,7 @@ import java.util.function.Supplier;
 public class Teleop extends OpMode {
 
     public static Pose startingPose; //See ExampleAuto to understand how to use this
+    private FlowerIntake flowerIntake;
 
     private Follower            follower;
     private boolean             automatedDrive;
@@ -59,6 +64,8 @@ public class Teleop extends OpMode {
     @Override
     public void init() {
         follower = Constants.create(hardwareMap);
+        flowerIntake = new FlowerIntake(hardwareMap);
+        Scheduler.reset();
     }
 
     @Override
@@ -69,6 +76,15 @@ public class Teleop extends OpMode {
         if (gamepad1.touchpadWasPressed()){
             follower.setPose(Pose.zero());
             headingSetpoint = 0.0;
+        }
+
+        //Flower Intake
+        if (gamepad1.left_bumper){
+            Scheduler.schedule(flowerIntake.on());
+        } else if (gamepad1.left_trigger_pressed){
+            Scheduler.schedule(flowerIntake.reverse());
+        }else {
+            Scheduler.schedule(flowerIntake.off());
         }
 
         //Slow Mode
