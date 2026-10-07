@@ -38,9 +38,11 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.pedropathing.ivy.Scheduler;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.seattlesolvers.solverslib.command.CommandOpMode;
+import com.seattlesolvers.solverslib.command.CommandScheduler;
+import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.gamepad.GamepadEx;
+import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.teamcode.Subsystems.FlowerIntake;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
@@ -48,101 +50,97 @@ import org.firstinspires.ftc.teamcode.pedro.Constants;
 import java.util.function.Supplier;
 
 @TeleOp(name = "G-FORCE TELEOP", group = "Sensor")
-public class Teleop extends OpMode {
+public class Teleop extends CommandOpMode {
 
     public static Pose startingPose; //See ExampleAuto to understand how to use this
-    private FlowerIntake flowerIntake;
+    private FlowerIntake        flowerIntake;
 
     private Follower            follower;
-    private boolean             automatedDrive;
-    private Supplier<Path>      path;
     private boolean             slowMode = false;
 
     private boolean             headingLocked = false;
     private double              headingSetpoint = 0;
 
     @Override
-    public void init() {
+    public void initialize() {
         follower = Constants.create(hardwareMap);
         flowerIntake = new FlowerIntake(hardwareMap);
-        Scheduler.reset();
+        CommandScheduler.getInstance().reset();
+        bindButtons();
+        super.reset();  // Resets the scheduler (I think :)
     }
 
     @Override
-    public void loop() {
-        // mode controls =================================
-
-        // Home the pose (location and heading)
-        if (gamepad1.touchpadWasPressed()){
-            follower.setPose(Pose.zero());
-            headingSetpoint = 0.0;
-        }
-
-        //Flower Intake
-        if (gamepad1.left_bumper){
-            Scheduler.schedule(flowerIntake.on());
-        } else if (gamepad1.left_trigger_pressed){
-            Scheduler.schedule(flowerIntake.reverse());
-        }else {
-            Scheduler.schedule(flowerIntake.off());
-        }
-
-        //Slow Mode
-        if (gamepad1.rightBumperWasPressed()) {
-            slowMode = !slowMode;
-        }
-
-        //Automated PathFollowing (A starts it, and A again cancels it)
-        boolean aPressed = gamepad1.aWasPressed();
-        if (aPressed && !automatedDrive) {
-            follower.follow(path.get());
-            automatedDrive = true;
-        } else if (automatedDrive && (aPressed || !follower.isBusy())) {
-            //Stop automated following if cancelled or if the follower is done
-            follower.stop();
-            headingSetpoint = follower.pose().heading();
-            headingLocked = true;
-            automatedDrive = false;
-        }
+    public void run() {
+        super.run();
 
         // Manual driving ===================================
         final double SLOW_MULTIPLIER = 0.5;
         final double HEADING_GAIN    = 1.0;
         final double MIN_ROTATE      = 0.1;
 
-        if (!automatedDrive) {
-            double axial    = -gamepad1.left_stick_y * (slowMode ? SLOW_MULTIPLIER : 1.0);
-            double lateral  = -gamepad1.left_stick_x * (slowMode ? SLOW_MULTIPLIER : 1.0);
-            double yaw      = -gamepad1.right_stick_x * (slowMode ? SLOW_MULTIPLIER : 1.0);
+        double axial    = -gamepad1.left_stick_y  * SLOW_MULTIPLIER;
+        double lateral  = -gamepad1.left_stick_x  * SLOW_MULTIPLIER;
+        double yaw      = -gamepad1.right_stick_x * SLOW_MULTIPLIER;
 
-            double heading = follower.pose().heading();
+        double heading = follower.pose().heading();
 
-            // Lock heading if we aren't trying to turn.
-            if (yaw == 0 ) {
-                if (headingLocked) {
-                    yaw = Angle.normalizeSigned(headingSetpoint - heading) * HEADING_GAIN;
-                } else if (Math.abs(follower.velocity().omega) < MIN_ROTATE) {
-                    headingSetpoint = heading;
-                    headingLocked = true;
-                }
-            } else {
-                headingLocked = false;
+        // Lock heading if we aren't trying to turn.
+        if (yaw == 0 ) {
+            if (headingLocked) {
+                yaw = Angle.normalizeSigned(headingSetpoint - heading) * HEADING_GAIN;
+            } else if (Math.abs(follower.velocity().omega) < MIN_ROTATE) {
+                headingSetpoint = heading;
+                headingLocked = true;
             }
-
-            DrivePowers powers = ManualDrive.fieldCentric(
-                axial, lateral, yaw, follower.pose().heading()
-            );
-
-            // Robot-centric drive
-            follower.manual(powers);
+        } else {
+            headingLocked = false;
         }
 
-        //
+        DrivePowers powers = ManualDrive.fieldCentric(
+            axial, lateral, yaw, follower.pose().heading()
+        );
+
+        // Robot-centric drive
+        follower.manual(powers);
         follower.update();
+
+        // Man Pedro and Solver loop processing.
+        CommandScheduler.getInstance().run();
 
         telemetry.addData("pos X: Y", "%5.1f : %5.1f", follower.pose().x(), follower.pose().y());
         telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", follower.velocity().vx,  follower.velocity().vy,  follower.velocity().omega);
-        telemetry.addData("Auto", automatedDrive);
         telemetry.update();
     }
+
+    public void resetHeading () {
+        follower.setPose(Pose.zero());
+        headingSetpoint = 0.0;
+    }
+
+    public void toggleSlowMode() {
+        slowMode = !slowMode;
+    }
+
+    /**
+     * Connect button triggers to commands
+     */
+    public void bindButtons() {
+        GamepadEx driverOp = new GamepadEx(gamepad1);
+
+        // Home the pose (location and heading)
+        driverOp.getGamepadButton(GamepadKeys.Button.TOUCHPAD)
+                .whenPressed(new InstantCommand(() -> resetHeading()));
+
+        // Turn on flower collector
+        driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(flowerIntake.onCommand())
+                .whenReleased(flowerIntake.offCommand());
+
+        // Reverse flower collector
+        driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .whenPressed(flowerIntake.reverseCommand())
+                .whenReleased(flowerIntake.offCommand());
+    }
 }
+

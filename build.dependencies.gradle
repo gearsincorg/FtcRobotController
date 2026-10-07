@@ -1,7 +1,9 @@
 repositories {
     mavenCentral()
     google() // Needed for androidx
-    maven { url 'https://repo.dairy.foundation/releases/'}  // For PedroPathing 3.0
+    maven {
+        url 'https://repo.dairy.foundation/releases/'   // For PedroPathing 3.0
+    }
 }
 
 dependencies {
@@ -17,6 +19,7 @@ dependencies {
 
     implementation 'com.pedropathing:revhub:3.0.1'  // For PedroPathing 3.0
     implementation 'com.pedropathing:tuning:1.0.0'  // For PedroPathing 3.0
-    implementation 'com.pedropathing.ivy:pedro:1.1.1' // for PedroPathing 3.0
+    implementation "org.solverslib:core:0.3.6"      // core
+    implementation "org.solverslib:pedroPathing:0.3.6" // For pedroPathing 3.0
 }
 

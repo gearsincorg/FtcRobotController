@@ -8,6 +8,7 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
+import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
 public class OurPaths {
     private final Follower follower;
@@ -18,7 +19,7 @@ public class OurPaths {
         poseFactory = PoseFactory.degrees();
     }
 
-    public Command pathToFlower1() {
+    public FollowPathCommand pathToFlower1() {
 
         final Pose start = poseFactory.of(56, 8, 90);
         final Pose path1 = poseFactory.of(38.1349, 31.1277, 180);
@@ -33,10 +34,10 @@ public class OurPaths {
             line(point2, point3).linear(point2, point3)
         );
 
-        return follow(follower, flowerPath);
+        return new FollowPathCommand(follower, flowerPath);
     }
 
-    public Command pathToShoot(){
+    public FollowPathCommand pathToShoot(){
         final Pose point3 = poseFactory.of(12.9928, 46.731, 180);
         final Pose point4 = poseFactory.of(57.2496, 22.9785, 90);
         final Pose point4Control1 = poseFactory.of(27.8336, 15.0438, 0);
@@ -45,6 +46,6 @@ public class OurPaths {
             curve(point3, point4Control1, point4).linear(point3,point4)
         );
 
-        return follow(follower, flowerPath2);
+        return new FollowPathCommand(follower, flowerPath2);
     }
 }

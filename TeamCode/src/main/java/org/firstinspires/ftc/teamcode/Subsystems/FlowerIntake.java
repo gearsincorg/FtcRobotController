@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
-import static com.pedropathing.ivy.commands.Commands.instant;
-import static com.pedropathing.ivy.groups.Groups.parallel;
-
-import com.pedropathing.ivy.Command;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.InstantCommand;
 
 public class FlowerIntake {
     private final DcMotorEx flower1;
@@ -33,17 +31,18 @@ public class FlowerIntake {
         flower2.setPower(-1);
     }
 
-    public Command off() {
-        return instant(() -> intake_stop());
+    // Put commands here  ==========================================
+
+    public Command offCommand() {
+        return new InstantCommand(() -> intake_stop());
     }
 
-    public Command on() {
-        return instant(() -> intake_start());
+    public Command onCommand() {
+        return new InstantCommand(() -> intake_start());
     }
 
-    public Command reverse() {
-
-        return instant(() ->intake_reverse());
+    public Command reverseCommand() {
+        return new InstantCommand(() ->intake_reverse());
     }
 }
 
