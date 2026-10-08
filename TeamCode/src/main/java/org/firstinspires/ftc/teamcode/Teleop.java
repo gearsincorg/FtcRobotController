@@ -39,6 +39,7 @@ import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.CommandScheduler;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.button.GamepadButton;
+import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
@@ -58,10 +59,10 @@ public class Teleop extends CommandOpMode {
     @Override
     public void initialize() {
         follower = Constants.create(hardwareMap);
-        flowerIntake = new FlowerIntake(hardwareMap);
+        flowerIntake = new FlowerIntake(this);
         CommandScheduler.getInstance().reset();
         bindButtons();
-        super.reset();  // Resets the scheduler (I think :)
+         // super.reset();  // Resets the scheduler (I think :)
     }
 
     @Override
@@ -102,9 +103,9 @@ public class Teleop extends CommandOpMode {
         follower.update();
         CommandScheduler.getInstance().run();
 
-        telemetry.addData("pos X: Y", "%5.1f : %5.1f", follower.pose().x(), follower.pose().y());
-        telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", follower.velocity().vx,  follower.velocity().vy,  follower.velocity().omega);
-        telemetry.update();
+        //telemetry.addData("pos X: Y", "%5.1f : %5.1f", follower.pose().x(), follower.pose().y());
+       // telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", follower.velocity().vx,  follower.velocity().vy,  follower.velocity().omega);
+        //telemetry.update();
     }
 
     public void resetHeading () {
@@ -132,7 +133,10 @@ public class Teleop extends CommandOpMode {
             .whenReleased(flowerIntake.offCommand());
 
         // Reverse flower collector
-        new GamepadTrigger(driverOp, GamepadKeys.Trigger.RIGHT_TRIGGER)
+        Trigger leftTriggerSwitch = new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5);
+        leftTriggerSwitch.whenActive(flowerIntake.offCommand());
+
+        new GamepadTrigger(driverOp, GamepadKeys.Trigger.LEFT_TRIGGER)
             .whenPressed(flowerIntake.reverseCommand())
             .whenReleased(flowerIntake.offCommand());
 

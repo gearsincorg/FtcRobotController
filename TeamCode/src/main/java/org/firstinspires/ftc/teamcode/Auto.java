@@ -7,6 +7,7 @@ import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 
+import org.firstinspires.ftc.teamcode.Subsystems.FlowerIntake;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 @Autonomous
@@ -20,12 +21,21 @@ public class Auto extends CommandOpMode {
 
         follower = Constants.create(hardwareMap);
         ourPaths = new OurPaths(follower);
+        FlowerIntake flowerIntake= new FlowerIntake(this);
 
         schedule(
             new SequentialCommandGroup(
             ourPaths.pathToFlower1(),
+            flowerIntake.onCommand(),
             new WaitCommand(3000),
-            ourPaths.pathToShoot()
+            flowerIntake.offCommand(),
+            ourPaths.pathToShoot(),
+            flowerIntake.reverseCommand(),
+            new WaitCommand(3000),
+            flowerIntake.offCommand()
+
+
+
         ));
     }
 
