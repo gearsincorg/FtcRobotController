@@ -29,7 +29,6 @@ public class Auto extends CommandOpMode {
         ));
     }
 
-
     @Override
     public void run() {
         super.run();
