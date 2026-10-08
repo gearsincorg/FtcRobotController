@@ -29,35 +29,29 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.pedropathing.api.Paths;
 import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.utils.Angle;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.CommandScheduler;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.button.GamepadButton;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.teamcode.Subsystems.FlowerIntake;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
-import java.util.function.Supplier;
-
 @TeleOp(name = "G-FORCE TELEOP", group = "Sensor")
 public class Teleop extends CommandOpMode {
 
-    public static Pose startingPose; //See ExampleAuto to understand how to use this
     private FlowerIntake        flowerIntake;
 
     private Follower            follower;
     private boolean             slowMode = false;
-
     private boolean             headingLocked = false;
     private double              headingSetpoint = 0;
 
@@ -103,9 +97,9 @@ public class Teleop extends CommandOpMode {
 
         // Robot-centric drive
         follower.manual(powers);
-        follower.update();
 
-        // Man Pedro and Solver loop processing.
+        // Main Pedro and Solver loop processing.
+        follower.update();
         CommandScheduler.getInstance().run();
 
         telemetry.addData("pos X: Y", "%5.1f : %5.1f", follower.pose().x(), follower.pose().y());
@@ -130,17 +124,37 @@ public class Teleop extends CommandOpMode {
 
         // Home the pose (location and heading)
         driverOp.getGamepadButton(GamepadKeys.Button.TOUCHPAD)
-                .whenPressed(new InstantCommand(() -> resetHeading()));
+            .whenPressed(new InstantCommand(() -> resetHeading()));
 
         // Turn on flower collector
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(flowerIntake.onCommand())
-                .whenReleased(flowerIntake.offCommand());
+            .whenPressed(flowerIntake.onCommand())
+            .whenReleased(flowerIntake.offCommand());
 
         // Reverse flower collector
+        new GamepadTrigger(driverOp, GamepadKeys.Trigger.RIGHT_TRIGGER)
+            .whenPressed(flowerIntake.reverseCommand())
+            .whenReleased(flowerIntake.offCommand());
+
+        // Toggle slow mode
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(flowerIntake.reverseCommand())
-                .whenReleased(flowerIntake.offCommand());
+            .whenPressed(new InstantCommand(() -> toggleSlowMode()));
     }
 }
 
+class GamepadTrigger extends GamepadButton {
+
+    GamepadEx           driverOp;
+    GamepadKeys.Trigger triger;
+
+    public GamepadTrigger(GamepadEx driverOp, GamepadKeys.Trigger triger){
+        super(driverOp);
+        this.driverOp = driverOp;
+        this.triger = triger;
+    }
+
+    @Override
+    public boolean get() {
+        return driverOp.getTrigger(triger) > 0.5;
+    }
+}

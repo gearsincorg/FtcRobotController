@@ -1,11 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 import static com.pedropathing.api.Paths.*;
-import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
 import com.pedropathing.api.Paths;
 import com.pedropathing.api.PoseFactory;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.ivy.Command;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
@@ -20,7 +18,6 @@ public class OurPaths {
     }
 
     public FollowPathCommand pathToFlower1() {
-
         final Pose start = poseFactory.of(56, 8, 90);
         final Pose path1 = poseFactory.of(38.1349, 31.1277, 180);
         final Pose path1Control1 = poseFactory.of(52.1743, 19.3243, 0);

@@ -16,17 +16,17 @@ public class FlowerIntake {
         flower1.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
-    private void intake_stop(){
+    public void intake_stop(){
         flower1.setPower(0);
         flower2.setPower(0);
     }
 
-    private void intake_start(){
+    public void intake_start(){
         flower1.setPower(1);
         flower2.setPower(1);
     }
 
-    private void intake_reverse(){
+    public void intake_reverse(){
         flower1.setPower(-1);
         flower2.setPower(-1);
     }
@@ -44,6 +44,7 @@ public class FlowerIntake {
     public Command reverseCommand() {
         return new InstantCommand(() ->intake_reverse());
     }
+
 }
 
 
