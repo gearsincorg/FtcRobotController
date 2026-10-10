@@ -23,6 +23,7 @@ public class Auto extends CommandOpMode {
         ourPaths = new OurPaths(follower);
         FlowerIntake flowerIntake= new FlowerIntake(this);
 
+        /*
         schedule(
             new SequentialCommandGroup(
             ourPaths.pathToFlower1(),
@@ -33,10 +34,8 @@ public class Auto extends CommandOpMode {
             flowerIntake.reverseCommand(),
             new WaitCommand(3000),
             flowerIntake.offCommand()
-
-
-
-        ));
+            ));
+         */
     }
 
     @Override

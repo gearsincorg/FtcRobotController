@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
-import static com.pedropathing.api.Paths.*;
+
+import static com.pedropathing.api.Paths.curve;
+import static com.pedropathing.api.Paths.line;
 
 import com.pedropathing.api.Paths;
 import com.pedropathing.api.PoseFactory;
@@ -8,11 +10,11 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
-public class OurPaths {
+public class OurPathsOriginal {
     private final Follower follower;
     private PoseFactory poseFactory;
 
-    public OurPaths(Follower sharedFollower) {
+    public OurPathsOriginal(Follower sharedFollower) {
         follower = sharedFollower;
         poseFactory = PoseFactory.degrees();
     }
@@ -42,20 +44,5 @@ public class OurPaths {
         );
 
         return new FollowPathCommand(follower, auto1Path);
-    }
-
-    // Generated from Auto2.pp
-    public FollowPathCommand auto2() {
-        final Pose start = poseFactory.of(56, 8, 90);
-        final Pose path1 = poseFactory.of(56, 36, 180);
-        final Pose point2 = poseFactory.of(21.4646, 68.0976, 180);
-        final Pose point2Control1 = poseFactory.of(56.095, 75.0648, 0);
-
-        Path auto2Path = Paths.path(
-                line(start, path1).linear(start, path1),
-                curve(path1, point2Control1, point2).constant(point2)
-        );
-
-        return new FollowPathCommand(follower, auto2Path);
     }
 }
