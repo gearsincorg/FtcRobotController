@@ -33,9 +33,6 @@ public class Auto extends CommandOpMode {
             flowerIntake.reverseCommand(),
             new WaitCommand(3000),
             flowerIntake.offCommand()
-
-
-
         ));
     }
 
