@@ -2,12 +2,14 @@
  * Another Mr. Phil Tutorial
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Util;
 
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Utility;
+
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagClusterDetection;
@@ -23,7 +25,7 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
 
-@TeleOp(name = "Cluster Display", group = "A Tutorial")
+@Utility(name = "Cluster Display", description="Displays Apriltag Cluster data")
 public class ClusterDisplay extends LinearOpMode {
 
     // The variable to store our instance of the AprilTag processor.

@@ -2,12 +2,13 @@
  * Another Mr. Phil Tutorial
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Util;
 
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Utility;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.Range;
 
@@ -46,8 +47,7 @@ import java.util.concurrent.TimeUnit;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  *
  */
-
-@TeleOp(name="Cluster Tracking", group = "A Tutorial")
+@Utility(name="Cluster Tracking", description="Tracks Apriltag Cluster")
 public class ClusterTracking extends LinearOpMode
 {
     //  Set the GAIN constant to control the relationship between the measured position error, and how much power is
@@ -150,7 +150,7 @@ public class ClusterTracking extends LinearOpMode
                 turn   = Range.clip(targetBearing * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
                 drive   = Range.clip((RANGE_GOAL - targetRange) * -DRIVE_GAIN, -MAX_AUTO_DRIVE, MAX_AUTO_DRIVE) ;
 
-                telemetry.addData("Auto  ","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
+                telemetry.addData("GFORCE_Auto  ","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             } else {
                 telemetry.addData("Manual","Drive %5.2f, Strafe %5.2f, Turn %5.2f ", drive, strafe, turn);
             }

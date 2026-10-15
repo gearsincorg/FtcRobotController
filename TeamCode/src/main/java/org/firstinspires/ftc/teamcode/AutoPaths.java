@@ -8,11 +8,11 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
-public class OurPaths {
+public class AutoPaths {
     private final Follower follower;
     private PoseFactory poseFactory;
 
-    public OurPaths(Follower sharedFollower) {
+    public AutoPaths(Follower sharedFollower) {
         follower = sharedFollower;
         poseFactory = PoseFactory.degrees();
     }

@@ -43,32 +43,52 @@ import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
-import org.firstinspires.ftc.teamcode.Subsystems.FlowerIntake;
+import org.firstinspires.ftc.teamcode.Subsystems.FlowerSubsystem;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
-@TeleOp(name = "G-FORCE TELEOP", group = "Sensor")
-public class Teleop extends CommandOpMode {
+@TeleOp(name = "G-FORCE TELEOP", group = "Competition")
+public class GFORCE_Teleop extends CommandOpMode {
 
-    private FlowerIntake        flowerIntake;
+    // Declare Subsystems
+    private FlowerSubsystem     flowerSubsystem = new FlowerSubsystem(this);
+    private Follower            driveSubsystem;
 
-    private Follower            follower;
-    private boolean             slowMode = false;
+    // class Methods
     private boolean             headingLocked = false;
     private double              headingSetpoint = 0;
 
+    // == Standard Methods ===================================================
     @Override
     public void initialize() {
-        follower = Constants.create(hardwareMap);
-        flowerIntake = new FlowerIntake(this);
+        // Initialize subsystems
+        flowerSubsystem.init();
+
+        // Setup robot and scheduler
+        driveSubsystem = Constants.create(hardwareMap);
         CommandScheduler.getInstance().reset();
+
+        // Connect buttons with commands
         bindButtons();
-         // super.reset();  // Resets the scheduler (I think :)
+    }
+
+    private void showTelemetry() {
+        telemetry.addData("pos X: Y", "%5.1f : %5.1f", driveSubsystem.pose().x(), driveSubsystem.pose().y());
+        telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", driveSubsystem.velocity().vx,
+                            driveSubsystem.velocity().vy,  driveSubsystem.velocity().omega);
+        telemetry.update();
     }
 
     @Override
     public void run() {
         super.run();
+        manualDrive();
+        driveSubsystem.update();
+        showTelemetry();
+    }
 
+    // == Additional Methods ===================================================
+
+    public void manualDrive() {
         // Manual driving ===================================
         final double SLOW_MULTIPLIER = 0.5;
         final double HEADING_GAIN    = 1.0;
@@ -78,13 +98,13 @@ public class Teleop extends CommandOpMode {
         double lateral  = -gamepad1.left_stick_x  * SLOW_MULTIPLIER;
         double yaw      = -gamepad1.right_stick_x * SLOW_MULTIPLIER;
 
-        double heading = follower.pose().heading();
+        double heading = driveSubsystem.pose().heading();
 
         // Lock heading if we aren't trying to turn.
         if (yaw == 0 ) {
             if (headingLocked) {
                 yaw = Angle.normalizeSigned(headingSetpoint - heading) * HEADING_GAIN;
-            } else if (Math.abs(follower.velocity().omega) < MIN_ROTATE) {
+            } else if (Math.abs(driveSubsystem.velocity().omega) < MIN_ROTATE) {
                 headingSetpoint = heading;
                 headingLocked = true;
             }
@@ -93,28 +113,11 @@ public class Teleop extends CommandOpMode {
         }
 
         DrivePowers powers = ManualDrive.fieldCentric(
-            axial, lateral, yaw, follower.pose().heading()
+                axial, lateral, yaw, driveSubsystem.pose().heading()
         );
 
         // Robot-centric drive
-        follower.manual(powers);
-
-        // Main Pedro and Solver loop processing.
-        follower.update();
-        CommandScheduler.getInstance().run();
-
-        //telemetry.addData("pos X: Y", "%5.1f : %5.1f", follower.pose().x(), follower.pose().y());
-       // telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", follower.velocity().vx,  follower.velocity().vy,  follower.velocity().omega);
-        //telemetry.update();
-    }
-
-    public void resetHeading () {
-        follower.setPose(Pose.zero());
-        headingSetpoint = 0.0;
-    }
-
-    public void toggleSlowMode() {
-        slowMode = !slowMode;
+        driveSubsystem.manual(powers);
     }
 
     /**
@@ -129,36 +132,18 @@ public class Teleop extends CommandOpMode {
 
         // Turn on flower collector
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-            .whenPressed(flowerIntake.onCommand())
-            .whenReleased(flowerIntake.offCommand());
+            .whenPressed(flowerSubsystem.startCommand())
+            .whenReleased(flowerSubsystem.stopCommand());
 
         // Reverse flower collector
-        Trigger leftTriggerSwitch = new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5);
-        leftTriggerSwitch.whenActive(flowerIntake.offCommand());
+        new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5)
+            .whenActive(flowerSubsystem.reverseCommand())
+            .whenInactive(flowerSubsystem.stopCommand());
+    }
 
-        new GamepadTrigger(driverOp, GamepadKeys.Trigger.LEFT_TRIGGER)
-            .whenPressed(flowerIntake.reverseCommand())
-            .whenReleased(flowerIntake.offCommand());
-
-        // Toggle slow mode
-        driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-            .whenPressed(new InstantCommand(() -> toggleSlowMode()));
+    public void resetHeading () {
+        driveSubsystem.setPose(Pose.zero());
+        headingSetpoint = 0.0;
     }
 }
 
-class GamepadTrigger extends GamepadButton {
-
-    GamepadEx           driverOp;
-    GamepadKeys.Trigger triger;
-
-    public GamepadTrigger(GamepadEx driverOp, GamepadKeys.Trigger triger){
-        super(driverOp);
-        this.driverOp = driverOp;
-        this.triger = triger;
-    }
-
-    @Override
-    public boolean get() {
-        return driverOp.getTrigger(triger) > 0.5;
-    }
-}

@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PP_DIR = ROOT / "pp"
-JAVA_FILE = ROOT / "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/OurPaths.java"
+JAVA_FILE = ROOT / "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/AutoPaths.java"
 
 BANNER_TEXT = "Do not change anything above this line"
 BANNER_RULE = "// ===="
