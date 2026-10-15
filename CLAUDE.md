@@ -12,7 +12,6 @@ Fork of the FIRST `FtcRobotController` SDK (`origin` = gearsincorg/FtcRobotContr
 - `Subsystems/`: one class per mechanism (currently `FlowerSubsystem`, a two-motor collector with start/stop/reverse).
 - `Util/`: helper classes (`ClusterTracking`, `ClusterDisplay`) and test opmodes (`BasicOpMode_shaneshot`).
 - `AutoPaths.java`: generated paths (see below).
-- `res/raw/pedro/` holds copies of the `pedro/` sources.
 
 ## Autonomous paths: `.pp` -> Java
 - Draw paths in the Pedro visualizer and save the `.pp` file in `/pp`. Commit every `.pp` file.
