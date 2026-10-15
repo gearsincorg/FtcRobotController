@@ -45,6 +45,7 @@ import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Subsystems.FlowerSubsystem;
+import org.firstinspires.ftc.teamcode.Subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.Subsystems.VisionSubsystem;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
@@ -54,11 +55,18 @@ public class GFORCE_Teleop extends CommandOpMode {
     // Declare Subsystems
     private FlowerSubsystem     flowerSubsystem;
     private VisionSubsystem     visionSubsystem;
+    private ShooterSubsystem    shooterSubsystem;
     private Follower            driveSubsystem;
 
     // Point-at-target tuning
     private static final double TARGET_TURN_GAIN = 0.04;
-    private static final double MAX_TARGET_TURN  = 0.4;
+    private static final double MAX_TARGET_TURN  = 0.6;
+
+    // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
+    private static final Pose RESET_POSE = new Pose(56, 9, Math.toRadians(90));
+
+    // Pedro field direction that "stick forward" means to the driver (away from the driver station).
+    private static final double DRIVER_FORWARD = Math.toRadians(90);
 
     // class Methods
     private boolean             headingLocked = false;
@@ -77,12 +85,17 @@ public class GFORCE_Teleop extends CommandOpMode {
         // Setup robot
         driveSubsystem = Constants.create(hardwareMap);
 
+        // Shooter aims from odometry, so it needs the drive's Follower.
+        shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
+        shooterSubsystem.init();
+
         // Connect buttons with commands
         bindButtons();
     }
 
     private void showTelemetry() {
         telemetry.addData("pos X: Y", "%5.1f : %5.1f", driveSubsystem.pose().x(), driveSubsystem.pose().y());
+        telemetry.addData("heading", "%5.1f deg", Math.toDegrees(driveSubsystem.pose().heading()));
         telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", driveSubsystem.velocity().vx,
                             driveSubsystem.velocity().vy,  driveSubsystem.velocity().omega);
         telemetry.update();
@@ -100,7 +113,7 @@ public class GFORCE_Teleop extends CommandOpMode {
 
     public void manualDrive() {
         // Manual driving ===================================
-        final double SLOW_MULTIPLIER = 0.5;
+        final double SLOW_MULTIPLIER = 0.7;
         final double HEADING_GAIN    = 1.0;
         final double MIN_ROTATE      = 0.1;
 
@@ -127,8 +140,9 @@ public class GFORCE_Teleop extends CommandOpMode {
             headingLocked = false;
         }
 
+        // Field centric, relative to the driver's view rather than Pedro's +X axis.
         DrivePowers powers = ManualDrive.fieldCentric(
-                axial, lateral, yaw, driveSubsystem.pose().heading()
+                axial, lateral, yaw, heading - DRIVER_FORWARD
         );
 
         // Robot-centric drive
@@ -145,11 +159,15 @@ public class GFORCE_Teleop extends CommandOpMode {
         driverOp.getGamepadButton(GamepadKeys.Button.TOUCHPAD)
             .whenPressed(new InstantCommand(() -> resetHeading()));
 
-        // Select the alliance cluster to track (hold Right Bumper to point at it)
+        // Select the alliance (vision cluster and shooter target).  Hold Right Bumper to point at the cluster.
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
-            .whenPressed(new InstantCommand(() -> visionSubsystem.setAlliance(false)));
+            .whenPressed(new InstantCommand(() -> setAlliance(false)));
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-            .whenPressed(new InstantCommand(() -> visionSubsystem.setAlliance(true)));
+            .whenPressed(new InstantCommand(() -> setAlliance(true)));
+
+        // Aim turret at the hive-Cell and spin up the shooter while Right Trigger is held
+        new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5)
+            .whileActiveOnce(shooterSubsystem.trackCommand());
 
         // Turn on flower collector
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
@@ -162,9 +180,15 @@ public class GFORCE_Teleop extends CommandOpMode {
             .whenInactive(flowerSubsystem.stopCommand());
     }
 
+    public void setAlliance(boolean red) {
+        visionSubsystem.setAlliance(red);
+        shooterSubsystem.setAlliance(red);
+    }
+
     public void resetHeading () {
-        driveSubsystem.setPose(Pose.zero());
-        headingSetpoint = 0.0;
+        driveSubsystem.setPose(RESET_POSE);
+        headingSetpoint = RESET_POSE.heading();
     }
 }
+
 

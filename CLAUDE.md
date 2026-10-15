@@ -9,7 +9,10 @@ Fork of the FIRST `FtcRobotController` SDK (`origin` = gearsincorg/FtcRobotContr
 
 ## Layout (`TeamCode/src/main/java/org/firstinspires/ftc/teamcode`)
 - `GFORCE_Auto`, `GFORCE_Teleop`: competition opmodes (group "Competition"). Teleop is field-centric with heading lock; buttons are bound in `bindButtons()`.
-- `Subsystems/`: one class per mechanism (currently `FlowerSubsystem`, a two-motor collector with start/stop/reverse).
+- `Subsystems/`: one class per mechanism:
+  - `FlowerSubsystem`: a one-motor collector (`flower1`) with start/stop/reverse.
+  - `VisionSubsystem`: webcam AprilTag cluster tracking.
+  - `ShooterSubsystem`: turret (motor + encoder), hood (servo) and one flywheel. It aims at the hive-Cell from Pedro odometry and leads the target to shoot on the move. Speed and hood come from `SHOT_TABLE` (distance → rpm, hood, flight time); tune it with `Util/ShooterTuningOpMode`. The turret must be centered at init. Hive-Cell targets are set directly in Pedro coordinates, as observed on the field: red audience (60, 60), red far (84, 60), blue audience (60, 84), blue far (84, 84). The shooter aims at the nearer cell of the selected alliance. (The published FTC-frame table didn't map cleanly onto Pedro, so don't convert from it.) The shot table is a placeholder until measured. Intake and transfer are a separate subsystem.
 - `Util/`: helper classes (`ClusterTracking`, `ClusterDisplay`) and test opmodes (`BasicOpMode_shaneshot`).
 - `AutoPaths.java`: generated paths (see below).
 
@@ -28,7 +31,7 @@ Build and deploy from Android Studio. The default shell Java may be 8, which is 
 
 ## Conventions
 - Keep opmodes thin; put mechanism logic in subsystems with command factories.
-- Hardware names used so far: `front_left_drive`, `front_right_drive`, `back_left_drive`, `back_right_drive`, `octoquad`, `flower1`, `flower2`.
+- Hardware names used so far: `front_left_drive`, `front_right_drive`, `back_left_drive`, `back_right_drive`, `octoquad`, `flower1`, `turret`, `shooter`, `hood`, `Webcam 1`.
 
 ## Setting up a new PC
 If the user says they are on a new machine, offer to run through this checklist (check each item with a command, don't assume):

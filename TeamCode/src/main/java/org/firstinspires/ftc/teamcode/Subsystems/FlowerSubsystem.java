@@ -10,7 +10,6 @@ import com.seattlesolvers.solverslib.command.SubsystemBase;
 public class FlowerSubsystem extends SubsystemBase {
     private final OpMode opMode;
     private DcMotorEx flower1;
-    private DcMotorEx flower2;
     private double power;
 
     // == standard Methods ===================================
@@ -20,7 +19,6 @@ public class FlowerSubsystem extends SubsystemBase {
 
     public void init() {
         flower1 = opMode.hardwareMap.get(DcMotorEx.class, "flower1");
-        flower2 = opMode.hardwareMap.get(DcMotorEx.class, "flower2");
         flower1.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
@@ -50,7 +48,6 @@ public class FlowerSubsystem extends SubsystemBase {
     private void setPower(double newPower) {
         power = newPower;
         flower1.setPower(power);
-        flower2.setPower(power);
     }
 
     // == Command methods  ==========================================
