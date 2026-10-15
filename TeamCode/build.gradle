@@ -56,6 +56,57 @@ tasks.register('generatePaths', Exec) {
 
 tasks.named('preBuild') { dependsOn 'generatePaths' }
 
+// Connect ADB to the Control Hub over Wi-Fi so Run/Deploy works without a manual 'adb connect'.
+// Runs before every build (Android Studio's Run button doesn't use Gradle's install tasks), but is
+// harmless: it never fails the build, and skips instantly if the hub isn't reachable or already connected.
+tasks.register('adbConnect') {
+    group = 'build'
+    description = 'Runs adb connect to the Control Hub (192.168.43.1:5555) if it is reachable'
+
+    def hubHost = '192.168.43.1'
+    def hubPort = 5555
+    def sdkDir = null
+    def props = rootProject.file('local.properties')
+    if (props.exists()) {
+        def p = new Properties()
+        props.withInputStream { p.load(it) }
+        sdkDir = p.getProperty('sdk.dir')
+    }
+    sdkDir = sdkDir ?: System.getenv('ANDROID_HOME') ?: System.getenv('ANDROID_SDK_ROOT')
+    def isWindows = System.getProperty('os.name').toLowerCase().contains('win')
+    def adb = sdkDir ? new File(sdkDir, 'platform-tools/' + (isWindows ? 'adb.exe' : 'adb')) : null
+
+    outputs.upToDateWhen { false }
+    doLast {
+        try {
+            if (adb == null || !adb.exists()) {
+                logger.warn('adbConnect: adb not found - skipping.')
+                return
+            }
+            boolean reachable = false
+            try {
+                def socket = new Socket()
+                socket.connect(new InetSocketAddress(hubHost, hubPort), 1500)
+                socket.close()
+                reachable = true
+            } catch (IOException ignored) { }
+            if (!reachable) {
+                logger.lifecycle("adbConnect: ${hubHost}:${hubPort} not reachable - skipping (not on Control Hub Wi-Fi?).")
+                return
+            }
+            def proc = [adb.absolutePath, 'connect', "${hubHost}:${hubPort}"].execute()
+            def out = new StringBuilder()
+            proc.consumeProcessOutput(out, out)
+            proc.waitForOrKill(10000)
+            logger.lifecycle('adbConnect: ' + out.toString().trim())
+        } catch (Exception e) {
+            logger.warn('adbConnect: skipped (' + e.message + ')')
+        }
+    }
+}
+
+tasks.named('preBuild') { dependsOn 'adbConnect' }
+
 dependencies {
     implementation project(':FtcRobotController')
 }

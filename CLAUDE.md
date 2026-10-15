@@ -23,6 +23,9 @@ Fork of the FIRST `FtcRobotController` SDK (`origin` = gearsincorg/FtcRobotContr
 ## Building
 Build and deploy from Android Studio. The default shell Java may be 8, which is too old for the Gradle wrapper (needs 17+); use Android Studio's bundled JDK if building from a command line.
 
+## Deploying to the robot (Wi-Fi ADB)
+- The Gradle task `:TeamCode:adbConnect` (hooked to `preBuild`, so it runs on every build/Run) does `adb connect 192.168.43.1:5555` when the Control Hub is reachable. It never fails the build and skips quietly if you're not on the hub's Wi-Fi. `adb` is found via `sdk.dir` in `local.properties` or `ANDROID_HOME`.
+
 ## Conventions
 - Keep opmodes thin; put mechanism logic in subsystems with command factories.
 - Hardware names used so far: `front_left_drive`, `front_right_drive`, `back_left_drive`, `back_right_drive`, `octoquad`, `flower1`, `flower2`.
