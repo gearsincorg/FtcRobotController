@@ -54,11 +54,11 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_OFFSET_Y = 0.0;
 
     // == Turret ==============================================================
-    // TODO tune: encoder ticks per radian of turret rotation (motor ticks/rev * gear ratio / 2PI).
-    private static final double TURRET_TICKS_PER_RAD  = 537.7 * 5.0 / (2 * Math.PI);
+    // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
+    private static final double TURRET_TICKS_PER_RAD  = 537.7 / (2 * Math.PI);
     private static final double TURRET_MIN_RAD        = Math.toRadians(-170);
     private static final double TURRET_MAX_RAD        = Math.toRadians(170);
-    private static final double TURRET_KP             = 2.0;    // power per radian of error
+    private static final double TURRET_KP             = 0.5;    // power per radian of error
     private static final double TURRET_KV             = 0.15;   // power per rad/s of chassis turn
     private static final double TURRET_MAX_POWER      = 0.8;
     private static final double TURRET_TOLERANCE_RAD  = Math.toRadians(2);
@@ -96,7 +96,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private Servo     hood;
 
     private Mode    mode    = Mode.IDLE;
-    private boolean redAlliance = false;
+    private boolean redAlliance = true;
     private boolean farCell     = true;     // which of the alliance's two cells is targeted
     private double  dFar        = 0;        // robot distance to each alliance cell (inches)
     private double  dAudience   = 0;
@@ -126,6 +126,7 @@ public class ShooterSubsystem extends SubsystemBase {
         turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         turret.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        turret.setDirection(DcMotorSimple.Direction.REVERSE);
 
         flywheel.setDirection(DcMotorSimple.Direction.FORWARD);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);

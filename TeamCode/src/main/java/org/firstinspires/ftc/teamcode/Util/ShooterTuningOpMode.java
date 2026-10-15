@@ -36,7 +36,7 @@ public class ShooterTuningOpMode extends CommandOpMode {
 
     private ShooterSubsystem shooterSubsystem;
     private Follower         driveSubsystem;
-    private boolean          redAlliance = false;
+    private boolean          redAlliance = true;
 
     private double rpm       = 3000;
     private double hood      = 0.5;

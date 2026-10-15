@@ -14,6 +14,8 @@
             <goBILDA5202SeriesMotor name="shooter" port="1" />
             <goBILDA5202SeriesMotor name="flower1" port="2" />
             <Servo name="hood" port="0" />
+            <Servo name="pitch" port="1" />
+            <Servo name="roll" port="2" />
 
 
         </LynxModule>

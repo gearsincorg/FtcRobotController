@@ -43,7 +43,7 @@ public class VisionSubsystem extends SubsystemBase {
     private AprilTagProcessor aprilTag;
     private VisionPortal visionPortal;
 
-    private String targetName = "BLUE";
+    private String targetName = "RED";
     private AprilTagClusterDetection targetCluster = null;
     private int exposureStep = 0;   // 0 = waiting for camera, 1 = manual mode set, 2 = done
 

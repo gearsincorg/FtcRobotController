@@ -27,7 +27,7 @@ public class GFORCE_Auto extends CommandOpMode {
         autoPaths = new AutoPaths(driveSubsystem);
         shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
         shooterSubsystem.init();
-        shooterSubsystem.setAlliance(false);    // TODO: select alliance during init
+        shooterSubsystem.setAlliance(true);     // red.  TODO: select alliance during init
 
         schedule(
             new SequentialCommandGroup(
