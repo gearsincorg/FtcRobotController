@@ -24,7 +24,7 @@ public class AutoPaths {
 
     // Generated from Auto1.pp
     public FollowPathCommand auto1() {
-        final Pose start = poseFactory.of(56, 8, 90);
+        final Pose start = poseFactory.of(56, 9, 90);
         final Pose path1 = poseFactory.of(57.9551, 27.2021, 90);
         final Pose point2 = poseFactory.of(58.5665, 75.3092, 89.2719);
         final Pose point3 = poseFactory.of(118.5933, 94.3212, -3.2857);
