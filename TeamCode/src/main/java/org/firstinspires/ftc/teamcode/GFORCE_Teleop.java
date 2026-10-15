@@ -36,22 +36,29 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
-import com.seattlesolvers.solverslib.command.CommandScheduler;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.button.GamepadButton;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
+import com.qualcomm.robotcore.util.Range;
+
 import org.firstinspires.ftc.teamcode.Subsystems.FlowerSubsystem;
+import org.firstinspires.ftc.teamcode.Subsystems.VisionSubsystem;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 @TeleOp(name = "G-FORCE TELEOP", group = "Competition")
 public class GFORCE_Teleop extends CommandOpMode {
 
     // Declare Subsystems
-    private FlowerSubsystem     flowerSubsystem = new FlowerSubsystem(this);
+    private FlowerSubsystem     flowerSubsystem;
+    private VisionSubsystem     visionSubsystem;
     private Follower            driveSubsystem;
+
+    // Point-at-target tuning
+    private static final double TARGET_TURN_GAIN = 0.04;
+    private static final double MAX_TARGET_TURN  = 0.4;
 
     // class Methods
     private boolean             headingLocked = false;
@@ -60,12 +67,15 @@ public class GFORCE_Teleop extends CommandOpMode {
     // == Standard Methods ===================================================
     @Override
     public void initialize() {
-        // Initialize subsystems
+        // Create subsystems here (not as field initializers) so they register with the
+        // scheduler after CommandOpMode has reset it.  SubsystemBase registers itself.
+        flowerSubsystem = new FlowerSubsystem(this);
+        visionSubsystem = new VisionSubsystem(this);
         flowerSubsystem.init();
+        visionSubsystem.init();
 
-        // Setup robot and scheduler
+        // Setup robot
         driveSubsystem = Constants.create(hardwareMap);
-        CommandScheduler.getInstance().reset();
 
         // Connect buttons with commands
         bindButtons();
@@ -100,8 +110,13 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         double heading = driveSubsystem.pose().heading();
 
-        // Lock heading if we aren't trying to turn.
-        if (yaw == 0 ) {
+        if (gamepad1.right_bumper && visionSubsystem.hasTarget()) {
+            // Point at the target cluster: use the bearing (+ is CCW) as the error.
+            yaw = Range.clip(visionSubsystem.getTargetPose().bearing * TARGET_TURN_GAIN,
+                             -MAX_TARGET_TURN, MAX_TARGET_TURN);
+            headingLocked = false;
+        } else if (yaw == 0 ) {
+            // Lock heading if we aren't trying to turn.
             if (headingLocked) {
                 yaw = Angle.normalizeSigned(headingSetpoint - heading) * HEADING_GAIN;
             } else if (Math.abs(driveSubsystem.velocity().omega) < MIN_ROTATE) {
@@ -129,6 +144,12 @@ public class GFORCE_Teleop extends CommandOpMode {
         // Home the pose (location and heading)
         driverOp.getGamepadButton(GamepadKeys.Button.TOUCHPAD)
             .whenPressed(new InstantCommand(() -> resetHeading()));
+
+        // Select the alliance cluster to track (hold Right Bumper to point at it)
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+            .whenPressed(new InstantCommand(() -> visionSubsystem.setAlliance(false)));
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+            .whenPressed(new InstantCommand(() -> visionSubsystem.setAlliance(true)));
 
         // Turn on flower collector
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
