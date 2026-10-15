@@ -26,3 +26,11 @@ Build and deploy from Android Studio. The default shell Java may be 8, which is 
 ## Conventions
 - Keep opmodes thin; put mechanism logic in subsystems with command factories.
 - Hardware names used so far: `front_left_drive`, `front_right_drive`, `back_left_drive`, `back_right_drive`, `octoquad`, `flower1`, `flower2`.
+
+## Setting up a new PC
+If the user says they are on a new machine, offer to run through this checklist (check each item with a command, don't assume):
+1. `git clone` the repo and check out `BIOBUZZ-Master`. Confirm `git config user.name` / `user.email` are set.
+2. Android Studio installed, with its bundled JDK (17+). Command-line `java -version` may still say 8; that's OK for Android Studio builds.
+3. Python 3 on the PATH (`python --version`). Needed by the `generatePaths` Gradle task; without it `AutoPaths.java` can silently go stale. Verify with `python tools/pp2java.py` (should list every `pp/*.pp` file and leave `git status` clean).
+4. Do a build in Android Studio and confirm it succeeds and `git status` stays clean.
+5. Claude conversation history and memory are local to the old PC and are not in the repo; this file is the continuity.
