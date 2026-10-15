@@ -1,7 +1,7 @@
 {
   "startPoint": {
     "x": 56,
-    "y": 8,
+    "y": 9,
     "locked": false,
     "headingDeg": 90
   },
