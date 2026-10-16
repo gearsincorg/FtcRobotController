@@ -4,16 +4,15 @@ import com.pedropathing.follower.Follower;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
-import com.seattlesolvers.solverslib.command.WaitCommand;
 
-import org.firstinspires.ftc.teamcode.Subsystems.FlowerSubsystem;
+import org.firstinspires.ftc.teamcode.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 @Autonomous(name = "G-FORCE AUTO", group = "Competition")
 public class GFORCE_Auto extends CommandOpMode {
-    private FlowerSubsystem flowerSubsystem = new FlowerSubsystem(this);
     private ShooterSubsystem shooterSubsystem;
+    private IntakeSubsystem intakeSubsystem;
     private Follower driveSubsystem; // you added this before
     private AutoPaths autoPaths;
 
@@ -22,27 +21,23 @@ public class GFORCE_Auto extends CommandOpMode {
         super.reset();
 
         // Initialize Subsystems
-        flowerSubsystem.init();
         driveSubsystem = Constants.create(hardwareMap);
         autoPaths = new AutoPaths(driveSubsystem);
         shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
         shooterSubsystem.init();
         shooterSubsystem.setAlliance(true);     // red.  TODO: select alliance during init
+        intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem);
+        intakeSubsystem.init();
 
         schedule(
             new SequentialCommandGroup(
             shooterSubsystem.startTrackingCommand(),    // aim and spin up while driving
             autoPaths.auto1(),
             shooterSubsystem.waitUntilReadyCommand(2000),
-            // TODO: feed pollen with the transfer subsystem's command here
+            intakeSubsystem.feedCommand().withTimeout(3000),
             shooterSubsystem.idleCommand(),
-            flowerSubsystem.startCommand(),
-            new WaitCommand(3000),
-            flowerSubsystem.stopCommand(),
-            autoPaths.auto2(),
-            flowerSubsystem.reverseCommand(),
-            new WaitCommand(3000),
-            flowerSubsystem.stopCommand()
+            intakeSubsystem.intakeUntilFullCommand().withTimeout(3000),
+            autoPaths.auto2()
             ));
 
     }

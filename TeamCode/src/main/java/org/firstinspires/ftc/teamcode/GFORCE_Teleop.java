@@ -44,7 +44,7 @@ import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.Subsystems.FlowerSubsystem;
+import org.firstinspires.ftc.teamcode.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.Subsystems.VisionSubsystem;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
@@ -53,7 +53,7 @@ import org.firstinspires.ftc.teamcode.pedro.Constants;
 public class GFORCE_Teleop extends CommandOpMode {
 
     // Declare Subsystems
-    private FlowerSubsystem     flowerSubsystem;
+    private IntakeSubsystem   intakeSubsystem;
     private VisionSubsystem     visionSubsystem;
     private ShooterSubsystem    shooterSubsystem;
     private Follower            driveSubsystem;
@@ -77,9 +77,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     public void initialize() {
         // Create subsystems here (not as field initializers) so they register with the
         // scheduler after CommandOpMode has reset it.  SubsystemBase registers itself.
-        flowerSubsystem = new FlowerSubsystem(this);
         visionSubsystem = new VisionSubsystem(this);
-        flowerSubsystem.init();
         visionSubsystem.init();
 
         // Setup robot
@@ -88,6 +86,10 @@ public class GFORCE_Teleop extends CommandOpMode {
         // Shooter aims from odometry, so it needs the drive's Follower.
         shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
         shooterSubsystem.init();
+
+        // Intake waits for the shooter to be ready before feeding.
+        intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem);
+        intakeSubsystem.init();
 
         // Connect buttons with commands
         bindButtons();
@@ -169,15 +171,17 @@ public class GFORCE_Teleop extends CommandOpMode {
         new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5)
             .whileActiveOnce(shooterSubsystem.trackCommand());
 
-        // Turn on flower collector
-        driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-            .whenPressed(flowerSubsystem.startCommand())
-            .whenReleased(flowerSubsystem.stopCommand());
+        // Feed the shooter: the gate opens once the shooter is ready
+        driverOp.getGamepadButton(GamepadKeys.Button.A)
+            .whenPressed(intakeSubsystem.feedCommand());
 
-        // Reverse flower collector
+        // Intake balls while Left Bumper is held (stops by itself when full)
+        driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+            .whileHeld(intakeSubsystem.intakeCommand());
+
+        // Eject (reverse the intake) while Left Trigger is held
         new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5)
-            .whenActive(flowerSubsystem.reverseCommand())
-            .whenInactive(flowerSubsystem.stopCommand());
+            .whileActiveOnce(intakeSubsystem.ejectCommand());
     }
 
     public void setAlliance(boolean red) {

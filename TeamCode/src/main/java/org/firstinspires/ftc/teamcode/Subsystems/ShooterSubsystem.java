@@ -32,7 +32,7 @@ import com.seattlesolvers.solverslib.command.WaitUntilCommand;
  * The turret encoder is zeroed in init(), so the turret MUST be centered (pointing robot-forward)
  * when the opmode is initialized.
  *
- * Intake and transfer (feeding pollen) are NOT handled here.
+ * Intake and transfer (feeding balls) are handled by IntakeSubsystem.
  */
 public class ShooterSubsystem extends SubsystemBase {
 
