@@ -8,14 +8,23 @@
             <goBILDA5202SeriesMotor name="front_right_drive" port="2" />
             <goBILDA5202SeriesMotor name="back_right_drive"  port="3" />
             <OctoQuadFTC name="octoquad" port="0" bus="1"/>
+
+            <DigitalDevice name="slot1" port="1" />
+            <DigitalDevice name="slot2" port="3" />
+            <DigitalDevice name="slot3" port="5" />
+            <DigitalDevice name="slot4" port="7" />
+
         </LynxModule>
-        <LynxModule name="Expansion Hub" port="3">
+        <LynxModule name="Expansion Hub" port="1">
             <goBILDA5202SeriesMotor name="turret" port="0" />
             <goBILDA5202SeriesMotor name="shooter" port="1" />
-            <goBILDA5202SeriesMotor name="flower1" port="2" />
+            <goBILDA5202SeriesMotor name="intake" port="2" />
+            <goBILDA5202SeriesMotor name="feeder" port="3" />
+
             <Servo name="hood" port="0" />
             <Servo name="pitch" port="1" />
             <Servo name="roll" port="2" />
+            <Servo name="gate" port="3" />
 
 
         </LynxModule>
