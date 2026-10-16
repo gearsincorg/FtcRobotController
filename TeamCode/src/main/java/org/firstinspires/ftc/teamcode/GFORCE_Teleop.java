@@ -69,6 +69,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double DRIVER_FORWARD = Math.toRadians(90);
 
     // class Methods
+    private Constants.Chassis   chassis;
     private boolean             headingLocked = false;
     private double              headingSetpoint = 0;
 
@@ -81,6 +82,7 @@ public class GFORCE_Teleop extends CommandOpMode {
         visionSubsystem.init();
 
         // Setup robot
+        chassis = Constants.chassis();
         driveSubsystem = Constants.create(hardwareMap);
 
         // Shooter aims from odometry, so it needs the drive's Follower.
@@ -96,6 +98,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     }
 
     private void showTelemetry() {
+        telemetry.addData("chassis", chassis);
         telemetry.addData("pos X: Y", "%5.1f : %5.1f", driveSubsystem.pose().x(), driveSubsystem.pose().y());
         telemetry.addData("heading", "%5.1f deg", Math.toDegrees(driveSubsystem.pose().heading()));
         telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", driveSubsystem.velocity().vx,

@@ -4,6 +4,11 @@ Fork of the FIRST `FtcRobotController` SDK (`origin` = gearsincorg/FtcRobotContr
 
 ## Stack
 - **Pedro Pathing 3.0** for driving/localization. Hardware config is in `pedro/Constants.java` (`Constants.create(hardwareMap)` returns the `Follower`): mecanum drive, OctoQuad localizer, Foresight. Tuners are in `pedro/procedures/` and `pedro/Tuning.java`.
+
+## Two chassis (prototype and production)
+- The drive geometry differs, so `Constants` has a localizer + Foresight set per chassis; motor names/directions and OctoQuad ports are shared.
+- The chassis is picked at runtime from the active robot configuration name: `res/xml/prototype.xml` or `res/xml/production.xml` (deployed with the app; select it on the Driver Station). Any other name throws at init. `Constants.chassis()` returns it; teleop shows it in telemetry.
+- Keep the two XML configs in step when wiring changes. Tuners use the detected chassis, so paste tuning results into that chassis's block. Use `Constants.chassis()` for any other per-robot differences, but keep shared code shared.
 - **SolversLib** command framework for opmodes, subsystems and button bindings (WPILib style). Replaced Ivy.
 - Opmodes extend `CommandOpMode`; subsystems extend `SubsystemBase` and expose `...Command()` methods.
 
