@@ -26,20 +26,31 @@ public class GFORCE_Auto extends CommandOpMode {
         shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
         shooterSubsystem.init();
         shooterSubsystem.setAlliance(true);     // red.  TODO: select alliance during init
-        intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem);
+        intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem::isReady);
         intakeSubsystem.init();
 
+        // Spin up and aim when full, spin down when empty.
+        RobotCommands.bindAutoAim(shooterSubsystem, intakeSubsystem);
+
+        // Each step ends on the real result (all shot, path done); timeouts are only safety nets.
         schedule(
             new SequentialCommandGroup(
-            shooterSubsystem.startTrackingCommand(),    // aim and spin up while driving
+            shooterSubsystem.startTrackingCommand(),    // aim and spin up the preload while driving
             autoPaths.auto1(),
-            shooterSubsystem.waitUntilReadyCommand(2000),
-            intakeSubsystem.feedCommand().withTimeout(3000),
-            shooterSubsystem.idleCommand(),
-            intakeSubsystem.intakeUntilFullCommand().withTimeout(3000),
-            autoPaths.auto2()
+            RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
+            RobotCommands.collectWhile(autoPaths.auto2(), intakeSubsystem)
+            // TODO: drive back and RobotCommands.shootAll(...) again
             ));
 
+    }
+
+    /** Show the preload so the drive team can check it before START. */
+    @Override
+    public void initialize_loop() {
+        intakeSubsystem.refreshSensors();
+        telemetry.addData("Preload", "%d balls  [ %s]%s", intakeSubsystem.ballCount(),
+                intakeSubsystem.slotPattern(), intakeSubsystem.isSimulated() ? "  (SIMULATED)" : "");
+        telemetry.update();
     }
 
     @Override

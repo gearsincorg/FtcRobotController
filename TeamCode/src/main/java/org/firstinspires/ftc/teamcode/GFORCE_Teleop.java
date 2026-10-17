@@ -35,6 +35,7 @@ import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
 import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.button.GamepadButton;
@@ -72,6 +73,8 @@ public class GFORCE_Teleop extends CommandOpMode {
     private Constants.Chassis   chassis;
     private boolean             headingLocked = false;
     private double              headingSetpoint = 0;
+    private int                 lastLedCount = -1;
+    private boolean             lastSimUp, lastSimDown;
 
     // == Standard Methods ===================================================
     @Override
@@ -89,8 +92,8 @@ public class GFORCE_Teleop extends CommandOpMode {
         shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
         shooterSubsystem.init();
 
-        // Intake waits for the shooter to be ready before feeding.
-        intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem);
+        // Intake waits for the shooter to be ready before feeding each ball.
+        intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem::isReady);
         intakeSubsystem.init();
 
         // Connect buttons with commands
@@ -109,6 +112,8 @@ public class GFORCE_Teleop extends CommandOpMode {
     @Override
     public void run() {
         super.run();
+        gamepad2Intake();
+        showBallCountLed();
         manualDrive();
         driveSubsystem.update();
         showTelemetry();
@@ -170,21 +175,66 @@ public class GFORCE_Teleop extends CommandOpMode {
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
             .whenPressed(new InstantCommand(() -> setAlliance(true)));
 
-        // Aim turret at the hive-Cell and spin up the shooter while Right Trigger is held
-        new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5)
-            .whileActiveOnce(shooterSubsystem.trackCommand());
+        // The shooter spins up and aims by itself when we're full, and spins down when empty.
+        RobotCommands.bindAutoAim(shooterSubsystem, intakeSubsystem);
 
-        // Feed the shooter: the gate opens once the shooter is ready
+        // A: fire every ball (each waits for the shooter to be ready).  Double rumble when done.
         driverOp.getGamepadButton(GamepadKeys.Button.A)
-            .whenPressed(intakeSubsystem.feedCommand());
+            .whenPressed(RobotCommands.shootAll(shooterSubsystem, intakeSubsystem)
+                .andThen(new InstantCommand(() -> {
+                    if (intakeSubsystem.isEmpty()) gamepad1.rumbleBlips(2);
+                })));
 
-        // Intake balls while Left Bumper is held (stops by itself when full)
+        // Right Trigger: fire one ball per press
+        new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5)
+            .whenActive(RobotCommands.shootOne(shooterSubsystem, intakeSubsystem));
+
+        // Left Bumper: collect while held (stops and spits out extras by itself when full)
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
             .whileHeld(intakeSubsystem.intakeCommand());
 
-        // Eject (reverse the intake) while Left Trigger is held
-        new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5)
-            .whileActiveOnce(intakeSubsystem.ejectCommand());
+        // B: eject every ball out of the intake while held
+        driverOp.getGamepadButton(GamepadKeys.Button.B)
+            .whileHeld(intakeSubsystem.ejectCommand());
+
+        // Driver feedback
+        new Trigger(intakeSubsystem::isFull).whenActive(() -> gamepad1.rumble(300));
+        new Trigger(intakeSubsystem::isJammed).whenActive(() -> gamepad1.rumble(1000));
+    }
+
+    /** Gamepad LED shows the ball count: red empty, amber partial, green full. */
+    private void showBallCountLed() {
+        int count = intakeSubsystem.ballCount();
+        if (count == lastLedCount) return;
+        lastLedCount = count;
+        if (count == 0) {
+            gamepad1.setLedColor(1, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
+        } else if (intakeSubsystem.isFull()) {
+            gamepad1.setLedColor(0, 1, 0, Gamepad.LED_DURATION_CONTINUOUS);
+        } else {
+            gamepad1.setLedColor(1, 0.5, 0, Gamepad.LED_DURATION_CONTINUOUS);
+        }
+    }
+
+    /**
+     * Gamepad 2 fallback if the sensors fail: left stick = intake, right stick = feeder,
+     * hold X = gate open.  Letting go hands control back to the state machine.
+     * D-pad up / down adds / removes a simulated ball.
+     */
+    private void gamepad2Intake() {
+        double intakePower = -gamepad2.left_stick_y;
+        double feederPower = -gamepad2.right_stick_y;
+        if (Math.abs(intakePower) > 0.1 || Math.abs(feederPower) > 0.1 || gamepad2.x) {
+            intakeSubsystem.setManual(intakePower, feederPower,
+                    gamepad2.x ? IntakeSubsystem.GATE_OPEN : IntakeSubsystem.GATE_CLOSED);
+        } else {
+            intakeSubsystem.clearManual();
+        }
+
+        if (gamepad2.dpad_up && !lastSimUp)     intakeSubsystem.simAddBall();
+        if (gamepad2.dpad_down && !lastSimDown) intakeSubsystem.simRemoveBall();
+        lastSimUp   = gamepad2.dpad_up;
+        lastSimDown = gamepad2.dpad_down;
     }
 
     public void setAlliance(boolean red) {
