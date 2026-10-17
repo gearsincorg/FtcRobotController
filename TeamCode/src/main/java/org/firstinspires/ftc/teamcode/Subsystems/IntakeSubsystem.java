@@ -128,14 +128,20 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void init() {
-        intake = opMode.hardwareMap.get(DcMotorEx.class, "intake");
-        feeder = opMode.hardwareMap.get(DcMotorEx.class, "feeder");
-        gate   = opMode.hardwareMap.get(Servo.class, "gate");
+        // Any of these missing from the robot configuration is simulated: the state machine and
+        // SimulatedSlots still run on the commanded powers, the hardware call is just skipped.
+        intake = opMode.hardwareMap.tryGet(DcMotorEx.class, "intake");
+        feeder = opMode.hardwareMap.tryGet(DcMotorEx.class, "feeder");
+        gate   = opMode.hardwareMap.tryGet(Servo.class, "gate");
 
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
-        feeder.setDirection(DcMotorSimple.Direction.FORWARD);
-        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        feeder.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        if (intake != null) {
+            intake.setDirection(DcMotorSimple.Direction.REVERSE);
+            intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
+        if (feeder != null) {
+            feeder.setDirection(DcMotorSimple.Direction.FORWARD);
+            feeder.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
 
         if (SIMULATE_SENSORS) {
             sim = new SimulatedSlots(SIM_PRELOAD);
@@ -165,6 +171,15 @@ public class IntakeSubsystem extends SubsystemBase {
         if (sim != null) {
             opMode.telemetry.addLine("!!! INTAKE: SIMULATED SENSORS !!!");
         }
+        if (intake == null || feeder == null || gate == null) {
+            opMode.telemetry.addLine("!!! INTAKE: SIMULATED "
+                    + (intake == null ? "intake " : "")
+                    + (feeder == null ? "feeder " : "")
+                    + (gate == null ? "gate " : "")
+                    + "(not in config) !!!");
+        }
+        opMode.telemetry.addData("Intake : feeder : gate", "%4.2f : %4.2f : %4.2f",
+                intakePower, feederPower, gatePosition);
         opMode.telemetry.addData("BALLS", "%d  [ %s]  %s  shots %d",
                 ballCount, pattern, modeName(), shotsFired);
         if (jammed) {
@@ -477,9 +492,9 @@ public class IntakeSubsystem extends SubsystemBase {
         this.intakePower  = intakePower;
         this.feederPower  = feederPower;
         this.gatePosition = gatePosition;
-        intake.setPower(intakePower);
-        feeder.setPower(feederPower);
-        gate.setPosition(gatePosition);
+        if (intake != null) intake.setPower(intakePower);
+        if (feeder != null) feeder.setPower(feederPower);
+        if (gate != null)   gate.setPosition(gatePosition);
     }
 
     private String modeName() {
