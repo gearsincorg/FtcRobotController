@@ -133,10 +133,14 @@ public class ShooterSubsystem extends SubsystemBase {
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turret.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        flywheel.setDirection(DcMotorSimple.Direction.FORWARD);
+        flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, FLYWHEEL_PIDF);
+
+        // Move the hood to 0 now, rather than waiting for the first periodic() after start.
+        targetHood = 0;
+        hood.setPosition(targetHood);
 
         idle();
     }

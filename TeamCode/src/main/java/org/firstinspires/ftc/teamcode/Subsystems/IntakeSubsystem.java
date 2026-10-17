@@ -134,7 +134,7 @@ public class IntakeSubsystem extends SubsystemBase {
         // TODO the gate isn't fitted yet: skip it if it's missing from the config.
         gate   = opMode.hardwareMap.tryGet(Servo.class, "gate");
 
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        intake.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         feeder.setDirection(DcMotorSimple.Direction.FORWARD);
         feeder.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

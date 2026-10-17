@@ -204,9 +204,10 @@ public class GFORCE_Teleop extends CommandOpMode {
         // The shooter spins up and aims by itself when we're full, and spins down when empty.
         RobotCommands.bindAutoAim(shooterSubsystem, intakeSubsystem);
 
-        // Point-at-goal: on by itself when full, off when empty; Right Stick press toggles it.
+        // Point-at-goal: on by itself when full, off when empty; Right Stick press toggles it,
+        // and starts or stops the shooter with it.
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
-            .whenPressed(new InstantCommand(() -> aimAtGoal = !aimAtGoal));
+            .whenPressed(new InstantCommand(() -> toggleAimAtGoal()));
         new Trigger(intakeSubsystem::isFull)
             .whenActive(() -> aimAtGoal = true);
         new Trigger(() -> intakeSubsystem.isEmpty() && !intakeSubsystem.isShooting())
@@ -274,6 +275,16 @@ public class GFORCE_Teleop extends CommandOpMode {
     public void setAlliance(boolean red) {
         visionSubsystem.setAlliance(red);
         shooterSubsystem.setAlliance(red);
+    }
+
+    /** Toggle point-at-goal, spinning the shooter up (tracking) or down to match. */
+    public void toggleAimAtGoal() {
+        aimAtGoal = !aimAtGoal;
+        if (aimAtGoal) {
+            shooterSubsystem.track();
+        } else {
+            shooterSubsystem.idle();
+        }
     }
 
     /** Turn to a Pedro field heading (degrees) and hold it until the driver twists the stick. Cancels point-at-goal. */
