@@ -40,12 +40,13 @@ import java.util.function.BooleanSupplier;
  * A shot is counted when slot4 goes from "ball" to "no ball" while the gate is open and the
  * feeder is pushing.  "All shot" = the count is zero and SHOT_CLEAR_MS has passed.
  *
- * Until the sensors are installed, SIMULATE_SENSORS swaps them for SimulatedSlots.
+ * Until the sensors are in use, SIMULATE_SENSORS swaps them for SimulatedSlots.
  */
 public class IntakeSubsystem extends SubsystemBase {
 
     // == Sensors =============================================================
-    // TODO set false once the slot sensors are installed.
+    // true: the ball count comes from SimulatedSlots instead of the slot sensors.
+    // TODO set false once the slot sensors are in use.
     public static final boolean SIMULATE_SENSORS = true;
     private static final int    SIM_PRELOAD      = 3;
 
@@ -128,20 +129,15 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void init() {
-        // Any of these missing from the robot configuration is simulated: the state machine and
-        // SimulatedSlots still run on the commanded powers, the hardware call is just skipped.
-        intake = opMode.hardwareMap.tryGet(DcMotorEx.class, "intake");
-        feeder = opMode.hardwareMap.tryGet(DcMotorEx.class, "feeder");
+        intake = opMode.hardwareMap.get(DcMotorEx.class, "intake");
+        feeder = opMode.hardwareMap.get(DcMotorEx.class, "feeder");
+        // TODO the gate isn't fitted yet: skip it if it's missing from the config.
         gate   = opMode.hardwareMap.tryGet(Servo.class, "gate");
 
-        if (intake != null) {
-            intake.setDirection(DcMotorSimple.Direction.REVERSE);
-            intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        }
-        if (feeder != null) {
-            feeder.setDirection(DcMotorSimple.Direction.FORWARD);
-            feeder.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        }
+        intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        feeder.setDirection(DcMotorSimple.Direction.FORWARD);
+        feeder.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         if (SIMULATE_SENSORS) {
             sim = new SimulatedSlots(SIM_PRELOAD);
@@ -171,12 +167,8 @@ public class IntakeSubsystem extends SubsystemBase {
         if (sim != null) {
             opMode.telemetry.addLine("!!! INTAKE: SIMULATED SENSORS !!!");
         }
-        if (intake == null || feeder == null || gate == null) {
-            opMode.telemetry.addLine("!!! INTAKE: SIMULATED "
-                    + (intake == null ? "intake " : "")
-                    + (feeder == null ? "feeder " : "")
-                    + (gate == null ? "gate " : "")
-                    + "(not in config) !!!");
+        if (gate == null) {
+            opMode.telemetry.addLine("!!! INTAKE: NO GATE (not in config) !!!");
         }
         opMode.telemetry.addData("Intake : feeder : gate", "%4.2f : %4.2f : %4.2f",
                 intakePower, feederPower, gatePosition);
@@ -492,9 +484,9 @@ public class IntakeSubsystem extends SubsystemBase {
         this.intakePower  = intakePower;
         this.feederPower  = feederPower;
         this.gatePosition = gatePosition;
-        if (intake != null) intake.setPower(intakePower);
-        if (feeder != null) feeder.setPower(feederPower);
-        if (gate != null)   gate.setPosition(gatePosition);
+        intake.setPower(intakePower);
+        feeder.setPower(feederPower);
+        if (gate != null) gate.setPosition(gatePosition);
     }
 
     private String modeName() {
