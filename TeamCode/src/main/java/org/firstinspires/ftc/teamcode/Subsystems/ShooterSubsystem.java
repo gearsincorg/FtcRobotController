@@ -54,6 +54,11 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_OFFSET_Y = 0.0;
 
     // == Turret ==============================================================
+    // false: the turret is held at 0 (straight ahead) and the chassis turns to aim instead
+    // (teleop point-at-goal mode).  isReady() then checks the robot heading.
+    public static final boolean TURRET_ENABLED = false;
+    private static final double AIM_TOLERANCE_RAD     = Math.toRadians(3);
+
     // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
     private static final double TURRET_TICKS_PER_RAD  = 537.7 / (2 * Math.PI);
     private static final double TURRET_MIN_RAD        = Math.toRadians(-170);
@@ -143,7 +148,7 @@ public class ShooterSubsystem extends SubsystemBase {
         if (mode == Mode.TRACKING) {
             targetRPM       = shot.rpm;
             targetHood      = shot.hood;
-            targetTurretRad = turretAngleTo(shot.aimX, shot.aimY);
+            targetTurretRad = TURRET_ENABLED ? turretAngleTo(shot.aimX, shot.aimY) : 0;
         }
 
         applyOutputs();
@@ -161,10 +166,8 @@ public class ShooterSubsystem extends SubsystemBase {
         // Where the turret should point to hit the cell, computed every loop even when not
         // tracking.  "robot" is relative to robot forward (+ CCW, before soft limits);
         // "field" is the Pedro field direction from the turret to the aim point.
-        double fieldAim = Math.atan2(shot.aimY - turretY, shot.aimX - turretX);
-        double robotAim = Angle.normalizeSigned(fieldAim - follower.pose().heading());
         opMode.telemetry.addData("  Aim robot : field", "%5.1f : %5.1f",
-                Math.toDegrees(robotAim), Math.toDegrees(fieldAim));
+                Math.toDegrees(getAimError()), Math.toDegrees(getAimHeading()));
         opMode.telemetry.addData("  Hood", "%4.2f", targetHood);
     }
 
@@ -196,13 +199,25 @@ public class ShooterSubsystem extends SubsystemBase {
         targetTurretRad = turretRad;
     }
 
-    /** True when the flywheel is at speed and the turret is on target. */
+    /** True when the flywheel is at speed and the turret (or the robot, if no turret) is on target. */
     public boolean isReady() {
+        boolean onTarget = TURRET_ENABLED
+                ? Math.abs(targetTurretRad - getTurretAngle()) < TURRET_TOLERANCE_RAD && turretTargetReachable()
+                : mode != Mode.TRACKING || Math.abs(getAimError()) < AIM_TOLERANCE_RAD;
         return mode != Mode.IDLE
                 && targetRPM > 0
                 && Math.abs(getRPM() - targetRPM) < RPM_TOLERANCE
-                && Math.abs(targetTurretRad - getTurretAngle()) < TURRET_TOLERANCE_RAD
-                && turretTargetReachable();
+                && onTarget;
+    }
+
+    /** Pedro field direction (radians) from the turret to the lead-corrected aim point. */
+    public double getAimHeading() {
+        return Math.atan2(shot.aimY - turretY, shot.aimX - turretX);
+    }
+
+    /** How far to turn the robot (radians, + is CCW) to point straight at the aim point. */
+    public double getAimError() {
+        return Angle.normalizeSigned(getAimHeading() - follower.pose().heading());
     }
 
     /** Distance (inches) from the turret to the (virtual) target. */
@@ -316,7 +331,7 @@ public class ShooterSubsystem extends SubsystemBase {
         // Turret: P on angle + feedforward to cancel chassis rotation.
         double error = targetTurretRad - getTurretAngle();
         double power = error * TURRET_KP;
-        if (mode == Mode.TRACKING) {
+        if (mode == Mode.TRACKING && TURRET_ENABLED) {
             power -= follower.velocity().omega * TURRET_KV;
         }
         // Never drive past the soft limits.

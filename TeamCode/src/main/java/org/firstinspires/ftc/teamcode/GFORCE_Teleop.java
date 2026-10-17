@@ -63,6 +63,10 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double TARGET_TURN_GAIN = 0.04;
     private static final double MAX_TARGET_TURN  = 0.6;
 
+    // Point-at-goal tuning (no turret: the chassis turns to aim the shooter)
+    private static final double AIM_GAIN     = 1.0;   // power per radian of aim error
+    private static final double MAX_AIM_TURN = 0.6;
+
     // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
     private static final Pose RESET_POSE = new Pose(56, 9, Math.toRadians(90));
 
@@ -71,6 +75,7 @@ public class GFORCE_Teleop extends CommandOpMode {
 
     // class Methods
     private Constants.Chassis   chassis;
+    private boolean             aimAtGoal = false;
     private boolean             headingLocked = false;
     private double              headingSetpoint = 0;
     private int                 lastLedCount = -1;
@@ -102,6 +107,8 @@ public class GFORCE_Teleop extends CommandOpMode {
 
     private void showTelemetry() {
         telemetry.addData("chassis", chassis);
+        telemetry.addData("aim at goal", "%s  error = %5.1f deg", aimAtGoal ? "ON" : "off",
+                            Math.toDegrees(shooterSubsystem.getAimError()));
         telemetry.addData("pos X: Y", "%5.1f : %5.1f", driveSubsystem.pose().x(), driveSubsystem.pose().y());
         telemetry.addData("heading", "%5.1f deg", Math.toDegrees(driveSubsystem.pose().heading()));
         telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", driveSubsystem.velocity().vx,
@@ -137,6 +144,10 @@ public class GFORCE_Teleop extends CommandOpMode {
             // Point at the target cluster: use the bearing (+ is CCW) as the error.
             yaw = Range.clip(visionSubsystem.getTargetPose().bearing * TARGET_TURN_GAIN,
                              -MAX_TARGET_TURN, MAX_TARGET_TURN);
+            headingLocked = false;
+        } else if (yaw == 0 && aimAtGoal) {
+            // Point the shooter at the goal (leading it when moving).  Twisting the stick overrides.
+            yaw = Range.clip(shooterSubsystem.getAimError() * AIM_GAIN, -MAX_AIM_TURN, MAX_AIM_TURN);
             headingLocked = false;
         } else if (yaw == 0 ) {
             // Lock heading if we aren't trying to turn.
@@ -177,6 +188,14 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         // The shooter spins up and aims by itself when we're full, and spins down when empty.
         RobotCommands.bindAutoAim(shooterSubsystem, intakeSubsystem);
+
+        // Point-at-goal: on by itself when full, off when empty; Right Stick press toggles it.
+        driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
+            .whenPressed(new InstantCommand(() -> aimAtGoal = !aimAtGoal));
+        new Trigger(intakeSubsystem::isFull)
+            .whenActive(() -> aimAtGoal = true);
+        new Trigger(() -> intakeSubsystem.isEmpty() && !intakeSubsystem.isShooting())
+            .whenActive(() -> aimAtGoal = false);
 
         // A: fire every ball (each waits for the shooter to be ready).  Double rumble when done.
         driverOp.getGamepadButton(GamepadKeys.Button.A)
