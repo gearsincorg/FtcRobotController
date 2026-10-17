@@ -67,6 +67,9 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double AIM_GAIN     = 1.0;   // power per radian of aim error
     private static final double MAX_AIM_TURN = 0.6;
 
+    // Heading lock / D-pad heading snap tuning
+    private static final double MAX_SNAP_TURN = 0.6;
+
     // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
     private static final Pose RESET_POSE = new Pose(56, 9, Math.toRadians(90));
 
@@ -152,7 +155,8 @@ public class GFORCE_Teleop extends CommandOpMode {
         } else if (yaw == 0 ) {
             // Lock heading if we aren't trying to turn.
             if (headingLocked) {
-                yaw = Angle.normalizeSigned(headingSetpoint - heading) * HEADING_GAIN;
+                yaw = Range.clip(Angle.normalizeSigned(headingSetpoint - heading) * HEADING_GAIN,
+                                 -MAX_SNAP_TURN, MAX_SNAP_TURN);
             } else if (Math.abs(driveSubsystem.velocity().omega) < MIN_ROTATE) {
                 headingSetpoint = heading;
                 headingLocked = true;
@@ -180,11 +184,22 @@ public class GFORCE_Teleop extends CommandOpMode {
         driverOp.getGamepadButton(GamepadKeys.Button.TOUCHPAD)
             .whenPressed(new InstantCommand(() -> resetHeading()));
 
-        // Select the alliance (vision cluster and shooter target).  Hold Right Bumper to point at the cluster.
-        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+        // Select the alliance (vision cluster and shooter target): Share = blue, Options = red.
+        // Hold Right Bumper to point at the cluster.
+        driverOp.getGamepadButton(GamepadKeys.Button.BACK)
             .whenPressed(new InstantCommand(() -> setAlliance(false)));
-        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+        driverOp.getGamepadButton(GamepadKeys.Button.START)
             .whenPressed(new InstantCommand(() -> setAlliance(true)));
+
+        // D-pad turns to a field heading (as the driver sees it).  Twisting the stick takes over.
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+            .whenPressed(new InstantCommand(() -> setHeadingTarget(90)));
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+            .whenPressed(new InstantCommand(() -> setHeadingTarget(180)));
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+            .whenPressed(new InstantCommand(() -> setHeadingTarget(270)));
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+            .whenPressed(new InstantCommand(() -> setHeadingTarget(0)));
 
         // The shooter spins up and aims by itself when we're full, and spins down when empty.
         RobotCommands.bindAutoAim(shooterSubsystem, intakeSubsystem);
@@ -259,6 +274,13 @@ public class GFORCE_Teleop extends CommandOpMode {
     public void setAlliance(boolean red) {
         visionSubsystem.setAlliance(red);
         shooterSubsystem.setAlliance(red);
+    }
+
+    /** Turn to a Pedro field heading (degrees) and hold it until the driver twists the stick. Cancels point-at-goal. */
+    public void setHeadingTarget(double degrees) {
+        headingSetpoint = Math.toRadians(degrees);
+        headingLocked = true;
+        aimAtGoal = false;
     }
 
     public void resetHeading () {
