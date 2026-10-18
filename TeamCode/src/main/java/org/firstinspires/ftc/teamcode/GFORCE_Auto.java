@@ -11,6 +11,9 @@ import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 @Autonomous(name = "G-FORCE AUTO", group = "Competition")
 public class GFORCE_Auto extends CommandOpMode {
+    // Top path speed in auto (inches/sec).  The production chassis can do about 94 forward.
+    private static final double AUTO_MAX_SPEED = 40;
+
     private ShooterSubsystem shooterSubsystem;
     private IntakeSubsystem intakeSubsystem;
     private Follower driveSubsystem; // you added this before
@@ -21,7 +24,7 @@ public class GFORCE_Auto extends CommandOpMode {
         super.reset();
 
         // Initialize Subsystems
-        driveSubsystem = Constants.create(hardwareMap);
+        driveSubsystem = Constants.create(hardwareMap, AUTO_MAX_SPEED);
         autoPaths = new AutoPaths(driveSubsystem);
         shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
         shooterSubsystem.init();
@@ -35,10 +38,13 @@ public class GFORCE_Auto extends CommandOpMode {
         // Each step ends on the real result (all shot, path done); timeouts are only safety nets.
         schedule(
             new SequentialCommandGroup(
-            shooterSubsystem.startTrackingCommand(),    // aim and spin up the preload while driving
-            autoPaths.auto1(),
-            RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
-            RobotCommands.collectWhile(autoPaths.auto2(), intakeSubsystem)
+            //shooterSubsystem.startTrackingCommand(),    // aim and spin up the preload while driving
+            autoPaths.firstPath()
+            //RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
+            //RobotCommands.collectWhile(autoPaths.secondPath(), intakeSubsystem),
+            //autoPaths.thirdPath(),
+            //RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
+            //RobotCommands.collectWhile(autoPaths.fourthPath(), intakeSubsystem)
             // TODO: drive back and RobotCommands.shootAll(...) again
             ));
 

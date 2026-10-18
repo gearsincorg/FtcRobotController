@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.InstantCommand;
@@ -71,8 +72,13 @@ public class ShooterSubsystem extends SubsystemBase {
     // == Flywheel ============================================================
     // TODO tune: ticks per rev of the flywheel (28 for a bare goBILDA/REV motor at 1:1).
     private static final double FLYWHEEL_TICKS_PER_REV = 28;
-    private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(10, 0, 0, 13);
+    private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(15, 0, 0, 13);
     private static final double RPM_TOLERANCE          = 100;
+
+    // TODO temporary: true runs the flywheel at full power whenever it should spin, ignoring the
+    // shot table RPM.  It counts as up to speed SPINUP_MS after starting.
+    public static final boolean FULL_SPEED = true;
+    private static final double SPINUP_MS  = 1000;
 
     // == Hood ================================================================
     private static final double HOOD_MIN = 0.0;
@@ -105,6 +111,10 @@ public class ShooterSubsystem extends SubsystemBase {
     private boolean farCell     = true;     // which of the alliance's two cells is targeted
     private double  dFar        = 0;        // robot distance to each alliance cell (inches)
     private double  dAudience   = 0;
+
+    // FULL_SPEED spin-up
+    private final ElapsedTime spinupTimer = new ElapsedTime();
+    private boolean           wasSpinning = false;
 
     // Setpoints
     private double targetRPM        = 0;
@@ -208,9 +218,12 @@ public class ShooterSubsystem extends SubsystemBase {
         boolean onTarget = TURRET_ENABLED
                 ? Math.abs(targetTurretRad - getTurretAngle()) < TURRET_TOLERANCE_RAD && turretTargetReachable()
                 : mode != Mode.TRACKING || Math.abs(getAimError()) < AIM_TOLERANCE_RAD;
+        boolean atSpeed = FULL_SPEED
+                ? spinupTimer.milliseconds() > SPINUP_MS
+                : Math.abs(getRPM() - targetRPM) < RPM_TOLERANCE;
         return mode != Mode.IDLE
                 && targetRPM > 0
-                && Math.abs(getRPM() - targetRPM) < RPM_TOLERANCE
+                && atSpeed
                 && onTarget;
     }
 
@@ -345,7 +358,14 @@ public class ShooterSubsystem extends SubsystemBase {
         }
         turret.setPower(Range.clip(power, -TURRET_MAX_POWER, TURRET_MAX_POWER));
 
-        flywheel.setVelocity(targetRPM * FLYWHEEL_TICKS_PER_REV / 60.0);
+        if (FULL_SPEED) {
+            boolean spinning = targetRPM > 0;
+            if (spinning && !wasSpinning) spinupTimer.reset();
+            wasSpinning = spinning;
+            flywheel.setPower(spinning ? 1.0 : 0.0);
+        } else {
+            flywheel.setVelocity(targetRPM * FLYWHEEL_TICKS_PER_REV / 60.0);
+        }
         hood.setPosition(Range.clip(targetHood, HOOD_MIN, HOOD_MAX));
     }
 

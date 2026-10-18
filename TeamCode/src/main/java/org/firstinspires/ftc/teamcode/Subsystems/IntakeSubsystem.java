@@ -47,7 +47,7 @@ public class IntakeSubsystem extends SubsystemBase {
     // == Sensors =============================================================
     // true: the ball count comes from SimulatedSlots instead of the slot sensors.
     // TODO set false once the slot sensors are in use.
-    public static final boolean SIMULATE_SENSORS = true;
+    public static final boolean SIMULATE_SENSORS = false;
     private static final int    SIM_PRELOAD      = 3;
 
     // Sensor reading when a ball is in the slot (most digital sensors are active-low).
@@ -58,9 +58,15 @@ public class IntakeSubsystem extends SubsystemBase {
     // true: feed continuously once ready.  false: wait for the shooter to be ready before every ball.
     public static final boolean RAPID_FIRE = false;
 
+    // TODO temporary: true ignores the sensors when shooting.  Every shoot request (all or one)
+    // fires one ball: wait for the shooter, then run the feeder through the open gate for
+    // TIMED_FEED_MS.  No empty check and no jam detection.
+    public static final boolean TIMED_SHOTS   = true;
+    private static final double TIMED_FEED_MS = 300;
+
     // == Tuning (all placeholders) ===========================================
     private static final double INTAKE_POWER       = 1.0;
-    private static final double PACK_POWER         = 0.3;   // feeder while intaking, against the closed gate
+    private static final double PACK_POWER         = 1.0;   // feeder while intaking, against the closed gate
     private static final double HOLD_POWER         = 0.2;   // feeder while rejecting, keeps the four in place
     private static final double FEED_POWER         = 1.0;
     private static final double REJECT_POWER       = -1.0;
@@ -136,7 +142,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
         intake.setDirection(DcMotorSimple.Direction.FORWARD);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        feeder.setDirection(DcMotorSimple.Direction.FORWARD);
+        feeder.setDirection(DcMotorSimple.Direction.REVERSE);
         feeder.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         if (SIMULATE_SENSORS) {
@@ -343,6 +349,12 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private void startShooting(boolean oneOnly) {
         jammed = false;
+        if (TIMED_SHOTS) {
+            shootOneOnly = true;
+            setMode(Mode.SHOOTING);
+            setShotStep(ShotStep.WAIT_READY);
+            return;
+        }
         if (isEmpty() && rawCount() == 0) {
             return;
         }
@@ -399,6 +411,10 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     private void updateShooting() {
+        if (TIMED_SHOTS) {
+            updateTimedShot();
+            return;
+        }
         boolean empty = isEmpty() && rawCount() == 0;
 
         switch (shotStep) {
@@ -426,6 +442,32 @@ public class IntakeSubsystem extends SubsystemBase {
                 } else if (modeTimer.milliseconds() > FEED_BALL_TIMEOUT_MS) {
                     jammed = true;
                     setMode(Mode.IDLE);
+                }
+                break;
+
+            case CLEARING:
+                if (lastShotTimer.milliseconds() > SHOT_CLEAR_MS) {
+                    setMode(Mode.IDLE);
+                }
+                break;
+        }
+    }
+
+    /** TIMED_SHOTS: wait for the shooter, feed for a fixed time, then let the ball clear. */
+    private void updateTimedShot() {
+        switch (shotStep) {
+            case WAIT_READY:
+                if (shooterReady.getAsBoolean()
+                        && lastShotTimer.milliseconds() > MIN_SHOT_GAP_MS) {
+                    setShotStep(ShotStep.FEED);
+                }
+                break;
+
+            case FEED:
+                if (modeTimer.milliseconds() > TIMED_FEED_MS) {
+                    shotsFired++;
+                    lastShotTimer.reset();
+                    setShotStep(ShotStep.CLEARING);
                 }
                 break;
 

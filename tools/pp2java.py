@@ -174,6 +174,7 @@ def build_method(pp_path):
     out.append(",\n".join(" " * 16 + s for s in segments))
     out.append("        );")
     out.append("")
+    out.append("        follower.setPose(start);")
     out.append(f"        return new FollowPathCommand(follower, {method}Path);")
     out.append("    }")
     return method, "\n".join(out)

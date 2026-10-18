@@ -64,7 +64,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double MAX_TARGET_TURN  = 0.6;
 
     // Point-at-goal tuning (no turret: the chassis turns to aim the shooter)
-    private static final double AIM_GAIN     = 1.0;   // power per radian of aim error
+    private static final double AIM_GAIN     = 0.5;   // power per radian of aim error
     private static final double MAX_AIM_TURN = 0.6;
 
     // Heading lock / D-pad heading snap tuning
@@ -134,7 +134,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     public void manualDrive() {
         // Manual driving ===================================
         final double SLOW_MULTIPLIER = 0.7;
-        final double HEADING_GAIN    = 1.0;
+        final double HEADING_GAIN    = 0.5;
         final double MIN_ROTATE      = 0.1;
 
         double axial    = -gamepad1.left_stick_y  * SLOW_MULTIPLIER;
@@ -210,7 +210,8 @@ public class GFORCE_Teleop extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> toggleAimAtGoal()));
         new Trigger(intakeSubsystem::isFull)
             .whenActive(() -> aimAtGoal = true);
-        new Trigger(() -> intakeSubsystem.isEmpty() && !intakeSubsystem.isShooting())
+        new Trigger(() -> !IntakeSubsystem.TIMED_SHOTS
+                && intakeSubsystem.isEmpty() && !intakeSubsystem.isShooting())
             .whenActive(() -> aimAtGoal = false);
 
         // A: fire every ball (each waits for the shooter to be ready).  Double rumble when done.

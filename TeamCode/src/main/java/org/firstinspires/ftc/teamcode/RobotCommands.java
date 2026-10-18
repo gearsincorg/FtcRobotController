@@ -22,7 +22,8 @@ public final class RobotCommands {
     public static void bindAutoAim(ShooterSubsystem shooter, IntakeSubsystem intake) {
         new Trigger(intake::isFull)
             .whenActive(shooter.startTrackingCommand());
-        new Trigger(() -> intake.isEmpty() && !intake.isShooting())
+        // With TIMED_SHOTS the count isn't trusted, so don't spin down on "empty".
+        new Trigger(() -> !IntakeSubsystem.TIMED_SHOTS && intake.isEmpty() && !intake.isShooting())
             .whenActive(shooter.idleCommand());
     }
 

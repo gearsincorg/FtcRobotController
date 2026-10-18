@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.pedro;
 
 import com.pedropathing.algorithm.Foresight;
 import com.pedropathing.algorithm.ForesightConfig;
+import com.pedropathing.config.Configuration;
 import com.pedropathing.controllers.Controller;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Matrix;
@@ -30,10 +31,17 @@ public class Constants {
     public enum Chassis { PROTOTYPE, PRODUCTION }
 
     public static Follower create(HardwareMap h) {
+        return create(h, ForesightConfig.Constraint.NONE);
+    }
+
+    /** Same, with path following capped at maxPathSpeed (inches/sec).  Only this follower is affected. */
+    public static Follower create(HardwareMap h, double maxPathSpeed) {
+        ForesightConfig foresight = foresightConfig();
+        foresight.maxPathSpeed.set(maxPathSpeed);
         return new Follower(
             new OctoQuadLocalizer(h, localizerConfig()),
             new Mecanum(h, drivetrainConfig()),
-            new Foresight(foresightConfig())
+            new Foresight(foresight)
         );
     }
 
@@ -54,8 +62,9 @@ public class Constants {
         return chassis() == Chassis.PRODUCTION ? PRODUCTION_LOCALIZER : PROTOTYPE_LOCALIZER;
     }
 
+    /** A new config each call, so a speed cap set on one follower doesn't leak into the next opmode. */
     public static ForesightConfig foresightConfig() {
-        return chassis() == Chassis.PRODUCTION ? PRODUCTION_FORESIGHT : PROTOTYPE_FORESIGHT;
+        return new ForesightConfig(chassis() == Chassis.PRODUCTION ? PRODUCTION_FORESIGHT : PROTOTYPE_FORESIGHT);
     }
 
     // == Shared ================================================================
@@ -100,7 +109,7 @@ public class Constants {
         c.headingScalar.set(1.0053120122844978);
     });
 
-    private static final ForesightConfig PROTOTYPE_FORESIGHT = new ForesightConfig(
+    private static final Configuration<ForesightConfig> PROTOTYPE_FORESIGHT = (
         c -> {
             Controller primaryTranslationalForward = Controller.proportional(0.18257094263290366);
             Controller secondaryTranslationalForward = Controller.proportional(0.06745508491742425);
@@ -148,12 +157,14 @@ public class Constants {
         c.headingScalar.set(1.009115985239217);
     });
 
-    private static final ForesightConfig PRODUCTION_FORESIGHT = new ForesightConfig(
+    private static final Configuration<ForesightConfig> PRODUCTION_FORESIGHT = (
         c -> {
             Controller primaryTranslationalForward = Controller.proportional(0.17514564795165746);
             Controller secondaryTranslationalForward = Controller.proportional(0.06471163694023177);
-            Controller primaryTranslationalLateral = Controller.proportional(-33019.6678075866);
-            Controller secondaryTranslationalLateral = Controller.proportional(-12199.884953129844);
+            // TODO re-tune: the tuner gave -33019.67 / -12199.88 (huge and negative: the robot strafed
+            // off as soon as a path started).  These are the prototype's values until re-tuned.
+            Controller primaryTranslationalLateral = Controller.proportional(0.2716341796782243);
+            Controller secondaryTranslationalLateral = Controller.proportional(0.10036157119214668);
 
             c.forwardTranslational.set(Controller.piecewise(secondaryTranslationalForward).put(2.5, primaryTranslationalForward));
             c.strafeTranslational.set(Controller.piecewise(secondaryTranslationalLateral).put(2.5, primaryTranslationalLateral));
