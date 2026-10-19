@@ -39,12 +39,12 @@ public class GFORCE_Auto extends CommandOpMode {
         schedule(
             new SequentialCommandGroup(
             //shooterSubsystem.startTrackingCommand(),    // aim and spin up the preload while driving
-            autoPaths.firstPath()
-            //RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
-            //RobotCommands.collectWhile(autoPaths.secondPath(), intakeSubsystem),
-            //autoPaths.thirdPath(),
-            //RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
-            //RobotCommands.collectWhile(autoPaths.fourthPath(), intakeSubsystem)
+            autoPaths.firstPath(),
+            RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
+            RobotCommands.collectWhile(autoPaths.secondPath(), intakeSubsystem),
+            autoPaths.thirdPath(),
+            RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
+            RobotCommands.collectWhile(autoPaths.fourthPath(), intakeSubsystem)
             // TODO: drive back and RobotCommands.shootAll(...) again
             ));
 
