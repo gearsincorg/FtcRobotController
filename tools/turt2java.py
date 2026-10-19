@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Convert Pedro Pathing visualizer .pp files into methods in OurPaths.java.
+"""Convert Turtle Tracer .turt files into methods in AutoPaths.java.
 
-Every .pp file in the pp folder becomes one public method (named after the
+Every .turt file in the turt_files folder becomes one public method (named after the
 file) that returns a FollowPathCommand for the whole path.  Everything in
 OurPaths.java above the "Do not change anything above this line" banner is
 kept as is; everything below it is regenerated on each run.
 
-Usage:  python tools/pp2java.py
+Usage:  python tools/turt2java.py
 """
 
 import json
@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PP_DIR = ROOT / "pp"
+TURT_DIR = ROOT / "turt_files"
 JAVA_FILE = ROOT / "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/AutoPaths.java"
 
 BANNER_TEXT = "Do not change anything above this line"
@@ -32,7 +32,7 @@ JAVA_KEYWORDS = {
 }
 
 
-class PpError(Exception):
+class TurtError(Exception):
     pass
 
 
@@ -81,7 +81,24 @@ def first_key(mapping, *keys):
     for key in keys:
         if key in mapping:
             return mapping[key]
-    raise PpError(f"heading is missing one of {keys}: {mapping}")
+    raise TurtError(f"heading is missing one of {keys}: {mapping}")
+
+
+def line_heading(line):
+    """Heading of a line, from either layout Turtle Tracer writes.
+
+    Either a "heading" object ({type, startDeg, endDeg, reverse}) on the line, or the
+    fields on the endPoint ("heading": "linear", plus startDeg / endDeg / degrees).
+    """
+    heading = line.get("heading")
+    if isinstance(heading, dict):
+        return heading
+    end = line.get("endPoint", {})
+    if isinstance(end.get("heading"), str):
+        merged = {k: v for k, v in end.items() if k not in ("x", "y")}
+        merged["type"] = merged.pop("heading")
+        return merged
+    return {}
 
 
 def ordered_lines(data):
@@ -94,14 +111,14 @@ def ordered_lines(data):
     try:
         return [by_id[s["lineId"]] for s in sequence]
     except KeyError as missing:
-        raise PpError(f"sequence refers to unknown line {missing}")
+        raise TurtError(f"sequence refers to unknown line {missing}")
 
 
-def build_method(pp_path):
-    data = json.loads(pp_path.read_text(encoding="utf-8"))
-    method = identifier(pp_path.stem)
+def build_method(turt_path):
+    data = json.loads(turt_path.read_text(encoding="utf-8"))
+    method = identifier(turt_path.stem)
     if not method:
-        raise PpError("file name cannot be turned into a method name")
+        raise TurtError("file name cannot be turned into a method name")
 
     start = data["startPoint"]
     start_deg = first_key(start, "headingDeg", "startDeg", "degrees")
@@ -120,14 +137,14 @@ def build_method(pp_path):
 
     for index, line in enumerate(ordered_lines(data), start=1):
         if "endPoint" not in line:
-            raise PpError(f"line {index} (kind '{line.get('kind')}') has no endPoint")
+            raise TurtError(f"line {index} (kind '{line.get('kind')}') has no endPoint")
         name = unique(identifier(line.get("name") or "") or f"point{index}")
         end = line["endPoint"]
         end_xy = (end["x"], end["y"])
         controls = [(c["x"], c["y"]) for c in line.get("controlPoints", [])]
         shape = [prev_xy] + controls + [end_xy]
 
-        heading = line.get("heading") or {}
+        heading = line_heading(line)
         kind = heading.get("type")
         if kind == "linear":
             end_deg = heading["endDeg"]
@@ -145,7 +162,7 @@ def build_method(pp_path):
             end_deg = normalize_deg(end_tangent_deg(shape) + (180 if reverse else 0))
             interpolation = ".reverseTangent()" if reverse else ".tangent()"
         else:
-            raise PpError(f"line {index} has unsupported heading type '{kind}'")
+            raise TurtError(f"line {index} has unsupported heading type '{kind}'")
 
         control_names = []
         for c_index, (cx, cy) in enumerate(controls, start=1):
@@ -163,9 +180,9 @@ def build_method(pp_path):
         prev_name, prev_xy, prev_deg = name, end_xy, end_deg
 
     if not segments:
-        raise PpError("file contains no paths")
+        raise TurtError("file contains no paths")
 
-    out = [f"    // Generated from {pp_path.name}",
+    out = [f"    // Generated from {turt_path.name}",
            f"    public FollowPathCommand {method}() {{"]
     for name, x, y, deg in poses:
         out.append(f"        final Pose {name} = poseFactory.of({num(x)}, {num(y)}, {num(deg)});")
@@ -188,28 +205,28 @@ def read_header():
                 if lines[j].strip().startswith(BANNER_RULE):
                     return lines[:j + 1]
             break
-    raise PpError(f'could not find the "{BANNER_TEXT}" banner in {JAVA_FILE.name}')
+    raise TurtError(f'could not find the "{BANNER_TEXT}" banner in {JAVA_FILE.name}')
 
 
 def main():
-    pp_files = sorted(PP_DIR.glob("*.pp"), key=lambda p: p.name.lower())
-    if not pp_files:
-        print(f"No .pp files found in {PP_DIR}")
+    turt_files = sorted(TURT_DIR.glob("*.turt"), key=lambda p: p.name.lower())
+    if not turt_files:
+        print(f"No .turt files found in {TURT_DIR}")
         return 1
 
     methods, names, failed = [], {}, False
-    for pp_path in pp_files:
+    for turt_path in turt_files:
         try:
-            method, code = build_method(pp_path)
+            method, code = build_method(turt_path)
             if method in names:
-                raise PpError(f"method name '{method}' already used by {names[method]}")
-            names[method] = pp_path.name
+                raise TurtError(f"method name '{method}' already used by {names[method]}")
+            names[method] = turt_path.name
             methods.append(code)
-            print(f"  {pp_path.name} -> {method}()")
-        except (PpError, KeyError, TypeError, ValueError) as error:
+            print(f"  {turt_path.name} -> {method}()")
+        except (TurtError, KeyError, TypeError, ValueError) as error:
             failed = True
-            print(f"  {pp_path.name}: ERROR {error!r}" if isinstance(error, KeyError)
-                  else f"  {pp_path.name}: ERROR {error}")
+            print(f"  {turt_path.name}: ERROR {error!r}" if isinstance(error, KeyError)
+                  else f"  {turt_path.name}: ERROR {error}")
 
     if failed:
         print(f"{JAVA_FILE.name} was NOT updated. Fix the errors above and run again.")
@@ -217,7 +234,7 @@ def main():
 
     try:
         header = read_header()
-    except PpError as error:
+    except TurtError as error:
         print(f"ERROR {error}")
         return 1
 

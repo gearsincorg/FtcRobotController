@@ -24,12 +24,12 @@ Fork of the FIRST `FtcRobotController` SDK (`origin` = gearsincorg/FtcRobotContr
 - `Util/`: helper classes (`ClusterTracking`, `ClusterDisplay`) and test opmodes (`BasicOpMode_shaneshot`).
 - `AutoPaths.java`: generated paths (see below).
 
-## Autonomous paths: `.pp` -> Java
-- Draw paths in the Pedro visualizer and save the `.pp` file in `/pp`. Commit every `.pp` file.
-- `tools/pp2java.py` turns each `pp/<Name>.pp` into a public method `<name>()` in `AutoPaths.java` that returns a `FollowPathCommand`. Each method also calls `follower.setPose(start)` (the path's start point), when the method is called, not when the command runs.
+## Autonomous paths: `.turt` -> Java
+- Draw paths in Turtle Tracer and save the `.turt` file in `/turt_files`. Commit every `.turt` file.
+- `tools/turt2java.py` turns each `turt_files/<Name>.turt` into a public method `<name>()` in `AutoPaths.java` that returns a `FollowPathCommand`. Each method also calls `follower.setPose(start)` (the path's start point), when the method is called, not when the command runs.
 - The Gradle task `:TeamCode:generatePaths` runs the script before every build (hooked to `preBuild`), so never hand-edit anything below the "Do not change anything above this line" banner in `AutoPaths.java`; it is overwritten. Code above the banner is preserved.
-- A bad `.pp` file fails the build with a message and leaves `AutoPaths.java` untouched. If Python isn't installed, the task warns and skips.
-- Run it manually with `python tools/pp2java.py`.
+- A bad `.turt` file fails the build with a message and leaves `AutoPaths.java` untouched. If Python isn't installed, the task warns and skips.
+- Run it manually with `python tools/turt2java.py`.
 
 ## Building
 Build and deploy from Android Studio. The default shell Java may be 8, which is too old for the Gradle wrapper (needs 17+); use Android Studio's bundled JDK if building from a command line.
@@ -45,6 +45,6 @@ Build and deploy from Android Studio. The default shell Java may be 8, which is 
 If the user says they are on a new machine, offer to run through this checklist (check each item with a command, don't assume):
 1. `git clone` the repo and check out `BIOBUZZ-Master`. Confirm `git config user.name` / `user.email` are set.
 2. Android Studio installed, with its bundled JDK (17+). Command-line `java -version` may still say 8; that's OK for Android Studio builds.
-3. Python 3 on the PATH (`python --version`). Needed by the `generatePaths` Gradle task; without it `AutoPaths.java` can silently go stale. Verify with `python tools/pp2java.py` (should list every `pp/*.pp` file and leave `git status` clean).
+3. Python 3 on the PATH (`python --version`). Needed by the `generatePaths` Gradle task; without it `AutoPaths.java` can silently go stale. Verify with `python tools/turt2java.py` (should list every `turt_files/*.turt` file and leave `git status` clean).
 4. Do a build in Android Studio and confirm it succeeds and `git status` stays clean.
 5. Claude conversation history and memory are local to the old PC and are not in the repo; this file is the continuity.

@@ -24,8 +24,8 @@ android {
     }
 }
 
-// Regenerate AutoPaths.java from the .pp files in /pp before every build.
-// Skipped (with a warning) if Python can't be found; fails the build if a .pp file is invalid.
+// Regenerate AutoPaths.java from the .turt files in /turt_files before every build.
+// Skipped (with a warning) if Python can't be found; fails the build if a .turt file is invalid.
 def findPython() {
     for (String candidate : ['python', 'python3', 'py']) {
         try {
@@ -39,16 +39,16 @@ def findPython() {
 
 tasks.register('generatePaths', Exec) {
     group = 'build'
-    description = 'Converts pp/*.pp files into methods in AutoPaths.java (tools/pp2java.py)'
+    description = 'Converts turt_files/*.turt files into methods in AutoPaths.java (tools/turt2java.py)'
 
-    def script = rootProject.file('tools/pp2java.py')
+    def script = rootProject.file('tools/turt2java.py')
     def python = findPython()
 
-    inputs.files(fileTree(rootProject.file('pp')) { include '*.pp' }, script)
+    inputs.files(fileTree(rootProject.file('turt_files')) { include '*.turt' }, script)
     outputs.file('src/main/java/org/firstinspires/ftc/teamcode/AutoPaths.java')
 
     onlyIf {
-        if (python == null) logger.warn('WARNING: Python not found - skipping pp2java; AutoPaths.java may be out of date.')
+        if (python == null) logger.warn('WARNING: Python not found - skipping turt2java; AutoPaths.java may be out of date.')
         python != null
     }
     if (python != null) commandLine python, script.absolutePath
