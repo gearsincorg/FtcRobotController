@@ -14,6 +14,9 @@ public class GFORCE_Auto extends CommandOpMode {
     // Top path speed in auto (inches/sec).  The production chassis can do about 94 forward.
     private static final double AUTO_MAX_SPEED = 40;
 
+    private static final long SHOOT_TIMEOUT_MS = 4000;
+
+    private boolean red = true;
     private ShooterSubsystem shooterSubsystem;
     private IntakeSubsystem intakeSubsystem;
     private Follower driveSubsystem; // you added this before
@@ -26,9 +29,10 @@ public class GFORCE_Auto extends CommandOpMode {
         // Initialize Subsystems
         driveSubsystem = Constants.create(hardwareMap, AUTO_MAX_SPEED);
         autoPaths = new AutoPaths(driveSubsystem);
+        driveSubsystem.setPose(autoPaths.firstPathStart());    // once; the robot is placed here
         shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
         shooterSubsystem.init();
-        shooterSubsystem.setAlliance(true);     // red.  TODO: select alliance during init
+        shooterSubsystem.setAlliance(red);      // Share = blue, Options = red during init
         intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem::isReady);
         intakeSubsystem.init();
 
@@ -38,21 +42,29 @@ public class GFORCE_Auto extends CommandOpMode {
         // Each step ends on the real result (all shot, path done); timeouts are only safety nets.
         schedule(
             new SequentialCommandGroup(
-            //shooterSubsystem.startTrackingCommand(),    // aim and spin up the preload while driving
+            shooterSubsystem.startTrackingCommand(),    // aim and spin up the preload while driving
             autoPaths.firstPath(),
-            RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
+            RobotCommands.shootVolley(shooterSubsystem, intakeSubsystem, SHOOT_TIMEOUT_MS),
             RobotCommands.collectWhile(autoPaths.secondPath(), intakeSubsystem),
             autoPaths.thirdPath(),
-            RobotCommands.shootAll(shooterSubsystem, intakeSubsystem).withTimeout(4000),
+            RobotCommands.shootVolley(shooterSubsystem, intakeSubsystem, SHOOT_TIMEOUT_MS),
             RobotCommands.collectWhile(autoPaths.fourthPath(), intakeSubsystem)
             // TODO: drive back and RobotCommands.shootAll(...) again
             ));
 
     }
 
-    /** Show the preload so the drive team can check it before START. */
+    /** Select the alliance and show the preload so the drive team can check both before START. */
     @Override
     public void initialize_loop() {
+        if (gamepad1.share && red) {
+            red = false;
+            shooterSubsystem.setAlliance(false);
+        } else if (gamepad1.options && !red) {
+            red = true;
+            shooterSubsystem.setAlliance(true);
+        }
+        telemetry.addData("Alliance", red ? "RED  (Share = blue)" : "BLUE  (Options = red)");
         intakeSubsystem.refreshSensors();
         telemetry.addData("Preload", "%d balls  [ %s]%s", intakeSubsystem.ballCount(),
                 intakeSubsystem.slotPattern(), intakeSubsystem.isSimulated() ? "  (SIMULATED)" : "");

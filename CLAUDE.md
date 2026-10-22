@@ -26,7 +26,7 @@ Fork of the FIRST `FtcRobotController` SDK (`origin` = gearsincorg/FtcRobotContr
 
 ## Autonomous paths: `.turt` -> Java
 - Draw paths in Turtle Tracer and save the `.turt` file in `/turt_files`. Commit every `.turt` file.
-- `tools/turt2java.py` turns each `turt_files/<Name>.turt` into a public method `<name>()` in `AutoPaths.java` that returns a `FollowPathCommand`. Each method also calls `follower.setPose(start)` (the path's start point), when the method is called, not when the command runs.
+- `tools/turt2java.py` turns each `turt_files/<Name>.turt` into a public method `<name>()` in `AutoPaths.java` that returns a `FollowPathCommand`. Each also gets a `<name>Start()` returning the path's start pose. The generated code never sets the follower's pose (all path methods are called at init, so the last would win); `GFORCE_Auto` sets it once from `firstPathStart()`.
 - The Gradle task `:TeamCode:generatePaths` runs the script before every build (hooked to `preBuild`), so never hand-edit anything below the "Do not change anything above this line" banner in `AutoPaths.java`; it is overwritten. Code above the banner is preserved.
 - A bad `.turt` file fails the build with a message and leaves `AutoPaths.java` untouched. If Python isn't installed, the task warns and skips.
 - Run it manually with `python tools/turt2java.py`.

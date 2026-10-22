@@ -191,8 +191,12 @@ def build_method(turt_path):
     out.append(",\n".join(" " * 16 + s for s in segments))
     out.append("        );")
     out.append("")
-    out.append("        follower.setPose(start);")
     out.append(f"        return new FollowPathCommand(follower, {method}Path);")
+    out.append("    }")
+    out.append("")
+    out.append(f"    /** Where {method}() starts.  Set the follower's pose to this once, before the auto runs. */")
+    out.append(f"    public Pose {method}Start() {{")
+    out.append(f"        return poseFactory.of({num(poses[0][1])}, {num(poses[0][2])}, {num(poses[0][3])});")
     out.append("    }")
     return method, "\n".join(out)
 
@@ -241,7 +245,11 @@ def main():
     text = "\n".join(header) + "\n\n" + "\n\n".join(methods) + "\n}\n"
     # Keep whatever line endings the file already has.
     newline = "\r\n" if b"\r\n" in JAVA_FILE.read_bytes() else "\n"
-    JAVA_FILE.write_text(text, encoding="utf-8", newline=newline)
+    new_bytes = text.replace("\n", newline).encode("utf-8")
+    if JAVA_FILE.read_bytes() == new_bytes:
+        print(f"{JAVA_FILE.name} is already up to date ({len(methods)} method(s)).")
+        return 0
+    JAVA_FILE.write_bytes(new_bytes)
     print(f"Wrote {len(methods)} method(s) to {JAVA_FILE}")
     return 0
 

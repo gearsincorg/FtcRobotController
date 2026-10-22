@@ -35,6 +35,11 @@ public final class RobotCommands {
         );
     }
 
+    /** Same, but gives up after timeoutMs as a safety net (for auto). */
+    public static Command shootVolley(ShooterSubsystem shooter, IntakeSubsystem intake, long timeoutMs) {
+        return shootAll(shooter, intake).withTimeout(timeoutMs);
+    }
+
     /** Aim, spin up and fire one ball. */
     public static Command shootOne(ShooterSubsystem shooter, IntakeSubsystem intake) {
         return new SequentialCommandGroup(

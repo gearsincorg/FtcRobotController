@@ -31,8 +31,12 @@ public class AutoPaths {
                 line(start, auto1StepA).linear(start, auto1StepA)
         );
 
-        follower.setPose(start);
         return new FollowPathCommand(follower, firstPathPath);
+    }
+
+    /** Where firstPath() starts.  Set the follower's pose to this once, before the auto runs. */
+    public Pose firstPathStart() {
+        return poseFactory.of(56, 8, 90);
     }
 
     // Generated from FourthPath.turt
@@ -47,8 +51,12 @@ public class AutoPaths {
                 curve(auto1StepD, auto1StepEControl1, auto1StepE).linear(auto1StepD, auto1StepE)
         );
 
-        follower.setPose(start);
         return new FollowPathCommand(follower, fourthPathPath);
+    }
+
+    /** Where fourthPath() starts.  Set the follower's pose to this once, before the auto runs. */
+    public Pose fourthPathStart() {
+        return poseFactory.of(58.2418, 23.4656, 90);
     }
 
     // Generated from SecondPath.turt
@@ -60,8 +68,12 @@ public class AutoPaths {
                 line(start, auto1StepB).linear(start, auto1StepB)
         );
 
-        follower.setPose(start);
         return new FollowPathCommand(follower, secondPathPath);
+    }
+
+    /** Where secondPath() starts.  Set the follower's pose to this once, before the auto runs. */
+    public Pose secondPathStart() {
+        return poseFactory.of(56, 31.127, 90);
     }
 
     // Generated from ThirdPath.turt
@@ -73,7 +85,11 @@ public class AutoPaths {
                 line(start, auto1StepC).linear(Math.toRadians(180), Math.toRadians(90))
         );
 
-        follower.setPose(start);
         return new FollowPathCommand(follower, thirdPathPath);
+    }
+
+    /** Where thirdPath() starts.  Set the follower's pose to this once, before the auto runs. */
+    public Pose thirdPathStart() {
+        return poseFactory.of(15, 46, 90);
     }
 }
