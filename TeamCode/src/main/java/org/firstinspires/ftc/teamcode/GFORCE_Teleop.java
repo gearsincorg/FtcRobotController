@@ -48,6 +48,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.teamcode.Subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.Subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.Subsystems.VisionSubsystem;
+import org.firstinspires.ftc.teamcode.Util.AutoConfig;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 @TeleOp(name = "G-FORCE TELEOP", group = "Competition")
@@ -103,6 +104,11 @@ public class GFORCE_Teleop extends CommandOpMode {
         // Intake waits for the shooter to be ready before feeding each ball.
         intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem::isReady);
         intakeSubsystem.init();
+
+        // Start on the alliance chosen in the auto setup menu (Share / Options still override).
+        AutoConfig autoConfig = new AutoConfig(this);
+        autoConfig.initialize();
+        setAlliance(autoConfig.red);
 
         // Connect buttons with commands
         bindButtons();

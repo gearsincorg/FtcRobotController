@@ -5,7 +5,9 @@ import android.util.Size;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
@@ -45,7 +47,11 @@ public class VisionSubsystem extends SubsystemBase {
 
     private String targetName = "RED";
     private AprilTagClusterDetection targetCluster = null;
-    private int exposureStep = 0;   // 0 = waiting for camera, 1 = manual mode set, 2 = done
+    // Goal tip detection: how far the tag's pitch must change (degrees) to count as tipped.  Tune.
+    public static double TIP_DELTA_DEG = 10;
+    private double restPitch = Double.NaN;
+
+    private int exposureStep = 0;  // 0 = waiting for camera, 1 = manual mode set, 2 = done
 
     // == standard Methods ===================================
     public VisionSubsystem(OpMode myOpMode) {
@@ -174,6 +180,29 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     // == Command methods  ==========================================
+
+    /**
+     * Wait for the goal to tip up.  The first pitch seen is the resting pitch; this finishes
+     * once the target's pitch has moved TIP_DELTA_DEG from it (either direction).  If the target
+     * is lost the wait just continues, and the baseline is kept.  Add a timeout in the caller.
+     */
+    public Command waitForTipCommand() {
+        return new SequentialCommandGroup(
+            new InstantCommand(() -> restPitch = Double.NaN),
+            new WaitUntilCommand(this::isTipped));
+    }
+
+    /** Same, but gives up after timeoutMs as a safety net (for auto). */
+    public Command waitForTipCommand(long timeoutMs) {
+        return waitForTipCommand().withTimeout(timeoutMs);
+    }
+
+    private boolean isTipped() {
+        if (targetCluster == null) return false;
+        double pitch = targetCluster.ftcPose.pitch;
+        if (Double.isNaN(restPitch)) restPitch = pitch;
+        return Math.abs(pitch - restPitch) >= TIP_DELTA_DEG;
+    }
 
     public Command stopStreamingCommand() {
         return new InstantCommand(() -> stopStreaming());
