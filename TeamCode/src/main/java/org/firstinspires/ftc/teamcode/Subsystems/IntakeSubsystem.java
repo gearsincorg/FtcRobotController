@@ -176,7 +176,7 @@ public class IntakeSubsystem extends SubsystemBase {
         if (gate == null) {
             opMode.telemetry.addLine("!!! INTAKE: NO GATE (not in config) !!!");
         }
-        opMode.telemetry.addData("Intake : feeder : gate", "%4.2f : %4.2f : %4.2f",
+        opMode.telemetry.addData("In:Feed:Gate", "%4.2f, %4.2f, %4.2f",
                 intakePower, feederPower, gatePosition);
         opMode.telemetry.addData("BALLS", "%d  [ %s]  %s  shots %d",
                 ballCount, pattern, modeName(), shotsFired);

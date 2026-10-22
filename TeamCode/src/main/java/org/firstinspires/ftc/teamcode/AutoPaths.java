@@ -24,11 +24,11 @@ public class AutoPaths {
 
     // Generated from FirstPath.turt
     public FollowPathCommand firstPath() {
-        final Pose start = poseFactory.of(56, 8, 90);
-        final Pose auto1StepA = poseFactory.of(56, 31.1277, 90);
+        final Pose start = poseFactory.of(55.1229, 6.3902, 0);
+        final Pose driveToShoot = poseFactory.of(59.2197, 55.3164, 90);
 
         Path firstPathPath = Paths.path(
-                line(start, auto1StepA).linear(start, auto1StepA)
+                line(start, driveToShoot).linear(start, driveToShoot)
         );
 
         return new FollowPathCommand(follower, firstPathPath);
@@ -36,7 +36,7 @@ public class AutoPaths {
 
     /** Where firstPath() starts.  Set the follower's pose to this once, before the auto runs. */
     public Pose firstPathStart() {
-        return poseFactory.of(56, 8, 90);
+        return poseFactory.of(55.1229, 6.3902, 0);
     }
 
     // Generated from FourthPath.turt

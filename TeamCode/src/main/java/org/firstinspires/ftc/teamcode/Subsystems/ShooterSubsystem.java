@@ -38,17 +38,17 @@ import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 public class ShooterSubsystem extends SubsystemBase {
 
     // == Field targets ========================================================
-    // Hive-Cell locations in Pedro coordinates (inches, origin at a field corner, 0-144),
-    // as observed on the field: audience side is x = 60, red is y = 60, blue is y = 84.
-    // Each alliance has two cells; we aim at the nearer one.
-    public static final Pose RED_CELL_AUDIENCE  = new Pose(60, 60);   // tags 4-7
-    public static final Pose RED_CELL_FAR       = new Pose(60, 84);   // tags 0-3
-    public static final Pose BLUE_CELL_AUDIENCE = new Pose(84, 60);   // tags 38-41
-    public static final Pose BLUE_CELL_FAR      = new Pose(84, 84);   // tags 42-45
+    // Goal locations in Pedro coordinates (inches, origin at a field corner, 0-144).
+    // Audience side is x = 60, far side x = 84.  Blue is red with y flipped about 72.
+    // Each alliance has two goals; we aim at the nearer one.
+    public static final Pose RED_GOAL_AUDIENCE  = new Pose(60, 54.5);
+    public static final Pose RED_GOAL_FAR       = new Pose(84, 54.5);
+    public static final Pose BLUE_GOAL_AUDIENCE = new Pose(60, 144 - 54.5);
+    public static final Pose BLUE_GOAL_FAR      = new Pose(84, 144 - 54.5);
 
-    // Only switch to the other alliance cell when it is this much closer (inches), so the
+    // Only switch to the other alliance goal when it is this much closer (inches), so the
     // target doesn't flicker when the robot is about equidistant.
-    private static final double CELL_SWITCH_HYSTERESIS = 6.0;
+    private static final double GOAL_SWITCH_HYSTERESIS = 6.0;
 
     // Turret pivot location relative to robot center (inches, x = forward, y = left).
     private static final double TURRET_OFFSET_X = 0.0;
@@ -57,7 +57,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // == Turret ==============================================================
     // false: the turret is held at 0 (straight ahead) and the chassis turns to aim instead
     // (teleop point-at-goal mode).  isReady() then checks the robot heading.
-    public static final boolean TURRET_ENABLED = false;
+    public static final boolean TURRET_ENABLED = true;
     private static final double AIM_TOLERANCE_RAD     = Math.toRadians(3);
 
     // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
@@ -77,7 +77,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
     // TODO temporary: true runs the flywheel at full power whenever it should spin, ignoring the
     // shot table RPM.  It counts as up to speed SPINUP_MS after starting.
-    public static final boolean FULL_SPEED = true;
+    public static final boolean FULL_SPEED = false;
     private static final double SPINUP_MS  = 1000;
 
     // == Hood ================================================================
@@ -108,8 +108,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private Mode    mode    = Mode.IDLE;
     private boolean redAlliance = true;
-    private boolean farCell     = true;     // which of the alliance's two cells is targeted
-    private double  dFar        = 0;        // robot distance to each alliance cell (inches)
+    private boolean farGoal     = true;     // which of the alliance's two goals is targeted
+    private double  dFar        = 0;        // robot distance to each alliance goal (inches)
     private double  dAudience   = 0;
 
     // FULL_SPEED spin-up
@@ -145,7 +145,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, FLYWHEEL_PIDF);
 
         // Move the hood to 0 now, rather than waiting for the first periodic() after start.
@@ -171,8 +171,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     void showTelemetry() {
         opMode.telemetry.addData("SHOOTER", "%s %s %s  dist = %5.1f  ready = %b",
-                mode, redAlliance ? "RED" : "BLUE", farCell ? "FAR" : "AUDIENCE", distance, isReady());
-        opMode.telemetry.addData("  Cell dist audience : far", "%5.1f : %5.1f", dAudience, dFar);
+                mode, redAlliance ? "RED" : "BLUE", farGoal ? "FAR" : "AUDIENCE", distance, isReady());
+        opMode.telemetry.addData("  Goal dist audience : far", "%5.1f : %5.1f", dAudience, dFar);
         opMode.telemetry.addData("  RPM tgt : act", "%5.0f : %5.0f", targetRPM, getRPM());
         opMode.telemetry.addData("  Turret tgt : act", "%5.1f : %5.1f",
                 Math.toDegrees(targetTurretRad), Math.toDegrees(getTurretAngle()));
@@ -261,20 +261,20 @@ public class ShooterSubsystem extends SubsystemBase {
 
     // == Aiming math ===========================================
 
-    /** The alliance cell we're aiming at: the nearer one, with hysteresis. */
+    /** The alliance goal we're aiming at: the nearer one, with hysteresis. */
     private Pose target() {
-        Pose far      = redAlliance ? RED_CELL_FAR      : BLUE_CELL_FAR;
-        Pose audience = redAlliance ? RED_CELL_AUDIENCE : BLUE_CELL_AUDIENCE;
+        Pose far      = redAlliance ? RED_GOAL_FAR      : BLUE_GOAL_FAR;
+        Pose audience = redAlliance ? RED_GOAL_AUDIENCE : BLUE_GOAL_AUDIENCE;
 
         Pose robot = follower.pose();
         dFar      = robot.distance(far);
         dAudience = robot.distance(audience);
-        if (farCell && dAudience < dFar - CELL_SWITCH_HYSTERESIS) {
-            farCell = false;
-        } else if (!farCell && dFar < dAudience - CELL_SWITCH_HYSTERESIS) {
-            farCell = true;
+        if (farGoal && dAudience < dFar - GOAL_SWITCH_HYSTERESIS) {
+            farGoal = false;
+        } else if (!farGoal && dFar < dAudience - GOAL_SWITCH_HYSTERESIS) {
+            farGoal = true;
         }
-        return farCell ? far : audience;
+        return farGoal ? far : audience;
     }
 
     /** Computes the shoot-on-the-move firing solution from odometry. */
