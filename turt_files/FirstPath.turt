@@ -10,19 +10,19 @@
     "y": 6.390167772142016,
     "heading": "linear",
     "locked": false,
-    "startDeg": 0,
-    "endDeg": 90
+    "startDeg": 90,
+    "endDeg": 180
   },
   "lines": [
     {
       "id": "line-mvk1b2dn-4ashjr",
       "name": "DriveToShoot",
       "endPoint": {
-        "x": 59.219664455715964,
-        "y": 55.316426063207174,
+        "x": 55.12290284822473,
+        "y": 29.331252438548567,
         "heading": "linear",
-        "startDeg": 0,
-        "endDeg": 90
+        "startDeg": 90,
+        "endDeg": 180
       },
       "controlPoints": [],
       "color": "#8CD6B8",
