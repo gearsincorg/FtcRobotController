@@ -38,8 +38,8 @@ public class Robot {
         intake.init();
 
         // Start on the alliance chosen in the auto setup menu (Share / Options still override).
-        AutoConfig autoConfig = new AutoConfig(opMode);
-        autoConfig.initialize();
+        config = new AutoConfig(opMode);
+        config.initialize();
     }
 
     /***

@@ -85,6 +85,7 @@ public class GFORCE_Teleop extends CommandOpMode {
         chassis = Constants.chassis();
 
         robot.initialize();
+
         setAlliance(robot.config.red);
 
         // Connect buttons with commands

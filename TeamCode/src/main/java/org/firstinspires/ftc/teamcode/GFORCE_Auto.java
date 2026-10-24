@@ -5,14 +5,7 @@ import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
-import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
-import com.seattlesolvers.solverslib.command.WaitCommand;
-
-import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
-import org.firstinspires.ftc.teamcode.util.AutoConfig;
 import org.firstinspires.ftc.teamcode.paths.Path_NearCenter;
-import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 import java.util.function.Supplier;
 
@@ -51,7 +44,6 @@ public class GFORCE_Auto extends CommandOpMode {
     private Path_NearCenter autoPaths;
 
     private boolean appliedRed;
-    private AutoConfig.StartLocation appliedStart;
 
     @Override
     public void initialize() {
@@ -67,11 +59,6 @@ public class GFORCE_Auto extends CommandOpMode {
 
     /** Push the menu choices (goal side, start pose) to the robot whenever they change. */
     private void applyConfig() {
-        if (appliedStart == null || appliedRed != robot.config.red) {
-            appliedRed = robot.config.red;
-            robot.shooter.setAlliance(appliedRed);
-        }
-
     }
 
     /** Run the setup menu and show the preload so the drive team can check both before START. */
