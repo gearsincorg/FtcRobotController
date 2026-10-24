@@ -54,7 +54,8 @@ tasks.register('generatePaths', Exec) {
     if (python != null) commandLine python, script.absolutePath
 }
 
-tasks.named('preBuild') { dependsOn 'generatePaths' }
+// Disabled: AutoPaths.java was removed in the auto rewrite. Run 'generatePaths' manually if needed.
+// tasks.named('preBuild') { dependsOn 'generatePaths' }
 
 // Connect ADB to the Control Hub over Wi-Fi so Run/Deploy works without a manual 'adb connect'.
 // Runs before every build (Android Studio's Run button doesn't use Gradle's install tasks), but is
