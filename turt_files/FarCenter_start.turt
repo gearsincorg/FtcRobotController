@@ -1,0 +1,112 @@
+{
+  "version": "2.5.1",
+  "header": {
+    "info": "Created with Turtle Tracer",
+    "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
+    "link": "https://github.com/Mallen220/TurtleTracer"
+  },
+  "startPoint": {
+    "x": 65.644565701559,
+    "y": 134.79287305122494,
+    "locked": false,
+    "headingDeg": 90,
+    "heading": "linear",
+    "startDeg": 90,
+    "endDeg": 90
+  },
+  "lines": [
+    {
+      "id": "mvmz4gcf-38twv7",
+      "name": "",
+      "endPoint": {
+        "x": 48.64679287305123,
+        "y": 130.9487750556793,
+        "heading": "linear",
+        "reverse": false,
+        "startDeg": 90,
+        "endDeg": 90
+      },
+      "controlPoints": [
+        {
+          "x": 65.644565701559,
+          "y": 123.17371937639196
+        },
+        {
+          "x": 47.0432293986637,
+          "y": 127.45434298440979
+        }
+      ],
+      "color": "#CAA8CC",
+      "eventMarkers": [],
+      "waitBeforeMs": 0,
+      "waitAfterMs": 0,
+      "waitBeforeName": "",
+      "waitAfterName": ""
+    }
+  ],
+  "sequence": [
+    {
+      "kind": "path",
+      "lineId": "mvmz4gcf-38twv7"
+    }
+  ],
+  "shapes": [
+    {
+      "id": "triangle-1",
+      "name": "Red Goal",
+      "vertices": [
+        {
+          "x": 141.5,
+          "y": 70
+        },
+        {
+          "x": 141.5,
+          "y": 141.5
+        },
+        {
+          "x": 118.3,
+          "y": 141.5
+        },
+        {
+          "x": 135.5,
+          "y": 118
+        },
+        {
+          "x": 136.3,
+          "y": 70.2
+        }
+      ],
+      "color": "#dc2626",
+      "fillColor": "#ff6b6b"
+    },
+    {
+      "id": "triangle-2",
+      "name": "Blue Goal",
+      "vertices": [
+        {
+          "x": 6.2,
+          "y": 116.9
+        },
+        {
+          "x": 25,
+          "y": 141.5
+        },
+        {
+          "x": 0,
+          "y": 141.5
+        },
+        {
+          "x": 0,
+          "y": 70
+        },
+        {
+          "x": 6,
+          "y": 70
+        }
+      ],
+      "color": "#2563eb",
+      "fillColor": "#60a5fa"
+    }
+  ],
+  "extraData": {}
+}
