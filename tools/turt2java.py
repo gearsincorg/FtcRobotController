@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Convert Turtle Tracer .turt files into methods in AutoPaths.java.
+"""Convert Turtle Tracer .turt files into one path class per file-name group.
 
-Every .turt file in the turt_files folder becomes one public method (named after the
-file) that returns a FollowPathCommand for the whole path.  Everything in
-OurPaths.java above the "Do not change anything above this line" banner is
-kept as is; everything below it is regenerated on each run.
+Files in /turt_files are grouped by the text before the last underscore of the file name
+(NearCenter_start.turt, NearCenter_2.turt -> group "NearCenter").  Each group becomes
+TeamCode/.../teamcode/paths/Path_<Group>.java.  Every group needs exactly one file ending in
+_start; its starting position becomes getStartPose().  Within a group the files are sorted
+(numbers in natural order, so _2 comes before _10) and each becomes a method path_<suffix>().
+
+A new Path_<Group>.java is created from the template Path_GroupName.java.  After that,
+everything above the "Do not change anything above this line" banner is left alone (so
+autoCommand() can be edited by hand) and everything below it is regenerated on every run.
 
 Usage:  python tools/turt2java.py
 """
@@ -17,7 +22,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TURT_DIR = ROOT / "turt_files"
-JAVA_FILE = ROOT / "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/AutoPaths.java"
+PATHS_DIR = ROOT / "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/paths"
+TEMPLATE_NAME = "GroupName"          # Path_GroupName.java is the template for new groups
+START_SUFFIX = "start"
 
 BANNER_TEXT = "Do not change anything above this line"
 BANNER_RULE = "// ===="
@@ -114,17 +121,13 @@ def ordered_lines(data):
         raise TurtError(f"sequence refers to unknown line {missing}")
 
 
-def build_method(turt_path):
+def build_method(turt_path, method, is_start):
     data = json.loads(turt_path.read_text(encoding="utf-8"))
-    method = identifier(turt_path.stem)
-    if not method:
-        raise TurtError("file name cannot be turned into a method name")
-
     start = data["startPoint"]
     start_deg = first_key(start, "headingDeg", "startDeg", "degrees")
     poses = [("start", start["x"], start["y"], start_deg)]
     segments = []
-    used = {"start", "follower", "poseFactory", method + "Path"}
+    used = {"start", "robot", "poseFactory", method + "Path"}
 
     def unique(name):
         candidate, n = name, 2
@@ -185,72 +188,132 @@ def build_method(turt_path):
     out = [f"    // Generated from {turt_path.name}",
            f"    public FollowPathCommand {method}() {{"]
     for name, x, y, deg in poses:
-        out.append(f"        final Pose {name} = poseFactory.of({num(x)}, {num(y)}, {num(deg)});")
+        if name == "start" and is_start:
+            out.append("        final Pose start = getStartPose();")
+        else:
+            out.append(f"        final Pose {name} = poseFactory.of({num(x)}, {num(y)}, {num(deg)});")
     out.append("")
     out.append(f"        Path {method}Path = Paths.path(")
     out.append(",\n".join(" " * 16 + s for s in segments))
     out.append("        );")
     out.append("")
-    out.append(f"        return new FollowPathCommand(follower, {method}Path);")
+    out.append(f"        return new FollowPathCommand(robot.drive, {method}Path);")
     out.append("    }")
-    out.append("")
-    out.append(f"    /** Where {method}() starts.  Set the follower's pose to this once, before the auto runs. */")
-    out.append(f"    public Pose {method}Start() {{")
-    out.append(f"        return poseFactory.of({num(poses[0][1])}, {num(poses[0][2])}, {num(poses[0][3])});")
-    out.append("    }")
-    return method, "\n".join(out)
+    start_pose = (num(poses[0][1]), num(poses[0][2]), num(poses[0][3]))
+    return "\n".join(out), start_pose
 
 
-def read_header():
-    lines = JAVA_FILE.read_text(encoding="utf-8").splitlines()
+def natural_key(text):
+    return [int(t) if t.isdigit() else t.lower() for t in re.findall(r"\d+|\D+", text)]
+
+
+def clean(text):
+    return re.sub(r"[^A-Za-z0-9]+", "_", text).strip("_")
+
+
+def header_of(text, source):
+    """Lines up to and including the rule below the banner."""
+    lines = text.splitlines()
     for i, line in enumerate(lines):
         if BANNER_TEXT in line:
             for j in range(i + 1, len(lines)):
                 if lines[j].strip().startswith(BANNER_RULE):
                     return lines[:j + 1]
             break
-    raise TurtError(f'could not find the "{BANNER_TEXT}" banner in {JAVA_FILE.name}')
+    raise TurtError(f'could not find the "{BANNER_TEXT}" banner in {source}')
+
+
+def read_text(path):
+    raw = path.read_bytes()
+    return raw.decode("utf-8"), ("\r\n" if b"\r\n" in raw else "\n")
+
+
+def find_groups():
+    groups = {}
+    for path in sorted(TURT_DIR.glob("*.turt"), key=lambda p: natural_key(p.name)):
+        if "_" not in path.stem:
+            raise TurtError(f"{path.name}: file names must be <Group>_<suffix>.turt")
+        prefix, suffix = path.stem.rsplit("_", 1)
+        groups.setdefault(clean(prefix), []).append((clean(suffix), path))
+    return groups
+
+
+def build_group(group, members, template_text):
+    """Returns (file text, target path) for Path_<group>.java, or raises TurtError."""
+    cls = f"Path_{group}"
+    starts = [m for m in members if m[0].lower() == START_SUFFIX]
+    if len(starts) != 1:
+        raise TurtError(f"needs exactly one *_{START_SUFFIX}.turt file (found {len(starts)})")
+    # The start file first, then the rest in natural order.
+    ordered = starts + sorted((m for m in members if m not in starts), key=lambda m: natural_key(m[0]))
+
+    methods, names = [], []
+    for suffix, path in ordered:
+        is_start = path is starts[0][1]
+        method = f"path_{suffix}"
+        try:
+            code, pose = build_method(path, method, is_start)
+        except TurtError as error:
+            raise TurtError(f"{path.name}: {error}")
+        except (KeyError, TypeError, ValueError) as error:
+            raise TurtError(f"{path.name}: {error!r}")
+        if is_start:
+            marker = f"    // Generated from {path.name}\n"
+            code = code.replace(marker,
+                                marker +
+                                "    public Pose getStartPose() {\n"
+                                f"        return poseFactory.of({', '.join(pose)}); // from start path in this name group\n"
+                                "    }\n\n", 1)
+        methods.append(code)
+        names.append(method)
+
+    target = PATHS_DIR / f"{cls}.java"
+    if target.exists():
+        header = header_of(read_text(target)[0], target.name)
+    else:
+        header = header_of(template_text, f"Path_{TEMPLATE_NAME}.java")
+        header = [l.replace(f"Path_{TEMPLATE_NAME}", cls) for l in header]
+        # Fill in the command list for a brand-new file.
+        calls = ", ".join(n + "()" for n in names)
+        header = [re.sub(r"auto\.addCommands\(.*\);", lambda _: f"auto.addCommands({calls});", l) for l in header]
+    return "\n".join(header) + "\n\n" + "\n\n".join(methods) + "\n}\n", target
 
 
 def main():
-    turt_files = sorted(TURT_DIR.glob("*.turt"), key=lambda p: p.name.lower())
-    if not turt_files:
-        print(f"No .turt files found in {TURT_DIR}")
-        return 1
-
-    methods, names, failed = [], {}, False
-    for turt_path in turt_files:
-        try:
-            method, code = build_method(turt_path)
-            if method in names:
-                raise TurtError(f"method name '{method}' already used by {names[method]}")
-            names[method] = turt_path.name
-            methods.append(code)
-            print(f"  {turt_path.name} -> {method}()")
-        except (TurtError, KeyError, TypeError, ValueError) as error:
-            failed = True
-            print(f"  {turt_path.name}: ERROR {error!r}" if isinstance(error, KeyError)
-                  else f"  {turt_path.name}: ERROR {error}")
-
-    if failed:
-        print(f"{JAVA_FILE.name} was NOT updated. Fix the errors above and run again.")
-        return 1
-
+    template = PATHS_DIR / f"Path_{TEMPLATE_NAME}.java"
     try:
-        header = read_header()
+        if not template.exists():
+            raise TurtError(f"template {template.name} not found in {PATHS_DIR}")
+        template_text, template_newline = read_text(template)
+        groups = find_groups()
+        if not groups:
+            raise TurtError(f"no .turt files found in {TURT_DIR}")
     except TurtError as error:
         print(f"ERROR {error}")
         return 1
 
-    text = "\n".join(header) + "\n\n" + "\n\n".join(methods) + "\n}\n"
-    # Keep whatever line endings the file already has.
-    newline = "\r\n" if b"\r\n" in JAVA_FILE.read_bytes() else "\n"
-    new_bytes = text.replace("\n", newline).encode("utf-8")
-    if JAVA_FILE.read_bytes() == new_bytes:
-        print(f"{JAVA_FILE.name} is already up to date ({len(methods)} method(s)).")
-        return 0
-    JAVA_FILE.write_bytes(new_bytes)
-    print(f"Wrote {len(methods)} method(s) to {JAVA_FILE}")
+    outputs, failed = [], False
+    for group, members in groups.items():
+        try:
+            text, target = build_group(group, members, template_text)
+            outputs.append((text, target))
+            print(f"  {group}: {', '.join(p.name for _, p in members)} -> {target.name}")
+        except TurtError as error:
+            failed = True
+            print(f"  {group}: ERROR {error}")
+
+    if failed:
+        print("No path files were updated. Fix the errors above and run again.")
+        return 1
+
+    for text, target in outputs:
+        newline = read_text(target)[1] if target.exists() else template_newline
+        new_bytes = text.replace("\n", newline).encode("utf-8")
+        if target.exists() and target.read_bytes() == new_bytes:
+            print(f"{target.name} is already up to date.")
+        else:
+            target.write_bytes(new_bytes)
+            print(f"Wrote {target.name}")
     return 0
 
 

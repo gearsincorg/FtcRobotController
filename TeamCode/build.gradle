@@ -24,7 +24,7 @@ android {
     }
 }
 
-// Regenerate AutoPaths.java from the .turt files in /turt_files before every build.
+// Generate paths/Path_<Group>.java from the .turt file groups in /turt_files.
 // Skipped (with a warning) if Python can't be found; fails the build if a .turt file is invalid.
 def findPython() {
     for (String candidate : ['python', 'python3', 'py']) {
@@ -39,23 +39,22 @@ def findPython() {
 
 tasks.register('generatePaths', Exec) {
     group = 'build'
-    description = 'Converts turt_files/*.turt files into methods in AutoPaths.java (tools/turt2java.py)'
+    description = 'Converts turt_files/*.turt files into path classes in the paths folder (tools/turt2java.py)'
 
     def script = rootProject.file('tools/turt2java.py')
     def python = findPython()
 
     inputs.files(fileTree(rootProject.file('turt_files')) { include '*.turt' }, script)
-    outputs.file('src/main/java/org/firstinspires/ftc/teamcode/AutoPaths.java')
+    outputs.dir('src/main/java/org/firstinspires/ftc/teamcode/paths')
 
     onlyIf {
-        if (python == null) logger.warn('WARNING: Python not found - skipping turt2java; AutoPaths.java may be out of date.')
+        if (python == null) logger.warn('WARNING: Python not found - skipping turt2java; path files may be out of date.')
         python != null
     }
     if (python != null) commandLine python, script.absolutePath
 }
 
-// Disabled: AutoPaths.java was removed in the auto rewrite. Run 'generatePaths' manually if needed.
-// tasks.named('preBuild') { dependsOn 'generatePaths' }
+tasks.named('preBuild') { dependsOn 'generatePaths' }
 
 // Connect ADB to the Control Hub over Wi-Fi so Run/Deploy works without a manual 'adb connect'.
 // Runs before every build (Android Studio's Run button doesn't use Gradle's install tasks), but is

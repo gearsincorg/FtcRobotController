@@ -15,6 +15,7 @@ public class GFORCE_Auto extends CommandOpMode {
     private static final double AUTO_MAX_SPEED = 40;
 
     private static final long SHOOT_TIMEOUT_MS = 4000;
+    private boolean autoStarted = false;
 
     /**
      * The paths for one starting location.  A null entry means "not drawn yet" and is skipped.
@@ -59,6 +60,7 @@ public class GFORCE_Auto extends CommandOpMode {
 
     /** Push the menu choices (goal side, start pose) to the robot whenever they change. */
     private void applyConfig() {
+        robot.shooter.setAlliance(robot.config.red);
     }
 
     /** Run the setup menu and show the preload so the drive team can check both before START. */
@@ -68,6 +70,7 @@ public class GFORCE_Auto extends CommandOpMode {
         applyConfig();
 
         robot.intake.refreshSensors();
+
         telemetry.addData("Preload", "%d balls  [ %s]%s", robot.intake.ballCount(),
                 robot.intake.slotPattern(), robot.intake.isSimulated() ? "  (SIMULATED)" : "");
         telemetry.update();
@@ -75,6 +78,11 @@ public class GFORCE_Auto extends CommandOpMode {
 
     @Override
     public void run() {
+
+        if (!autoStarted) {
+            autoStarted = true;
+            schedule(autoPaths.autoCommand());   // runs from START
+        }
         super.run();
         robot.update();
         showTelemetry();
