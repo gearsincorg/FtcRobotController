@@ -28,7 +28,7 @@ public class Path_NearCenter {
         robot.drive.setPose(getStartPose());
 
         // Add paths and other subsystem commands here
-        auto.addCommands(path_start(), path_2(), path_3(), path_4());
+        auto.addCommands(path_start(),path_2(),path_3(), path_7());
         return auto;
     }
 
@@ -39,15 +39,17 @@ public class Path_NearCenter {
 
     // Generated from NearCenter_start.turt
     public Pose getStartPose() {
-        return poseFactory.of(55.1229, 6.3902, 90); // from start path in this name group
+        return poseFactory.of(55.1229, 6.3902, 180); // from start path in this name group
     }
 
     public FollowPathCommand path_start() {
         final Pose start = getStartPose();
-        final Pose driveToShoot = poseFactory.of(55.1229, 29.3313, 180);
+        final Pose driveToShoot = poseFactory.of(10.245, 8, 180);
+        final Pose driveToShootControl1 = poseFactory.of(34.6459, 13.0156, 0);
+        final Pose driveToShootControl2 = poseFactory.of(39.539, 4.947, 0);
 
         Path path_startPath = Paths.path(
-                line(start, driveToShoot).linear(start, driveToShoot)
+                curve(start, driveToShootControl1, driveToShootControl2, driveToShoot).linear(Math.toRadians(180), Math.toRadians(180))
         );
 
         return new FollowPathCommand(robot.drive, path_startPath);
@@ -55,14 +57,14 @@ public class Path_NearCenter {
 
     // Generated from NearCenter_2.turt
     public FollowPathCommand path_2() {
-        final Pose start = poseFactory.of(56, 31.127, 90);
-        final Pose auto1StepB = poseFactory.of(28.6009, 8, 180);
-        final Pose auto1StepBControl1 = poseFactory.of(46.8904, 10.1514, 0);
-        final Pose point2 = poseFactory.of(8, 8, 180);
+        final Pose start = poseFactory.of(10.24, 8, 180);
+        final Pose auto1Step2 = poseFactory.of(50.0886, 130.5078, 90);
+        final Pose auto1Step2Control1 = poseFactory.of(56.9928, 33.0823, 0);
+        final Pose auto1Step2Control2 = poseFactory.of(4.9555, 101.0356, 0);
+        final Pose auto1Step2Control3 = poseFactory.of(51.5212, 107.3719, 0);
 
         Path path_2Path = Paths.path(
-                curve(start, auto1StepBControl1, auto1StepB).linear(start, auto1StepB),
-                line(auto1StepB, point2).linear(auto1StepB, point2)
+                curve(start, auto1Step2Control1, auto1Step2Control2, auto1Step2Control3, auto1Step2).linear(Math.toRadians(180), Math.toRadians(90))
         );
 
         return new FollowPathCommand(robot.drive, path_2Path);
@@ -70,29 +72,29 @@ public class Path_NearCenter {
 
     // Generated from NearCenter_3.turt
     public FollowPathCommand path_3() {
-        final Pose start = poseFactory.of(9.7456, 6.9364, 90);
-        final Pose auto1StepC = poseFactory.of(33.2155, 97.4696, 90);
-        final Pose auto1StepCControl1 = poseFactory.of(32.1014, 27.9417, 0);
-        final Pose auto1StepCControl2 = poseFactory.of(22.4803, 74.705, 0);
-        final Pose point2 = poseFactory.of(48.0318, 130.8613, 90);
+        final Pose start = poseFactory.of(50.09, 130.51, 90);
+        final Pose auto1StepD = poseFactory.of(14.45, 46.96, 180);
+        final Pose auto1StepDControl1 = poseFactory.of(25, 125.5884, 0);
+        final Pose auto1StepDControl2 = poseFactory.of(43.1203, 42.8552, 0);
 
         Path path_3Path = Paths.path(
-                curve(start, auto1StepCControl1, auto1StepCControl2, auto1StepC).linear(Math.toRadians(180), Math.toRadians(90)),
-                line(auto1StepC, point2).linear(Math.toRadians(180), Math.toRadians(90))
+                curve(start, auto1StepDControl1, auto1StepDControl2, auto1StepD).linear(Math.toRadians(90), Math.toRadians(180))
         );
 
         return new FollowPathCommand(robot.drive, path_3Path);
     }
 
-    // Generated from NearCenter_4.turt
-    public FollowPathCommand path_4() {
-        final Pose start = poseFactory.of(48.5918, 132.5373, 90);
-        final Pose auto1StepD = poseFactory.of(57.9558, 112.9203, 90);
+    // Generated from NearCenter_7.turt
+    public FollowPathCommand path_7() {
+        final Pose start = poseFactory.of(14.45, 46.96, 180);
+        final Pose auto1StepD = poseFactory.of(55.12, 6.39, 180);
+        final Pose auto1StepDControl1 = poseFactory.of(14.45, 6.39, 0);
+        final Pose auto1StepDControl2 = poseFactory.of(55.12, 26.069, 0);
 
-        Path path_4Path = Paths.path(
-                line(start, auto1StepD).linear(start, auto1StepD)
+        Path path_7Path = Paths.path(
+                curve(start, auto1StepDControl1, auto1StepDControl2, auto1StepD).linear(Math.toRadians(180), Math.toRadians(180))
         );
 
-        return new FollowPathCommand(robot.drive, path_4Path);
+        return new FollowPathCommand(robot.drive, path_7Path);
     }
 }

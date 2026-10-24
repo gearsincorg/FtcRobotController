@@ -6,19 +6,19 @@
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 9.745610612563402,
-    "y": 6.9364026531408545,
+    "x": 50.09,
+    "y": 130.51,
     "locked": false,
     "headingDeg": 90,
     "heading": "linear",
-    "startDeg": 180,
-    "endDeg": 90
+    "startDeg": 90,
+    "endDeg": 180
   },
   "lines": [
     {
       "id": "line-mug5hmgu-6gzak1",
       "color": "#ffc516",
-      "name": "Auto1_StepC",
+      "name": "Auto1_StepD",
       "locked": false,
       "waitBeforeMs": 0,
       "waitAfterMs": 0,
@@ -26,61 +26,36 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 33.215458816588125,
-        "y": 97.46964494732735,
+        "x": 14.45,
+        "y": 46.96,
         "heading": "linear",
-        "degrees": 0,
-        "startDeg": 180,
+        "startDeg": 90,
         "endDeg": 180
       },
       "controlPoints": [
         {
-          "x": 32.101443620756925,
-          "y": 27.9417479516192
+          "x": 25,
+          "y": 125.58844017181289
         },
         {
-          "x": 22.480296527506834,
-          "y": 74.70503316426063
+          "x": 43.120267260579055,
+          "y": 42.85523385300669
         }
       ],
       "heading": {
         "type": "linear",
-        "startDeg": 180,
+        "startDeg": 90,
         "endDeg": 90,
         "reverse": false
       },
       "eventMarkers": [],
       "hidden": false
-    },
-    {
-      "id": "mvk8aqw2-tjfuyd",
-      "name": "",
-      "endPoint": {
-        "x": 48.03179867342957,
-        "y": 130.8612953570035,
-        "heading": "linear",
-        "startDeg": 180,
-        "endDeg": 90
-      },
-      "controlPoints": [],
-      "color": "#77AC77",
-      "eventMarkers": [],
-      "waitBeforeMs": 0,
-      "waitAfterMs": 0,
-      "waitBeforeName": "",
-      "waitAfterName": "",
-      "isChain": true
     }
   ],
   "sequence": [
     {
       "kind": "path",
       "lineId": "line-mug5hmgu-6gzak1"
-    },
-    {
-      "kind": "path",
-      "lineId": "mvk8aqw2-tjfuyd",
-      "isChain": true
     }
   ],
   "shapes": [

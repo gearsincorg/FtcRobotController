@@ -6,19 +6,19 @@
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 56,
-    "y": 31.127,
+    "x": 10.24,
+    "y": 8,
     "locked": false,
     "headingDeg": 90,
     "heading": "linear",
     "startDeg": 180,
-    "endDeg": 180
+    "endDeg": 90
   },
   "lines": [
     {
       "id": "line-mug5hmgu-6gzak1",
       "color": "#ffc516",
-      "name": "Auto1_StepB",
+      "name": "Auto1_Step2",
       "locked": false,
       "waitBeforeMs": 0,
       "waitAfterMs": 0,
@@ -26,16 +26,24 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 28.60085836909871,
-        "y": 8,
+        "x": 50.08860892589158,
+        "y": 130.5077951002227,
         "heading": "linear",
         "startDeg": 180,
-        "endDeg": 180
+        "endDeg": 90
       },
       "controlPoints": [
         {
-          "x": 46.89036285602809,
-          "y": 10.151385095591111
+          "x": 56.992812744669514,
+          "y": 33.082342779332805
+        },
+        {
+          "x": 4.955456570155904,
+          "y": 101.03563474387526
+        },
+        {
+          "x": 51.521158129175944,
+          "y": 107.37193763919818
         }
       ],
       "heading": {
@@ -46,36 +54,12 @@
       },
       "eventMarkers": [],
       "hidden": false
-    },
-    {
-      "id": "mvk7jg26-925ya0",
-      "name": "",
-      "endPoint": {
-        "x": 8,
-        "y": 8,
-        "heading": "linear",
-        "startDeg": 180,
-        "endDeg": 180
-      },
-      "controlPoints": [],
-      "color": "#5A7B7B",
-      "eventMarkers": [],
-      "waitBeforeMs": 0,
-      "waitAfterMs": 0,
-      "waitBeforeName": "",
-      "waitAfterName": "",
-      "isChain": true
     }
   ],
   "sequence": [
     {
       "kind": "path",
       "lineId": "line-mug5hmgu-6gzak1"
-    },
-    {
-      "kind": "path",
-      "lineId": "mvk7jg26-925ya0",
-      "isChain": true
     }
   ],
   "shapes": [

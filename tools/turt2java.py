@@ -92,19 +92,21 @@ def first_key(mapping, *keys):
 
 
 def line_heading(line):
-    """Heading of a line, from either layout Turtle Tracer writes.
+    """Heading of a line, from the layouts Turtle Tracer writes.
 
-    Either a "heading" object ({type, startDeg, endDeg, reverse}) on the line, or the
-    fields on the endPoint ("heading": "linear", plus startDeg / endDeg / degrees).
+    The heading the editor shows for a path is stored on the line's endPoint ("heading":
+    "linear" plus startDeg / endDeg / degrees).  The "heading" object on the line itself can be
+    stale (it is not updated when the angles are edited), so the endPoint wins and the object
+    is only a fallback.
     """
-    heading = line.get("heading")
-    if isinstance(heading, dict):
-        return heading
     end = line.get("endPoint", {})
     if isinstance(end.get("heading"), str):
         merged = {k: v for k, v in end.items() if k not in ("x", "y")}
         merged["type"] = merged.pop("heading")
         return merged
+    heading = line.get("heading")
+    if isinstance(heading, dict):
+        return heading
     return {}
 
 
@@ -125,6 +127,12 @@ def build_method(turt_path, method, is_start):
     data = json.loads(turt_path.read_text(encoding="utf-8"))
     start = data["startPoint"]
     start_deg = first_key(start, "headingDeg", "startDeg", "degrees")
+    # A linear first line starts at its own startDeg, so the start pose takes that heading.
+    first = ordered_lines(data)[:1]
+    if first:
+        first_heading = line_heading(first[0])
+        if first_heading.get("type") == "linear" and "startDeg" in first_heading:
+            start_deg = first_heading["startDeg"]
     poses = [("start", start["x"], start["y"], start_deg)]
     segments = []
     used = {"start", "robot", "poseFactory", method + "Path"}
@@ -150,13 +158,10 @@ def build_method(turt_path, method, is_start):
         heading = line_heading(line)
         kind = heading.get("type")
         if kind == "linear":
+            # The path always starts at this line's startDeg and ends at its endDeg.
             end_deg = heading["endDeg"]
-            if math.isclose(normalize_deg(heading["startDeg"] - prev_deg), 0, abs_tol=1e-6):
-                interpolation = f".linear({prev_name}, {name})"
-            else:
-                # Start heading differs from the previous pose, so give the angles directly (radians).
-                interpolation = (f".linear(Math.toRadians({num(heading['startDeg'])}), "
-                                 f"Math.toRadians({num(end_deg)}))")
+            interpolation = (f".linear(Math.toRadians({num(heading['startDeg'])}), "
+                             f"Math.toRadians({num(end_deg)}))")
         elif kind == "constant":
             end_deg = first_key(heading, "degrees", "deg", "constantDeg", "headingDeg")
             interpolation = f".constant({name})"
