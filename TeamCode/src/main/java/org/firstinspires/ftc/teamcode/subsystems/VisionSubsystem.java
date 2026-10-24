@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Subsystems;
+package org.firstinspires.ftc.teamcode.subsystems;
 
 import android.util.Size;
 
@@ -47,6 +47,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     private String targetName = "RED";
     private AprilTagClusterDetection targetCluster = null;
+
     // Goal tip detection: how far the tag's pitch must change (degrees) to count as tipped.  Tune.
     public static double TIP_DELTA_DEG = 10;
     private double restPitch = Double.NaN;

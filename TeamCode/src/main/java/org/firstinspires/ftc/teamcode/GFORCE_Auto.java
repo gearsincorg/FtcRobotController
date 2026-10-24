@@ -8,9 +8,10 @@ import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 
-import org.firstinspires.ftc.teamcode.Subsystems.IntakeSubsystem;
-import org.firstinspires.ftc.teamcode.Subsystems.ShooterSubsystem;
-import org.firstinspires.ftc.teamcode.Util.AutoConfig;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
+import org.firstinspires.ftc.teamcode.util.AutoConfig;
+import org.firstinspires.ftc.teamcode.paths.Path_NearCenter;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 import java.util.function.Supplier;
@@ -44,132 +45,59 @@ public class GFORCE_Auto extends CommandOpMode {
         }
     }
 
-    private ShooterSubsystem shooterSubsystem;
-    private IntakeSubsystem intakeSubsystem;
-    private Follower driveSubsystem;
-    private AutoPaths autoPaths;
-    private AutoConfig config;
+    // Declare robot Subsystems
+    private Robot robot = new Robot(this);
+
+    private Path_NearCenter autoPaths;
 
     private boolean appliedRed;
     private AutoConfig.StartLocation appliedStart;
-
-    /** Path set for each starting location.  Fill these in as .turt files are drawn. */
-    @SuppressWarnings("unchecked")
-    private Plan planFor(AutoConfig.StartLocation location) {
-        switch (location) {
-            case AUDIENCE_1:
-                return new Plan(
-                    autoPaths::firstPathStart,
-                    autoPaths::firstPath,
-                    new Supplier[] { (Supplier<Command>) autoPaths::secondPath, (Supplier<Command>) autoPaths::fourthPath },
-                    new Supplier[] { (Supplier<Command>) autoPaths::thirdPath, null },   // TODO: return path for cycle 2
-                    null);                                                              // TODO: park path
-            case AUDIENCE_2:    // TODO: draw paths
-            case FAR_1:         // TODO: draw paths
-            case FAR_2:         // TODO: draw paths
-            default:
-                return new Plan(null, null, new Supplier[2], new Supplier[2], null);
-        }
-    }
 
     @Override
     public void initialize() {
         super.reset();
 
         // Initialize Subsystems
-        driveSubsystem = Constants.create(hardwareMap, AUTO_MAX_SPEED);
-        autoPaths = new AutoPaths(driveSubsystem);
-        shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
-        shooterSubsystem.init();
-        intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem::isReady);
-        intakeSubsystem.init();
-
-        config = new AutoConfig(this);
-        config.initialize();
-        applyConfig();
+        robot.initialize();
+        autoPaths = new Path_NearCenter(robot);
 
         // Spin up and aim when full, spin down when empty.
-        RobotCommands.bindAutoAim(shooterSubsystem, intakeSubsystem);
+        RobotCommands.bindAutoAim(robot.shooter, robot.intake);
     }
 
     /** Push the menu choices (goal side, start pose) to the robot whenever they change. */
     private void applyConfig() {
-        if (appliedStart == null || appliedRed != config.red) {
-            shooterSubsystem.setAlliance(config.red);
-            appliedRed = config.red;
+        if (appliedStart == null || appliedRed != robot.config.red) {
+            appliedRed = robot.config.red;
+            robot.shooter.setAlliance(appliedRed);
         }
-        if (appliedStart != config.start) {
-            Plan plan = planFor(config.start);
-            if (plan.start != null) driveSubsystem.setPose(plan.start.get());
-            appliedStart = config.start;
-        }
+
     }
 
     /** Run the setup menu and show the preload so the drive team can check both before START. */
     @Override
     public void initialize_loop() {
-        config.runMenu();
+        robot.config.runMenu();
         applyConfig();
 
-        Plan plan = planFor(config.start);
-        if (plan.first == null) {
-            telemetry.addLine("WARNING: no paths drawn for " + config.start.label + " - will not move");
-        } else {
-            for (int i = 0; i < config.cycles; i++) {
-                if (plan.cycleCollect[i] == null || plan.cycleReturn[i] == null) {
-                    telemetry.addLine("WARNING: cycle " + (i + 1) + " paths not drawn - skipped");
-                }
-            }
-            if (config.park == AutoConfig.Park.BASE && plan.park == null) {
-                telemetry.addLine("WARNING: park path not drawn - will stay put");
-            }
-        }
-
-        intakeSubsystem.refreshSensors();
-        telemetry.addData("Preload", "%d balls  [ %s]%s", intakeSubsystem.ballCount(),
-                intakeSubsystem.slotPattern(), intakeSubsystem.isSimulated() ? "  (SIMULATED)" : "");
+        robot.intake.refreshSensors();
+        telemetry.addData("Preload", "%d balls  [ %s]%s", robot.intake.ballCount(),
+                robot.intake.slotPattern(), robot.intake.isSimulated() ? "  (SIMULATED)" : "");
         telemetry.update();
-    }
-
-    /** Build the auto from the menu choices once START is pressed. */
-    @Override
-    public void preRun() {
-        Plan plan = planFor(config.start);
-        if (plan.start != null) driveSubsystem.setPose(plan.start.get());
-
-        SequentialCommandGroup auto = new SequentialCommandGroup();
-        // Each step ends on the real result (all shot, path done); timeouts are only safety nets.
-        auto.addCommands(shooterSubsystem.startTrackingCommand());   // aim and spin up the preload
-        if (config.delaySec > 0) auto.addCommands(new WaitCommand(config.delaySec * 1000L));
-        if (plan.first != null) {
-            auto.addCommands(plan.first.get(),
-                RobotCommands.shootVolley(shooterSubsystem, intakeSubsystem, SHOOT_TIMEOUT_MS));
-            for (int i = 0; i < config.cycles; i++) {
-                if (plan.cycleCollect[i] == null || plan.cycleReturn[i] == null) continue;
-                auto.addCommands(
-                    RobotCommands.collectWhile(plan.cycleCollect[i].get(), intakeSubsystem),
-                    plan.cycleReturn[i].get(),
-                    RobotCommands.shootVolley(shooterSubsystem, intakeSubsystem, SHOOT_TIMEOUT_MS));
-            }
-            if (config.park == AutoConfig.Park.BASE && plan.park != null) {
-                auto.addCommands(plan.park.get());
-            }
-        }
-        schedule(auto);
     }
 
     @Override
     public void run() {
         super.run();
-        driveSubsystem.update();
+        robot.update();
         showTelemetry();
     }
 
     public void showTelemetry() {
-        telemetry.addData("X", driveSubsystem.pose().x());
-        telemetry.addData("Y", driveSubsystem.pose().y());
-        telemetry.addData("Heading", Math.toDegrees(driveSubsystem.pose().heading()));
-        telemetry.addData("Follower Mode", driveSubsystem.mode());
+        telemetry.addData("X", robot.drive.pose().x());
+        telemetry.addData("Y", robot.drive.pose().y());
+        telemetry.addData("Heading", Math.toDegrees(robot.drive.pose().heading()));
+        telemetry.addData("Follower Mode", robot.drive.mode());
         telemetry.update();
     }
 }

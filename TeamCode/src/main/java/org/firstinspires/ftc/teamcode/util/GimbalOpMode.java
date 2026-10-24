@@ -1,9 +1,9 @@
-package org.firstinspires.ftc.teamcode.Util;
+package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 
-import org.firstinspires.ftc.teamcode.Subsystems.GimbalSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.GimbalSubsystem;
 
 /**
  * Gimbal follows gamepad1's right joystick.

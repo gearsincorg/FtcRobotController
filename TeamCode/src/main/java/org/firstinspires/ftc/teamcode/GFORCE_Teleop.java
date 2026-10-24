@@ -30,7 +30,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.pedropathing.drivetrain.DrivePowers;
-import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
 import com.pedropathing.utils.Angle;
@@ -38,27 +37,20 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
-import com.seattlesolvers.solverslib.command.button.GamepadButton;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.Subsystems.IntakeSubsystem;
-import org.firstinspires.ftc.teamcode.Subsystems.ShooterSubsystem;
-import org.firstinspires.ftc.teamcode.Subsystems.VisionSubsystem;
-import org.firstinspires.ftc.teamcode.Util.AutoConfig;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 @TeleOp(name = "G-FORCE TELEOP", group = "Competition")
 public class GFORCE_Teleop extends CommandOpMode {
 
-    // Declare Subsystems
-    private IntakeSubsystem   intakeSubsystem;
-    private VisionSubsystem     visionSubsystem;
-    private ShooterSubsystem    shooterSubsystem;
-    private Follower            driveSubsystem;
+    // Declare robot Subsystems
+    private Robot               robot = new Robot(this);
 
     // Point-at-target tuning
     private static final double TARGET_TURN_GAIN = 0.04;
@@ -85,30 +77,15 @@ public class GFORCE_Teleop extends CommandOpMode {
     private int                 lastLedCount = -1;
     private boolean             lastSimUp, lastSimDown;
 
+
     // == Standard Methods ===================================================
     @Override
     public void initialize() {
         // Create subsystems here (not as field initializers) so they register with the
-        // scheduler after CommandOpMode has reset it.  SubsystemBase registers itself.
-        visionSubsystem = new VisionSubsystem(this);
-        visionSubsystem.init();
-
-        // Setup robot
         chassis = Constants.chassis();
-        driveSubsystem = Constants.create(hardwareMap);
 
-        // Shooter aims from odometry, so it needs the drive's Follower.
-        shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
-        shooterSubsystem.init();
-
-        // Intake waits for the shooter to be ready before feeding each ball.
-        intakeSubsystem = new IntakeSubsystem(this, shooterSubsystem::isReady);
-        intakeSubsystem.init();
-
-        // Start on the alliance chosen in the auto setup menu (Share / Options still override).
-        AutoConfig autoConfig = new AutoConfig(this);
-        autoConfig.initialize();
-        setAlliance(autoConfig.red);
+        robot.initialize();
+        setAlliance(robot.config.red);
 
         // Connect buttons with commands
         bindButtons();
@@ -117,21 +94,22 @@ public class GFORCE_Teleop extends CommandOpMode {
     private void showTelemetry() {
         telemetry.addData("chassis", chassis);
         telemetry.addData("aim at goal", "%s  error = %5.1f deg", aimAtGoal ? "ON" : "off",
-                            Math.toDegrees(shooterSubsystem.getAimError()));
-        telemetry.addData("pos X: Y", "%5.1f : %5.1f", driveSubsystem.pose().x(), driveSubsystem.pose().y());
-        telemetry.addData("heading", "%5.1f deg", Math.toDegrees(driveSubsystem.pose().heading()));
-        telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", driveSubsystem.velocity().vx,
-                            driveSubsystem.velocity().vy,  driveSubsystem.velocity().omega);
+                            Math.toDegrees(robot.shooter.getAimError()));
+        telemetry.addData("pos X: Y", "%5.1f : %5.1f", robot.drive.pose().x(), robot.drive.pose().y());
+        telemetry.addData("heading", "%5.1f deg", Math.toDegrees(robot.drive.pose().heading()));
+        telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", robot.drive.velocity().vx,
+                robot.drive.velocity().vy,  robot.drive.velocity().omega);
         telemetry.update();
+
+        showBallCountLed();
     }
 
     @Override
     public void run() {
         super.run();
         gamepad2Intake();
-        showBallCountLed();
         manualDrive();
-        driveSubsystem.update();
+        robot.update();
         showTelemetry();
     }
 
@@ -147,23 +125,23 @@ public class GFORCE_Teleop extends CommandOpMode {
         double lateral  = -gamepad1.left_stick_x  * SLOW_MULTIPLIER;
         double yaw      = -gamepad1.right_stick_x * SLOW_MULTIPLIER;
 
-        double heading = driveSubsystem.pose().heading();
+        double heading = robot.drive.pose().heading();
 
-        if (gamepad1.right_bumper && visionSubsystem.hasTarget()) {
+        if (gamepad1.right_bumper && robot.vision.hasTarget()) {
             // Point at the target cluster: use the bearing (+ is CCW) as the error.
-            yaw = Range.clip(visionSubsystem.getTargetPose().bearing * TARGET_TURN_GAIN,
+            yaw = Range.clip(robot.vision.getTargetPose().bearing * TARGET_TURN_GAIN,
                              -MAX_TARGET_TURN, MAX_TARGET_TURN);
             headingLocked = false;
         } else if (yaw == 0 && aimAtGoal) {
             // Point the shooter at the goal (leading it when moving).  Twisting the stick overrides.
-            yaw = Range.clip(shooterSubsystem.getAimError() * AIM_GAIN, -MAX_AIM_TURN, MAX_AIM_TURN);
+            yaw = Range.clip(robot.shooter.getAimError() * AIM_GAIN, -MAX_AIM_TURN, MAX_AIM_TURN);
             headingLocked = false;
         } else if (yaw == 0 ) {
             // Lock heading if we aren't trying to turn.
             if (headingLocked) {
                 yaw = Range.clip(Angle.normalizeSigned(headingSetpoint - heading) * HEADING_GAIN,
                                  -MAX_SNAP_TURN, MAX_SNAP_TURN);
-            } else if (Math.abs(driveSubsystem.velocity().omega) < MIN_ROTATE) {
+            } else if (Math.abs(robot.drive.velocity().omega) < MIN_ROTATE) {
                 headingSetpoint = heading;
                 headingLocked = true;
             }
@@ -177,7 +155,7 @@ public class GFORCE_Teleop extends CommandOpMode {
         );
 
         // Robot-centric drive
-        driveSubsystem.manual(powers);
+        robot.drive.manual(powers);
     }
 
     /**
@@ -208,50 +186,50 @@ public class GFORCE_Teleop extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> setHeadingTarget(0)));
 
         // The shooter spins up and aims by itself when we're full, and spins down when empty.
-        RobotCommands.bindAutoAim(shooterSubsystem, intakeSubsystem);
+        RobotCommands.bindAutoAim(robot.shooter, robot.intake);
 
         // Point-at-goal: on by itself when full, off when empty; Right Stick press toggles it,
         // and starts or stops the shooter with it.
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
             .whenPressed(new InstantCommand(() -> toggleAimAtGoal()));
-        new Trigger(intakeSubsystem::isFull)
+        new Trigger(robot.intake::isFull)
             .whenActive(() -> aimAtGoal = true);
         new Trigger(() -> !IntakeSubsystem.TIMED_SHOTS
-                && intakeSubsystem.isEmpty() && !intakeSubsystem.isShooting())
+                && robot.intake.isEmpty() && !robot.intake.isShooting())
             .whenActive(() -> aimAtGoal = false);
 
         // A: fire every ball (each waits for the shooter to be ready).  Double rumble when done.
         driverOp.getGamepadButton(GamepadKeys.Button.A)
-            .whenPressed(RobotCommands.shootAll(shooterSubsystem, intakeSubsystem)
+            .whenPressed(RobotCommands.shootAll(robot.shooter, robot.intake)
                 .andThen(new InstantCommand(() -> {
-                    if (intakeSubsystem.isEmpty()) gamepad1.rumbleBlips(2);
+                    if (robot.intake.isEmpty()) gamepad1.rumbleBlips(2);
                 })));
 
         // Right Trigger: fire one ball per press
         new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5)
-            .whenActive(RobotCommands.shootOne(shooterSubsystem, intakeSubsystem));
+            .whenActive(RobotCommands.shootOne(robot.shooter, robot.intake));
 
         // Left Bumper: collect while held (stops and spits out extras by itself when full)
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-            .whileHeld(intakeSubsystem.intakeCommand());
+            .whileHeld(robot.intake.intakeCommand());
 
         // B: eject every ball out of the intake while held
         driverOp.getGamepadButton(GamepadKeys.Button.B)
-            .whileHeld(intakeSubsystem.ejectCommand());
+            .whileHeld(robot.intake.ejectCommand());
 
         // Driver feedback
-        new Trigger(intakeSubsystem::isFull).whenActive(() -> gamepad1.rumble(300));
-        new Trigger(intakeSubsystem::isJammed).whenActive(() -> gamepad1.rumble(1000));
+        new Trigger(robot.intake::isFull).whenActive(() -> gamepad1.rumble(300));
+        new Trigger(robot.intake::isJammed).whenActive(() -> gamepad1.rumble(1000));
     }
 
     /** Gamepad LED shows the ball count: red empty, amber partial, green full. */
     private void showBallCountLed() {
-        int count = intakeSubsystem.ballCount();
+        int count = robot.intake.ballCount();
         if (count == lastLedCount) return;
         lastLedCount = count;
         if (count == 0) {
             gamepad1.setLedColor(1, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
-        } else if (intakeSubsystem.isFull()) {
+        } else if (robot.intake.isFull()) {
             gamepad1.setLedColor(0, 1, 0, Gamepad.LED_DURATION_CONTINUOUS);
         } else {
             gamepad1.setLedColor(1, 0.5, 0, Gamepad.LED_DURATION_CONTINUOUS);
@@ -267,30 +245,30 @@ public class GFORCE_Teleop extends CommandOpMode {
         double intakePower = -gamepad2.left_stick_y;
         double feederPower = -gamepad2.right_stick_y;
         if (Math.abs(intakePower) > 0.1 || Math.abs(feederPower) > 0.1 || gamepad2.x) {
-            intakeSubsystem.setManual(intakePower, feederPower,
+            robot.intake.setManual(intakePower, feederPower,
                     gamepad2.x ? IntakeSubsystem.GATE_OPEN : IntakeSubsystem.GATE_CLOSED);
         } else {
-            intakeSubsystem.clearManual();
+            robot.intake.clearManual();
         }
 
-        if (gamepad2.dpad_up && !lastSimUp)     intakeSubsystem.simAddBall();
-        if (gamepad2.dpad_down && !lastSimDown) intakeSubsystem.simRemoveBall();
+        if (gamepad2.dpad_up && !lastSimUp)     robot.intake.simAddBall();
+        if (gamepad2.dpad_down && !lastSimDown) robot.intake.simRemoveBall();
         lastSimUp   = gamepad2.dpad_up;
         lastSimDown = gamepad2.dpad_down;
     }
 
     public void setAlliance(boolean red) {
-        visionSubsystem.setAlliance(red);
-        shooterSubsystem.setAlliance(red);
+        robot.vision.setAlliance(red);
+        robot.shooter.setAlliance(red);
     }
 
     /** Toggle point-at-goal, spinning the shooter up (tracking) or down to match. */
     public void toggleAimAtGoal() {
         aimAtGoal = !aimAtGoal;
         if (aimAtGoal) {
-            shooterSubsystem.track();
+            robot.shooter.track();
         } else {
-            shooterSubsystem.idle();
+            robot.shooter.idle();
         }
     }
 
@@ -302,7 +280,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     }
 
     public void resetHeading () {
-        driveSubsystem.setPose(RESET_POSE);
+        robot.drive.setPose(RESET_POSE);
         headingSetpoint = RESET_POSE.heading();
     }
 }
