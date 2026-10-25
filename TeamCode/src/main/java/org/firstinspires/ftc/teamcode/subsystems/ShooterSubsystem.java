@@ -58,7 +58,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // false: the turret is held at 0 (straight ahead) and the chassis turns to aim instead
     // (teleop point-at-goal mode).  isReady() then checks the robot heading.
     public static final boolean TURRET_ENABLED = true;
-    private static final double AIM_TOLERANCE_RAD     = Math.toRadians(3);
+    private static final double AIM_TOLERANCE_RAD     = Math.toRadians(10);
 
     // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
     private static final double TURRET_TICKS_PER_RAD  = 537.7 / (2 * Math.PI);
@@ -73,7 +73,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // TODO tune: ticks per rev of the flywheel (28 for a bare goBILDA/REV motor at 1:1).
     private static final double FLYWHEEL_TICKS_PER_REV = 28;
     private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(15, 0, 0, 13);
-    private static final double RPM_TOLERANCE          = 100;
+    private static final double RPM_TOLERANCE          = 250;
 
     // TODO temporary: true runs the flywheel at full power whenever it should spin, ignoring the
     // shot table RPM.  It counts as up to speed SPINUP_MS after starting.
@@ -221,6 +221,8 @@ public class ShooterSubsystem extends SubsystemBase {
         boolean atSpeed = FULL_SPEED
                 ? spinupTimer.milliseconds() > SPINUP_MS
                 : Math.abs(getRPM() - targetRPM) < RPM_TOLERANCE;
+        opMode.telemetry.addData("On Target",onTarget);
+        opMode.telemetry.addData("At Speed",atSpeed);
         return mode != Mode.IDLE
                 && targetRPM > 0
                 && atSpeed
@@ -389,6 +391,10 @@ public class ShooterSubsystem extends SubsystemBase {
     /** Start tracking and leave it running (for auto sequences). */
     public Command startTrackingCommand() {
         return new InstantCommand(this::track, this);
+    }
+
+    public Command stopTrackingCommand() {
+        return new InstantCommand(this::idle, this);
     }
 
     public Command idleCommand() {

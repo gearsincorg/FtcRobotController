@@ -8,6 +8,9 @@ import com.pedropathing.api.PoseFactory;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
+import com.seattlesolvers.solverslib.command.ParallelDeadlineGroup;
+import com.seattlesolvers.solverslib.command.ParallelRaceGroup;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
@@ -28,7 +31,10 @@ public class Path_NearCenter {
         robot.drive.setPose(getStartPose());
 
         // Add paths and other subsystem commands here
-        auto.addCommands(path_start(),path_2(),path_3(), path_7());
+        auto.addCommands(robot.shooter.startTrackingCommand(), robot.intake.shootAllCommand(),robot.shooter.idleCommand());
+        auto.addCommands(new ParallelRaceGroup(path_start(), robot.intake.intakeUntilFullCommand()));
+        auto.addCommands(path_2(), robot.shooter.startTrackingCommand(),robot.intake.shootAllCommand());
+
         return auto;
     }
 

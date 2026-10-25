@@ -16,9 +16,9 @@
 
         </LynxModule>
         <LynxModule name="Expansion Hub" port="1">
-            <goBILDA5202SeriesMotor name="turret" port="0" />
+            <goBILDA5202SeriesMotor name="turret" port="2" />
             <goBILDA5202SeriesMotor name="shooter" port="1" />
-            <goBILDA5202SeriesMotor name="intake" port="2" />
+            <goBILDA5202SeriesMotor name="intake" port="0" />
             <goBILDA5202SeriesMotor name="feeder" port="3" />
 
 

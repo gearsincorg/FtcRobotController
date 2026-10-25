@@ -47,8 +47,8 @@ public class IntakeSubsystem extends SubsystemBase {
     // == Sensors =============================================================
     // true: the ball count comes from SimulatedSlots instead of the slot sensors.
     // TODO set false once the slot sensors are in use.
-    public static final boolean SIMULATE_SENSORS = false;
-    private static final int    SIM_PRELOAD      = 3;
+    public static final boolean SIMULATE_SENSORS = true;
+    private static final int    SIM_PRELOAD      = 4;
 
     // Sensor reading when a ball is in the slot (most digital sensors are active-low).
     private static final boolean BALL_SEEN_STATE = false;
@@ -178,8 +178,8 @@ public class IntakeSubsystem extends SubsystemBase {
         }
         opMode.telemetry.addData("In:Feed:Gate", "%4.2f, %4.2f, %4.2f",
                 intakePower, feederPower, gatePosition);
-        opMode.telemetry.addData("BALLS", "%d  [ %s]  %s  shots %d",
-                ballCount, pattern, modeName(), shotsFired);
+        opMode.telemetry.addData("BALLS", "%d  [ %s]  %s  shots %d Full? %s",
+                ballCount, pattern, modeName(), shotsFired, isFull());
         if (jammed) {
             opMode.telemetry.addLine("!!! INTAKE JAMMED !!!");
         }

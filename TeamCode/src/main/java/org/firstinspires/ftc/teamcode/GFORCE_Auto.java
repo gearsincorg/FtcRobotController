@@ -85,7 +85,7 @@ public class GFORCE_Auto extends CommandOpMode {
 
         if (!autoStarted) {
             autoStarted = true;
-            schedule(autoFarCenter.autoCommand());   // runs from START
+            schedule(autoNearCenter.autoCommand());   // runs from START
         }
         super.run();
         robot.update();
