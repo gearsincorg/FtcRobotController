@@ -71,6 +71,7 @@ public class GFORCE_Auto extends CommandOpMode {
         telemetry.addData("Y", robot.drive.pose().y());
         telemetry.addData("Heading", Math.toDegrees(robot.drive.pose().heading()));
         telemetry.addData("Follower Mode", robot.drive.mode());
+        telemetry.addData("busy", robot.drive.isBusy());
         telemetry.update();
     }
 }

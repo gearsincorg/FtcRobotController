@@ -32,7 +32,7 @@ public class Path_NearCenter {
 
         // Add paths and other subsystem commands here
         auto.addCommands(robot.shooter.startTrackingCommand(), robot.intake.shootAllCommand(),robot.shooter.idleCommand());
-        auto.addCommands(new ParallelCommandGroup(path_start(), robot.intake.intakeUntilFullCommand().withTimeout(1500)));
+        auto.addCommands(new ParallelCommandGroup(path_start(), robot.intake.intakeUntilFullCommand()));  // does not complete ???
         auto.addCommands(path_2(), robot.shooter.startTrackingCommand(),robot.intake.shootAllCommand());
 
         return auto;
