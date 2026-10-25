@@ -18,28 +18,6 @@ public class GFORCE_Auto extends CommandOpMode {
     private static final long SHOOT_TIMEOUT_MS = 4000;
     private boolean autoStarted = false;
 
-    /**
-     * The paths for one starting location.  A null entry means "not drawn yet" and is skipped.
-     * cycleCollect[i] / cycleReturn[i] are cycle i+1: drive and collect, then go back to shoot.
-     */
-    private static class Plan {
-        final Supplier<Pose> start;
-        final Supplier<Command> first;
-        final Supplier<Command>[] cycleCollect;
-        final Supplier<Command>[] cycleReturn;
-        final Supplier<Command> park;
-
-        Plan(Supplier<Pose> start, Supplier<Command> first,
-             Supplier<Command>[] cycleCollect, Supplier<Command>[] cycleReturn,
-             Supplier<Command> park) {
-            this.start = start;
-            this.first = first;
-            this.cycleCollect = cycleCollect;
-            this.cycleReturn = cycleReturn;
-            this.park = park;
-        }
-    }
-
     // Declare robot Subsystems
     private Robot robot = new Robot(this);
 

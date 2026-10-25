@@ -27,9 +27,9 @@ public class SimulatedSlots {
     private static final double SPACING            = 1.0;   // one ball per slot
     private static final double SENSOR_HALF_WIDTH  = 0.4;
     private static final double INTAKE_ZONE        = 1.0;   // the intake roller reaches balls below this
-    private static final double INTAKE_SPEED       = 6.0;   // slots per second at full power
-    private static final double FEED_SPEED         = 6.0;   // slots per second at full power
-    private static final double PICKUP_MS          = 700;
+    private static final double INTAKE_SPEED       = 4.0;   // slots per second at full power
+    private static final double FEED_SPEED         = 4.0;   // slots per second at full power
+    private static final double PICKUP_MS          = 500;
     private static final double MAX_DT             = 0.1;
 
     // Ball positions, front (nearest the shooter) first.
