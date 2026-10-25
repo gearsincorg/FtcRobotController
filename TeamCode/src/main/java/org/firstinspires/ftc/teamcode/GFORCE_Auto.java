@@ -34,10 +34,6 @@ public class GFORCE_Auto extends CommandOpMode {
         robot.initialize();
         autoNearCenter = new Path_NearCenter(robot);
         autoFarCenter = new Path_FarCenter(robot);
-
-
-        // Spin up and aim when full, spin down when empty.
-        RobotCommands.bindAutoAim(robot.shooter, robot.intake);
     }
 
     /** Push the menu choices (goal side, start pose) to the robot whenever they change. */
