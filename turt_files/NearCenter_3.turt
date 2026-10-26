@@ -11,7 +11,7 @@
     "locked": false,
     "heading": "linear",
     "startDeg": 90,
-    "endDeg": 90
+    "endDeg": 180
   },
   "lines": [
     {
@@ -29,7 +29,7 @@
         "y": 47.89640265314084,
         "heading": "linear",
         "startDeg": 90,
-        "endDeg": 90
+        "endDeg": 180
       },
       "controlPoints": [
         {

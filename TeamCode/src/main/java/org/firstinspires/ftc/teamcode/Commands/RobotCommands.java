@@ -22,12 +22,11 @@ public final class RobotCommands {
     public static void bindAutoAim(BiobuzzRobot robot) {
         new Trigger(robot.intake::isFull)
             .whenActive(robot.shooter.startTrackingCommand());
-        // With TIMED_SHOTS the count isn't trusted, so don't spin down on "empty".
-        new Trigger(() -> !IntakeSubsystem.TIMED_SHOTS && robot.intake.isEmpty() && !robot.intake.isShooting())
+        new Trigger(() -> robot.intake.isEmpty() && !robot.intake.isShooting())
             .whenActive(robot.shooter.idleCommand());
     }
 
-    /** Aim, spin up and fire every ball; finishes when the last one has left. */
+    /** Aim, spin up and fire every ball in one volley; finishes when the last one has left. */
     public static Command shootAll(BiobuzzRobot robot) {
         return new SequentialCommandGroup(
             robot.shooter.startTrackingCommand(),
@@ -40,11 +39,11 @@ public final class RobotCommands {
         return shootAll(robot).withTimeout(timeoutMs);
     }
 
-    /** Aim, spin up and fire one ball. */
-    public static Command shootOne(BiobuzzRobot robot) {
+    /** Aim, spin up and fire while scheduled (teleop: while the button is held). */
+    public static Command shootWhileHeld(BiobuzzRobot robot) {
         return new SequentialCommandGroup(
             robot.shooter.startTrackingCommand(),
-            robot.intake.shootOneCommand()
+            robot.intake.shootWhileHeldCommand()
         );
     }
 

@@ -196,20 +196,12 @@ public class GFORCE_Teleop extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> toggleAimAtGoal()));
         new Trigger(robot.intake::isFull)
             .whenActive(() -> aimAtGoal = true);
-        new Trigger(() -> !IntakeSubsystem.TIMED_SHOTS
-                && robot.intake.isEmpty() && !robot.intake.isShooting())
+        new Trigger(() -> robot.intake.isEmpty() && !robot.intake.isShooting())
             .whenActive(() -> aimAtGoal = false);
 
-        // A: fire every ball (each waits for the shooter to be ready).  Double rumble when done.
+        // A: fire while held (waits for the shooter to be ready, then feeds until empty or released).
         driverOp.getGamepadButton(GamepadKeys.Button.A)
-            .whenPressed(RobotCommands.shootAll(robot)
-                .andThen(new InstantCommand(() -> {
-                    if (robot.intake.isEmpty()) gamepad1.rumbleBlips(2);
-                })));
-
-        // Right Trigger: fire one ball per press
-        new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5)
-            .whenActive(RobotCommands.shootOne(robot));
+            .whileHeld(RobotCommands.shootWhileHeld(robot));
 
         // Left Bumper: collect while held (stops and spits out extras by itself when full)
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
@@ -221,7 +213,7 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         // Driver feedback
         new Trigger(robot.intake::isFull).whenActive(() -> gamepad1.rumble(300));
-        new Trigger(robot.intake::isJammed).whenActive(() -> gamepad1.rumble(1000));
+        new Trigger(robot.intake::isEmpty).whenActive(() -> gamepad1.rumbleBlips(2));
     }
 
     /** Gamepad LED shows the ball count: red empty, amber partial, green full. */

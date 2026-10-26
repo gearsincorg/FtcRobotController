@@ -29,9 +29,11 @@ public class Path_NearCenter {
         robot.drive.setPose(getStartPose());
 
         // Add paths and other subsystem commands here
-        auto.addCommands(robot.shooter.startTrackingCommand(), robot.intake.shootAllCommand(),robot.shooter.idleCommand());
-        auto.addCommands(new ParallelCommandGroup(path_start(), robot.intake.intakeUntilFullCommand()));  // does not complete ???
-        auto.addCommands(path_2(), robot.shooter.startTrackingCommand(),robot.intake.shootAllCommand());
+        auto.addCommands(robot.shooter.startTrackingCommand(), robot.intake.shootAllCommand());
+        auto.addCommands(new ParallelCommandGroup(path_start(), robot.intake.intakeUntilFullCommand()));
+        auto.addCommands(path_2(),robot.intake.shootAllCommand());
+        auto.addCommands(new ParallelCommandGroup(path_3(), robot.intake.intakeUntilFullCommand()));
+        auto.addCommands(path_4(),robot.intake.shootAllCommand(),robot.shooter.idleCommand());
 
         return auto;
     }
@@ -81,7 +83,7 @@ public class Path_NearCenter {
     // Generated from NearCenter_3.turt
     public FollowPathCommand path_3() {
         final Pose start = poseFactory.of(50.09, 130.51, 90);
-        final Pose nearFlower = poseFactory.of(13.9818, 47.8964, 90);
+        final Pose nearFlower = poseFactory.of(13.9818, 47.8964, 180);
         final Pose nearFlowerControl1 = poseFactory.of(21.4885, 123.7156, 0);
         final Pose nearFlowerControl2 = poseFactory.of(44.759, 40.7483, 0);
 
@@ -94,9 +96,9 @@ public class Path_NearCenter {
 
     // Generated from NearCenter_4.turt
     public FollowPathCommand path_4() {
-        final Pose start = poseFactory.of(14.45, 46.96, 90);
-        final Pose nearShoot = poseFactory.of(55.12, 6.39, 90);
-        final Pose nearShootControl1 = poseFactory.of(14.45, 6.39, 0);
+        final Pose start = poseFactory.of(13.9818, 48.8328, 180);
+        final Pose nearShoot = poseFactory.of(57.2269, 12.0084, 180);
+        final Pose nearShootControl1 = poseFactory.of(20.7707, 48.9963, 0);
         final Pose nearShootControl2 = poseFactory.of(55.12, 26.069, 0);
 
         Path path_4Path = Paths.path(

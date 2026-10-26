@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
  *   RAW            left stick Y = intake power, right stick Y = feeder power
  *                  X = gate closed, Y = gate open, D-pad left/right = nudge gate by 0.01
  *                  (use this to find IntakeSubsystem.GATE_OPEN and GATE_CLOSED)
- *   STATE MACHINE  the teleop buttons: hold LB intake, A shoot all, RT shoot one, hold B eject.
+ *   STATE MACHINE  the teleop buttons: hold LB intake, hold A shoot, hold B eject.
  *                  Hold Right Bumper to pretend the shooter is ready.
  * D-pad up / down adds / removes a simulated ball (when the sensors are simulated).
  */
@@ -39,9 +39,7 @@ public class IntakeTestOpMode extends CommandOpMode {
         new Trigger(() -> statePage && gamepad1.left_bumper)
             .whileActiveOnce(intake.intakeCommand());
         new Trigger(() -> statePage && gamepad1.a)
-            .whenActive(intake.shootAllCommand());
-        new Trigger(() -> statePage && gamepad1.right_trigger > 0.5)
-            .whenActive(intake.shootOneCommand());
+            .whileActiveOnce(intake.shootWhileHeldCommand());
         new Trigger(() -> statePage && gamepad1.b)
             .whileActiveOnce(intake.ejectCommand());
     }

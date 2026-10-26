@@ -6,12 +6,12 @@
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 14.45,
-    "y": 46.96,
+    "x": 13.981798673429575,
+    "y": 48.83280530628171,
     "locked": false,
     "heading": "linear",
-    "startDeg": 90,
-    "endDeg": 90
+    "startDeg": 180,
+    "endDeg": 180
   },
   "lines": [
     {
@@ -25,16 +25,16 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 55.12,
-        "y": 6.39,
+        "x": 57.2269059695669,
+        "y": 12.00841591884511,
         "heading": "linear",
-        "startDeg": 90,
-        "endDeg": 90
+        "startDeg": 180,
+        "endDeg": 180
       },
       "controlPoints": [
         {
-          "x": 14.45,
-          "y": 6.39
+          "x": 20.77071790870074,
+          "y": 48.99632071790871
         },
         {
           "x": 55.12,

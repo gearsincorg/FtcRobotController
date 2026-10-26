@@ -143,7 +143,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Move the hood to 0 now, rather than waiting for the first periodic() after start.
         targetHood = 0;
@@ -220,8 +220,6 @@ public class ShooterSubsystem extends SubsystemBase {
                 ? Math.abs(targetTurretRad - getactualTurretRad()) < TURRET_TOLERANCE_RAD && turretTargetReachable()
                 : mode != Mode.TRACKING || Math.abs(getAimError()) < AIM_TOLERANCE_RAD;
         boolean atSpeed = Math.abs(getActualRPM() - targetRPM) < RPM_TOLERANCE;
-        opMode.telemetry.addData("On Target",onTarget);
-        opMode.telemetry.addData("At Speed",atSpeed);
         return mode != Mode.IDLE
                 && targetRPM > 0
                 && atSpeed
@@ -360,9 +358,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         // Control Flywheel Switch between full power and calculated power.
         if (targetRPM > 0) {
-            error = targetRPM - actualRPM;
-            double ff = targetRPM / FLYWHEEL_MAX_RPM;
-            flywheel.setPower(ff + ((error / FLYWHEEL_MAX_RPM) * 2) );
+            flywheel.setVelocity(targetRPM/2);
         } else {
             flywheel.setPower(FLYWHEEL_IDLE_POWER);
         }
