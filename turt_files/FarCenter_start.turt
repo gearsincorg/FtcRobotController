@@ -1,5 +1,5 @@
 {
-  "version": "2.5.1",
+  "version": "2.6.0",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
@@ -9,7 +9,6 @@
     "x": 65.644565701559,
     "y": 134.79287305122494,
     "locked": false,
-    "headingDeg": 90,
     "heading": "linear",
     "startDeg": 90,
     "endDeg": 90
@@ -17,7 +16,7 @@
   "lines": [
     {
       "id": "mvmz4gcf-38twv7",
-      "name": "",
+      "name": "FarFlower",
       "endPoint": {
         "x": 48.64679287305123,
         "y": 130.9487750556793,
@@ -29,11 +28,11 @@
       "controlPoints": [
         {
           "x": 65.644565701559,
-          "y": 123.17371937639196
+          "y": 116.9
         },
         {
-          "x": 47.0432293986637,
-          "y": 127.45434298440979
+          "x": 48.64679287305123,
+          "y": 120.66542374913861
         }
       ],
       "color": "#CAA8CC",
@@ -41,7 +40,8 @@
       "waitBeforeMs": 0,
       "waitAfterMs": 0,
       "waitBeforeName": "",
-      "waitAfterName": ""
+      "waitAfterName": "",
+      "hidden": false
     }
   ],
   "sequence": [

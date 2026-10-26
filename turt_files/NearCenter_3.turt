@@ -1,5 +1,5 @@
 {
-  "version": "2.5.1",
+  "version": "2.6.0",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
@@ -9,16 +9,15 @@
     "x": 50.09,
     "y": 130.51,
     "locked": false,
-    "headingDeg": 90,
     "heading": "linear",
     "startDeg": 90,
-    "endDeg": 180
+    "endDeg": 90
   },
   "lines": [
     {
       "id": "line-mug5hmgu-6gzak1",
       "color": "#ffc516",
-      "name": "Auto1_StepD",
+      "name": "NearFlower",
       "locked": false,
       "waitBeforeMs": 0,
       "waitAfterMs": 0,
@@ -26,28 +25,22 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 14.45,
-        "y": 46.96,
+        "x": 13.981798673429573,
+        "y": 47.89640265314084,
         "heading": "linear",
         "startDeg": 90,
-        "endDeg": 180
+        "endDeg": 90
       },
       "controlPoints": [
         {
-          "x": 25,
-          "y": 125.58844017181289
+          "x": 21.48849005072181,
+          "y": 123.7156348655312
         },
         {
-          "x": 43.120267260579055,
-          "y": 42.85523385300669
+          "x": 44.75897190357555,
+          "y": 40.74832788343977
         }
       ],
-      "heading": {
-        "type": "linear",
-        "startDeg": 90,
-        "endDeg": 90,
-        "reverse": false
-      },
       "eventMarkers": [],
       "hidden": false
     }

@@ -1,15 +1,14 @@
 {
-  "version": "2.5.1",
+  "version": "2.6.0",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 10.24,
-    "y": 8,
+    "x": 8.835396020288723,
+    "y": 9.170503316426064,
     "locked": false,
-    "headingDeg": 90,
     "heading": "linear",
     "startDeg": 180,
     "endDeg": 90
@@ -18,7 +17,7 @@
     {
       "id": "line-mug5hmgu-6gzak1",
       "color": "#ffc516",
-      "name": "Auto1_Step2",
+      "name": "Transition",
       "locked": false,
       "waitBeforeMs": 0,
       "waitAfterMs": 0,
@@ -26,40 +25,70 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 50.08860892589158,
-        "y": 130.5077951002227,
+        "x": 32.06285785293021,
+        "y": 32.887818510289016,
         "heading": "linear",
         "startDeg": 180,
         "endDeg": 90
       },
       "controlPoints": [
         {
-          "x": 56.992812744669514,
-          "y": 33.082342779332805
+          "x": 30.071236466870047,
+          "y": 18.768630511119785
         },
         {
-          "x": 4.955456570155904,
-          "y": 101.03563474387526
-        },
-        {
-          "x": 51.521158129175944,
-          "y": 107.37193763919818
+          "x": 32.06285785293021,
+          "y": 22.143711216758618
         }
       ],
-      "heading": {
-        "type": "linear",
-        "startDeg": 90,
-        "endDeg": 180,
-        "reverse": false
-      },
       "eventMarkers": [],
-      "hidden": false
+      "hidden": false,
+      "chainMaxSpeed": 60,
+      "globalStartDeg": 90,
+      "globalEndDeg": 90
+    },
+    {
+      "id": "mvpfoxvw-qts8zx",
+      "name": "FarFlower",
+      "endPoint": {
+        "x": 48.41123683183768,
+        "y": 133.25595005852517,
+        "heading": "tangential",
+        "startDeg": 90,
+        "endDeg": 90
+      },
+      "controlPoints": [
+        {
+          "x": 32.06285785293021,
+          "y": 54.08115489660554
+        },
+        {
+          "x": 28.28950448692938,
+          "y": 125.82013265704254
+        },
+        {
+          "x": 48.41123683183768,
+          "y": 102.41279750292627
+        }
+      ],
+      "color": "#669877",
+      "eventMarkers": [],
+      "waitBeforeMs": 0,
+      "waitAfterMs": 0,
+      "waitBeforeName": "",
+      "waitAfterName": "",
+      "isChain": true
     }
   ],
   "sequence": [
     {
       "kind": "path",
       "lineId": "line-mug5hmgu-6gzak1"
+    },
+    {
+      "kind": "path",
+      "lineId": "mvpfoxvw-qts8zx",
+      "isChain": true
     }
   ],
   "shapes": [

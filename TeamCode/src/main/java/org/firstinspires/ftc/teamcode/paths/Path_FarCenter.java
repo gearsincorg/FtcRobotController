@@ -11,13 +11,13 @@ import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
-import org.firstinspires.ftc.teamcode.Robot;
+import org.firstinspires.ftc.teamcode.BiobuzzRobot;
 
 public class Path_FarCenter {
     private PoseFactory poseFactory;
-    private Robot robot;
+    private BiobuzzRobot robot;
 
-    public Path_FarCenter(Robot robot) {
+    public Path_FarCenter(BiobuzzRobot robot) {
         this.robot = robot;
         poseFactory = PoseFactory.degrees();
     }
@@ -44,12 +44,12 @@ public class Path_FarCenter {
 
     public FollowPathCommand path_start() {
         final Pose start = getStartPose();
-        final Pose point1 = poseFactory.of(48.6468, 130.9488, 90);
-        final Pose point1Control1 = poseFactory.of(65.6446, 123.1737, 0);
-        final Pose point1Control2 = poseFactory.of(47.0432, 127.4543, 0);
+        final Pose farFlower = poseFactory.of(48.6468, 130.9488, 90);
+        final Pose farFlowerControl1 = poseFactory.of(65.6446, 116.9, 0);
+        final Pose farFlowerControl2 = poseFactory.of(48.6468, 120.6654, 0);
 
         Path path_startPath = Paths.path(
-                curve(start, point1Control1, point1Control2, point1).linear(Math.toRadians(90), Math.toRadians(90))
+                curve(start, farFlowerControl1, farFlowerControl2, farFlower).linear(start, farFlower)
         );
 
         return new FollowPathCommand(robot.drive, path_startPath);

@@ -1,5 +1,5 @@
 {
-  "version": "2.5.1",
+  "version": "2.6.0",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
@@ -9,16 +9,15 @@
     "x": 14.45,
     "y": 46.96,
     "locked": false,
-    "headingDeg": 90,
     "heading": "linear",
-    "startDeg": 180,
-    "endDeg": 180
+    "startDeg": 90,
+    "endDeg": 90
   },
   "lines": [
     {
       "id": "line-mug5hmgu-6gzak1",
       "color": "#ffc516",
-      "name": "Auto1_StepD",
+      "name": "NearShoot",
       "locked": false,
       "waitBeforeMs": 0,
       "waitAfterMs": 0,
@@ -29,8 +28,8 @@
         "x": 55.12,
         "y": 6.39,
         "heading": "linear",
-        "startDeg": 180,
-        "endDeg": 180
+        "startDeg": 90,
+        "endDeg": 90
       },
       "controlPoints": [
         {
@@ -42,12 +41,6 @@
           "y": 26.069042316258358
         }
       ],
-      "heading": {
-        "type": "linear",
-        "startDeg": 90,
-        "endDeg": 90,
-        "reverse": false
-      },
       "eventMarkers": [],
       "hidden": false
     }

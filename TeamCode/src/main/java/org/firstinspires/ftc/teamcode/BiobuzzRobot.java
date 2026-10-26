@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 import org.firstinspires.ftc.teamcode.util.AutoConfig;
 
-public class Robot {
+public class BiobuzzRobot {
     public IntakeSubsystem intake;
     public VisionSubsystem vision;
     public ShooterSubsystem shooter;
@@ -18,7 +18,7 @@ public class Robot {
 
     private OpMode  opMode;
 
-    public Robot(OpMode opmode) {
+    public BiobuzzRobot(OpMode opmode) {
         this.opMode = opmode;
     }
 

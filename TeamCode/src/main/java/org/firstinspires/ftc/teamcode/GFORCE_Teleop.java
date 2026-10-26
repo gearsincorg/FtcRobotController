@@ -43,6 +43,7 @@ import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.teamcode.Commands.RobotCommands;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
@@ -50,7 +51,7 @@ import org.firstinspires.ftc.teamcode.pedro.Constants;
 public class GFORCE_Teleop extends CommandOpMode {
 
     // Declare robot Subsystems
-    private Robot               robot = new Robot(this);
+    private BiobuzzRobot robot = new BiobuzzRobot(this);
 
     // Point-at-target tuning
     private static final double TARGET_TURN_GAIN = 0.04;
@@ -187,7 +188,7 @@ public class GFORCE_Teleop extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> setHeadingTarget(0)));
 
         // The shooter spins up and aims by itself when we're full, and spins down when empty.
-        RobotCommands.bindAutoAim(robot.shooter, robot.intake);
+        RobotCommands.bindAutoAim(robot);
 
         // Point-at-goal: on by itself when full, off when empty; Right Stick press toggles it,
         // and starts or stops the shooter with it.
@@ -201,14 +202,14 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         // A: fire every ball (each waits for the shooter to be ready).  Double rumble when done.
         driverOp.getGamepadButton(GamepadKeys.Button.A)
-            .whenPressed(RobotCommands.shootAll(robot.shooter, robot.intake)
+            .whenPressed(RobotCommands.shootAll(robot)
                 .andThen(new InstantCommand(() -> {
                     if (robot.intake.isEmpty()) gamepad1.rumbleBlips(2);
                 })));
 
         // Right Trigger: fire one ball per press
         new Trigger(() -> driverOp.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5)
-            .whenActive(RobotCommands.shootOne(robot.shooter, robot.intake));
+            .whenActive(RobotCommands.shootOne(robot));
 
         // Left Bumper: collect while held (stops and spits out extras by itself when full)
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)

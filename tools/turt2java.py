@@ -7,7 +7,8 @@ TeamCode/.../teamcode/paths/Path_<Group>.java.  Every group needs exactly one fi
 _start; its starting position becomes getStartPose().  Within a group the files are sorted
 (numbers in natural order, so _2 comes before _10) and each becomes a method path_<suffix>().
 
-A new Path_<Group>.java is created from the template Path_GroupName.java.  After that,
+A new Path_<Group>.java is created from the template Path_GroupName.java (or, if that file
+is gone, from any existing Path_*.java).  After that,
 everything above the "Do not change anything above this line" banner is left alone (so
 autoCommand() can be edited by hand) and everything below it is regenerated on every run.
 
@@ -158,10 +159,16 @@ def build_method(turt_path, method, is_start):
         heading = line_heading(line)
         kind = heading.get("type")
         if kind == "linear":
-            # The path always starts at this line's startDeg and ends at its endDeg.
+            # The path starts at this line's startDeg and ends at its endDeg; the heading
+            # comes from the poses, so the start/end poses carry those angles.
             end_deg = heading["endDeg"]
-            interpolation = (f".linear(Math.toRadians({num(heading['startDeg'])}), "
-                             f"Math.toRadians({num(end_deg)}))")
+            from_name = prev_name
+            if not math.isclose(normalize_deg(heading["startDeg"] - prev_deg), 0, abs_tol=1e-6):
+                # The previous pose ended at a different heading, so add a pose at the
+                # same spot that has this line's startDeg.
+                from_name = unique(f"{name}From")
+                poses.append((from_name, prev_xy[0], prev_xy[1], heading["startDeg"]))
+            interpolation = f".linear({from_name}, {name})"
         elif kind == "constant":
             end_deg = first_key(heading, "degrees", "deg", "constantDeg", "headingDeg")
             interpolation = f".constant({name})"
@@ -243,6 +250,15 @@ def find_groups():
     return groups
 
 
+def template_source(template_text):
+    """(file name, text) to copy a new path class from: the template, else any existing path class."""
+    if template_text is not None:
+        return f"Path_{TEMPLATE_NAME}.java", template_text
+    for path in sorted(PATHS_DIR.glob("Path_*.java")):
+        return path.name, read_text(path)[0]
+    raise TurtError(f"no template Path_{TEMPLATE_NAME}.java and no existing path class to copy from")
+
+
 def build_group(group, members, template_text):
     """Returns (file text, target path) for Path_<group>.java, or raises TurtError."""
     cls = f"Path_{group}"
@@ -276,8 +292,9 @@ def build_group(group, members, template_text):
     if target.exists():
         header = header_of(read_text(target)[0], target.name)
     else:
-        header = header_of(template_text, f"Path_{TEMPLATE_NAME}.java")
-        header = [l.replace(f"Path_{TEMPLATE_NAME}", cls) for l in header]
+        source_name, source_text = template_source(template_text)
+        header = header_of(source_text, source_name)
+        header = [l.replace(source_name[:-len(".java")], cls) for l in header]
         # Fill in the command list for a brand-new file.
         calls = ", ".join(n + "()" for n in names)
         header = [re.sub(r"auto\.addCommands\(.*\);", lambda _: f"auto.addCommands({calls});", l) for l in header]
@@ -287,9 +304,8 @@ def build_group(group, members, template_text):
 def main():
     template = PATHS_DIR / f"Path_{TEMPLATE_NAME}.java"
     try:
-        if not template.exists():
-            raise TurtError(f"template {template.name} not found in {PATHS_DIR}")
-        template_text, template_newline = read_text(template)
+        # Only needed to create a path class that does not exist yet.
+        template_text, template_newline = read_text(template) if template.exists() else (None, "\n")
         groups = find_groups()
         if not groups:
             raise TurtError(f"no .turt files found in {TURT_DIR}")

@@ -39,11 +39,11 @@ public class ShooterSubsystem extends SubsystemBase {
 
     // == Field targets ========================================================
     // Goal locations in Pedro coordinates (inches, origin at a field corner, 0-144).
-    // Audience side is x = 60, far side x = 84.  Blue is red with y flipped about 72.
+    // RED side is x = 60, BLUE side x = 84.  Blue is red with y flipped about 72.
     // Each alliance has two goals; we aim at the nearer one.
     public static final Pose RED_GOAL_AUDIENCE  = new Pose(60, 54.5);
-    public static final Pose RED_GOAL_FAR       = new Pose(84, 54.5);
-    public static final Pose BLUE_GOAL_AUDIENCE = new Pose(60, 144 - 54.5);
+    public static final Pose RED_GOAL_FAR       = new Pose(60, 144 - 54.5);
+    public static final Pose BLUE_GOAL_AUDIENCE = new Pose(84, 54.5);
     public static final Pose BLUE_GOAL_FAR      = new Pose(84, 144 - 54.5);
 
     // Only switch to the other alliance goal when it is this much closer (inches), so the
@@ -67,18 +67,14 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_KP             = 0.5;    // power per radian of error
     private static final double TURRET_KV             = 0.15;   // power per rad/s of chassis turn
     private static final double TURRET_MAX_POWER      = 0.8;
-    private static final double TURRET_TOLERANCE_RAD  = Math.toRadians(2);
+    private static final double TURRET_TOLERANCE_RAD  = Math.toRadians(5);
 
     // == Flywheel ============================================================
     // TODO tune: ticks per rev of the flywheel (28 for a bare goBILDA/REV motor at 1:1).
     private static final double FLYWHEEL_TICKS_PER_REV = 28;
-    private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(15, 0, 0, 13);
-    private static final double RPM_TOLERANCE          = 250;
-
-    // TODO temporary: true runs the flywheel at full power whenever it should spin, ignoring the
-    // shot table RPM.  It counts as up to speed SPINUP_MS after starting.
-    public static final boolean FULL_SPEED = false;
-    private static final double SPINUP_MS  = 1000;
+    private static final double FLYWHEEL_MAX_RPM       = 5500;
+    private static final double RPM_TOLERANCE          = 400;
+    private static final double FLYWHEEL_IDLE_POWER    = 0.0;
 
     // == Hood ================================================================
     private static final double HOOD_MIN = 0.0;
@@ -101,7 +97,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public enum Mode { IDLE, MANUAL, TRACKING }
 
     private final OpMode   opMode;
-    private final Follower follower;
+    private final Follower drive;
     private DcMotorEx turret;
     private DcMotorEx flywheel;
     private Servo     hood;
@@ -120,6 +116,8 @@ public class ShooterSubsystem extends SubsystemBase {
     private double targetRPM        = 0;
     private double targetHood       = HOOD_MIN;
     private double targetTurretRad  = 0;
+    private double actualRPM        = 0;
+    private double actualTurretRad  = 0;
 
     // Latest solution (also computed when not tracking, for telemetry and tuning)
     private double distance         = 0;
@@ -128,9 +126,9 @@ public class ShooterSubsystem extends SubsystemBase {
     private double turretY          = 0;
 
     // == standard Methods ===================================
-    public ShooterSubsystem(OpMode myOpMode, Follower myFollower) {
+    public ShooterSubsystem(OpMode myOpMode, Follower drive) {
         opMode   = myOpMode;
-        follower = myFollower;
+        this.drive = drive;
     }
 
     public void init() {
@@ -146,7 +144,6 @@ public class ShooterSubsystem extends SubsystemBase {
         flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, FLYWHEEL_PIDF);
 
         // Move the hood to 0 now, rather than waiting for the first periodic() after start.
         targetHood = 0;
@@ -157,6 +154,10 @@ public class ShooterSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+
+        actualRPM        = flywheel.getVelocity() * 60.0 / FLYWHEEL_TICKS_PER_REV;
+        actualTurretRad  = turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
+
         computeSolution();
 
         if (mode == Mode.TRACKING) {
@@ -173,9 +174,9 @@ public class ShooterSubsystem extends SubsystemBase {
         opMode.telemetry.addData("SHOOTER", "%s %s %s  dist = %5.1f  ready = %b",
                 mode, redAlliance ? "RED" : "BLUE", farGoal ? "FAR" : "AUDIENCE", distance, isReady());
         opMode.telemetry.addData("  Goal dist audience : far", "%5.1f : %5.1f", dAudience, dFar);
-        opMode.telemetry.addData("  RPM tgt : act", "%5.0f : %5.0f", targetRPM, getRPM());
+        opMode.telemetry.addData("  RPM tgt : act", "%5.0f : %5.0f", targetRPM, getActualRPM());
         opMode.telemetry.addData("  Turret tgt : act", "%5.1f : %5.1f",
-                Math.toDegrees(targetTurretRad), Math.toDegrees(getTurretAngle()));
+                Math.toDegrees(targetTurretRad), Math.toDegrees(getactualTurretRad()));
 
         // Where the turret should point to hit the cell, computed every loop even when not
         // tracking.  "robot" is relative to robot forward (+ CCW, before soft limits);
@@ -201,7 +202,7 @@ public class ShooterSubsystem extends SubsystemBase {
         mode = Mode.IDLE;
         targetRPM = 0;
         if (turret != null) {
-            targetTurretRad = getTurretAngle();
+            targetTurretRad = getactualTurretRad();
         }
     }
 
@@ -216,11 +217,9 @@ public class ShooterSubsystem extends SubsystemBase {
     /** True when the flywheel is at speed and the turret (or the robot, if no turret) is on target. */
     public boolean isReady() {
         boolean onTarget = TURRET_ENABLED
-                ? Math.abs(targetTurretRad - getTurretAngle()) < TURRET_TOLERANCE_RAD && turretTargetReachable()
+                ? Math.abs(targetTurretRad - getactualTurretRad()) < TURRET_TOLERANCE_RAD && turretTargetReachable()
                 : mode != Mode.TRACKING || Math.abs(getAimError()) < AIM_TOLERANCE_RAD;
-        boolean atSpeed = FULL_SPEED
-                ? spinupTimer.milliseconds() > SPINUP_MS
-                : Math.abs(getRPM() - targetRPM) < RPM_TOLERANCE;
+        boolean atSpeed = Math.abs(getActualRPM() - targetRPM) < RPM_TOLERANCE;
         opMode.telemetry.addData("On Target",onTarget);
         opMode.telemetry.addData("At Speed",atSpeed);
         return mode != Mode.IDLE
@@ -235,8 +234,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     /** How far to turn the robot (radians, + is CCW) to point straight at the aim point. */
-    public double getAimError() {
-        return Angle.normalizeSigned(getAimHeading() - follower.pose().heading());
+    public double getAimError() { return Angle.normalizeSigned(getAimHeading() - drive.pose().heading());
     }
 
     /** Distance (inches) from the turret to the (virtual) target. */
@@ -248,12 +246,10 @@ public class ShooterSubsystem extends SubsystemBase {
         return mode;
     }
 
-    public double getRPM() {
-        return flywheel.getVelocity() * 60.0 / FLYWHEEL_TICKS_PER_REV;
-    }
-
     /** Turret angle relative to robot forward, radians, + is CCW. */
-    public double getTurretAngle() {
+
+    public double getActualRPM() {return actualRPM;}
+    public double getactualTurretRad() {
         return turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
     }
 
@@ -268,7 +264,7 @@ public class ShooterSubsystem extends SubsystemBase {
         Pose far      = redAlliance ? RED_GOAL_FAR      : BLUE_GOAL_FAR;
         Pose audience = redAlliance ? RED_GOAL_AUDIENCE : BLUE_GOAL_AUDIENCE;
 
-        Pose robot = follower.pose();
+        Pose robot = drive.pose();
         dFar      = robot.distance(far);
         dAudience = robot.distance(audience);
         if (farGoal && dAudience < dFar - GOAL_SWITCH_HYSTERESIS) {
@@ -281,8 +277,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     /** Computes the shoot-on-the-move firing solution from odometry. */
     private void computeSolution() {
-        Pose     pose    = follower.pose();
-        Velocity vel     = follower.velocity();   // field frame, inches/s
+        Pose     pose    = drive.pose();
+        Velocity vel     = drive.velocity();   // field frame, inches/s
         double   heading = pose.heading();
 
         // Turret pivot in field coordinates.
@@ -313,7 +309,7 @@ public class ShooterSubsystem extends SubsystemBase {
     /** Turret angle (relative to robot forward) that points at a field location. */
     private double turretAngleTo(double x, double y) {
         double fieldAngle = Math.atan2(y - turretY, x - turretX);
-        double angle = Angle.normalizeSigned(fieldAngle - follower.pose().heading());
+        double angle = Angle.normalizeSigned(fieldAngle - drive.pose().heading());
         return Range.clip(angle, TURRET_MIN_RAD, TURRET_MAX_RAD);
     }
 
@@ -321,7 +317,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private boolean turretTargetReachable() {
         if (mode != Mode.TRACKING) return true;
         double fieldAngle = Math.atan2(shot.aimY - turretY, shot.aimX - turretX);
-        double angle = Angle.normalizeSigned(fieldAngle - follower.pose().heading());
+        double angle = Angle.normalizeSigned(fieldAngle - drive.pose().heading());
         return angle >= TURRET_MIN_RAD && angle <= TURRET_MAX_RAD;
     }
 
@@ -347,27 +343,31 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     private void applyOutputs() {
+
+        // Control Turret
         // Turret: P on angle + feedforward to cancel chassis rotation.
-        double error = targetTurretRad - getTurretAngle();
+        double error = targetTurretRad - getactualTurretRad();
         double power = error * TURRET_KP;
         if (mode == Mode.TRACKING && TURRET_ENABLED) {
-            power -= follower.velocity().omega * TURRET_KV;
+            power -= drive.velocity().omega * TURRET_KV;
         }
         // Never drive past the soft limits.
-        double angle = getTurretAngle();
+        double angle = getactualTurretRad();
         if ((angle >= TURRET_MAX_RAD && power > 0) || (angle <= TURRET_MIN_RAD && power < 0)) {
             power = 0;
         }
         turret.setPower(Range.clip(power, -TURRET_MAX_POWER, TURRET_MAX_POWER));
 
-        if (FULL_SPEED) {
-            boolean spinning = targetRPM > 0;
-            if (spinning && !wasSpinning) spinupTimer.reset();
-            wasSpinning = spinning;
-            flywheel.setPower(spinning ? 1.0 : 0.0);
+        // Control Flywheel Switch between full power and calculated power.
+        if (targetRPM > 0) {
+            error = targetRPM - actualRPM;
+            double ff = targetRPM / FLYWHEEL_MAX_RPM;
+            flywheel.setPower(ff + ((error / FLYWHEEL_MAX_RPM) * 2) );
         } else {
-            flywheel.setVelocity(targetRPM * FLYWHEEL_TICKS_PER_REV / 60.0);
+            flywheel.setPower(FLYWHEEL_IDLE_POWER);
         }
+
+        // Control Hood Angle
         hood.setPosition(Range.clip(targetHood, HOOD_MIN, HOOD_MAX));
     }
 
