@@ -32,7 +32,7 @@ public class Path_NearCenter {
         auto.addCommands(robot.shooter.startTrackingCommand(), robot.intake.shootAllCommand());
         auto.addCommands(new ParallelCommandGroup(path_start(), robot.intake.intakeUntilFullCommand()));
         auto.addCommands(path_2(),robot.intake.shootAllCommand());
-        auto.addCommands(new ParallelCommandGroup(path_3(), robot.intake.intakeUntilFullCommand()));
+        auto.addCommands(path_3(),robot.intake.intakeUntilFullCommand());
         auto.addCommands(path_4(),robot.intake.shootAllCommand(),robot.shooter.idleCommand());
 
         return auto;
