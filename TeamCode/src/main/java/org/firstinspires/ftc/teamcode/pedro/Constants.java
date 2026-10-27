@@ -91,6 +91,20 @@ public class Constants {
 
     // == Prototype =============================================================
 
+    // Integral term for the last inch, added to the prototype's secondary (under 2.5 in)
+    // translational controllers.  Accumulates only within END_I_ZONE inches of the target,
+    // shrinks by END_I_DECAY each loop, and is capped so it adds at most END_I_GAIN * END_I_MAX
+    // power (0.15).  If the robot overshoots or wobbles at the end, lower END_I_GAIN.
+    private static final double END_I_GAIN  = 0.3;
+    private static final double END_I_ZONE  = 1.0;    // inches
+    private static final double END_I_DECAY = 0.98;   // per loop
+    private static final double END_I_MAX   = 0.5;    // inch-seconds
+
+    /** A new integral controller each call: each one keeps its own running total. */
+    private static Controller endIntegral() {
+        return Controller.integral(() -> END_I_GAIN, () -> END_I_ZONE, () -> END_I_DECAY, () -> END_I_MAX);
+    }
+
     // Prototype gearing: left side reversed.
     private static final MecanumConfig PROTOTYPE_DRIVETRAIN = new MecanumConfig(c -> {
         sharedDrivetrain(c);
@@ -112,9 +126,11 @@ public class Constants {
     private static final Configuration<ForesightConfig> PROTOTYPE_FORESIGHT = (
         c -> {
             Controller primaryTranslationalForward = Controller.proportional(0.18257094263290366);
-            Controller secondaryTranslationalForward = Controller.proportional(0.06745508491742425);
+            Controller secondaryTranslationalForward = Controller.proportional(0.06745508491742425)
+                    .plus(endIntegral());
             Controller primaryTranslationalLateral = Controller.proportional(0.2716341796782243);
-            Controller secondaryTranslationalLateral = Controller.proportional(0.10036157119214668);
+            Controller secondaryTranslationalLateral = Controller.proportional(0.10036157119214668)
+                    .plus(endIntegral());
 
             c.forwardTranslational.set(Controller.piecewise(secondaryTranslationalForward).put(2.5, primaryTranslationalForward));
             c.strafeTranslational.set(Controller.piecewise(secondaryTranslationalLateral).put(2.5, primaryTranslationalLateral));
@@ -132,6 +148,12 @@ public class Constants {
             c.maxAchievableStrafeVelocity.set(34.43322584962535);
             c.naturalForwardDeceleration.set(33.75201289593079);
             c.naturalStrafeDeceleration.set(47.4271060723835);
+
+            // End of path: hold with full translational gain (default 0.45 was too weak to move the
+            // last couple of inches), and give it up to 500 ms (default 100) to settle before the
+            // path command finishes and the next one starts.
+            c.holdPointTranslationalScaling.set(1.0);
+            c.timeoutConstraint.set(500.0);
         }
     );
 

@@ -23,11 +23,18 @@ public class BiobuzzRobot {
     }
 
     public void initialize() {
+        initialize(0);
+    }
+
+    /** maxPathSpeed caps path following (inches/sec); 0 = no cap. */
+    public void initialize(double maxPathSpeed) {
         vision = new VisionSubsystem(opMode);
         vision.init();
 
         // Setup robot
-        drive = Constants.create(opMode.hardwareMap);
+        drive = maxPathSpeed > 0
+                ? Constants.create(opMode.hardwareMap, maxPathSpeed)
+                : Constants.create(opMode.hardwareMap);
 
         // Shooter aims from odometry, so it needs the drive's Follower.
         shooter = new ShooterSubsystem(opMode, drive);

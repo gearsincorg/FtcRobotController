@@ -58,6 +58,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // false: the turret is held at 0 (straight ahead) and the chassis turns to aim instead
     // (teleop point-at-goal mode).  isReady() then checks the robot heading.
     public static final boolean TURRET_ENABLED = true;
+    public static final boolean TURRET_SIMULATED = false;
     private static final double AIM_TOLERANCE_RAD     = Math.toRadians(10);
 
     // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
@@ -70,8 +71,12 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_TOLERANCE_RAD  = Math.toRadians(5);
 
     // == Flywheel ============================================================
-    // TODO tune: ticks per rev of the flywheel (28 for a bare goBILDA/REV motor at 1:1).
-    private static final double FLYWHEEL_TICKS_PER_REV = 28;
+    // Ticks per rev of the flywheel (28 for a bare goBILDA/REV motor at 1:1).  Check with
+    // util/FlywheelTestOpMode: full power should read close to the motor's free speed.
+    public static final double FLYWHEEL_TICKS_PER_REV = 28;
+
+    public static double rpmToTicksPerSec(double rpm) { return rpm * FLYWHEEL_TICKS_PER_REV / 60.0; }
+    public static double ticksPerSecToRpm(double tps) { return tps * 60.0 / FLYWHEEL_TICKS_PER_REV; }
     private static final double FLYWHEEL_MAX_RPM       = 5500;
     private static final double RPM_TOLERANCE          = 400;
     private static final double FLYWHEEL_IDLE_POWER    = 0.0;
@@ -144,6 +149,8 @@ public class ShooterSubsystem extends SubsystemBase {
         flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
+            new PIDFCoefficients(3,0.5,0,10.0));
 
         // Move the hood to 0 now, rather than waiting for the first periodic() after start.
         targetHood = 0;
@@ -155,7 +162,7 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
 
-        actualRPM        = flywheel.getVelocity() * 60.0 / FLYWHEEL_TICKS_PER_REV;
+        actualRPM        = ticksPerSecToRpm(flywheel.getVelocity());
         actualTurretRad  = turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
 
         computeSolution();
@@ -246,9 +253,20 @@ public class ShooterSubsystem extends SubsystemBase {
 
     /** Turret angle relative to robot forward, radians, + is CCW. */
 
-    public double getActualRPM() {return actualRPM;}
+    public double getActualRPM() {
+        if (TURRET_SIMULATED) {
+            return targetRPM;
+        } else {
+            return actualRPM;
+        }
+    }
+
     public double getactualTurretRad() {
-        return turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
+        if (TURRET_SIMULATED) {
+            return targetTurretRad;
+        } else {
+            return turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
+        }
     }
 
     public double getTargetRPM()       { return targetRPM; }
@@ -358,7 +376,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         // Control Flywheel Switch between full power and calculated power.
         if (targetRPM > 0) {
-            flywheel.setVelocity(targetRPM/2);
+            flywheel.setVelocity(rpmToTicksPerSec(targetRPM));   // setVelocity takes ticks/s
         } else {
             flywheel.setPower(FLYWHEEL_IDLE_POWER);
         }

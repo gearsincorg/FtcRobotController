@@ -26,7 +26,7 @@ public class GFORCE_Auto extends CommandOpMode {
         super.reset();
 
         // Initialize Subsystems
-        robot.initialize();
+        robot.initialize(AUTO_MAX_SPEED);
         autoNearCenter = new Path_NearCenter(robot);
         autoFarCenter = new Path_FarCenter(robot);
     }
@@ -67,6 +67,9 @@ public class GFORCE_Auto extends CommandOpMode {
         telemetry.addData("Heading", Math.toDegrees(robot.drive.pose().heading()));
         telemetry.addData("Follower Mode", robot.drive.mode());
         telemetry.addData("busy", robot.drive.isBusy());
+        if (robot.drive.following() || robot.drive.holding()) {
+            telemetry.addData("To path end (in)", "%5.2f", robot.drive.distanceToEndpoint());
+        }
         telemetry.update();
     }
 }

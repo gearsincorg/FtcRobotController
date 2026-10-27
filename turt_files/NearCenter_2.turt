@@ -11,7 +11,7 @@
     "locked": false,
     "heading": "linear",
     "startDeg": 180,
-    "endDeg": 90
+    "endDeg": 90.76388879871274
   },
   "lines": [
     {
@@ -51,7 +51,7 @@
       "id": "mvpfoxvw-qts8zx",
       "name": "FarFlower",
       "endPoint": {
-        "x": 48.41123683183768,
+        "x": 48,
         "y": 133.25595005852517,
         "heading": "tangential",
         "startDeg": 90,
@@ -77,7 +77,8 @@
       "waitAfterMs": 0,
       "waitBeforeName": "",
       "waitAfterName": "",
-      "isChain": true
+      "isChain": true,
+      "hidden": false
     }
   ],
   "sequence": [
