@@ -67,10 +67,10 @@ public class Path_NearCenter {
         final Pose transition = poseFactory.of(32.0629, 32.8878, 90);
         final Pose transitionControl1 = poseFactory.of(30.0712, 18.7686, 0);
         final Pose transitionControl2 = poseFactory.of(32.0629, 22.1437, 0);
-        final Pose farFlower = poseFactory.of(48, 133.256, 90.2053);
-        final Pose farFlowerControl1 = poseFactory.of(32.0629, 54.0812, 0);
-        final Pose farFlowerControl2 = poseFactory.of(28.2895, 125.8201, 0);
-        final Pose farFlowerControl3 = poseFactory.of(48.4112, 102.4128, 0);
+        final Pose farFlower = poseFactory.of(48, 133.256, 94.6325);
+        final Pose farFlowerControl1 = poseFactory.of(32.0629, 84.5142, 0);
+        final Pose farFlowerControl2 = poseFactory.of(32.0629, 125.1178, 0);
+        final Pose farFlowerControl3 = poseFactory.of(51.4545, 93.7511, 0);
 
         Path path_2Path = Paths.path(
                 curve(start, transitionControl1, transitionControl2, transition).linear(start, transition),
@@ -82,8 +82,8 @@ public class Path_NearCenter {
 
     // Generated from NearCenter_3.turt
     public FollowPathCommand path_3() {
-        final Pose start = poseFactory.of(50.09, 130.51, 90);
-        final Pose nearFlower = poseFactory.of(13.9818, 47.8964, 180);
+        final Pose start = poseFactory.of(48, 130.51, 90);
+        final Pose nearFlower = poseFactory.of(14, 48, 180);
         final Pose nearFlowerControl1 = poseFactory.of(21.4885, 123.7156, 0);
         final Pose nearFlowerControl2 = poseFactory.of(44.759, 40.7483, 0);
 
