@@ -194,7 +194,8 @@ public class GFORCE_Teleop extends CommandOpMode {
         // Right Bumper: fire while held (waits for the shooter to be ready, then feeds until
         // released).  Overrides eject and clear.
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-            .whileHeld(RobotCommands.shootWhileHeld(robot));
+            .whenActive(robot.shooter.trackCommand())
+            .whenInactive(robot.shooter.idleCommand());
 
         // B: intake out while held (the transfer holds its balls)
         driverOp.getGamepadButton(GamepadKeys.Button.B)

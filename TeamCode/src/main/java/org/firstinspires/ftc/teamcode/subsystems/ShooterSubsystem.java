@@ -55,8 +55,8 @@ public class ShooterSubsystem extends SubsystemBase {
     // == Turret ==============================================================
     // false: the turret is held at 0 (straight ahead) and the chassis turns to aim instead
     // (teleop point-at-goal mode).  isReady() then checks the robot heading.
-    public static final boolean TURRET_ENABLED = true;
-    public static final boolean TURRET_SIMULATED = true;
+    public static final boolean TURRET_ENABLED        = true;
+    public static final boolean TURRET_SIMULATED      = false;
     private static final double AIM_TOLERANCE_RAD     = Math.toRadians(10);
 
     // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
@@ -87,11 +87,11 @@ public class ShooterSubsystem extends SubsystemBase {
     // TODO placeholder: fill with measurements from ShooterTuningOpMode.
     // Rows sorted by distance: { distance (in), flywheel RPM, hood servo position, flight time (s) }
     private static final double[][] SHOT_TABLE = {
-        {  24, 4500, 0.20, 0.30 },
-        {  48, 4500, 0.35, 0.40 },
-        {  72, 4500, 0.50, 0.50 },
-        {  96, 4500, 0.60, 0.60 },
-        { 120, 4500, 0.70, 0.70 },
+        {  24, 4400, 0.20, 0.30 },
+        {  48, 4400, 0.35, 0.40 },
+        {  72, 4400, 0.50, 0.50 },
+        {  96, 4400, 0.60, 0.60 },
+        { 120, 4400, 0.70, 0.70 },
     };
 
     // Number of iterations used to converge the shoot-on-the-move solution.
