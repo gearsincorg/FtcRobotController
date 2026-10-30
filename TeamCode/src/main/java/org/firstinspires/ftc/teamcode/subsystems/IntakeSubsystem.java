@@ -11,11 +11,12 @@ import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.FunctionalCommand;
 import com.seattlesolvers.solverslib.command.StartEndCommand;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 
 import java.util.function.BooleanSupplier;
 
 /**
- * Collect and transfer: intake motor, gate servo and feeder motor, with four slot sensors.
+ * Collect and transfer: intake motor, gate servo and feeder (transfer) motor, with four slot sensors.
  *
  *   - the intake motor pulls balls in at the mouth
  *   - the feeder moves the whole column toward the gate / shooter
@@ -25,19 +26,17 @@ import java.util.function.BooleanSupplier;
  * The ball count is simply the number of sensors that see a ball (briefly debounced).  No sensor
  * seeing a ball is "empty", all four is "full".  Nothing is inferred from a ball passing a sensor.
  *
- * What the motors are doing (Mode) is separate from the ball count:
+ * The mode is worked out every loop from what the driver is holding and the ball count, highest
+ * priority first:
  *
- *   IDLE       everything off, gate closed
- *   INTAKING   intake in, feeder slowly packs balls against the closed gate -> REJECTING when full
- *   REJECTING  intake reversed briefly to spit out a 5th ball, feeder holds the four
- *   SHOOTING   gate open, fires the whole load in one volley, steps WAIT_READY -> FEED -> CLEARING:
- *                WAIT_READY  wait for the shooter to be ready
- *                FEED        run the feeder until the column reads empty (or VOLLEY_TIMEOUT_MS)
- *                CLEARING    keep feeding SHOT_CLEAR_MS so the last ball leaves the flywheel
- *              Auto fires a volley with shootAllCommand(); teleop fires while a button is held
- *              with shootWhileHeldCommand().
- *   EJECTING   intake and feeder reversed: purges every ball out of the intake
- *   MANUAL     powers and gate set directly (test opmode, gamepad 2 fallback)
+ *   SHOOTING   shoot held and the shooter is up to speed.  Gate open, intake in,
+ *              feeder feeds.  The only mode with the gate open.
+ *   SPINUP     shoot held but the shooter isn't up to speed (yet, or again after a shot slowed it):
+ *              intake and feeder stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), clear and eject are ignored.
+ *   CLEAR_ALL  clear held: intake out, feeder reversed, purges every ball.
+ *   EJECTING   eject held: intake out, feeder holds the column.
+ *   FULL       four balls: intake out (spits a 5th ball), feeder packs the column.
+ *   INTAKING   otherwise: intake in, feeder feeds the column against the closed gate.
  *
  * Until the sensors are in use, SIMULATE_SENSORS swaps them for SimulatedSlots.
  */
@@ -54,24 +53,22 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final String[] SLOT_NAMES = { "slot1", "slot2", "slot3", "slot4" };
 
     // == Tuning (all placeholders) ===========================================
-    private static final double INTAKE_POWER       = 1.0;
-    private static final double PACK_POWER         = 1.0;   // feeder while intaking, against the closed gate
-    private static final double HOLD_POWER         = 0.2;   // feeder while rejecting, keeps the four in place
-    private static final double FEED_POWER         = 1.0;
-    private static final double REJECT_POWER       = -1.0;
-    private static final double EJECT_POWER        = -1.0;
+    private static final double INTAKE_POWER       = 1.0;   // intake in   (INTAKING, SHOOTING)
+    private static final double REJECT_POWER       = -1.0;  // intake out  (FULL, EJECTING, CLEAR_ALL)
+    private static final double FEED_POWER         = 1.0;   // feeder      (INTAKING, SHOOTING)
+    private static final double PACK_POWER         = 1.0;   // feeder      (FULL), against the closed gate
+    private static final double HOLD_POWER         = 0.2;   // feeder      (EJECTING), keeps the column in place
+    private static final double EJECT_POWER        = -1.0;  // feeder      (CLEAR_ALL)
 
-    // TODO tune with Util/IntakeTestOpMode.
+    // TODO tune on the robot.
     public static final double GATE_CLOSED         = 0.0;
     public static final double GATE_OPEN           = 0.5;
 
     private static final double COUNT_DEBOUNCE_MS  = 100;   // sensor count must hold this long
-    private static final double REJECT_MS          = 400;
-    private static final double VOLLEY_TIMEOUT_MS  = 3000;  // stop feeding even if a sensor still sees a ball
-    private static final double SHOT_CLEAR_MS      = 300;   // last ball leaves the flywheel
+    private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
+    private static final double SHOT_CLEAR_MS      = 300;   // auto volley: last ball leaves the flywheel
 
-    public enum Mode     { IDLE, INTAKING, REJECTING, SHOOTING, EJECTING, MANUAL }
-    public enum ShotStep { WAIT_READY, FEED, CLEARING }
+    public enum Mode { INTAKING, FULL, EJECTING, CLEAR_ALL, SPINUP, SHOOTING }
 
     private final OpMode          opMode;
     private final BooleanSupplier shooterReady;
@@ -87,21 +84,23 @@ public class IntakeSubsystem extends SubsystemBase {
     private int       ballCount     = 0;      // debounced
     private int       pendingCount  = 0;
 
+    // Driver requests
+    private boolean  shootHeld       = false;
+    private boolean  clearHeld       = false;
+    private boolean  ejectHeld       = false;
+    private boolean  fedThisPress    = false;  // SHOOTING has been reached since shoot was pressed
+
     // State
-    private Mode     mode          = Mode.IDLE;
-    private ShotStep shotStep      = ShotStep.WAIT_READY;
-    private boolean  intakeHeld    = false;
+    private Mode     mode          = Mode.INTAKING;
 
     // Outputs (also what the simulation reacts to)
     private double  intakePower    = 0;
     private double  feederPower    = 0;
     private double  gatePosition   = GATE_CLOSED;
-    private double  manualIntake   = 0;
-    private double  manualFeeder   = 0;
-    private double  manualGate     = GATE_CLOSED;
 
-    private final ElapsedTime countTimer    = new ElapsedTime();   // time the raw count has been stable
-    private final ElapsedTime modeTimer     = new ElapsedTime();   // time in the current mode / step
+    private final ElapsedTime countTimer = new ElapsedTime();   // time the raw count has been stable
+    private final ElapsedTime volleyTimer = new ElapsedTime();  // time since this press first reached SHOOTING
+    private final ElapsedTime emptyTimer = new ElapsedTime();   // time the count has read empty
 
     // == standard Methods ===================================
     /** shooterReady: true when the shooter can take a ball (normally ShooterSubsystem::isReady). */
@@ -131,14 +130,15 @@ public class IntakeSubsystem extends SubsystemBase {
 
         readSensors();
         ballCount = pendingCount = rawCount();      // trust the first reading (preload)
-        setMode(Mode.IDLE);
-        applyOutputs();
+
+        // Everything off until the first loop after START (the scheduler doesn't run during init).
+        set(0, 0, GATE_CLOSED);
     }
 
     @Override
     public void periodic() {
         readSensors();
-        updateState();
+        updateMode();
         applyOutputs();
         showTelemetry();
     }
@@ -149,8 +149,7 @@ public class IntakeSubsystem extends SubsystemBase {
         }
         opMode.telemetry.addData("In:Feed:Gate", "%4.2f, %4.2f, %4.2f",
                 intakePower, feederPower, gatePosition);
-        opMode.telemetry.addData("BALLS", "%d  [ %s]  %s",
-                ballCount, pattern, modeName());
+        opMode.telemetry.addData("BALLS", "%d  [ %s]  %s", ballCount, pattern, mode);
     }
 
     /** Read the sensors without running anything else (e.g. to show the preload during init). */
@@ -160,62 +159,18 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // == Requests =============================================================
 
-    /** Start collecting (stays on while held; stops and rejects by itself when full). */
-    public void startIntake() {
-        intakeHeld = true;
-        if (mode != Mode.SHOOTING && mode != Mode.EJECTING && !isFull()) {
-            setMode(Mode.INTAKING);
-        }
+    public void startShoot() { shootHeld = true; }
+
+    public void stopShoot() {
+        shootHeld = false;
+        fedThisPress = false;
     }
 
-    public void stopIntake() {
-        intakeHeld = false;
-        if (mode == Mode.INTAKING) {
-            setMode(Mode.IDLE);
-        }
-    }
+    public void startClear() { clearHeld = true; }
+    public void stopClear()  { clearHeld = false; }
 
-    /** Fire every ball in one volley (stops when the column reads empty). */
-    public void shootAll() {
-        if (isEmpty()) {
-            return;
-        }
-        setMode(Mode.SHOOTING);
-        setShotStep(ShotStep.WAIT_READY);
-    }
-
-    public void cancelShoot() {
-        if (mode == Mode.SHOOTING) {
-            setMode(Mode.IDLE);
-        }
-    }
-
-    /** Purge every ball out of the intake (overrides everything else). */
-    public void startEject() {
-        setMode(Mode.EJECTING);
-    }
-
-    public void stopEject() {
-        if (mode == Mode.EJECTING) {
-            setMode(Mode.IDLE);
-        }
-    }
-
-    /** Drive the hardware directly.  Sensors and counts keep updating. */
-    public void setManual(double intakePower, double feederPower, double gatePosition) {
-        manualIntake = intakePower;
-        manualFeeder = feederPower;
-        manualGate   = gatePosition;
-        if (mode != Mode.MANUAL) {
-            setMode(Mode.MANUAL);
-        }
-    }
-
-    public void clearManual() {
-        if (mode == Mode.MANUAL) {
-            setMode(Mode.IDLE);
-        }
-    }
+    public void startEject() { ejectHeld = true; }
+    public void stopEject()  { ejectHeld = false; }
 
     // Simulation helpers (do nothing with real sensors).
     public void simAddBall()     { if (sim != null) sim.addBall(); }
@@ -225,18 +180,23 @@ public class IntakeSubsystem extends SubsystemBase {
     // == Queries ==============================================================
 
     public Mode     getMode()     { return mode; }
-    public ShotStep getShotStep() { return shotStep; }
     public int      ballCount()   { return ballCount; }
     public boolean  isFull()      { return ballCount == slots.length; }
     public boolean  isEmpty()     { return ballCount == 0; }
-    public boolean  isShooting()  { return mode == Mode.SHOOTING; }
+    /** True while shoot is requested (SPINUP or SHOOTING). */
+    public boolean  isShooting()  { return shootHeld; }
     public String   slotPattern() { return pattern; }
 
-    public boolean isWaitingForShooter() {
-        return mode == Mode.SHOOTING && shotStep == ShotStep.WAIT_READY;
-    }
-
     public double getGatePosition() { return gatePosition; }
+
+    /** An auto volley is done: the column has read empty long enough, or we've fed too long. */
+    private boolean volleyDone() {
+        if (!fedThisPress) {
+            return false;
+        }
+        return (isEmpty() && emptyTimer.milliseconds() > SHOT_CLEAR_MS)
+                || volleyTimer.milliseconds() > VOLLEY_TIMEOUT_MS;
+    }
 
     // == Sensors ==============================================================
 
@@ -267,6 +227,10 @@ public class IntakeSubsystem extends SubsystemBase {
         } else if (countTimer.milliseconds() > COUNT_DEBOUNCE_MS) {
             ballCount = count;
         }
+
+        if (!isEmpty()) {
+            emptyTimer.reset();
+        }
     }
 
     private int rawCount() {
@@ -281,95 +245,51 @@ public class IntakeSubsystem extends SubsystemBase {
         return Math.abs(gatePosition - GATE_OPEN) < Math.abs(gatePosition - GATE_CLOSED);
     }
 
-    // == State machine =========================================================
+    // == Mode =================================================================
 
-    private void updateState() {
-        switch (mode) {
-            case IDLE:
-                if (intakeHeld && !isFull()) {
-                    setMode(Mode.INTAKING);
-                }
-                break;
-
-            case INTAKING:
-                if (isFull()) {
-                    setMode(Mode.REJECTING);
-                }
-                break;
-
-            case REJECTING:
-                if (modeTimer.milliseconds() > REJECT_MS) {
-                    setMode(Mode.IDLE);
-                }
-                break;
-
-            case SHOOTING:
-                updateShooting();
-                break;
-
-            default:
-                break;
+    /** Pick the mode from the driver's requests and the ball count, highest priority first. */
+    private void updateMode() {
+        Mode newMode;
+        if (shootHeld) {
+            // Shoot overrides clear and eject.  Feed only while the shooter is up to speed.
+            newMode = shooterReady.getAsBoolean() ? Mode.SHOOTING : Mode.SPINUP;
+        } else if (clearHeld) {
+            newMode = Mode.CLEAR_ALL;
+        } else if (ejectHeld) {
+            newMode = Mode.EJECTING;
+        } else if (isFull()) {
+            newMode = Mode.FULL;
+        } else {
+            newMode = Mode.INTAKING;
         }
-    }
 
-    /** One volley: wait for the shooter once, then feed until the column reads empty. */
-    private void updateShooting() {
-        switch (shotStep) {
-            case WAIT_READY:
-                if (shooterReady.getAsBoolean()) {
-                    setShotStep(ShotStep.FEED);
-                }
-                break;
-
-            case FEED:
-                if (isEmpty() || modeTimer.milliseconds() > VOLLEY_TIMEOUT_MS) {
-                    setShotStep(ShotStep.CLEARING);
-                }
-                break;
-
-            case CLEARING:
-                if (modeTimer.milliseconds() > SHOT_CLEAR_MS) {
-                    setMode(Mode.IDLE);
-                }
-                break;
+        if (newMode == Mode.SHOOTING && !fedThisPress) {
+            fedThisPress = true;
+            volleyTimer.reset();
         }
-    }
-
-    private void setMode(Mode newMode) {
         mode = newMode;
-        modeTimer.reset();
-    }
-
-    private void setShotStep(ShotStep step) {
-        shotStep = step;
-        modeTimer.reset();
     }
 
     private void applyOutputs() {
         switch (mode) {
-            case INTAKING:
-                set(INTAKE_POWER, PACK_POWER, GATE_CLOSED);
-                break;
-            case REJECTING:
-                set(REJECT_POWER, HOLD_POWER, GATE_CLOSED);
-                break;
             case SHOOTING:
-                if (shotStep != ShotStep.WAIT_READY) {
-                    // The feeder moves the whole column; leave the intake off so we don't
-                    // collect more while shooting.
-                    set(0, FEED_POWER, GATE_OPEN);
-                } else {
-                    set(0, 0, GATE_OPEN);
-                }
+                set(INTAKE_POWER, FEED_POWER, GATE_OPEN);
+                break;
+            case SPINUP:
+                set(0, 0, GATE_CLOSED);
+                break;
+            case CLEAR_ALL:
+                set(REJECT_POWER, EJECT_POWER, GATE_CLOSED);
                 break;
             case EJECTING:
-                set(EJECT_POWER, EJECT_POWER, GATE_CLOSED);
+                set(REJECT_POWER, HOLD_POWER, GATE_CLOSED);
                 break;
-            case MANUAL:
-                set(manualIntake, manualFeeder, manualGate);
+            case FULL:
+                set(REJECT_POWER, PACK_POWER, GATE_CLOSED);
                 break;
+            case INTAKING:
             default:
-                set(0, 0, GATE_CLOSED);
+                set(INTAKE_POWER, FEED_POWER, GATE_CLOSED);
                 break;
         }
     }
@@ -383,44 +303,36 @@ public class IntakeSubsystem extends SubsystemBase {
         if (gate != null) gate.setPosition(gatePosition);
     }
 
-    private String modeName() {
-        return mode == Mode.SHOOTING ? "SHOOTING/" + shotStep : mode.toString();
-    }
-
     // == Command methods  ==========================================
+    // These don't require the subsystem, so holding shoot and clear together doesn't cancel one
+    // of them; updateMode() picks the winner.
 
-    /** Collect while scheduled (e.g. while a button is held). */
-    public Command intakeCommand() {
-        return new StartEndCommand(this::startIntake, this::stopIntake, this);
-    }
-
-    /** Collect until full (for auto; add a timeout). */
+    /** Wait until full (intaking is always on).  For auto; add a timeout. */
     public Command intakeUntilFullCommand() {
-        return new FunctionalCommand(
-                this::startIntake,
-                () -> {},
-                interrupted -> stopIntake(),
-                this::isFull,
-                this);
+        return new WaitUntilCommand(this::isFull);
     }
 
-    /** Fire every ball in one volley (auto); finishes when the last one has left.  Cancels if interrupted. */
+    /** Fire every ball in one volley (auto); finishes when the last one has left. */
     public Command shootAllCommand() {
         return new FunctionalCommand(
-                this::shootAll,
+                this::startShoot,
                 () -> {},
-                interrupted -> { if (interrupted) cancelShoot(); },
-                () -> mode != Mode.SHOOTING,
-                this);
+                interrupted -> stopShoot(),
+                this::volleyDone);
     }
 
-    /** Fire while scheduled (e.g. while a button is held); stops feeding when released. */
+    /** Fire while scheduled (e.g. while a button is held). */
     public Command shootWhileHeldCommand() {
-        return new StartEndCommand(this::shootAll, this::cancelShoot, this);
+        return new StartEndCommand(this::startShoot, this::stopShoot);
     }
 
-    /** Purge everything out of the intake while scheduled. */
+    /** Intake out while scheduled; the transfer holds its balls. */
     public Command ejectCommand() {
-        return new StartEndCommand(this::startEject, this::stopEject, this);
+        return new StartEndCommand(this::startEject, this::stopEject);
+    }
+
+    /** Purge every ball (intake and transfer reversed) while scheduled. */
+    public Command clearAllCommand() {
+        return new StartEndCommand(this::startClear, this::stopClear);
     }
 }

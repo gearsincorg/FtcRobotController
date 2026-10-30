@@ -44,7 +44,6 @@ import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Commands.RobotCommands;
-import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 @TeleOp(name = "G-FORCE TELEOP", group = "Competition")
@@ -109,7 +108,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     @Override
     public void run() {
         super.run();
-        gamepad2Intake();
+        gamepad2SimBalls();
         manualDrive();
         robot.update();
         showTelemetry();
@@ -190,17 +189,20 @@ public class GFORCE_Teleop extends CommandOpMode {
         // The shooter spins up and aims by itself when we're full, and spins down when empty.
         RobotCommands.bindAutoAim(robot);
 
-        // A: fire while held (waits for the shooter to be ready, then feeds until empty or released).
+        // The intake collects by itself (and spits out a 5th ball when full).
+
+        // Right Bumper: fire while held (waits for the shooter to be ready, then feeds until
+        // released).  Overrides eject and clear.
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
             .whileHeld(RobotCommands.shootWhileHeld(robot));
 
-        // Left Bumper: collect while held (stops and spits out extras by itself when full)
-        driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-            .whileHeld(robot.intake.intakeCommand());
-
-        // B: eject every ball out of the intake while held
+        // B: intake out while held (the transfer holds its balls)
         driverOp.getGamepadButton(GamepadKeys.Button.B)
             .whileHeld(robot.intake.ejectCommand());
+
+        // Y: clear every ball out (intake and transfer reversed) while held
+        driverOp.getGamepadButton(GamepadKeys.Button.Y)
+            .whileHeld(robot.intake.clearAllCommand());
 
         // Driver feedback
         new Trigger(robot.intake::isFull).whenActive(() -> gamepad1.rumble(300));
@@ -221,21 +223,8 @@ public class GFORCE_Teleop extends CommandOpMode {
         }
     }
 
-    /**
-     * Gamepad 2 fallback if the sensors fail: left stick = intake, right stick = feeder,
-     * hold X = gate open.  Letting go hands control back to the state machine.
-     * D-pad up / down adds / removes a simulated ball.
-     */
-    private void gamepad2Intake() {
-        double intakePower = -gamepad2.left_stick_y;
-        double feederPower = -gamepad2.right_stick_y;
-        if (Math.abs(intakePower) > 0.1 || Math.abs(feederPower) > 0.1 || gamepad2.x) {
-            robot.intake.setManual(intakePower, feederPower,
-                    gamepad2.x ? IntakeSubsystem.GATE_OPEN : IntakeSubsystem.GATE_CLOSED);
-        } else {
-            robot.intake.clearManual();
-        }
-
+    /** Gamepad 2 D-pad up / down adds / removes a simulated ball. */
+    private void gamepad2SimBalls() {
         if (gamepad2.dpad_up && !lastSimUp)     robot.intake.simAddBall();
         if (gamepad2.dpad_down && !lastSimDown) robot.intake.simRemoveBall();
         lastSimUp   = gamepad2.dpad_up;

@@ -87,11 +87,11 @@ public class ShooterSubsystem extends SubsystemBase {
     // TODO placeholder: fill with measurements from ShooterTuningOpMode.
     // Rows sorted by distance: { distance (in), flywheel RPM, hood servo position, flight time (s) }
     private static final double[][] SHOT_TABLE = {
-        {  24, 2400, 0.20, 0.30 },
-        {  48, 2800, 0.35, 0.40 },
-        {  72, 3200, 0.50, 0.50 },
-        {  96, 3600, 0.60, 0.60 },
-        { 120, 4000, 0.70, 0.70 },
+        {  24, 4500, 0.20, 0.30 },
+        {  48, 5400, 0.35, 0.40 },
+        {  72, 4500, 0.50, 0.50 },
+        {  96, 4500, 0.60, 0.60 },
+        { 120, 4500, 0.70, 0.70 },
     };
 
     // Number of iterations used to converge the shoot-on-the-move solution.

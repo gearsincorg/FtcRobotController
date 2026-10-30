@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
 import com.seattlesolvers.solverslib.command.Command;
-import com.seattlesolvers.solverslib.command.ParallelDeadlineGroup;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 
 import org.firstinspires.ftc.teamcode.BiobuzzRobot;
-import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 
 /**
  * Commands that need more than one subsystem, shared by teleop and auto.
@@ -45,10 +43,5 @@ public final class RobotCommands {
             robot.shooter.startTrackingCommand(),
             robot.intake.shootWhileHeldCommand()
         );
-    }
-
-    /** Collect while following a path; stops collecting when the path ends (or when full). */
-    public static Command collectWhile(Command path, IntakeSubsystem intake) {
-        return new ParallelDeadlineGroup(path, intake.intakeCommand());
     }
 }

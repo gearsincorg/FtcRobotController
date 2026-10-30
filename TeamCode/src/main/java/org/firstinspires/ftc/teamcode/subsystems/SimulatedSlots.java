@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class SimulatedSlots {
 
     private static final int    SLOTS      = 4;
-    private static final double PICKUP_MS  = 100;
+    private static final double PICKUP_MS  = 60000;
     private static final double SHOT_MS    = 250;
     private static final double EJECT_MS   = 300;
     private static final double MAX_DT     = 0.1;

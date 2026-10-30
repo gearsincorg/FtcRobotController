@@ -5,12 +5,14 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.robot.Robot;
 import com.qualcomm.robotcore.util.Range;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
+import org.firstinspires.ftc.teamcode.BiobuzzRobot;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
@@ -32,11 +34,9 @@ import org.firstinspires.ftc.teamcode.pedro.Constants;
 public class ShooterTuningOpMode extends CommandOpMode {
 
     // TODO placeholder: a known, easy-to-reproduce starting spot on the field.
-    private static final Pose TUNING_START_POSE = new Pose(72, 72, Math.toRadians(90));
-
-    private ShooterSubsystem shooterSubsystem;
-    private Follower         driveSubsystem;
-    private boolean          redAlliance = true;
+    private static final Pose TUNING_START_POSE = new Pose(72, 72, Math.toRadians(0));
+    private BiobuzzRobot robot;
+    private boolean      redAlliance = true;
 
     private double rpm       = 3000;
     private double hood      = 0.5;
@@ -44,12 +44,9 @@ public class ShooterTuningOpMode extends CommandOpMode {
 
     @Override
     public void initialize() {
-        driveSubsystem = Constants.create(hardwareMap);
-        driveSubsystem.setPose(TUNING_START_POSE);
-
-        shooterSubsystem = new ShooterSubsystem(this, driveSubsystem);
-        shooterSubsystem.init();
-        shooterSubsystem.setAlliance(redAlliance);
+        robot = new BiobuzzRobot(this);
+        robot.drive.setPose(TUNING_START_POSE);
+        robot.shooter.setAlliance(redAlliance);
 
         GamepadEx driverOp = new GamepadEx(gamepad1);
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_UP)
@@ -67,9 +64,10 @@ public class ShooterTuningOpMode extends CommandOpMode {
         driverOp.getGamepadButton(GamepadKeys.Button.B)
             .whenPressed(new InstantCommand(this::toggleTracking));
         driverOp.getGamepadButton(GamepadKeys.Button.X)
-            .whenPressed(new InstantCommand(() -> shooterSubsystem.setAlliance(redAlliance = !redAlliance)));
+            .whenPressed(new InstantCommand(() -> robot.shooter.setAlliance(redAlliance = !redAlliance)));
         driverOp.getGamepadButton(GamepadKeys.Button.TOUCHPAD)
-            .whenPressed(new InstantCommand(() -> driveSubsystem.setPose(TUNING_START_POSE)));
+            .whenPressed(new InstantCommand(() -> robot.drive.setPose(TUNING_START_POSE)));
+        // The intake collects by itself.
     }
 
     @Override
@@ -79,12 +77,12 @@ public class ShooterTuningOpMode extends CommandOpMode {
         DrivePowers powers = ManualDrive.fieldCentric(
                 -gamepad1.left_stick_y * 0.5, -gamepad1.left_stick_x * 0.5,
                 -gamepad1.right_stick_x * 0.5,
-                driveSubsystem.pose().heading() - TUNING_START_POSE.heading());
-        driveSubsystem.manual(powers);
-        driveSubsystem.update();
+                robot.drive.pose().heading() - TUNING_START_POSE.heading());
+        robot.drive.manual(powers);
+        robot.drive.update();
 
-        telemetry.addData("Pose", "%5.1f, %5.1f, %5.1f", driveSubsystem.pose().x(),
-                driveSubsystem.pose().y(), Math.toDegrees(driveSubsystem.pose().heading()));
+        telemetry.addData("Pose", "%5.1f, %5.1f, %5.1f", robot.drive.pose().x(),
+            robot.drive.pose().y(), Math.toDegrees(robot.drive.pose().heading()));
         telemetry.addData("Manual RPM : hood : turret", "%5.0f : %4.2f : %5.1f",
                 rpm, hood, Math.toDegrees(turretRad));
         telemetry.update();
@@ -94,16 +92,16 @@ public class ShooterTuningOpMode extends CommandOpMode {
         rpm       = Math.max(0, rpm + dRpm);
         hood      = Range.clip(hood + dHood, 0, 1);
         turretRad = turretRad + dTurret;
-        if (shooterSubsystem.getMode() != ShooterSubsystem.Mode.TRACKING) {
-            shooterSubsystem.setManual(rpm, hood, turretRad);
+        if (robot.shooter.getMode() != ShooterSubsystem.Mode.TRACKING) {
+            robot.shooter.setManual(rpm, hood, turretRad);
         }
     }
 
     private void toggleTracking() {
-        if (shooterSubsystem.getMode() == ShooterSubsystem.Mode.TRACKING) {
-            shooterSubsystem.setManual(rpm, hood, turretRad);
+        if (robot.shooter.getMode() == ShooterSubsystem.Mode.TRACKING) {
+            robot.shooter.setManual(rpm, hood, turretRad);
         } else {
-            shooterSubsystem.track();
+            robot.shooter.track();
         }
     }
 }
