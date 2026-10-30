@@ -88,7 +88,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // Rows sorted by distance: { distance (in), flywheel RPM, hood servo position, flight time (s) }
     private static final double[][] SHOT_TABLE = {
         {  24, 4500, 0.20, 0.30 },
-        {  48, 5400, 0.35, 0.40 },
+        {  48, 4500, 0.35, 0.40 },
         {  72, 4500, 0.50, 0.50 },
         {  96, 4500, 0.60, 0.60 },
         { 120, 4500, 0.70, 0.70 },

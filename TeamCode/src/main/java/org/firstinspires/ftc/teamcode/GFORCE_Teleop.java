@@ -187,7 +187,7 @@ public class GFORCE_Teleop extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> setHeadingTarget(270)));
 
         // The shooter spins up and aims by itself when we're full, and spins down when empty.
-        RobotCommands.bindAutoAim(robot);
+        // RobotCommands.bindAutoAim(robot);
 
         // The intake collects by itself (and spits out a 5th ball when full).
 

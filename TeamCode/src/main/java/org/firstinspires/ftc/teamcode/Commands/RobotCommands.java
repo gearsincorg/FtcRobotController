@@ -17,12 +17,14 @@ public final class RobotCommands {
      * Spin up and aim as soon as we're full; spin down once everything has been shot (or ejected).
      * Call once from initialize().  If only part of a load is fired, the shooter keeps tracking.
      */
-    public static void bindAutoAim(BiobuzzRobot robot) {
+    /* public static void bindAutoAim(BiobuzzRobot robot) {
         new Trigger(robot.intake::isFull)
             .whenActive(robot.shooter.startTrackingCommand());
         new Trigger(() -> robot.intake.isEmpty() && !robot.intake.isShooting())
             .whenActive(robot.shooter.idleCommand());
     }
+    */
+
 
     /** Aim, spin up and fire every ball in one volley; finishes when the last one has left. */
     public static Command shootAll(BiobuzzRobot robot) {

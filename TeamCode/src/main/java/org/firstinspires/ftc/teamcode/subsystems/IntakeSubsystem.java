@@ -54,9 +54,9 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // == Tuning (all placeholders) ===========================================
     private static final double INTAKE_POWER       = 1.0;   // intake in   (INTAKING, SHOOTING)
-    private static final double REJECT_POWER       = -1.0;  // intake out  (FULL, EJECTING, CLEAR_ALL)
+    private static final double REJECT_POWER       =-0.3;   // intake out  (FULL, EJECTING, CLEAR_ALL)
     private static final double FEED_POWER         = 1.0;   // feeder      (INTAKING, SHOOTING)
-    private static final double PACK_POWER         = 1.0;   // feeder      (FULL), against the closed gate
+    private static final double PACK_POWER         = 0.0;   // feeder      (FULL), against the closed gate
     private static final double HOLD_POWER         = 0.2;   // feeder      (EJECTING), keeps the column in place
     private static final double EJECT_POWER        = -1.0;  // feeder      (CLEAR_ALL)
 
@@ -279,7 +279,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 set(0, 0, GATE_CLOSED);
                 break;
             case CLEAR_ALL:
-                set(REJECT_POWER, EJECT_POWER, GATE_CLOSED);
+                set(EJECT_POWER, EJECT_POWER, GATE_CLOSED);
                 break;
             case EJECTING:
                 set(REJECT_POWER, HOLD_POWER, GATE_CLOSED);
