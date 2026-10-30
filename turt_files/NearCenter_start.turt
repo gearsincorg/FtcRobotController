@@ -1,13 +1,13 @@
 {
-  "version": "2.6.0",
+  "version": "2.6.1",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 57.463909481076854,
-    "y": 10,
+    "x": 55.12290284822473,
+    "y": 7.893094030433097,
     "heading": "linear",
     "locked": false,
     "startDeg": 180,

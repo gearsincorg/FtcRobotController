@@ -9,7 +9,7 @@ import org.firstinspires.ftc.teamcode.paths.Path_NearCenter;
 @Autonomous(name = "G-FORCE AUTO", group = "Competition")
 public class GFORCE_Auto extends CommandOpMode {
     // Top path speed in auto (inches/sec).  The production chassis can do about 94 forward.
-    private static final double AUTO_MAX_SPEED = 40;
+    private static final double AUTO_MAX_SPEED = 20;
     private static final long SHOOT_TIMEOUT_MS = 4000;
     private boolean autoStarted = false;
 

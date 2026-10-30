@@ -49,8 +49,8 @@ public class VisionSubsystem extends SubsystemBase {
     private AprilTagClusterDetection targetCluster = null;
 
     // Goal tip detection: how far the tag's pitch must change (degrees) to count as tipped.  Tune.
-    public static double TIP_DELTA_DEG = 10;
-    private double restPitch = Double.NaN;
+    public static double TIP_DEG = 5;
+    public static double TIP_THRESHOLD = 10;
 
     private int exposureStep = 0;  // 0 = waiting for camera, 1 = manual mode set, 2 = done
 
@@ -92,19 +92,15 @@ public class VisionSubsystem extends SubsystemBase {
 
     // == Target selection =========================================
 
-    /** Look for the cluster whose name contains this text (case sensitive). */
-    public void setTargetName(String name) {
-        targetName = name;
-    }
-
     /** Convenience for the "RED" / "BLUE" cluster names. */
     public void setAlliance(boolean areWeRed) {
-        setTargetName(areWeRed ? "RED" : "BLUE");
+        targetName =  (areWeRed ? "RED" : "BLUE");
     }
 
     public String getTargetName() {
         return targetName;
     }
+
 
     // == Pose data ================================================
 
@@ -189,7 +185,6 @@ public class VisionSubsystem extends SubsystemBase {
      */
     public Command waitForTipCommand() {
         return new SequentialCommandGroup(
-            new InstantCommand(() -> restPitch = Double.NaN),
             new WaitUntilCommand(this::isTipped));
     }
 
@@ -201,8 +196,7 @@ public class VisionSubsystem extends SubsystemBase {
     private boolean isTipped() {
         if (targetCluster == null) return false;
         double pitch = targetCluster.ftcPose.pitch;
-        if (Double.isNaN(restPitch)) restPitch = pitch;
-        return Math.abs(pitch - restPitch) >= TIP_DELTA_DEG;
+        return  Math.abs(pitch - TIP_DEG) <= TIP_THRESHOLD;
     }
 
     public Command stopStreamingCommand() {

@@ -45,7 +45,7 @@ public class Path_NearCenter {
 
     // Generated from NearCenter_start.turt
     public Pose getStartPose() {
-        return poseFactory.of(57.4639, 10, 180); // from start path in this name group
+        return poseFactory.of(55.1229, 7.8931, 180); // from start path in this name group
     }
 
     public FollowPathCommand path_start() {

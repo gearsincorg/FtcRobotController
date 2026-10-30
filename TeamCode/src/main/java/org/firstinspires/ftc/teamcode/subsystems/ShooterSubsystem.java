@@ -43,8 +43,6 @@ public class ShooterSubsystem extends SubsystemBase {
     // Each alliance has two goals; we aim at the nearer one.
     public static final Pose RED_GOAL_AUDIENCE  = new Pose(60, 54.5);
     public static final Pose RED_GOAL_FAR       = new Pose(60, 144 - 54.5);
-    public static final Pose BLUE_GOAL_AUDIENCE = new Pose(84, 54.5);
-    public static final Pose BLUE_GOAL_FAR      = new Pose(84, 144 - 54.5);
 
     // Only switch to the other alliance goal when it is this much closer (inches), so the
     // target doesn't flicker when the robot is about equidistant.
@@ -58,7 +56,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // false: the turret is held at 0 (straight ahead) and the chassis turns to aim instead
     // (teleop point-at-goal mode).  isReady() then checks the robot heading.
     public static final boolean TURRET_ENABLED = true;
-    public static final boolean TURRET_SIMULATED = false;
+    public static final boolean TURRET_SIMULATED = true;
     private static final double AIM_TOLERANCE_RAD     = Math.toRadians(10);
 
     // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
@@ -277,8 +275,8 @@ public class ShooterSubsystem extends SubsystemBase {
 
     /** The alliance goal we're aiming at: the nearer one, with hysteresis. */
     private Pose target() {
-        Pose far      = redAlliance ? RED_GOAL_FAR      : BLUE_GOAL_FAR;
-        Pose audience = redAlliance ? RED_GOAL_AUDIENCE : BLUE_GOAL_AUDIENCE;
+        Pose far      =  RED_GOAL_FAR;
+        Pose audience =  RED_GOAL_AUDIENCE;
 
         Pose robot = drive.pose();
         dFar      = robot.distance(far);

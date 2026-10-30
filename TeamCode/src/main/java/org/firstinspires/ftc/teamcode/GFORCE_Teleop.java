@@ -65,10 +65,10 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double MAX_SNAP_TURN = 0.6;
 
     // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
-    private static final Pose RESET_POSE = new Pose(56, 9, Math.toRadians(90));
+    private static final Pose RESET_POSE = new Pose(56, 9, Math.toRadians(180));
 
     // Pedro field direction that "stick forward" means to the driver (away from the driver station).
-    private static final double DRIVER_FORWARD = Math.toRadians(90);
+    private static final double DRIVER_FORWARD = Math.toRadians(0);
 
     // class Methods
     private Constants.Chassis   chassis;
@@ -179,28 +179,19 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         // D-pad turns to a field heading (as the driver sees it).  Twisting the stick takes over.
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_UP)
-            .whenPressed(new InstantCommand(() -> setHeadingTarget(90)));
-        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
-            .whenPressed(new InstantCommand(() -> setHeadingTarget(180)));
-        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
-            .whenPressed(new InstantCommand(() -> setHeadingTarget(270)));
-        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
             .whenPressed(new InstantCommand(() -> setHeadingTarget(0)));
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+            .whenPressed(new InstantCommand(() -> setHeadingTarget(90)));
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+            .whenPressed(new InstantCommand(() -> setHeadingTarget(180)));
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+            .whenPressed(new InstantCommand(() -> setHeadingTarget(270)));
 
         // The shooter spins up and aims by itself when we're full, and spins down when empty.
         RobotCommands.bindAutoAim(robot);
 
-        // Point-at-goal: on by itself when full, off when empty; Right Stick press toggles it,
-        // and starts or stops the shooter with it.
-        driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
-            .whenPressed(new InstantCommand(() -> toggleAimAtGoal()));
-        new Trigger(robot.intake::isFull)
-            .whenActive(() -> aimAtGoal = true);
-        new Trigger(() -> robot.intake.isEmpty() && !robot.intake.isShooting())
-            .whenActive(() -> aimAtGoal = false);
-
         // A: fire while held (waits for the shooter to be ready, then feeds until empty or released).
-        driverOp.getGamepadButton(GamepadKeys.Button.A)
+        driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
             .whileHeld(RobotCommands.shootWhileHeld(robot));
 
         // Left Bumper: collect while held (stops and spits out extras by itself when full)
