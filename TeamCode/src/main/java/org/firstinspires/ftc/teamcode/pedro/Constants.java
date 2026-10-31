@@ -34,10 +34,14 @@ public class Constants {
         return create(h, ForesightConfig.Constraint.NONE);
     }
 
-    /** Same, with path following capped at maxPathSpeed (inches/sec).  Only this follower is affected. */
+    /**
+     * Same, with path following capped at maxPathSpeed (inches/sec).  Only this follower is affected.
+     * Sets Foresight's maxVelocityConstraint (in/s).  Not Foresight's own maxPathSpeed: that one is
+     * a fraction (0-1) of the robot's top speed, so a value like 20 would cap nothing.
+     */
     public static Follower create(HardwareMap h, double maxPathSpeed) {
         ForesightConfig foresight = foresightConfig();
-        foresight.maxPathSpeed.set(maxPathSpeed);
+        foresight.maxVelocityConstraint.set(maxPathSpeed);
         return new Follower(
             new OctoQuadLocalizer(h, localizerConfig()),
             new Mecanum(h, drivetrainConfig()),
@@ -89,20 +93,36 @@ public class Constants {
         c.i2cRecoveryMode.set(OctoQuad.I2cRecoveryMode.MODE_1_PERIPH_RST_ON_FRAME_ERR);
     }
 
-    // == Prototype =============================================================
-
-    // Integral term for the last inch, added to the prototype's secondary (under 2.5 in)
-    // translational controllers.  Accumulates only within END_I_ZONE inches of the target,
-    // shrinks by END_I_DECAY each loop, and is capped so it adds at most END_I_GAIN * END_I_MAX
-    // power (0.15).  If the robot overshoots or wobbles at the end, lower END_I_GAIN.
-    private static final double END_I_GAIN  = 0.3;
-    private static final double END_I_ZONE  = 1.0;    // inches
-    private static final double END_I_DECAY = 0.98;   // per loop
-    private static final double END_I_MAX   = 0.5;    // inch-seconds
+    // End integral: extra push for the last few inches, added to each chassis' secondary
+    // translational controllers (the ones used under 2.5 in of error).  Each loop, while the
+    // error is under `zone` inches: integral = integral * decay + error * dt, clamped to +-max.
+    // Output is gain * integral, so it adds at most gain * max power.
+    //   gain   power per inch-second; lower it if the robot overshoots or wobbles at the end.
+    //   zone   only builds up within this many inches.  Keep it under the 2.5 in switch: above
+    //          that the primary runs and this controller isn't called at all.
+    //   decay  fraction kept each LOOP (not per second), so it depends on the loop rate.
+    //          At ~50 Hz, 0.98 acts like an extra proportional gain of about `gain`.
+    //   max    cap on the integral (inch-seconds).
+    // Never cleared mid-path.  Between `zone` and 2.5 in it is held and still adds
+    // gain * integral; above 2.5 in it is unused but keeps its value for when the error comes
+    // back under 2.5 in.  Pedro clears it only when a new path starts (Follower.follow).
 
     /** A new integral controller each call: each one keeps its own running total. */
-    private static Controller endIntegral() {
-        return Controller.integral(() -> END_I_GAIN, () -> END_I_ZONE, () -> END_I_DECAY, () -> END_I_MAX);
+    private static Controller endIntegral(double gain, double zone, double decay, double max) {
+        return Controller.integral(() -> gain, () -> zone, () -> decay, () -> max);
+    }
+
+    // ==========================================================================
+    // == PROTOTYPE === PROTOTYPE === PROTOTYPE =================================
+    // ==========================================================================
+
+    private static final double PROTOTYPE_END_I_GAIN  = 0.3;
+    private static final double PROTOTYPE_END_I_ZONE  = 2.0;    // inches
+    private static final double PROTOTYPE_END_I_DECAY = 0.98;   // per loop
+    private static final double PROTOTYPE_END_I_MAX   = 0.5;    // inch-seconds (cap: 0.15 power)
+
+    private static Controller prototypeEndIntegral() {
+        return endIntegral(PROTOTYPE_END_I_GAIN, PROTOTYPE_END_I_ZONE, PROTOTYPE_END_I_DECAY, PROTOTYPE_END_I_MAX);
     }
 
     // Prototype gearing: left side reversed.
@@ -127,10 +147,10 @@ public class Constants {
         c -> {
             Controller primaryTranslationalForward = Controller.proportional(0.18257094263290366);
             Controller secondaryTranslationalForward = Controller.proportional(0.06745508491742425)
-                    .plus(endIntegral());
+                    .plus(prototypeEndIntegral());
             Controller primaryTranslationalLateral = Controller.proportional(0.2716341796782243);
             Controller secondaryTranslationalLateral = Controller.proportional(0.10036157119214668)
-                    .plus(endIntegral());
+                    .plus(prototypeEndIntegral());
 
             c.forwardTranslational.set(Controller.piecewise(secondaryTranslationalForward).put(2.5, primaryTranslationalForward));
             c.strafeTranslational.set(Controller.piecewise(secondaryTranslationalLateral).put(2.5, primaryTranslationalLateral));
@@ -157,9 +177,19 @@ public class Constants {
         }
     );
 
-    // == Production ============================================================
-    // TODO tune: copied from the prototype.  Re-run the OctoQuad and Foresight tuners on the
-    // production chassis and paste the results here.
+    // ==========================================================================
+    // == PRODUCTION === PRODUCTION === PRODUCTION ==============================
+    // ==========================================================================
+
+    // Starts as a copy of the prototype's values; tune separately.
+    private static final double PRODUCTION_END_I_GAIN  = 0.3;
+    private static final double PRODUCTION_END_I_ZONE  = 2.0;    // inches
+    private static final double PRODUCTION_END_I_DECAY = 0.98;   // per loop
+    private static final double PRODUCTION_END_I_MAX   = 0.5;    // inch-seconds (cap: 0.15 power)
+
+    private static Controller productionEndIntegral() {
+        return endIntegral(PRODUCTION_END_I_GAIN, PRODUCTION_END_I_ZONE, PRODUCTION_END_I_DECAY, PRODUCTION_END_I_MAX);
+    }
 
     // Production gearing: right side reversed.
     private static final MecanumConfig PRODUCTION_DRIVETRAIN = new MecanumConfig(c -> {
@@ -182,11 +212,11 @@ public class Constants {
     private static final Configuration<ForesightConfig> PRODUCTION_FORESIGHT = (
         c -> {
             Controller primaryTranslationalForward = Controller.proportional(0.17514564795165746);
-            Controller secondaryTranslationalForward = Controller.proportional(0.06471163694023177);
-            // TODO re-tune: the tuner gave -33019.67 / -12199.88 (huge and negative: the robot strafed
-            // off as soon as a path started).  These are the prototype's values until re-tuned.
+            Controller secondaryTranslationalForward = Controller.proportional(0.06471163694023177)
+                    .plus(productionEndIntegral());
             Controller primaryTranslationalLateral = Controller.proportional(0.2716341796782243);
-            Controller secondaryTranslationalLateral = Controller.proportional(0.10036157119214668);
+            Controller secondaryTranslationalLateral = Controller.proportional(0.10036157119214668)
+                    .plus(productionEndIntegral());
 
             c.forwardTranslational.set(Controller.piecewise(secondaryTranslationalForward).put(2.5, primaryTranslationalForward));
             c.strafeTranslational.set(Controller.piecewise(secondaryTranslationalLateral).put(2.5, primaryTranslationalLateral));
@@ -200,8 +230,8 @@ public class Constants {
 
             c.linearBrakeCoefficients.set(Matrix.diag(0.06371873554530225, 0.05871431963111268));
             c.quadraticBrakeCoefficients.set(Matrix.diag(0.0011784821162332333, 0.0013118615445462875));
-          //  c.maxAchievableForwardVelocity.set(93.689720623814);
-        //    c.maxAchievableStrafeVelocity.set(64.51240737912634);
+            c.maxAchievableForwardVelocity.set(93.689720623814);
+            c.maxAchievableStrafeVelocity.set(64.51240737912634);
             c.maxAchievableForwardVelocity.set(20.0);
             c.maxAchievableStrafeVelocity.set(20.0);
             c.naturalForwardDeceleration.set(34.77902604546239);

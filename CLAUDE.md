@@ -3,7 +3,7 @@
 Fork of the FIRST `FtcRobotController` SDK (`origin` = gearsincorg/FtcRobotController, `upstream` = FIRST-Tech-Challenge). Team code lives in `TeamCode/`; `FtcRobotController/` is the stock SDK module and should not be edited. Working branch: `BIOBUZZ-Master`.
 
 ## Stack
-- **Pedro Pathing 3.0** for driving/localization. Hardware config is in `pedro/Constants.java` (`Constants.create(hardwareMap)` returns the `Follower`; `create(hardwareMap, maxPathSpeed)` caps path speed in in/s, used by auto via `AUTO_MAX_SPEED`): mecanum drive, OctoQuad localizer, Foresight. Tuners are in `pedro/procedures/` and `pedro/Tuning.java`.
+- **Pedro Pathing 3.0** for driving/localization. Hardware config is in `pedro/Constants.java` (`Constants.create(hardwareMap)` returns the `Follower`; `create(hardwareMap, maxPathSpeed)` caps path speed in in/s via Foresight's `maxVelocityConstraint`, used by auto via `AUTO_MAX_SPEED`; Foresight's own `maxPathSpeed` is a 0-1 fraction of top speed, not in/s): mecanum drive, OctoQuad localizer, Foresight. Tuners are in `pedro/procedures/` and `pedro/Tuning.java`.
 - **SolversLib** command framework for opmodes, subsystems and button bindings (WPILib style). Replaced Ivy.
 - Opmodes extend `CommandOpMode`; subsystems extend `SubsystemBase` and expose `...Command()` methods.
 
