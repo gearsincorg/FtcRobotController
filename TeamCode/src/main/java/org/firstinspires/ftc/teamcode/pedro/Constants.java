@@ -204,8 +204,8 @@ public class Constants {
         sharedLocalizer(c);
         c.xPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
         c.yPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
-        c.xPodOffset.set(4.429133858267717);
-        c.yPodOffset.set(-0.610236220472441);
+        c.xPodOffset.set(-0.610236220472441);
+        c.yPodOffset.set(4.429133858267717);
         c.headingScalar.set(1.009115985239217);
     });
 
