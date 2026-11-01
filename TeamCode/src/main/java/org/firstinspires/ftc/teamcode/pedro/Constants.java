@@ -138,8 +138,8 @@ public class Constants {
         sharedLocalizer(c);
         c.xPodDirection.set(OctoQuad.EncoderDirection.FORWARD);
         c.yPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
-        c.xPodOffset.set(-1.5748031496062993);
-        c.yPodOffset.set(0.2362204724409449);
+        c.xPodOffset.set(0.2362204724409449);
+        c.yPodOffset.set(-1.5748031496062993);
         c.headingScalar.set(1.0053120122844978);
     });
 
@@ -203,15 +203,10 @@ public class Constants {
     private static final OctoQuadConfig PRODUCTION_LOCALIZER = new OctoQuadConfig(c -> {
         sharedLocalizer(c);
         c.headingScalar.set(1.009115985239217);
-        c.xPodOffset.set(-0.1);
-        c.yPodOffset.set(4.1);
+        c.xPodOffset.set(4.1);
+        c.yPodOffset.set(-0.1);
         c.xPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
         c.yPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
-<<<<<<< HEAD
-        c.xPodOffset.set(-0.610236220472441);
-        c.yPodOffset.set(4.429133858267717);
-=======
->>>>>>> ca24d58da4e5459d2e2e1c9a0ff93c177d35725e
         c.headingScalar.set(1.009115985239217);
     });
 
