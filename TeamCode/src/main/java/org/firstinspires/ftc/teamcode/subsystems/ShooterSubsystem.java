@@ -25,7 +25,7 @@ import com.seattlesolvers.solverslib.command.WaitUntilCommand;
  * loop (periodic) computes a firing solution:
  *   - Shoot on the move: the robot's field velocity is carried by the game piece, so we aim at a
  *     "virtual target" = target - robotVelocity * flightTime (iterated a few times).
- *   - Distance to the virtual target selects flywheel RPM, hood position and flight time from
+ *   - Distance to the virtual target selects flywheel RPM, hood angle and flight time from
  *     an interpolated lookup table (SHOT_TABLE).
  *   - The turret angle (relative to robot forward, + is CCW) points at the virtual target, with a
  *     feedforward that counter-rotates the turret while the chassis turns.
@@ -56,7 +56,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // false: the turret is held at 0 (straight ahead) and the chassis turns to aim instead
     // (teleop point-at-goal mode).  isReady() then checks the robot heading.
     public static final boolean TURRET_ENABLED        = true;
-    public static final boolean TURRET_SIMULATED      = false;
+    public static final boolean TURRET_SIMULATED      = true;
     private static final double AIM_TOLERANCE_RAD     = Math.toRadians(10);
 
     // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
@@ -80,18 +80,32 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double FLYWHEEL_IDLE_POWER    = 0.0;
 
     // == Hood ================================================================
-    private static final double HOOD_MIN = 0.0;
-    private static final double HOOD_MAX = 1.0;
+    // Hood angle is in degrees from vertical, forward positive.  Two measured points define the
+    // (linear) angle -> servo position conversion; the hood is limited to the range between them.
+    // hoodAngleToServo() is the only place that knows about servo positions.
+    private static final double HOOD_ANGLE_A_DEG = 0;
+    private static final double HOOD_SERVO_A     = 0.64;
+    private static final double HOOD_ANGLE_B_DEG = 25;
+    private static final double HOOD_SERVO_B     = 0.96;
+    public  static final double HOOD_MIN_DEG     = Math.min(HOOD_ANGLE_A_DEG, HOOD_ANGLE_B_DEG);
+    public  static final double HOOD_MAX_DEG     = Math.max(HOOD_ANGLE_A_DEG, HOOD_ANGLE_B_DEG);
+
+    /** Servo position for a hood angle (degrees), clipped to the calibrated range. */
+    static double hoodAngleToServo(double deg) {
+        deg = Range.clip(deg, HOOD_MIN_DEG, HOOD_MAX_DEG);
+        double t = (deg - HOOD_ANGLE_A_DEG) / (HOOD_ANGLE_B_DEG - HOOD_ANGLE_A_DEG);
+        return HOOD_SERVO_A + t * (HOOD_SERVO_B - HOOD_SERVO_A);
+    }
 
     // == Shot table ==========================================================
     // TODO placeholder: fill with measurements from ShooterTuningOpMode.
-    // Rows sorted by distance: { distance (in), flywheel RPM, hood servo position, flight time (s) }
+    // Rows sorted by distance: { distance (in), flywheel RPM, hood angle (deg), flight time (s) }
     private static final double[][] SHOT_TABLE = {
-        {  24, 4400, 0.20, 0.30 },
-        {  48, 4400, 0.35, 0.40 },
-        {  72, 4400, 0.50, 0.50 },
-        {  96, 4400, 0.60, 0.60 },
-        { 120, 4400, 0.70, 0.70 },
+        {  24, 4400,  5, 0.30 },
+        {  48, 4400, 10, 0.40 },
+        {  72, 4400, 15, 0.50 },
+        {  96, 4400, 20, 0.60 },
+        { 120, 4400, 25, 0.70 },
     };
 
     // Number of iterations used to converge the shoot-on-the-move solution.
@@ -117,14 +131,14 @@ public class ShooterSubsystem extends SubsystemBase {
 
     // Setpoints
     private double targetRPM        = 0;
-    private double targetHood       = HOOD_MIN;
+    private double targetHoodDeg    = HOOD_MIN_DEG;
     private double targetTurretRad  = 0;
     private double actualRPM        = 0;
     private double actualTurretRad  = 0;
 
     // Latest solution (also computed when not tracking, for telemetry and tuning)
     private double distance         = 0;
-    private Shot   shot             = new Shot(0, 0, 0, HOOD_MIN);
+    private Shot   shot             = new Shot(0, 0, 0, HOOD_MIN_DEG);
     private double turretX          = 0;    // turret pivot, field coordinates
     private double turretY          = 0;
 
@@ -150,9 +164,9 @@ public class ShooterSubsystem extends SubsystemBase {
         flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
             new PIDFCoefficients(3,0.5,0,10.0));
 
-        // Move the hood to 0 now, rather than waiting for the first periodic() after start.
-        targetHood = 0;
-        hood.setPosition(targetHood);
+        // Move the hood to its minimum angle now, rather than waiting for the first periodic() after start.
+        targetHoodDeg = HOOD_MIN_DEG;
+        hood.setPosition(hoodAngleToServo(targetHoodDeg));
 
         idle();
     }
@@ -167,7 +181,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         if (mode == Mode.TRACKING) {
             targetRPM       = shot.rpm;
-            targetHood      = shot.hood;
+            targetHoodDeg   = shot.hoodDeg;
             targetTurretRad = TURRET_ENABLED ? turretAngleTo(shot.aimX, shot.aimY) : 0;
         }
 
@@ -188,7 +202,7 @@ public class ShooterSubsystem extends SubsystemBase {
         // "field" is the Pedro field direction from the turret to the aim point.
         opMode.telemetry.addData("  Aim robot : field", "%5.1f : %5.1f",
                 Math.toDegrees(getAimError()), Math.toDegrees(getAimHeading()));
-        opMode.telemetry.addData("  Hood", "%4.2f", targetHood);
+        opMode.telemetry.addData("  Hood tgt (deg)", "%5.1f", targetHoodDeg);
     }
 
     // == new elements =========================================
@@ -212,10 +226,10 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     /** Fixed shot, for tuning and as a fallback if odometry is lost. */
-    public void setManual(double rpm, double hoodPos, double turretRad) {
+    public void setManual(double rpm, double hoodDeg, double turretRad) {
         mode            = Mode.MANUAL;
         targetRPM       = rpm;
-        targetHood      = hoodPos;
+        targetHoodDeg   = hoodDeg;
         targetTurretRad = turretRad;
     }
 
@@ -268,7 +282,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public double getTargetRPM()       { return targetRPM; }
-    public double getTargetHood()      { return targetHood; }
+    public double getTargetHoodDeg()   { return targetHoodDeg; }
     public double getTargetTurretRad() { return targetTurretRad; }
 
     // == Aiming math ===========================================
@@ -380,16 +394,16 @@ public class ShooterSubsystem extends SubsystemBase {
         }
 
         // Control Hood Angle
-        hood.setPosition(Range.clip(targetHood, HOOD_MIN, HOOD_MAX));
+        hood.setPosition(hoodAngleToServo(targetHoodDeg));
     }
 
     private static class Shot {
-        final double aimX, aimY, rpm, hood;
-        Shot(double aimX, double aimY, double rpm, double hood) {
+        final double aimX, aimY, rpm, hoodDeg;
+        Shot(double aimX, double aimY, double rpm, double hoodDeg) {
             this.aimX = aimX;
             this.aimY = aimY;
             this.rpm  = rpm;
-            this.hood = hood;
+            this.hoodDeg = hoodDeg;
         }
     }
 
@@ -413,8 +427,8 @@ public class ShooterSubsystem extends SubsystemBase {
         return new InstantCommand(this::idle, this);
     }
 
-    public Command manualCommand(double rpm, double hoodPos, double turretRad) {
-        return new InstantCommand(() -> setManual(rpm, hoodPos, turretRad), this);
+    public Command manualCommand(double rpm, double hoodDeg, double turretRad) {
+        return new InstantCommand(() -> setManual(rpm, hoodDeg, turretRad), this);
     }
 
     /** Finishes when ready to shoot, or after timeoutMs. Use before the transfer's feed command. */

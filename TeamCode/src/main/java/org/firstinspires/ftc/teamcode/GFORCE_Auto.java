@@ -3,21 +3,15 @@ package org.firstinspires.ftc.teamcode; // This should match the file location. 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 
-import org.firstinspires.ftc.teamcode.paths.Path_FarCenter;
-import org.firstinspires.ftc.teamcode.paths.Path_NearCenter;
-
 @Autonomous(name = "G-FORCE AUTO", group = "Competition")
 public class GFORCE_Auto extends CommandOpMode {
     // Top path speed in auto (inches/sec).  The production chassis can do about 94 forward.
-    private static final double AUTO_MAX_SPEED = 20;
+    private static final double AUTO_MAX_SPEED = 40;
     private static final long SHOOT_TIMEOUT_MS = 4000;
     private boolean autoStarted = false;
 
     // Declare robot Subsystems
     private BiobuzzRobot robot = new BiobuzzRobot(this);
-
-    private Path_NearCenter autoNearCenter;
-    private Path_FarCenter autoFarCenter;
 
     private boolean appliedRed;
 
@@ -27,8 +21,6 @@ public class GFORCE_Auto extends CommandOpMode {
 
         // Initialize Subsystems
         robot.initialize(AUTO_MAX_SPEED);
-        autoNearCenter = new Path_NearCenter(robot);
-        autoFarCenter = new Path_FarCenter(robot);
     }
 
     /** Push the menu choices (goal side, start pose) to the robot whenever they change. */
@@ -44,7 +36,7 @@ public class GFORCE_Auto extends CommandOpMode {
 
         robot.intake.refreshSensors();
 
-        telemetry.addData("Preload", "%d balls  [ %s]%s", robot.intake.ballCount(),
+        telemetry.addData("Preload", "%s  [ %s]%s", robot.intake.stateName(),
                 robot.intake.slotPattern(), robot.intake.isSimulated() ? "  (SIMULATED)" : "");
         telemetry.update();
     }
@@ -54,7 +46,7 @@ public class GFORCE_Auto extends CommandOpMode {
 
         if (!autoStarted) {
             autoStarted = true;
-            schedule(autoNearCenter.autoCommand());   // runs from START
+            schedule(robot.config.routine.command(robot));   // runs from START
         }
         super.run();
         robot.update();

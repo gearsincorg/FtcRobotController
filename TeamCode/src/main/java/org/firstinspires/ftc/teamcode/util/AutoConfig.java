@@ -4,6 +4,8 @@ import android.content.Context;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import org.firstinspires.ftc.teamcode.paths.AutoRoutine;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
@@ -14,12 +16,6 @@ import java.util.Properties;
  * file on the Control Hub so the settings survive a restart (and teleop can read the alliance).
  */
 public class AutoConfig {
-
-    public enum StartLocation {
-        AUDIENCE_1("Audience 1"), AUDIENCE_2("Audience 2"), FAR_1("Far 1"), FAR_2("Far 2");
-        public final String label;
-        StartLocation(String label) { this.label = label; }
-    }
 
     public enum Park {
         NONE("None"), BASE("Base");
@@ -36,7 +32,7 @@ public class AutoConfig {
     // Settings
     public boolean       red      = true;
     public int           delaySec = 0;
-    public StartLocation start    = StartLocation.AUDIENCE_1;
+    public AutoRoutine   routine  = AutoRoutine.values()[0];
     public int           cycles   = 2;
     public Park          park     = Park.BASE;
 
@@ -74,7 +70,7 @@ public class AutoConfig {
         switch (item) {
             case 0: red = !red; break;
             case 1: delaySec = clamp(delaySec + dir, 0, MAX_DELAY_SEC); break;
-            case 2: start = StartLocation.values()[wrap(start.ordinal() + dir, StartLocation.values().length)]; break;
+            case 2: routine = AutoRoutine.values()[wrap(routine.ordinal() + dir, AutoRoutine.values().length)]; break;
             case 3: cycles = clamp(cycles + dir, 0, MAX_CYCLES); break;
             case 4: park = Park.values()[wrap(park.ordinal() + dir, Park.values().length)]; break;
         }
@@ -84,7 +80,7 @@ public class AutoConfig {
         opMode.telemetry.addLine("AUTO SETUP  (D-pad: up/down = item, left/right = change)");
         line(0, "Alliance",    red ? "RED" : "BLUE");
         line(1, "Start delay", delaySec + " s");
-        line(2, "Start",       start.label);
+        line(2, "Path",        routine.label);
         line(3, "Cycles",      String.valueOf(cycles));
         line(4, "Park",        park.label);
     }
@@ -99,7 +95,7 @@ public class AutoConfig {
             Properties p = new Properties();
             p.setProperty("red", Boolean.toString(red));
             p.setProperty("delaySec", Integer.toString(delaySec));
-            p.setProperty("start", start.name());
+            p.setProperty("routine", routine.name());
             p.setProperty("cycles", Integer.toString(cycles));
             p.setProperty("park", park.name());
             p.store(out, "G-FORCE auto setup");
@@ -115,7 +111,7 @@ public class AutoConfig {
             red      = Boolean.parseBoolean(p.getProperty("red", "true"));
             delaySec = clamp(parseInt(p.getProperty("delaySec"), 0), 0, MAX_DELAY_SEC);
             cycles   = clamp(parseInt(p.getProperty("cycles"), 2), 0, MAX_CYCLES);
-            start    = parseEnum(StartLocation.class, p.getProperty("start"), StartLocation.AUDIENCE_1);
+            routine  = parseEnum(AutoRoutine.class, p.getProperty("routine"), AutoRoutine.values()[0]);
             park     = parseEnum(Park.class, p.getProperty("park"), Park.BASE);
         } catch (Exception e) {
             // No file yet (or unreadable): keep the defaults.

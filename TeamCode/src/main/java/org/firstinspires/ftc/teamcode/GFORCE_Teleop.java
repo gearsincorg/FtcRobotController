@@ -195,6 +195,8 @@ public class GFORCE_Teleop extends CommandOpMode {
         // released).  Overrides eject and clear.
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
             .whenActive(robot.shooter.trackCommand())
+            //.whenActive(robot.intake.shootAllCommand())
+            .whenActive(RobotCommands.shootWhileHeld(robot))
             .whenInactive(robot.shooter.idleCommand());
 
         // B: intake out while held (the transfer holds its balls)
@@ -212,12 +214,12 @@ public class GFORCE_Teleop extends CommandOpMode {
 
     /** Gamepad LED shows the ball count: red empty, amber partial, green full. */
     private void showBallCountLed() {
-        int count = robot.intake.ballCount();
-        if (count == lastLedCount) return;
-        lastLedCount = count;
-        if (count == 0) {
+        int state = robot.intake.isFull() ? 2 : robot.intake.isEmpty() ? 0 : 1;
+        if (state == lastLedCount) return;
+        lastLedCount = state;
+        if (state == 0) {
             gamepad1.setLedColor(1, 0, 0, Gamepad.LED_DURATION_CONTINUOUS);
-        } else if (robot.intake.isFull()) {
+        } else if (state == 2) {
             gamepad1.setLedColor(0, 1, 0, Gamepad.LED_DURATION_CONTINUOUS);
         } else {
             gamepad1.setLedColor(1, 0.5, 0, Gamepad.LED_DURATION_CONTINUOUS);

@@ -16,15 +16,17 @@ import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 import java.util.function.BooleanSupplier;
 
 /**
- * Collect and transfer: intake motor, gate servo and feeder (transfer) motor, with four slot sensors.
+ * Collect and transfer: intake motor, gate servo and feeder (transfer) motor, with three sensors.
  *
  *   - the intake motor pulls balls in at the mouth
  *   - the feeder moves the whole column toward the gate / shooter
  *   - the gate servo keeps balls out of the shooter until we shoot
- *   - four digital sensors, one per ball position (slot1 nearest the intake, slot4 at the gate)
+ *   - two digital sensors at the very front of the intake (frontA, frontB) and one at the top (top)
  *
- * The ball count is simply the number of sensors that see a ball (briefly debounced).  No sensor
- * seeing a ball is "empty", all four is "full".  Nothing is inferred from a ball passing a sensor.
+ * There is no ball count, just three states:
+ *   FULL       either front sensor has seen something continuously for FULL_MS (balls backed up to the mouth)
+ *   EMPTY      no sensor has seen anything for EMPTY_MS
+ *   otherwise  we have balls
  *
  * The mode is worked out every loop from what the driver is holding and the ball count, highest
  * priority first:
@@ -35,7 +37,7 @@ import java.util.function.BooleanSupplier;
  *              intake and feeder stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), clear and eject are ignored.
  *   CLEAR_ALL  clear held: intake out, feeder reversed, purges every ball.
  *   EJECTING   eject held: intake out, feeder holds the column.
- *   FULL       four balls: intake out (spits a 5th ball), feeder packs the column.
+ *   FULL       front sensors blocked for FULL_MS: intake out (spits extra balls), feeder packs the column.
  *   INTAKING   otherwise: intake in, feeder feeds the column against the closed gate.
  *
  * Until the sensors are in use, SIMULATE_SENSORS swaps them for SimulatedSlots.
@@ -45,12 +47,13 @@ public class IntakeSubsystem extends SubsystemBase {
     // == Sensors =============================================================
     // true: the ball count comes from SimulatedSlots instead of the slot sensors.
     // TODO set false once the slot sensors are in use.
-    public static final boolean SIMULATE_SENSORS = true;
+    public static final boolean SIMULATE_SENSORS = false;
     private static final int    SIM_PRELOAD      = 4;
 
     // Sensor reading when a ball is in the slot (most digital sensors are active-low).
     private static final boolean BALL_SEEN_STATE = false;
-    private static final String[] SLOT_NAMES = { "slot1", "slot2", "slot3", "slot4" };
+    private static final String[] SENSOR_NAMES = { "frontA", "frontB", "top" };
+    private static final int      FRONT_A = 0, FRONT_B = 1, TOP = 2;
 
     // == Tuning (all placeholders) ===========================================
     private static final double INTAKE_POWER       = 1.0;   // intake in   (INTAKING, SHOOTING)
@@ -64,9 +67,11 @@ public class IntakeSubsystem extends SubsystemBase {
     public static final double GATE_CLOSED         = 0.0;
     public static final double GATE_OPEN           = 0.5;
 
-    private static final double COUNT_DEBOUNCE_MS  = 100;   // sensor count must hold this long
+    private static final boolean TOP_ONLY_FULL     = true;  // TEMPORARY test: full whenever the top sensor sees something (ignores front sensors and FULL_MS)
+    private static final double FULL_MS           = 500; // a front sensor must see something this long to read full
+    private static final double SIM_FULL_MS        = 1000;  // same, for the simulated sensors
+    private static final double EMPTY_MS           = 500;   // no sensor sees anything for this long to read empty
     private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
-    private static final double SHOT_CLEAR_MS      = 300;   // auto volley: last ball leaves the flywheel
 
     public enum Mode { INTAKING, FULL, EJECTING, CLEAR_ALL, SPINUP, SHOOTING }
 
@@ -75,14 +80,11 @@ public class IntakeSubsystem extends SubsystemBase {
     private DcMotorEx        intake;
     private DcMotorEx        feeder;
     private Servo            gate;
-    private DigitalChannel[] slotSensors = new DigitalChannel[SLOT_NAMES.length];
+    private DigitalChannel[] sensors = new DigitalChannel[SENSOR_NAMES.length];
     private SimulatedSlots   sim;
 
     // Sensors
-    private boolean[] slots         = new boolean[SLOT_NAMES.length];
     private String    pattern       = "";
-    private int       ballCount     = 0;      // debounced
-    private int       pendingCount  = 0;
 
     // Driver requests
     private boolean  shootHeld       = false;
@@ -98,9 +100,11 @@ public class IntakeSubsystem extends SubsystemBase {
     private double  feederPower    = 0;
     private double  gatePosition   = GATE_CLOSED;
 
-    private final ElapsedTime countTimer = new ElapsedTime();   // time the raw count has been stable
+    private final ElapsedTime frontTimer = new ElapsedTime();   // time a front sensor has continuously seen something
+    private boolean topNow  = false;                            // top sensor is seeing something right now
+    private boolean topSeen = false;                           // top sensor has seen something since the intake was last empty
     private final ElapsedTime volleyTimer = new ElapsedTime();  // time since this press first reached SHOOTING
-    private final ElapsedTime emptyTimer = new ElapsedTime();   // time the count has read empty
+    private final ElapsedTime emptyTimer = new ElapsedTime();   // time no sensor has seen anything
 
     // == standard Methods ===================================
     /** shooterReady: true when the shooter can take a ball (normally ShooterSubsystem::isReady). */
@@ -122,14 +126,13 @@ public class IntakeSubsystem extends SubsystemBase {
         if (SIMULATE_SENSORS) {
             sim = new SimulatedSlots(SIM_PRELOAD);
         } else {
-            for (int i = 0; i < SLOT_NAMES.length; i++) {
-                slotSensors[i] = opMode.hardwareMap.get(DigitalChannel.class, SLOT_NAMES[i]);
-                slotSensors[i].setMode(DigitalChannel.Mode.INPUT);
+            for (int i = 0; i < SENSOR_NAMES.length; i++) {
+                sensors[i] = opMode.hardwareMap.get(DigitalChannel.class, SENSOR_NAMES[i]);
+                sensors[i].setMode(DigitalChannel.Mode.INPUT);
             }
         }
 
         readSensors();
-        ballCount = pendingCount = rawCount();      // trust the first reading (preload)
 
         // Everything off until the first loop after START (the scheduler doesn't run during init).
         set(0, 0, GATE_CLOSED);
@@ -149,7 +152,7 @@ public class IntakeSubsystem extends SubsystemBase {
         }
         opMode.telemetry.addData("In:Feed:Gate", "%4.2f, %4.2f, %4.2f",
                 intakePower, feederPower, gatePosition);
-        opMode.telemetry.addData("BALLS", "%d  [ %s]  %s", ballCount, pattern, mode);
+        opMode.telemetry.addData("BALLS", "%s  [ %s]  %s", stateName(), pattern, mode);
     }
 
     /** Read the sensors without running anything else (e.g. to show the preload during init). */
@@ -180,22 +183,24 @@ public class IntakeSubsystem extends SubsystemBase {
     // == Queries ==============================================================
 
     public Mode     getMode()     { return mode; }
-    public int      ballCount()   { return ballCount; }
-    public boolean  isFull()      { return ballCount == slots.length; }
-    public boolean  isEmpty()     { return ballCount == 0; }
+    /** A front sensor has seen something for FULL_MS, and the top sensor has seen something since last empty. */
+    public boolean  isFull()      { return TOP_ONLY_FULL ? topNow : topSeen &&frontTimer.milliseconds() > (sim != null ? SIM_FULL_MS : FULL_MS); }
+    /** No sensor has seen anything for EMPTY_MS. */
+    public boolean  isEmpty()     { return emptyTimer.milliseconds() > EMPTY_MS; }
+    public boolean  hasBalls()    { return !isEmpty(); }
+    public String   stateName()   { return isFull() ? "FULL" : isEmpty() ? "EMPTY" : "HAS BALLS"; }
     /** True while shoot is requested (SPINUP or SHOOTING). */
     public boolean  isShooting()  { return shootHeld; }
     public String   slotPattern() { return pattern; }
 
     public double getGatePosition() { return gatePosition; }
 
-    /** An auto volley is done: the column has read empty long enough, or we've fed too long. */
+    /** An auto volley is done: the intake has read empty, or we've fed too long. */
     private boolean volleyDone() {
         if (!fedThisPress) {
             return false;
         }
-        return (isEmpty() && emptyTimer.milliseconds() > SHOT_CLEAR_MS)
-                || volleyTimer.milliseconds() > VOLLEY_TIMEOUT_MS;
+        return isEmpty() || volleyTimer.milliseconds() > VOLLEY_TIMEOUT_MS;
     }
 
     // == Sensors ==============================================================
@@ -206,9 +211,9 @@ public class IntakeSubsystem extends SubsystemBase {
             sim.update(intakePower, feederPower, isGateOpen());
             raw = sim.read();
         } else {
-            raw = new boolean[SLOT_NAMES.length];
+            raw = new boolean[SENSOR_NAMES.length];
             for (int i = 0; i < raw.length; i++) {
-                raw[i] = slotSensors[i].getState() == BALL_SEEN_STATE;
+                raw[i] = sensors[i].getState() == BALL_SEEN_STATE;
             }
         }
 
@@ -217,28 +222,21 @@ public class IntakeSubsystem extends SubsystemBase {
             sb.append(ball ? "X " : "- ");
         }
         pattern = sb.toString();
-        slots = raw;
 
-        // The count is the number of sensors seeing a ball, once it has held steady.
-        int count = rawCount();
-        if (count != pendingCount) {
-            pendingCount = count;
-            countTimer.reset();
-        } else if (countTimer.milliseconds() > COUNT_DEBOUNCE_MS) {
-            ballCount = count;
+        // Each timer runs while its condition is false, so it reads how long the condition has held.
+        if (!(raw[FRONT_A] || raw[FRONT_B])) {
+            frontTimer.reset();
         }
-
-        if (!isEmpty()) {
+        if (raw[FRONT_A] || raw[FRONT_B] || raw[TOP]) {
             emptyTimer.reset();
         }
-    }
-
-    private int rawCount() {
-        int count = 0;
-        for (boolean ball : slots) {
-            if (ball) count++;
+        // Full also needs the top sensor to have seen something at some point since last empty.
+        topNow = raw[TOP];
+        if (raw[TOP]) {
+            topSeen = true;
+        } else if (isEmpty()) {
+            topSeen = false;
         }
-        return count;
     }
 
     private boolean isGateOpen() {

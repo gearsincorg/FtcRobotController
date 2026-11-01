@@ -1,5 +1,5 @@
 {
-  "version": "2.6.0",
+  "version": "2.6.1",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
@@ -11,7 +11,7 @@
     "locked": false,
     "heading": "linear",
     "startDeg": 180,
-    "endDeg": 94.99757695755602
+    "endDeg": 90
   },
   "lines": [
     {
@@ -48,11 +48,11 @@
       "globalEndDeg": 90
     },
     {
-      "id": "mvpfoxvw-qts8zx",
-      "name": "FarFlower",
+      "id": "mvwwb99h-aoqsot",
+      "name": "",
       "endPoint": {
-        "x": 48,
-        "y": 133.25595005852517,
+        "x": 48.34100663285213,
+        "y": 134.88646117830666,
         "heading": "tangential",
         "startDeg": 90,
         "endDeg": 90
@@ -60,25 +60,24 @@
       "controlPoints": [
         {
           "x": 32.06285785293021,
-          "y": 84.51424112368318
+          "y": 56.320717908700765
         },
         {
-          "x": 32.06285785293021,
-          "y": 125.11783066718691
+          "x": 27.330081935232155,
+          "y": 124.71868903628561
         },
         {
-          "x": 51.454545454545446,
-          "y": 93.7510729613734
+          "x": 48.34100663285213,
+          "y": 111.77409285992977
         }
       ],
-      "color": "#669877",
+      "color": "#88CBCA",
       "eventMarkers": [],
       "waitBeforeMs": 0,
       "waitAfterMs": 0,
       "waitBeforeName": "",
       "waitAfterName": "",
-      "isChain": true,
-      "hidden": false
+      "isChain": true
     }
   ],
   "sequence": [
@@ -88,7 +87,7 @@
     },
     {
       "kind": "path",
-      "lineId": "mvpfoxvw-qts8zx",
+      "lineId": "mvwwb99h-aoqsot",
       "isChain": true
     }
   ],
