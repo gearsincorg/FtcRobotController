@@ -50,9 +50,9 @@ public class Path_NearCenter {
 
     public FollowPathCommand path_start() {
         final Pose start = getStartPose();
-        final Pose garden = poseFactory.of(12.1178, 10, 180);
-        final Pose gardenControl1 = poseFactory.of(35.5823, 14.6543, 0);
-        final Pose gardenControl2 = poseFactory.of(26.8975, 8, 0);
+        final Pose garden = poseFactory.of(7, 7, 180);
+        final Pose gardenControl1 = poseFactory.of(34.88, 8, 0);
+        final Pose gardenControl2 = poseFactory.of(26.8975, 7, 0);
 
         Path path_startPath = Paths.path(
                 curve(start, gardenControl1, gardenControl2, garden).linear(start, garden)
@@ -67,17 +67,17 @@ public class Path_NearCenter {
         final Pose transition = poseFactory.of(32.0629, 32.8878, 90);
         final Pose transitionControl1 = poseFactory.of(30.0712, 18.7686, 0);
         final Pose transitionControl2 = poseFactory.of(32.0629, 22.1437, 0);
-        final Pose farFlower = poseFactory.of(48, 133.256, 94.6325);
-        final Pose farFlowerControl1 = poseFactory.of(32.0629, 84.5142, 0);
-        final Pose farFlowerControl2 = poseFactory.of(32.0629, 125.1178, 0);
-        final Pose farFlowerControl3 = poseFactory.of(51.4545, 93.7511, 0);
+        final Pose point2 = poseFactory.of(48.341, 134.8865, 89.2123);
+        final Pose point2Control1 = poseFactory.of(32.0629, 56.3207, 0);
+        final Pose point2Control2 = poseFactory.of(27.3301, 124.7187, 0);
+        final Pose point2Control3 = poseFactory.of(48.341, 111.7741, 0);
 
         Path path_2Path = Paths.path(
                 curve(start, transitionControl1, transitionControl2, transition).linear(start, transition),
-                curve(transition, farFlowerControl1, farFlowerControl2, farFlowerControl3, farFlower).tangent()
+                curve(transition, point2Control1, point2Control2, point2Control3, point2).tangent()
         );
 
-        return new FollowPathCommand(robot.drive, path_2Path);
+        return new FollowPathCommand(robot.drive,   path_2Path);
     }
 
     // Generated from NearCenter_3.turt

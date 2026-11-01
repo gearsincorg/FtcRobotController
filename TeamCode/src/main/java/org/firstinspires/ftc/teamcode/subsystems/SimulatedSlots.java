@@ -3,10 +3,10 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
- * Stand-in for the four slot sensors until they are installed.
+ * Stand-in for the three intake sensors (frontA, frontB, top) until they are installed.
  *
- * Just a ball count (0..4).  Balls sit packed against the gate, so a count of n lights the n
- * sensors nearest the gate (slot4, slot3, ...), like the real column would.  The count changes
+ * Just a ball count (0..4).  Balls sit packed against the gate, so any ball lights the top
+ * sensor and a full column (4) also lights the front sensors.  The count changes
  * with what the intake subsystem is commanding:
  *   - intake running in: a ball arrives every PICKUP_MS, until the column is full
  *   - feeder pushing through the open gate: a ball is shot every SHOT_MS
@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class SimulatedSlots {
 
     private static final int    SLOTS      = 4;
-    private static final double PICKUP_MS  = 60000;
+    private static final double PICKUP_MS  = 200;
     private static final double SHOT_MS    = 250;
     private static final double EJECT_MS   = 300;
     private static final double MAX_DT     = 0.1;
@@ -54,13 +54,11 @@ public class SimulatedSlots {
         }
     }
 
-    /** Sensor readings, slot1 first.  Balls are packed against the gate (slot4). */
+    /** Sensor readings: frontA, frontB, top.  Balls pack against the gate, so the top sees any ball
+     *  and the front sensors only see a full column. */
     public boolean[] read() {
-        boolean[] seen = new boolean[SLOTS];
-        for (int i = 0; i < SLOTS; i++) {
-            seen[SLOTS - 1 - i] = i < count;
-        }
-        return seen;
+        boolean full = count == SLOTS;
+        return new boolean[] { full, full, count > 0 };
     }
 
     public void addBall() {

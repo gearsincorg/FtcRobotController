@@ -9,10 +9,9 @@
             <goBILDA5202SeriesMotor name="back_right_drive"  port="3" />
             <OctoQuadFTC name="octoquad" port="0" bus="1"/>
 
-            <DigitalDevice name="slot1" port="1" />
-            <DigitalDevice name="slot2" port="3" />
-            <DigitalDevice name="slot3" port="5" />
-            <DigitalDevice name="slot4" port="7" />
+            <DigitalDevice name="frontA" port="1" />
+            <DigitalDevice name="frontB" port="3" />
+            <DigitalDevice name="top" port="5" />
 
         </LynxModule>
         <LynxModule name="Expansion Hub" port="1">
