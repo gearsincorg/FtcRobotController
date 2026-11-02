@@ -54,4 +54,10 @@ public class Path_FarCenter {
 
         return new FollowPathCommand(robot.drive, path_startPath);
     }
+
+    /** Caps path speed (in/s) on one line of a path; from maxSpeed in the .turt file. */
+    private com.pedropathing.config.Modifier maxVelocity(double inchesPerSec) {
+        return ((com.pedropathing.algorithm.Foresight) robot.drive.algorithm())
+                .config.maxVelocityConstraint.at(inchesPerSec);
+    }
 }

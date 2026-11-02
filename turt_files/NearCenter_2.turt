@@ -6,8 +6,8 @@
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 8.835396020288723,
-    "y": 9.170503316426064,
+    "x": 7,
+    "y": 6,
     "locked": false,
     "heading": "linear",
     "startDeg": 180,
@@ -25,8 +25,8 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 32.06285785293021,
-        "y": 32.887818510289016,
+        "x": 36,
+        "y": 36,
         "heading": "linear",
         "startDeg": 180,
         "endDeg": 90
@@ -37,8 +37,8 @@
           "y": 18.768630511119785
         },
         {
-          "x": 32.06285785293021,
-          "y": 22.143711216758618
+          "x": 36.222937726463776,
+          "y": 20.146872877462506
         }
       ],
       "eventMarkers": [],
@@ -51,24 +51,24 @@
       "id": "mvwwb99h-aoqsot",
       "name": "",
       "endPoint": {
-        "x": 48.34100663285213,
+        "x": 48,
         "y": 134.88646117830666,
-        "heading": "tangential",
+        "heading": "linear",
         "startDeg": 90,
         "endDeg": 90
       },
       "controlPoints": [
         {
-          "x": 32.06285785293021,
-          "y": 56.320717908700765
+          "x": 36,
+          "y": 95.25906552497499
         },
         {
-          "x": 27.330081935232155,
-          "y": 124.71868903628561
+          "x": 33.33754888093852,
+          "y": 127.1676662166163
         },
         {
-          "x": 48.34100663285213,
-          "y": 111.77409285992977
+          "x": 48,
+          "y": 105.97192574236324
         }
       ],
       "color": "#88CBCA",
@@ -77,7 +77,8 @@
       "waitAfterMs": 0,
       "waitBeforeName": "",
       "waitAfterName": "",
-      "isChain": true
+      "isChain": true,
+      "hidden": false
     }
   ],
   "sequence": [

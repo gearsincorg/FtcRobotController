@@ -114,6 +114,17 @@ def line_heading(line):
     return {}
 
 
+def line_max_speed(line):
+    """Speed cap (in/s) set on a line, or None.
+
+    Turtle Tracer writes it as "maxSpeed" or "chainMaxSpeed"; any key ending in maxSpeed counts,
+    and if there are several the lowest wins.
+    """
+    speeds = [v for k, v in line.items()
+              if k.lower().endswith("maxspeed") and isinstance(v, (int, float)) and not isinstance(v, bool) and v > 0]
+    return min(speeds) if speeds else None
+
+
 def ordered_lines(data):
     """Lines in the order given by the sequence list (waits and other entries are skipped)."""
     lines = data.get("lines", [])
@@ -194,7 +205,9 @@ def build_method(turt_path, method, is_start):
             geometry = f"curve({', '.join([prev_name] + control_names + [name])})"
         else:
             geometry = f"line({prev_name}, {name})"
-        segments.append(geometry + interpolation)
+        max_speed = line_max_speed(line)
+        modifier = f".with(maxVelocity({num(max_speed)}))" if max_speed is not None else ""
+        segments.append(geometry + interpolation + modifier)
         prev_name, prev_xy, prev_deg = name, end_xy, end_deg
 
     if not segments:
@@ -290,6 +303,15 @@ def build_group(group, members, template_text):
                                 "    }\n\n", 1)
         methods.append(code)
         names.append(method)
+
+    # Lines with a maxSpeed in the .turt file get .with(maxVelocity(...)).  It must change the
+    # follower's own Foresight config: Constants.foresightConfig() returns a fresh copy.
+    methods.append(
+        "    /** Caps path speed (in/s) on one line of a path; from maxSpeed in the .turt file. */\n"
+        "    private com.pedropathing.config.Modifier maxVelocity(double inchesPerSec) {\n"
+        "        return ((com.pedropathing.algorithm.Foresight) robot.drive.algorithm())\n"
+        "                .config.maxVelocityConstraint.at(inchesPerSec);\n"
+        "    }")
 
     target = PATHS_DIR / f"{cls}.java"
     if target.exists():

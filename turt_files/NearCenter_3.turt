@@ -1,5 +1,5 @@
 {
-  "version": "2.6.0",
+  "version": "2.6.1",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
@@ -7,7 +7,7 @@
   },
   "startPoint": {
     "x": 48,
-    "y": 130.51,
+    "y": 135,
     "locked": false,
     "heading": "linear",
     "startDeg": 90,
@@ -25,7 +25,7 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 14,
+        "x": 11,
         "y": 48,
         "heading": "linear",
         "startDeg": 90,
@@ -33,12 +33,12 @@
       },
       "controlPoints": [
         {
-          "x": 21.48849005072181,
-          "y": 123.7156348655312
+          "x": 27.14619867872747,
+          "y": 114.56345914375734
         },
         {
-          "x": 44.75897190357555,
-          "y": 40.74832788343977
+          "x": 48,
+          "y": 48
         }
       ],
       "eventMarkers": [],
