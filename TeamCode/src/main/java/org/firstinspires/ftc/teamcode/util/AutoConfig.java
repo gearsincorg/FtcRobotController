@@ -27,7 +27,7 @@ public class AutoConfig {
     public static final int MAX_CYCLES    = 2;
 
     private static final String FILE_NAME = "GFORCE_auto.properties";
-    private static final int ITEMS = 5;     // alliance, delay, start, cycles, park
+    private static final int ITEMS = 6;     // alliance, delay, start, cycles, park, step
 
     // Settings
     public boolean       red      = true;
@@ -35,6 +35,9 @@ public class AutoConfig {
     public AutoRoutine   routine  = AutoRoutine.values()[0];
     public int           cycles   = 2;
     public Park          park     = Park.BASE;
+    // Step mode (testing only): pause after each path until gamepad 1 A is pressed.
+    // Never saved, so it is off every time the opmode starts and can't be left on for a match.
+    public boolean       stepMode = false;
 
     private final OpMode opMode;
     private Context context;
@@ -73,6 +76,7 @@ public class AutoConfig {
             case 2: routine = AutoRoutine.values()[wrap(routine.ordinal() + dir, AutoRoutine.values().length)]; break;
             case 3: cycles = clamp(cycles + dir, 0, MAX_CYCLES); break;
             case 4: park = Park.values()[wrap(park.ordinal() + dir, Park.values().length)]; break;
+            case 5: stepMode = !stepMode; break;
         }
     }
 
@@ -83,6 +87,7 @@ public class AutoConfig {
         line(2, "Path",        routine.label);
         line(3, "Cycles",      String.valueOf(cycles));
         line(4, "Park",        park.label);
+        line(5, "Step mode",   stepMode ? "ON (press A after each path)" : "Off");
     }
 
     private void line(int index, String name, String value) {

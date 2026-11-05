@@ -203,8 +203,8 @@ public class Constants {
     private static final OctoQuadConfig PRODUCTION_LOCALIZER = new OctoQuadConfig(c -> {
         sharedLocalizer(c);
         c.headingScalar.set(1.009115985239217);
-        c.xPodOffset.set(4.1);
-        c.yPodOffset.set(-0.1);
+        c.xPodOffset.set(4.074803149606299);
+        c.yPodOffset.set(1.3385826771653544);
         c.xPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
         c.yPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
         c.headingScalar.set(1.009115985239217);

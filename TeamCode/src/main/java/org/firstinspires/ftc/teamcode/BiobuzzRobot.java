@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.pedropathing.follower.Follower;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.FunctionalCommand;
 
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
@@ -54,5 +56,30 @@ public class BiobuzzRobot {
      */
     public void update() {
         drive.update();
+    }
+
+    /**
+     * Auto step mode: with step mode on (auto setup menu), wait here until gamepad 1 A is pressed;
+     * with it off, finish at once.  A must be released and pressed again, so holding it doesn't
+     * skip several pauses.  Pedro holds the robot at the end of the last path while paused.
+     */
+    public Command stepCommand(String label) {
+        boolean[] released = { false };
+        return new FunctionalCommand(
+                () -> released[0] = false,
+                () -> {
+                    if (config.stepMode) {
+                        opMode.telemetry.addLine("PAUSED " + label + ": press A to continue");
+                    }
+                },
+                interrupted -> {},
+                () -> {
+                    if (!config.stepMode) return true;
+                    if (!opMode.gamepad1.a) {
+                        released[0] = true;
+                        return false;
+                    }
+                    return released[0];
+                });
     }
 }

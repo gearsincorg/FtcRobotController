@@ -4,6 +4,9 @@ repositories {
     maven {
         url 'https://repo.dairy.foundation/releases/'   // For PedroPathing 3.0
     }
+    maven {
+        url 'https://mymaven.bylazar.com/releases'      // For Panels
+    }
 }
 
 dependencies {
@@ -21,5 +24,6 @@ dependencies {
     implementation 'com.pedropathing:tuning:1.0.3'  // For PedroPathing 3.0
     implementation "org.solverslib:core:0.3.6"      // core
     implementation "org.solverslib:pedroPathing:0.3.6" // For pedroPathing 3.0
+    implementation 'com.bylazar:fullpanels:1.0.19'  // Panels dashboard (http://192.168.43.1:8001)
 }
 
