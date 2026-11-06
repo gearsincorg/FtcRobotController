@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedro;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
+
 import com.pedropathing.algorithm.Foresight;
 import com.pedropathing.algorithm.ForesightConfig;
 import com.pedropathing.config.Configuration;
@@ -203,8 +205,8 @@ public class Constants {
     private static final OctoQuadConfig PRODUCTION_LOCALIZER = new OctoQuadConfig(c -> {
         sharedLocalizer(c);
         c.headingScalar.set(1.009115985239217);
-        c.xPodOffset.set(4.074803149606299);
-        c.yPodOffset.set(1.3385826771653544);
+        c.xPodOffset.set(4.5);
+        c.yPodOffset.set(0.125);
         c.xPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
         c.yPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
         c.headingScalar.set(1.009115985239217);

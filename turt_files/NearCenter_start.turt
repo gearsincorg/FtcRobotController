@@ -1,5 +1,5 @@
 {
-  "version": "2.6.1",
+  "version": "2.7.0",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
@@ -42,7 +42,7 @@
       "waitBeforeName": "",
       "waitAfterName": "",
       "hidden": false,
-      "maxSpeed": 20
+      "maxSpeed": 45
     }
   ],
   "sequence": [

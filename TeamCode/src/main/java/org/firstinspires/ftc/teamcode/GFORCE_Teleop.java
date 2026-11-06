@@ -64,7 +64,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double MAX_SNAP_TURN = 0.6;
 
     // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
-    private static final Pose RESET_POSE = new Pose(32, 6, Math.toRadians(180));
+    private static final Pose RESET_POSE = new Pose(32.75, 6, Math.toRadians(180));
 
     // Pedro field direction that "stick forward" means to the driver (away from the driver station).
     private static final double DRIVER_FORWARD = Math.toRadians(0);

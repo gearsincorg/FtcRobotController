@@ -1,5 +1,5 @@
 {
-  "version": "2.6.1",
+  "version": "2.7.0",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
@@ -43,7 +43,7 @@
       ],
       "eventMarkers": [],
       "hidden": false,
-      "chainMaxSpeed": 60,
+      "chainMaxSpeed": 45,
       "globalStartDeg": 90,
       "globalEndDeg": 90
     },
@@ -52,7 +52,7 @@
       "name": "",
       "endPoint": {
         "x": 48,
-        "y": 134.88646117830666,
+        "y": 130.5,
         "heading": "linear",
         "startDeg": 90,
         "endDeg": 90

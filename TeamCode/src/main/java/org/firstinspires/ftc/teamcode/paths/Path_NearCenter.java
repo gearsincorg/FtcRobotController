@@ -31,7 +31,7 @@ public class Path_NearCenter {
         // Add paths and other subsystem commands here
         auto.addCommands(robot.shooter.startTrackingCommand(), robot.intake.shootAllCommand());
         auto.addCommands(new ParallelCommandGroup(path_start().withTimeout(2000), robot.intake.intakeUntilFullCommand()), robot.stepCommand("after path_start"));
-        auto.addCommands(path_2(), robot.stepCommand("after path_2"), robot.intake.shootAllCommand());
+        auto.addCommands(path_2().withTimeout(8000), robot.stepCommand("after path_2"), robot.intake.shootAllCommand());
         auto.addCommands(path_3(), robot.stepCommand("after path_3"), robot.intake.intakeUntilFullCommand());
         auto.addCommands(path_4(), robot.stepCommand("after path_4"), robot.intake.shootAllCommand(), robot.shooter.idleCommand());
 
@@ -55,7 +55,7 @@ public class Path_NearCenter {
         final Pose gardenControl2 = poseFactory.of(26.8975, 6, 0);
 
         Path path_startPath = Paths.path(
-                curve(start, gardenControl1, gardenControl2, garden).linear(start, garden).with(maxVelocity(20))
+                curve(start, gardenControl1, gardenControl2, garden).linear(start, garden).with(maxVelocity(45))
         );
 
         return new FollowPathCommand(robot.drive, path_startPath);
@@ -67,13 +67,13 @@ public class Path_NearCenter {
         final Pose transition = poseFactory.of(36, 36, 90);
         final Pose transitionControl1 = poseFactory.of(30.0712, 18.7686, 0);
         final Pose transitionControl2 = poseFactory.of(36.2229, 20.1469, 0);
-        final Pose point2 = poseFactory.of(48, 134.8865, 90);
+        final Pose point2 = poseFactory.of(48, 130.5, 90);
         final Pose point2Control1 = poseFactory.of(36, 95.2591, 0);
         final Pose point2Control2 = poseFactory.of(33.3375, 127.1677, 0);
         final Pose point2Control3 = poseFactory.of(48, 105.9719, 0);
 
         Path path_2Path = Paths.path(
-                curve(start, transitionControl1, transitionControl2, transition).linear(start, transition).with(maxVelocity(60)),
+                curve(start, transitionControl1, transitionControl2, transition).linear(start, transition).with(maxVelocity(45)),
                 curve(transition, point2Control1, point2Control2, point2Control3, point2).linear(transition, point2)
         );
 
@@ -82,13 +82,13 @@ public class Path_NearCenter {
 
     // Generated from NearCenter_3.turt
     public FollowPathCommand path_3() {
-        final Pose start = poseFactory.of(48, 135, 90);
-        final Pose nearFlower = poseFactory.of(11, 48, 180);
-        final Pose nearFlowerControl1 = poseFactory.of(27.1462, 114.5635, 0);
+        final Pose start = poseFactory.of(48.5, 130.5, 90);
+        final Pose nearFlower = poseFactory.of(12, 48, 180);
+        final Pose nearFlowerControl1 = poseFactory.of(25, 118, 0);
         final Pose nearFlowerControl2 = poseFactory.of(48, 48, 0);
 
         Path path_3Path = Paths.path(
-                curve(start, nearFlowerControl1, nearFlowerControl2, nearFlower).linear(start, nearFlower)
+                curve(start, nearFlowerControl1, nearFlowerControl2, nearFlower).linear(start, nearFlower).with(maxVelocity(45))
         );
 
         return new FollowPathCommand(robot.drive, path_3Path);
@@ -96,13 +96,13 @@ public class Path_NearCenter {
 
     // Generated from NearCenter_4.turt
     public FollowPathCommand path_4() {
-        final Pose start = poseFactory.of(11, 48, 180);
+        final Pose start = poseFactory.of(12, 48, 180);
         final Pose nearShoot = poseFactory.of(32, 6, 180);
         final Pose nearShootControl1 = poseFactory.of(21.4363, 41.6746, 0);
         final Pose nearShootControl2 = poseFactory.of(32, 17.2497, 0);
 
         Path path_4Path = Paths.path(
-                curve(start, nearShootControl1, nearShootControl2, nearShoot).linear(start, nearShoot)
+                curve(start, nearShootControl1, nearShootControl2, nearShoot).linear(start, nearShoot).with(maxVelocity(45))
         );
 
         return new FollowPathCommand(robot.drive, path_4Path);
