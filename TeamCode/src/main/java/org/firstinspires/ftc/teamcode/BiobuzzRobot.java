@@ -10,6 +10,9 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 import org.firstinspires.ftc.teamcode.util.AutoConfig;
+import org.firstinspires.ftc.vision.opencv.ColorRange;
+import org.firstinspires.ftc.vision.opencv.ColorSpace;
+import org.opencv.core.Scalar;
 
 public class BiobuzzRobot {
     public IntakeSubsystem intake;
@@ -19,6 +22,12 @@ public class BiobuzzRobot {
     public AutoConfig config;
 
     private OpMode  opMode;
+
+    public static final ColorRange POLLEN_YELLOW = new ColorRange(
+        ColorSpace.YCrCb,
+        new Scalar( 128, 130, 29),
+        new Scalar(255, 166, 130)
+    );
 
     public BiobuzzRobot(OpMode opmode) {
         this.opMode = opmode;

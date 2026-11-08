@@ -33,8 +33,10 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorRange;
+import org.firstinspires.ftc.vision.opencv.ColorSpace;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
 import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
 
 import java.util.List;
 
@@ -64,10 +66,16 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Disabled
+
 @TeleOp(name = "Concept: Color-Locator (Rectangle)", group = "Concept")
 public class ConceptVisionColorLocator_Rectangle extends LinearOpMode
 {
+    public static final ColorRange POLLEN_YELLOW = new ColorRange(
+        ColorSpace.YCrCb,
+        new Scalar( 128, 130, 29),
+        new Scalar(255, 166, 130)
+    );
+
     @Override
     public void runOpMode()
     {
@@ -119,9 +127,9 @@ public class ConceptVisionColorLocator_Rectangle extends LinearOpMode
          *        "pixels" in the range of 2-4 are suitable for low res images.
          */
         ColorBlobLocatorProcessor colorLocator = new ColorBlobLocatorProcessor.Builder()
-                .setTargetColorRange(ColorRange.ARTIFACT_PURPLE)   // use a predefined color match
+                .setTargetColorRange(POLLEN_YELLOW)   // use a predefined color match
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
-                .setRoi(ImageRegion.asUnityCenterCoordinates(-0.75, 0.75, 0.75, -0.75))
+                .setErodeSize(3)
                 .setDrawContours(true)   // Show contours on the Stream Preview
                 .setBlurSize(5)          // Smooth the transitions between different colors in image
                 .build();
@@ -140,6 +148,7 @@ public class ConceptVisionColorLocator_Rectangle extends LinearOpMode
          */
         VisionPortal portal = new VisionPortal.Builder()
                 .addProcessor(colorLocator)
+                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .setCameraResolution(new Size(320, 240))
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .build();
@@ -154,6 +163,7 @@ public class ConceptVisionColorLocator_Rectangle extends LinearOpMode
 
             // Read the current list
             List<ColorBlobLocatorProcessor.Blob> blobs = colorLocator.getBlobs();
+            ColorBlobLocatorProcessor.Util.filterByCriteria(ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA,400,6000, blobs);
 
             /*
              * The list of Blobs can be filtered to remove unwanted Blobs.

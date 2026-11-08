@@ -47,7 +47,7 @@ public class IntakeSubsystem extends SubsystemBase {
     // == Sensors =============================================================
     // true: the ball count comes from SimulatedSlots instead of the slot sensors.
     // TODO set false once the slot sensors are in use.
-    public static final boolean SIMULATE_SENSORS = true;
+    public static final boolean SIMULATE_SENSORS = false;
     private static final int    SIM_PRELOAD      = 4;
 
     // Sensor reading when a ball is in the slot (most digital sensors are active-low).
@@ -118,7 +118,7 @@ public class IntakeSubsystem extends SubsystemBase {
         feeder = opMode.hardwareMap.get(DcMotorEx.class, "feeder");
         gate   = opMode.hardwareMap.tryGet(Servo.class, "gate");
 
-        intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        intake.setDirection(DcMotorSimple.Direction.REVERSE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         feeder.setDirection(DcMotorSimple.Direction.REVERSE);
         feeder.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

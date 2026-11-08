@@ -45,6 +45,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Commands.RobotCommands;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
+import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
 @TeleOp(name = "G-FORCE TELEOP", group = "Competition")
 public class GFORCE_Teleop extends CommandOpMode {
@@ -128,7 +129,17 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         double heading = robot.drive.pose().heading();
 
-        if (gamepad1.right_bumper && robot.vision.hasTarget()) {
+        if (gamepad1.left_bumper) {
+            // Chase the nearest yellow ball (the intake is always collecting).  With the left
+            // stick idle, drive straight ahead (robot-forward) at BALL_DRIVE_POWER; pushing it
+            // drives field-centric as usual.  Twisting the right stick overrides the turn.
+            if (yaw == 0) yaw = robot.vision.getBallTurn();
+            headingLocked = false;
+            if (axial == 0 && lateral == 0) {
+                robot.drive.manual(ManualDrive.fieldCentric(VisionSubsystem.BALL_DRIVE_POWER, 0, yaw, 0));
+                return;
+            }
+        } else if (gamepad1.right_bumper && robot.vision.hasTarget()) {
             // Point at the target cluster: use the bearing (+ is CCW) as the error.
             yaw = Range.clip(robot.vision.getTargetPose().bearing * TARGET_TURN_GAIN,
                              -MAX_TARGET_TURN, MAX_TARGET_TURN);
