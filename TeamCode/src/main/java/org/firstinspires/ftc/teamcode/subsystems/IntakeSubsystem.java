@@ -120,7 +120,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        feeder.setDirection(DcMotorSimple.Direction.REVERSE);
+        feeder.setDirection(DcMotorSimple.Direction.FORWARD);
         feeder.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         if (SIMULATE_SENSORS) {
