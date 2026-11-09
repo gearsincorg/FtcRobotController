@@ -36,7 +36,7 @@ public class GFORCE_Auto extends CommandOpMode {
 
         robot.intake.refreshSensors();
 
-        telemetry.addData("Preload", "%s  [ %s]%s", robot.intake.stateName(),
+        telemetry.addData("Preload", "%d balls  [ %s]%s", robot.intake.ballCount(),
                 robot.intake.slotPattern(), robot.intake.isSimulated() ? "  (SIMULATED)" : "");
         telemetry.update();
     }
