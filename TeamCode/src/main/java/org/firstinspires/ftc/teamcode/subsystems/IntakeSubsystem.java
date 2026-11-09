@@ -16,10 +16,10 @@ import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 import java.util.function.BooleanSupplier;
 
 /**
- * Collect and transfer: intake motor, gate servo and feeder (transfer) motor, with four slot sensors.
+ * Collect and transfer: intake motor, gate servo and transfer motor, with four slot sensors.
  *
  *   - the intake motor pulls balls in at the mouth
- *   - the feeder moves the whole column toward the gate / shooter
+ *   - the transfer moves the whole column toward the gate / shooter
  *   - the gate servo keeps balls out of the shooter until we shoot
  *   - four digital sensors, one per ball position (slot1 nearest the intake, slot4 at the gate)
  *
@@ -30,13 +30,16 @@ import java.util.function.BooleanSupplier;
  * priority first:
  *
  *   SHOOTING   shoot held and the shooter is up to speed.  Gate open, intake in,
- *              feeder feeds.  The only mode with the gate open.
+ *              transfer feeds.  The only mode with the gate open.
  *   SPINUP     shoot held but the shooter isn't up to speed (yet, or again after a shot slowed it):
- *              intake and feeder stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), clear and eject are ignored.
- *   CLEAR_ALL  clear held: intake out, feeder reversed, purges every ball.
- *   EJECTING   eject held: intake out, feeder holds the column.
- *   FULL       four balls: intake out (spits a 5th ball), feeder packs the column.
- *   INTAKING   otherwise: intake in, feeder feeds the column against the closed gate.
+ *              intake and transfer stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), clear and eject are ignored.
+ *   CLEAR_ALL  clear held: intake out, transfer reversed, purges every ball.
+ *   EJECTING   eject held: intake out, transfer holds the column.
+ *   FULL       four balls: intake out (spits a 5th ball), transfer packs the column.
+ *   INTAKING   otherwise: intake in.  The transfer runs at TRANSFER_POWER until the balls are
+ *              packed (stacked from slot4 down with no gaps, see isPacked()), then PACKED_POWER so
+ *              it doesn't stall against the closed gate.  A new ball at slot1 makes a gap and
+ *              starts it again.
  *
  * Until the sensors are in use, SIMULATE_SENSORS swaps them for SimulatedSlots.
  */
@@ -55,16 +58,16 @@ public class IntakeSubsystem extends SubsystemBase {
     // == Tuning (all placeholders) ===========================================
     private static final double INTAKE_POWER       = 1.0;   // intake in   (INTAKING, SHOOTING)
     private static final double REJECT_POWER       =-0.3;   // intake out  (FULL, EJECTING, CLEAR_ALL)
-    private static final double FEED_POWER         = 1.0;   // feeder      (INTAKING, SHOOTING)
-    private static final double PACK_POWER         = 0.0;   // feeder      (FULL), against the closed gate
-    private static final double HOLD_POWER         = 0.2;   // feeder      (EJECTING), keeps the column in place
-    private static final double EJECT_POWER        = -1.0;  // feeder      (CLEAR_ALL)
+    private static final double TRANSFER_POWER     = 1.0;   // transfer    (SHOOTING; INTAKING while not packed)
+    private static final double PACKED_POWER       = 0.0;   // transfer    (INTAKING while packed, FULL), balls stacked against the closed gate
+    private static final double HOLD_POWER         = 0.2;   // transfer    (EJECTING), keeps the column in place
+    private static final double EJECT_POWER        = -1.0;  // transfer    (CLEAR_ALL)
 
     // TODO tune on the robot.
     public static final double GATE_CLOSED         = 0.0;
     public static final double GATE_OPEN           = 0.5;
 
-    private static final double COUNT_DEBOUNCE_MS  = 100;   // sensor count must hold this long
+    private static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
     private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
     private static final double SHOT_CLEAR_MS      = 300;   // auto volley: last ball leaves the flywheel
 
@@ -73,16 +76,16 @@ public class IntakeSubsystem extends SubsystemBase {
     private final OpMode          opMode;
     private final BooleanSupplier shooterReady;
     private DcMotorEx        intake;
-    private DcMotorEx        feeder;
+    private DcMotorEx        transfer;
     private Servo            gate;
     private DigitalChannel[] slotSensors = new DigitalChannel[SLOT_NAMES.length];
     private SimulatedSlots   sim;
 
     // Sensors
-    private boolean[] slots         = new boolean[SLOT_NAMES.length];
+    private boolean[] slots         = new boolean[SLOT_NAMES.length];   // debounced, slot1 first
+    private boolean[] pendingSlots  = new boolean[SLOT_NAMES.length];   // raw, waiting to hold steady
     private String    pattern       = "";
-    private int       ballCount     = 0;      // debounced
-    private int       pendingCount  = 0;
+    private int       ballCount     = 0;      // balls in the debounced pattern
 
     // Driver requests
     private boolean  shootHeld       = false;
@@ -95,10 +98,10 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // Outputs (also what the simulation reacts to)
     private double  intakePower    = 0;
-    private double  feederPower    = 0;
+    private double  transferPower  = 0;
     private double  gatePosition   = GATE_CLOSED;
 
-    private final ElapsedTime countTimer = new ElapsedTime();   // time the raw count has been stable
+    private final ElapsedTime countTimer = new ElapsedTime();   // time the raw pattern has been stable
     private final ElapsedTime volleyTimer = new ElapsedTime();  // time since this press first reached SHOOTING
     private final ElapsedTime emptyTimer = new ElapsedTime();   // time the count has read empty
 
@@ -111,13 +114,13 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public void init() {
         intake = opMode.hardwareMap.get(DcMotorEx.class, "intake");
-        feeder = opMode.hardwareMap.get(DcMotorEx.class, "feeder");
+        transfer = opMode.hardwareMap.get(DcMotorEx.class, "transfer");
         gate   = opMode.hardwareMap.tryGet(Servo.class, "gate");
 
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        feeder.setDirection(DcMotorSimple.Direction.FORWARD);
-        feeder.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        transfer.setDirection(DcMotorSimple.Direction.FORWARD);
+        transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         if (SIMULATE_SENSORS) {
             sim = new SimulatedSlots(SIM_PRELOAD);
@@ -129,7 +132,8 @@ public class IntakeSubsystem extends SubsystemBase {
         }
 
         readSensors();
-        ballCount = pendingCount = rawCount();      // trust the first reading (preload)
+        slots = pendingSlots.clone();               // trust the first reading (preload)
+        ballCount = countBalls(slots);
 
         // Everything off until the first loop after START (the scheduler doesn't run during init).
         set(0, 0, GATE_CLOSED);
@@ -148,8 +152,9 @@ public class IntakeSubsystem extends SubsystemBase {
             opMode.telemetry.addLine("SIMULATED BALL SENSORS");
         }
         opMode.telemetry.addData("In:Feed:Gate", "%4.2f, %4.2f, %4.2f",
-                intakePower, feederPower, gatePosition);
-        opMode.telemetry.addData("BALLS", "%d  [ %s]  %s", ballCount, pattern, mode);
+                intakePower, transferPower, gatePosition);
+        opMode.telemetry.addData("BALLS", "%d  [ %s]  %s%s", ballCount, pattern, mode,
+                isPacked() ? "  PACKED" : "");
     }
 
     /** Read the sensors without running anything else (e.g. to show the preload during init). */
@@ -183,6 +188,18 @@ public class IntakeSubsystem extends SubsystemBase {
     public int      ballCount()   { return ballCount; }
     public boolean  isFull()      { return ballCount == slots.length; }
     public boolean  isEmpty()     { return ballCount == 0; }
+
+    /**
+     * The balls are stacked at the top with no gaps: from slot4 down it's balls, then only empty
+     * slots (e.g. "- - X X").  Empty is not packed.
+     */
+    public boolean isPacked() {
+        if (isEmpty()) return false;
+        int i = slots.length - 1;
+        while (i >= 0 && slots[i]) i--;     // the stack of balls under the gate
+        while (i >= 0 && !slots[i]) i--;    // then nothing below it
+        return i < 0;
+    }
     /** True while shoot is requested (SPINUP or SHOOTING). */
     public boolean  isShooting()  { return shootHeld; }
     public String   slotPattern() { return pattern; }
@@ -203,7 +220,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private void readSensors() {
         boolean[] raw;
         if (sim != null) {
-            sim.update(intakePower, feederPower, isGateOpen());
+            sim.update(intakePower, transferPower, isGateOpen());
             raw = sim.read();
         } else {
             raw = new boolean[SLOT_NAMES.length];
@@ -217,15 +234,15 @@ public class IntakeSubsystem extends SubsystemBase {
             sb.append(ball ? "X " : "- ");
         }
         pattern = sb.toString();
-        slots = raw;
 
-        // The count is the number of sensors seeing a ball, once it has held steady.
-        int count = rawCount();
-        if (count != pendingCount) {
-            pendingCount = count;
+        // Use the pattern once it has held steady, so a ball rolling between sensors doesn't
+        // flicker the count or the packed state.
+        if (!java.util.Arrays.equals(raw, pendingSlots)) {
+            pendingSlots = raw;
             countTimer.reset();
         } else if (countTimer.milliseconds() > COUNT_DEBOUNCE_MS) {
-            ballCount = count;
+            slots = raw;
+            ballCount = countBalls(slots);
         }
 
         if (!isEmpty()) {
@@ -233,9 +250,9 @@ public class IntakeSubsystem extends SubsystemBase {
         }
     }
 
-    private int rawCount() {
+    private static int countBalls(boolean[] seen) {
         int count = 0;
-        for (boolean ball : slots) {
+        for (boolean ball : seen) {
             if (ball) count++;
         }
         return count;
@@ -273,7 +290,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private void applyOutputs() {
         switch (mode) {
             case SHOOTING:
-                set(INTAKE_POWER, FEED_POWER, GATE_OPEN);
+                set(INTAKE_POWER, TRANSFER_POWER, GATE_OPEN);
                 break;
             case SPINUP:
                 set(0, 0, GATE_CLOSED);
@@ -285,21 +302,23 @@ public class IntakeSubsystem extends SubsystemBase {
                 set(REJECT_POWER, HOLD_POWER, GATE_CLOSED);
                 break;
             case FULL:
-                set(REJECT_POWER, PACK_POWER, GATE_CLOSED);
+                set(REJECT_POWER, PACKED_POWER, GATE_CLOSED);
                 break;
             case INTAKING:
             default:
-                set(INTAKE_POWER, FEED_POWER, GATE_CLOSED);
+                // Move balls up until they're stacked under the gate, then ease off so the
+                // transfer doesn't stall against the closed gate.
+                set(INTAKE_POWER, isPacked() ? PACKED_POWER : TRANSFER_POWER, GATE_CLOSED);
                 break;
         }
     }
 
-    private void set(double intakePower, double feederPower, double gatePosition) {
+    private void set(double intakePower, double transferPower, double gatePosition) {
         this.intakePower  = intakePower;
-        this.feederPower  = feederPower;
+        this.transferPower = transferPower;
         this.gatePosition = gatePosition;
         intake.setPower(intakePower);
-        feeder.setPower(feederPower);
+        transfer.setPower(transferPower);
         if (gate != null) gate.setPosition(gatePosition);
     }
 

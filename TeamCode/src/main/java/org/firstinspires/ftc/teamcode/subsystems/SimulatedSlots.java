@@ -9,8 +9,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * sensors nearest the gate (slot4, slot3, ...), like the real column would.  The count changes
  * with what the intake subsystem is commanding:
  *   - intake running in: a ball arrives every PICKUP_MS, until the column is full
- *   - feeder pushing through the open gate: a ball is shot every SHOT_MS
- *   - intake and feeder both reversed: a ball is ejected every EJECT_MS
+ *   - transfer pushing through the open gate: a ball is shot every SHOT_MS
+ *   - intake and transfer both reversed: a ball is ejected every EJECT_MS
  */
 public class SimulatedSlots {
 
@@ -31,7 +31,7 @@ public class SimulatedSlots {
     }
 
     /** Advance the model by the time since the last call. */
-    public void update(double intakePower, double feederPower, boolean gateOpen) {
+    public void update(double intakePower, double transferPower, boolean gateOpen) {
         double dtMs = Math.min(loopTimer.seconds(), MAX_DT) * 1000;
         loopTimer.reset();
 
@@ -41,13 +41,13 @@ public class SimulatedSlots {
             pickupMs = 0;
         }
 
-        shotMs = (gateOpen && feederPower > 0.1 && count > 0) ? shotMs + dtMs : 0;
+        shotMs = (gateOpen && transferPower > 0.1 && count > 0) ? shotMs + dtMs : 0;
         if (shotMs >= SHOT_MS) {
             count--;
             shotMs = 0;
         }
 
-        ejectMs = (intakePower < -0.1 && feederPower < -0.1 && count > 0) ? ejectMs + dtMs : 0;
+        ejectMs = (intakePower < -0.1 && transferPower < -0.1 && count > 0) ? ejectMs + dtMs : 0;
         if (ejectMs >= EJECT_MS) {
             count--;
             ejectMs = 0;
