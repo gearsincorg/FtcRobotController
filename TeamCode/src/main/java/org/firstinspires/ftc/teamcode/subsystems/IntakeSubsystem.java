@@ -35,9 +35,9 @@ import java.util.function.BooleanSupplier;
  *              intake and transfer stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), clear and eject are ignored.
  *   CLEAR_ALL  clear held: intake out, transfer reversed, purges every ball.
  *   EJECTING   eject held: intake out, transfer holds the column.
- *   FULL       four balls: intake out (spits a 5th ball), transfer packs the column.
+ *   FULL       four balls: intake holds gently (INTAKE_HOLD_POWER), transfer at TRANSFER_PACKED_POWER.
  *   INTAKING   otherwise: intake in.  The transfer runs at TRANSFER_POWER until the balls are
- *              packed (stacked from slot4 down with no gaps, see isPacked()), then PACKED_POWER so
+ *              packed (stacked from slot4 down with no gaps, see isPacked()), then TRANSFER_PACKED_POWER so
  *              it doesn't stall against the closed gate.  A new ball at slot1 makes a gap and
  *              starts it again.
  *
@@ -56,16 +56,20 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final String[] SLOT_NAMES = { "slot1", "slot2", "slot3", "slot4" };
 
     // == Tuning (all placeholders) ===========================================
-    private static final double INTAKE_POWER       = 1.0;   // intake in   (INTAKING, SHOOTING)
-    private static final double REJECT_POWER       =-0.3;   // intake out  (FULL, EJECTING, CLEAR_ALL)
-    private static final double TRANSFER_POWER     = 1.0;   // transfer    (SHOOTING; INTAKING while not packed)
-    private static final double PACKED_POWER       = 0.0;   // transfer    (INTAKING while packed, FULL), balls stacked against the closed gate
-    private static final double HOLD_POWER         = 0.2;   // transfer    (EJECTING), keeps the column in place
-    private static final double EJECT_POWER        = -1.0;  // transfer    (CLEAR_ALL)
+    // Intake motor
+    private static final double INTAKE_POWER          = 1.0;   // in             (INTAKING, SHOOTING)
+    private static final double INTAKE_HOLD_POWER     = 0.1;   // hold           (FULL)
+    private static final double INTAKE_REJECT_POWER   =-0.3;   // out            (EJECTING)
+    private static final double INTAKE_EJECT_POWER    =-1.0;   // out, full speed (CLEAR_ALL)
+    // Transfer motor
+    private static final double TRANSFER_POWER        = 1.0;   // up             (SHOOTING; INTAKING while not packed)
+    private static final double TRANSFER_PACKED_POWER = 0.0;   // packed         (INTAKING while packed, FULL), balls stacked against the closed gate
+    private static final double TRANSFER_HOLD_POWER   = 0.2;   // hold           (EJECTING), keeps the column in place
+    private static final double TRANSFER_EJECT_POWER  =-1.0;   // down           (CLEAR_ALL)
 
     // TODO tune on the robot.
-    public static final double GATE_CLOSED         = 0.0;
-    public static final double GATE_OPEN           = 0.5;
+    public static final double GATE_CLOSED         = 0.5;
+    public static final double GATE_OPEN           = 0.1;
 
     private static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
     private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
@@ -296,19 +300,19 @@ public class IntakeSubsystem extends SubsystemBase {
                 set(0, 0, GATE_CLOSED);
                 break;
             case CLEAR_ALL:
-                set(EJECT_POWER, EJECT_POWER, GATE_CLOSED);
+                set(INTAKE_EJECT_POWER, TRANSFER_EJECT_POWER, GATE_CLOSED);
                 break;
             case EJECTING:
-                set(REJECT_POWER, HOLD_POWER, GATE_CLOSED);
+                set(INTAKE_REJECT_POWER, TRANSFER_HOLD_POWER, GATE_CLOSED);
                 break;
             case FULL:
-                set(REJECT_POWER, PACKED_POWER, GATE_CLOSED);
+                set(INTAKE_HOLD_POWER, TRANSFER_PACKED_POWER, GATE_CLOSED);
                 break;
             case INTAKING:
             default:
                 // Move balls up until they're stacked under the gate, then ease off so the
                 // transfer doesn't stall against the closed gate.
-                set(INTAKE_POWER, isPacked() ? PACKED_POWER : TRANSFER_POWER, GATE_CLOSED);
+                set(INTAKE_POWER, isPacked() ? TRANSFER_PACKED_POWER : TRANSFER_POWER, GATE_CLOSED);
                 break;
         }
     }
