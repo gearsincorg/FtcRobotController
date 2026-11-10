@@ -119,13 +119,14 @@ public class GFORCE_Teleop extends CommandOpMode {
 
     public void manualDrive() {
         // Manual driving ===================================
-        final double SLOW_MULTIPLIER = 0.7;
+        final double DRIVE_SCALE_FACTOR = 1.0;
+        final double STEER_SCALE_FACTOR = 0.7;
         final double HEADING_GAIN    = 0.5;
         final double MIN_ROTATE      = 0.1;
 
-        double axial    = -gamepad1.left_stick_y  * SLOW_MULTIPLIER;
-        double lateral  = -gamepad1.left_stick_x  * SLOW_MULTIPLIER;
-        double yaw      = -gamepad1.right_stick_x * SLOW_MULTIPLIER;
+        double axial    = -gamepad1.left_stick_y  * DRIVE_SCALE_FACTOR;
+        double lateral  = -gamepad1.left_stick_x  * DRIVE_SCALE_FACTOR;
+        double yaw      = -gamepad1.right_stick_x * STEER_SCALE_FACTOR;
 
         double heading = robot.drive.pose().heading();
 

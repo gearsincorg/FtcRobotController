@@ -26,6 +26,8 @@ import java.util.function.BooleanSupplier;
  * The ball count is simply the number of sensors that see a ball (briefly debounced).  No sensor
  * seeing a ball is "empty", all four is "full".  Nothing is inferred from a ball passing a sensor.
  *
+ * During init (until START) the gate sits at GATE_INIT; after that the mode sets it.
+ *
  * The mode is worked out every loop from what the driver is holding and the ball count, highest
  * priority first:
  *
@@ -68,8 +70,9 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double TRANSFER_EJECT_POWER  =-1.0;   // down           (CLEAR_ALL)
 
     // TODO tune on the robot.
-    public static final double GATE_CLOSED         = 0.5;
-    public static final double GATE_OPEN           = 0.1;
+    public static final double GATE_CLOSED         = 0.35;
+    public static final double GATE_OPEN           = 0.44;
+    public static final double GATE_INIT           = 0.5;   // during init only (until START).  Placeholder.
 
     private static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
     private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
@@ -139,8 +142,9 @@ public class IntakeSubsystem extends SubsystemBase {
         slots = pendingSlots.clone();               // trust the first reading (preload)
         ballCount = countBalls(slots);
 
-        // Everything off until the first loop after START (the scheduler doesn't run during init).
-        set(0, 0, GATE_CLOSED);
+        // Motors off and gate at GATE_INIT until the first loop after START (the scheduler doesn't
+        // run during init); from then on the mode decides, so the gate closes once intaking starts.
+        set(0, 0, GATE_INIT);
     }
 
     @Override
