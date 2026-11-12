@@ -25,8 +25,8 @@ public class BiobuzzRobot {
 
     public static final ColorRange POLLEN_YELLOW = new ColorRange(
         ColorSpace.YCrCb,
-        new Scalar( 128, 130, 29),
-        new Scalar(255, 166, 130)
+        new Scalar( 128, 135, 29),
+        new Scalar(255, 166, 120)
     );
 
     public BiobuzzRobot(OpMode opmode) {

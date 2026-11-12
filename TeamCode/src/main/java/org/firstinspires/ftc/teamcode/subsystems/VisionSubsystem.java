@@ -55,6 +55,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     // Ignore clusters that are seen from behind.
     private static final double MAX_ABS_ROLL = 90;
+    private final double MAX_SPEED = 0.3;
 
     private final OpMode opMode;
     private AprilTagProcessor aprilTag;
@@ -77,7 +78,6 @@ public class VisionSubsystem extends SubsystemBase {
     // power to use, and the forward power to drive at.  Tune.
     public static double BALL_TURN_GAIN    = 0.5;
     public static double MAX_BALL_TURN     = 0.4;
-    public static double BALL_DRIVE_POWER  = 0.2;
 
     private ColorBlobLocatorProcessor ballLocator;
     private ColorBlobLocatorProcessor.Blob ball = null;
@@ -127,7 +127,7 @@ public class VisionSubsystem extends SubsystemBase {
             opMode.telemetry.addData("VISION", "no %s cluster", targetName);
         }
         if (ball != null) {
-            double error = getBallError();
+            double error = getBallHeadingError();
             String side = Math.abs(error) < 0.1 ? "CENTER" : (error < 0 ? "LEFT" : "RIGHT");
             opMode.telemetry.addData("BALL", "%s  x %3.0f y %3.0f  error %5.2f  area %d",
                     side, ball.getBoxFit().center.x, ball.getBoxFit().center.y,
@@ -180,10 +180,21 @@ public class VisionSubsystem extends SubsystemBase {
      * @return how far the ball is from the image center, -1 (left edge) to +1 (right edge),
      *         or 0 if no ball is seen.
      */
-    public double getBallError() {
+    public double getBallHeadingError() {
         if (ball == null) return 0;
         double half = CAMERA_SIZE.getWidth() / 2.0;
         return (ball.getBoxFit().center.x - half) / half;
+    }
+
+    /**
+     * @return how far the ball is from the image center, 0 (bottom) to +1 (top),
+     *         or 0 if no ball is seen.
+     */
+    public double getBallForwardError() {
+        if (ball == null) return 0;
+
+        double distance = (CAMERA_SIZE.getHeight() - ball.getBoxFit().center.y) / CAMERA_SIZE.getHeight();
+        return distance * MAX_SPEED;
     }
 
     /**
@@ -192,7 +203,7 @@ public class VisionSubsystem extends SubsystemBase {
      */
     public double getBallTurn() {
         if (ball == null) return 0;
-        return Range.clip(-getBallError() * BALL_TURN_GAIN, -MAX_BALL_TURN, MAX_BALL_TURN);
+        return Range.clip(-getBallHeadingError() * BALL_TURN_GAIN, -MAX_BALL_TURN, MAX_BALL_TURN);
     }
 
     private void updateBall() {

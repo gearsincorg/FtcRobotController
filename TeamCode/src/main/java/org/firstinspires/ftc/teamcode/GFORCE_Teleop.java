@@ -130,14 +130,14 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         double heading = robot.drive.pose().heading();
 
-        if (gamepad1.left_bumper) {
+        if (gamepad1.left_bumper && robot.vision.hasBall()) {
             // Chase the nearest yellow ball (the intake is always collecting).  With the left
             // stick idle, drive straight ahead (robot-forward) at BALL_DRIVE_POWER; pushing it
             // drives field-centric as usual.  Twisting the right stick overrides the turn.
             if (yaw == 0) yaw = robot.vision.getBallTurn();
             headingLocked = false;
             if (axial == 0 && lateral == 0) {
-                robot.drive.manual(ManualDrive.fieldCentric(VisionSubsystem.BALL_DRIVE_POWER, 0, yaw, 0));
+                robot.drive.manual(ManualDrive.fieldCentric(robot.vision.getBallForwardError(), 0, yaw, 0));
                 return;
             }
         } else if (gamepad1.right_bumper && robot.vision.hasTarget()) {
@@ -145,6 +145,8 @@ public class GFORCE_Teleop extends CommandOpMode {
             yaw = Range.clip(robot.vision.getTargetPose().bearing * TARGET_TURN_GAIN,
                              -MAX_TARGET_TURN, MAX_TARGET_TURN);
             headingLocked = false;
+
+
         } else if (yaw == 0 && aimAtGoal) {
             // Point the shooter at the goal (leading it when moving).  Twisting the stick overrides.
             yaw = Range.clip(robot.shooter.getAimError() * AIM_GAIN, -MAX_AIM_TURN, MAX_AIM_TURN);

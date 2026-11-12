@@ -64,7 +64,7 @@ public class ColorTrackingTestOpMode extends CommandOpMode {
 
         // Hold Left Bumper to drive forward and steer to the ball.  The sticks override.
         if (gamepad1.left_bumper) {
-            if (axial == 0) axial = VisionSubsystem.BALL_DRIVE_POWER;
+            if (axial == 0) axial = robot.vision.getBallForwardError();
             if (yaw == 0)   yaw   = vision.getBallTurn();
         }
 
