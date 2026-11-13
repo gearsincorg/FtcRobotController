@@ -98,8 +98,10 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     // == Shot table ==========================================================
-    // TODO placeholder: fill with measurements from ShooterTuningOpMode.
+    // TODO placeholder: measure with util/ShooterCalibrationOpMode, then run tools/shotcal.py,
+    // which rewrites everything between the BEGIN/END markers below (don't edit by hand there).
     // Rows sorted by distance: { distance (in), flywheel RPM, hood angle (deg), flight time (s) }
+    // BEGIN GENERATED SHOT_TABLE
     private static final double[][] SHOT_TABLE = {
         {  24, 4400,  5, 0.30 },
         {  48, 4400, 10, 0.40 },
@@ -107,6 +109,7 @@ public class ShooterSubsystem extends SubsystemBase {
         {  96, 4400, 20, 0.60 },
         { 120, 4400, 25, 0.70 },
     };
+    // END GENERATED SHOT_TABLE
 
     // Number of iterations used to converge the shoot-on-the-move solution.
     private static final int LEAD_ITERATIONS = 3;
@@ -271,6 +274,16 @@ public class ShooterSubsystem extends SubsystemBase {
         } else {
             return actualRPM;
         }
+    }
+
+    /** Real flywheel speed from the encoder (getActualRPM() returns the target while TURRET_SIMULATED). */
+    public double getMeasuredRPM() {
+        return actualRPM;
+    }
+
+    /** The goal being aimed at: the alliance goal nearer the robot (always on the robot's side). */
+    public Pose getGoal() {
+        return target();
     }
 
     public double getactualTurretRad() {

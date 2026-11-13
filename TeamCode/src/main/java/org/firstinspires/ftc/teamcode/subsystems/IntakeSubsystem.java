@@ -74,7 +74,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public static final double GATE_OPEN           = 0.44;
     public static final double GATE_INIT           = 0.5;   // during init only (until START).  Placeholder.
 
-    private static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
+    public  static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
     private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
     private static final double SHOT_CLEAR_MS      = 300;   // auto volley: last ball leaves the flywheel
 
