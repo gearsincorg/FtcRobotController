@@ -18,6 +18,8 @@ import com.seattlesolvers.solverslib.command.StartEndCommand;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 
+import java.util.function.BooleanSupplier;
+
 /**
  * Steerable shooter: turret (motor + encoder), hood (servo) and a single flywheel motor.
  *
@@ -57,7 +59,8 @@ public class ShooterSubsystem extends SubsystemBase {
     // speed follows the target with a SIM_SPINUP_S time constant; the turret is where it's told.
     // TODO set false once the shooter is fitted.
     public static final boolean SIMULATED   = false;
-    private static final double SIM_SPINUP_S = 0.4;
+    private static final double SIM_SPINUP_S = 0.4;     // closed-loop time constant
+    private static final double SIM_BOOST_S  = 0.1;     // while boosting (full power)
     private final ElapsedTime  simTimer     = new ElapsedTime();
 
     // == Turret ==============================================================
@@ -86,6 +89,16 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double FLYWHEEL_MAX_RPM       = 5500;
     private static final double RPM_TOLERANCE          = 400;
     private static final double FLYWHEEL_IDLE_POWER    = 0.0;
+    private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(3, 0.5, 0, 10.0);
+
+    // One speed target (targetRPM, from the shot table) at all times.  Normally the SDK's closed
+    // loop (setVelocity + FLYWHEEL_PIDF) holds it, so there is no spin-up wait.  While shooting, if
+    // the speed falls more than BOOST_ENTER_RPM below the target (a ball just left, or the target
+    // rose), the flywheel runs open loop at BOOST_POWER until it is back within BOOST_EXIT_RPM,
+    // then the closed loop takes over again.  Both margins are tunable (watch "Flywheel" telemetry).
+    private static final double BOOST_ENTER_RPM        = 100;
+    private static final double BOOST_EXIT_RPM         = 50;
+    private static final double BOOST_POWER            = 1.0;
 
     // == Hood ================================================================
     // Hood angle is in degrees from vertical, forward positive.  Two measured points define the
@@ -152,6 +165,9 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private Mode    mode    = Mode.IDLE;
     private boolean requireChassisAim = false;   // see setRequireChassisAim()
+    private BooleanSupplier shooting = () -> false;   // see setShootingSupplier()
+    private boolean boosting         = false;    // flywheel at full open-loop power to recover speed
+    private boolean flywheelOpenLoop = false;    // flywheel motor is in RUN_WITHOUT_ENCODER
     private boolean redAlliance = true;
     private boolean farGoal     = true;     // which of the alliance's two goals is targeted
     private double  dFar        = 0;        // robot distance to each alliance goal (inches)
@@ -195,8 +211,7 @@ public class ShooterSubsystem extends SubsystemBase {
         flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
-            new PIDFCoefficients(3,0.5,0,10.0));
+        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, FLYWHEEL_PIDF);
 
         // Move the hood to its minimum angle now, rather than waiting for the first periodic() after start.
         hood.setPosition(hoodAngleToServo(targetHoodDeg));
@@ -210,7 +225,7 @@ public class ShooterSubsystem extends SubsystemBase {
         if (SIMULATED) {
             double dt = Math.min(simTimer.seconds(), 0.1);
             simTimer.reset();
-            actualRPM      += (targetRPM - actualRPM) * Math.min(1, dt / SIM_SPINUP_S);
+            actualRPM      += (targetRPM - actualRPM) * Math.min(1, dt / (boosting ? SIM_BOOST_S : SIM_SPINUP_S));
             actualTurretRad = targetTurretRad;
         } else {
             actualRPM        = ticksPerSecToRpm(flywheel.getVelocity());
@@ -225,6 +240,7 @@ public class ShooterSubsystem extends SubsystemBase {
             targetTurretRad = TURRET_ENABLED ? turretAngleTo(shot.aimX, shot.aimY) : 0;
         }
 
+        updateBoost();
         applyOutputs();
         showTelemetry();
     }
@@ -236,7 +252,8 @@ public class ShooterSubsystem extends SubsystemBase {
         opMode.telemetry.addData("SHOOTER", "%s %s %s  dist = %5.1f  ready = %b",
                 mode, redAlliance ? "RED" : "BLUE", farGoal ? "FAR" : "AUDIENCE", distance, isReady());
         opMode.telemetry.addData("  Goal dist audience : far", "%5.1f : %5.1f", dAudience, dFar);
-        opMode.telemetry.addData("  RPM tgt : act", "%5.0f : %5.0f", targetRPM, getActualRPM());
+        opMode.telemetry.addData("  RPM tgt : act", "%5.0f : %5.0f  %s", targetRPM, getActualRPM(),
+                boosting ? "BOOST (full power)" : "closed loop");
         opMode.telemetry.addData("  Turret tgt : act", "%5.1f : %5.1f",
                 Math.toDegrees(targetTurretRad), Math.toDegrees(getactualTurretRad()));
 
@@ -283,6 +300,16 @@ public class ShooterSubsystem extends SubsystemBase {
      */
     public void setRequireChassisAim(boolean require) {
         requireChassisAim = require;
+    }
+
+    /** True while a shot is wanted (normally IntakeSubsystem::isShooting); enables the full-power speed recovery. */
+    public void setShootingSupplier(BooleanSupplier shooting) {
+        this.shooting = shooting;
+    }
+
+    /** Flywheel is at full open-loop power to recover its speed. */
+    public boolean isBoosting() {
+        return boosting;
     }
 
     /** Chassis points at the aim point, within AIM_TOLERANCE_RAD. */
@@ -444,6 +471,36 @@ public class ShooterSubsystem extends SubsystemBase {
         return SHOT_TABLE[last];
     }
 
+    /**
+     * Boost (full open-loop power) while shooting whenever the flywheel is more than BOOST_ENTER_RPM
+     * below its target; stop once it is within BOOST_EXIT_RPM (or when no longer shooting).
+     */
+    private void updateBoost() {
+        double slow = targetRPM - actualRPM;                // positive: too slow
+        if (targetRPM <= 0 || !shooting.getAsBoolean()) {
+            boosting = false;
+        } else if (!boosting) {
+            boosting = slow > BOOST_ENTER_RPM;
+        } else {
+            boosting = slow > BOOST_EXIT_RPM;
+        }
+    }
+
+    /**
+     * Switch the flywheel motor between the SDK's closed loop (RUN_USING_ENCODER, where setPower
+     * would only ask for a speed) and real open-loop power (RUN_WITHOUT_ENCODER).  Only on a change.
+     */
+    private void setFlywheelOpenLoop(boolean open) {
+        if (open == flywheelOpenLoop) return;
+        flywheelOpenLoop = open;
+        if (open) {
+            flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        } else {
+            flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, FLYWHEEL_PIDF);   // make sure they survived the mode change
+        }
+    }
+
     private void applyOutputs() {
         if (SIMULATED) return;
 
@@ -461,11 +518,17 @@ public class ShooterSubsystem extends SubsystemBase {
         }
         turret.setPower(Range.clip(power, -TURRET_MAX_POWER, TURRET_MAX_POWER));
 
-        // Control Flywheel Switch between full power and calculated power.
-        if (targetRPM > 0) {
-            flywheel.setVelocity(rpmToTicksPerSec(targetRPM));   // setVelocity takes ticks/s
+        // Control Flywheel: the SDK's closed loop holds targetRPM; while boosting, full open-loop power.
+        if (targetRPM > 0 && boosting) {
+            setFlywheelOpenLoop(true);
+            flywheel.setPower(BOOST_POWER);
         } else {
-            flywheel.setPower(FLYWHEEL_IDLE_POWER);
+            setFlywheelOpenLoop(false);
+            if (targetRPM > 0) {
+                flywheel.setVelocity(rpmToTicksPerSec(targetRPM));   // setVelocity takes ticks/s
+            } else {
+                flywheel.setPower(FLYWHEEL_IDLE_POWER);
+            }
         }
 
         // Control Hood Angle

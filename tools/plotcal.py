@@ -42,6 +42,8 @@ def read_points(path):
     points = {}
     with open(path, newline="", encoding="utf-8") as f:
         for n, row in enumerate(csv.DictReader(f), start=2):
+            if (row.get("kind") or "").strip() == "comp":
+                continue                    # compensation shots are not table points
             try:
                 p = {
                     "goal": row["goal"].strip(),

@@ -55,6 +55,9 @@ public class BiobuzzRobot {
         intake = new IntakeSubsystem(opMode, shooter::isReady);
         intake.init();
 
+        // While a shot is wanted the shooter recovers its speed at full power after each ball.
+        shooter.setShootingSupplier(intake::isShooting);
+
         // Start on the alliance chosen in the auto setup menu (Share / Options still override).
         config = new AutoConfig(opMode);
         config.initialize();
