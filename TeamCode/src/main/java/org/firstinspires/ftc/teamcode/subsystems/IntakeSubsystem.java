@@ -43,7 +43,8 @@ import java.util.function.BooleanSupplier;
  *              it doesn't stall against the closed gate.  A new ball at slot1 makes a gap and
  *              starts it again.
  *
- * Until the sensors are in use, SIMULATE_SENSORS swaps them for SimulatedSlots.
+ * Until the sensors are in use, SIMULATE_SENSORS swaps them for SimulatedSlots.  SIMULATED goes
+ * further: no intake hardware at all (motors, gate and sensors), with SimulatedSlots for the balls.
  */
 public class IntakeSubsystem extends SubsystemBase {
 
@@ -51,6 +52,9 @@ public class IntakeSubsystem extends SubsystemBase {
     // true: the ball count comes from SimulatedSlots instead of the slot sensors.
     // TODO set false once the slot sensors are in use.
     public static final boolean SIMULATE_SENSORS = false;
+    // true: no intake hardware is used (motors, gate and sensors can be missing).
+    // TODO set false once the intake is fitted.
+    public static final boolean SIMULATED        = false;
     private static final int    SIM_PRELOAD      = 4;
 
     // Sensor reading when a ball is in the slot (most digital sensors are active-low).
@@ -120,16 +124,18 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     public void init() {
-        intake = opMode.hardwareMap.get(DcMotorEx.class, "intake");
-        transfer = opMode.hardwareMap.get(DcMotorEx.class, "transfer");
-        gate   = opMode.hardwareMap.tryGet(Servo.class, "gate");
+        if (!SIMULATED) {
+            intake = opMode.hardwareMap.get(DcMotorEx.class, "intake");
+            transfer = opMode.hardwareMap.get(DcMotorEx.class, "transfer");
+            gate   = opMode.hardwareMap.tryGet(Servo.class, "gate");
 
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
-        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        transfer.setDirection(DcMotorSimple.Direction.FORWARD);
-        transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            intake.setDirection(DcMotorSimple.Direction.REVERSE);
+            intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+            transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
 
-        if (SIMULATE_SENSORS) {
+        if (SIMULATE_SENSORS || SIMULATED) {
             sim = new SimulatedSlots(SIM_PRELOAD);
         } else {
             for (int i = 0; i < SLOT_NAMES.length; i++) {
@@ -156,7 +162,9 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     void showTelemetry() {
-        if (sim != null) {
+        if (SIMULATED) {
+            opMode.telemetry.addLine("SIMULATED INTAKE (no hardware)");
+        } else if (sim != null) {
             opMode.telemetry.addLine("SIMULATED BALL SENSORS");
         }
         opMode.telemetry.addData("In:Feed:Gate", "%4.2f, %4.2f, %4.2f",
@@ -325,8 +333,8 @@ public class IntakeSubsystem extends SubsystemBase {
         this.intakePower  = intakePower;
         this.transferPower = transferPower;
         this.gatePosition = gatePosition;
-        intake.setPower(intakePower);
-        transfer.setPower(transferPower);
+        if (intake != null)   intake.setPower(intakePower);
+        if (transfer != null) transfer.setPower(transferPower);
         if (gate != null) gate.setPosition(gatePosition);
     }
 

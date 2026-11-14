@@ -21,14 +21,18 @@ import org.firstinspires.ftc.teamcode.BiobuzzRobot;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Shooter calibration: collects the data for ShooterSubsystem.SHOT_TABLE.
@@ -41,16 +45,17 @@ import java.util.Locale;
  *
  * Start with the robot at CAL_START_POSE and the turret centered.
  *
- *   Sticks              : drive (field centric, half speed); cancels a drive-to.  The chassis
- *                         aims at the goal whenever the right stick is idle.
+ *   Sticks              : drive (field centric, half speed); cancels a drive-to
+ *   Right stick press   : aim at the goal on / off (starts off; twisting the right stick overrides)
  *   D-pad up / down     : select distance;  left / right : select angle off the goal's front
- *   X                   : drive to the selected point
+ *   X                   : drive to the selected point, then aim at the goal
  *   B                   : flywheel on / off
  *   Y / A               : RPM +/- 100
  *   Right / left trigger: hood +/- 1 degree
  *   Right bumper (hold) : shoot
  *   Left bumper         : ball went in (stops the flight timer for the oldest shot in the air)
- *   Share               : save this point
+ *   Share               : save this point (replaces an earlier save of the same point)
+ *   Options (twice)     : delete the saved data for the selected point
  *   Touchpad            : reset pose to CAL_START_POSE
  */
 @TeleOp(name = "Shooter Calibration", group = "Tuning")
@@ -62,8 +67,13 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
 
     // Calibration points: distance from the goal (inches) x angle off the goal's front (degrees,
     // + is CCW seen from above).  0 is straight in front of the goal.
-    private static final double[] DISTANCES  = { 24, 36, 48, 60, 72, 96, 120 };
-    private static final double[] ANGLES     = { -45, -30, 0, 30, 45 };
+    private static final double   MIN_DIST   = 12;
+    private static final double   MAX_DIST   = 96;
+    private static final double   DIST_STEP  = 3;
+    private static final double[] DISTANCES  = steps(MIN_DIST, MAX_DIST, DIST_STEP);     // 12, 15, 18, ... 96
+    private static final double   MAX_ANGLE  = 60;
+    private static final double   ANGLE_STEP = 15;
+    private static final double[] ANGLES     = steps(-MAX_ANGLE, MAX_ANGLE, ANGLE_STEP);  // -60, -45, ... 60
 
     // Pedro field direction (degrees) that each goal's front faces.  TODO measure on the field.
     private static final double AUDIENCE_GOAL_FACING_DEG = 270;
@@ -87,11 +97,12 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
 
     // == State ===============================================================
     private BiobuzzRobot robot;
-    private int     distIndex  = 2;
-    private int     angleIndex = 2;
+    private int     distIndex  = (int) Math.round((36 - MIN_DIST) / DIST_STEP);   // start at 36 in
+    private int     angleIndex = (int) Math.round(MAX_ANGLE / ANGLE_STEP);         // start at 0 deg
     private double  rpm        = 3000;
     private double  hoodDeg    = 12;
     private boolean flywheelOn = true;
+    private boolean aiming     = false;     // chassis points at the goal (right stick press, or after X)
 
     private FollowPathCommand driveTo;
 
@@ -101,8 +112,12 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
     private int     lastBallCount = 0;
     private boolean lastRT, lastLT;
 
-    private int     rowsSaved  = 0;
-    private String  lastSave   = "";
+    // Saved points from the file: "goal,dist,angle" -> that point's latest row (CSV fields).
+    private final Map<String, String[]> saved = new HashMap<>();
+    private String  lastSave     = "";
+    private boolean deleteArmed  = false;          // Options pressed once; press again to delete
+    private final ElapsedTime deleteTimer = new ElapsedTime();
+    private static final double DELETE_CONFIRM_S = 2.0;
 
     @Override
     public void initialize() {
@@ -111,6 +126,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
         robot.drive.setPose(CAL_START_POSE);
         robot.shooter.setAlliance(robot.config.red);
         applyShooter();
+        loadSaved();
 
         GamepadEx pad = new GamepadEx(gamepad1);
         pad.getGamepadButton(GamepadKeys.Button.DPAD_UP)
@@ -123,6 +139,8 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> selectPoint(0, -1)));
         pad.getGamepadButton(GamepadKeys.Button.X)
             .whenPressed(new InstantCommand(this::driveToPoint));
+        pad.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
+            .whenPressed(new InstantCommand(() -> aiming = !aiming));
         pad.getGamepadButton(GamepadKeys.Button.B)
             .whenPressed(new InstantCommand(() -> { flywheelOn = !flywheelOn; applyShooter(); }));
         pad.getGamepadButton(GamepadKeys.Button.Y)
@@ -135,6 +153,8 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
             .whenPressed(new InstantCommand(this::ballIn));
         pad.getGamepadButton(GamepadKeys.Button.BACK)
             .whenPressed(new InstantCommand(this::savePoint));
+        pad.getGamepadButton(GamepadKeys.Button.START)
+            .whenPressed(new InstantCommand(this::deletePoint));
         pad.getGamepadButton(GamepadKeys.Button.TOUCHPAD)
             .whenPressed(new InstantCommand(() -> robot.drive.setPose(CAL_START_POSE)));
     }
@@ -157,13 +177,17 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
         double yaw     = -gamepad1.right_stick_x * DRIVE_SCALE;
         boolean sticks = axial != 0 || lateral != 0 || yaw != 0;
 
-        if (driveTo != null && driveTo.isScheduled()) {
-            if (!sticks) return;            // Pedro is driving
-            driveTo.cancel();               // the driver takes over
+        if (driveTo != null) {
+            if (driveTo.isScheduled()) {
+                if (!sticks) return;        // Pedro is driving
+                driveTo.cancel();           // the driver takes over
+            } else {
+                aiming = true;              // arrived: aim at the goal
+            }
+            driveTo = null;
         }
-        driveTo = null;
 
-        if (yaw == 0) {
+        if (yaw == 0 && aiming) {
             yaw = Range.clip(robot.shooter.getAimError() * AIM_GAIN, -MAX_AIM_TURN, MAX_AIM_TURN);
         }
         DrivePowers powers = ManualDrive.fieldCentric(axial, lateral, yaw, robot.drive.pose().heading());
@@ -190,6 +214,14 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
         return new Pose(x, y, Math.atan2(goal.y() - y, goal.x() - x));
     }
 
+    /** from, from + step, ... to. */
+    private static double[] steps(double from, double to, double step) {
+        int n = (int) Math.round((to - from) / step) + 1;
+        double[] d = new double[n];
+        for (int i = 0; i < n; i++) d[i] = from + i * step;
+        return d;
+    }
+
     private static double goalFacingDeg(Pose goal) {
         return goal.y() < 72 ? AUDIENCE_GOAL_FACING_DEG : FAR_GOAL_FACING_DEG;
     }
@@ -206,6 +238,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
     private void selectPoint(int dDist, int dAngle) {
         distIndex  = Range.clip(distIndex + dDist, 0, DISTANCES.length - 1);
         angleIndex = Range.clip(angleIndex + dAngle, 0, ANGLES.length - 1);
+        deleteArmed = false;
         resetFlights();
     }
 
@@ -264,6 +297,74 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
     }
 
     // == Saving ==============================================================
+    // Each point is saved once: saving again replaces it, and Options (twice) deletes it.  Before
+    // every change the old file is copied to shooter_cal.csv.bak, so one mistake can be undone.
+
+    private File csvFile() {
+        return new File(AppUtil.FIRST_FOLDER, CSV_NAME);
+    }
+
+    private static String key(String goal, double dist, double angle) {
+        return String.format(Locale.US, "%s,%.0f,%.0f", goal, dist, angle);
+    }
+
+    private static String key(String[] f) {
+        try {
+            return key(f[1].trim(), Double.parseDouble(f[2]), Double.parseDouble(f[3]));
+        } catch (Exception e) {
+            return null;                    // header or a bad line
+        }
+    }
+
+    private String selectedKey() {
+        return key(goalName(robot.shooter.getGoal()), DISTANCES[distIndex], ANGLES[angleIndex]);
+    }
+
+    private List<String> readLines() throws Exception {
+        List<String> lines = new ArrayList<>();
+        File file = csvFile();
+        if (!file.exists()) return lines;
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                if (!line.trim().isEmpty()) lines.add(line);
+            }
+        }
+        return lines;
+    }
+
+    /** Rewrite the file: the header, then every row except the selected point's, then newRow (if any). */
+    private void rewrite(String newRow) throws Exception {
+        List<String> lines = readLines();
+        String sel = selectedKey();
+        File file = csvFile();
+        if (file.exists()) {
+            try (FileWriter bak = new FileWriter(new File(AppUtil.FIRST_FOLDER, CSV_NAME + ".bak"))) {
+                for (String line : lines) bak.write(line + "\n");
+            }
+        }
+        try (FileWriter out = new FileWriter(file, false)) {
+            out.write(CSV_HEADER + "\n");
+            for (String line : lines) {
+                String k = key(line.split(",", -1));
+                if (k != null && !k.equals(sel)) out.write(line + "\n");
+            }
+            if (newRow != null) out.write(newRow + "\n");
+        }
+    }
+
+    private void loadSaved() {
+        saved.clear();
+        try {
+            for (String line : readLines()) {
+                String[] f = line.split(",", -1);
+                String k = key(f);
+                if (k != null && f.length >= 12) saved.put(k, f);
+            }
+        } catch (Exception e) {
+            lastSave = "READ FAILED: " + e;
+        }
+    }
 
     private void savePoint() {
         Pose pose = robot.drive.pose();
@@ -274,18 +375,40 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
                 goalName(goal), DISTANCES[distIndex], ANGLES[angleIndex],
                 pose.x(), pose.y(), Math.toDegrees(pose.heading()),
                 robot.shooter.getDistance(), rpm, hoodDeg, tof, flights.size());
-
-        File file = new File(AppUtil.ROOT_FOLDER, CSV_NAME);
-        boolean isNew = !file.exists();
-        try (FileWriter out = new FileWriter(file, true)) {
-            if (isNew) out.write(CSV_HEADER + "\n");
-            out.write(row + "\n");
-            rowsSaved++;
-            lastSave = String.format(Locale.US, "saved %.0f in @ %.0f deg", DISTANCES[distIndex], ANGLES[angleIndex]);
+        try {
+            boolean replaced = saved.containsKey(selectedKey());
+            rewrite(row);
+            saved.put(selectedKey(), row.split(",", -1));
+            lastSave = String.format(Locale.US, "%s %.0f in @ %.0f deg", replaced ? "replaced" : "saved",
+                    DISTANCES[distIndex], ANGLES[angleIndex]);
             gamepad1.rumble(200);
         } catch (Exception e) {
             lastSave = "SAVE FAILED: " + e;
         }
+        deleteArmed = false;
+    }
+
+    /** First press arms, a second press within DELETE_CONFIRM_S deletes the selected point. */
+    private void deletePoint() {
+        if (!saved.containsKey(selectedKey())) {
+            lastSave = "nothing saved at this point";
+            deleteArmed = false;
+            return;
+        }
+        if (!deleteArmed || deleteTimer.seconds() > DELETE_CONFIRM_S) {
+            deleteArmed = true;
+            deleteTimer.reset();
+            return;
+        }
+        try {
+            rewrite(null);
+            saved.remove(selectedKey());
+            lastSave = String.format(Locale.US, "deleted %.0f in @ %.0f deg", DISTANCES[distIndex], ANGLES[angleIndex]);
+            gamepad1.rumbleBlips(2);
+        } catch (Exception e) {
+            lastSave = "DELETE FAILED: " + e;
+        }
+        deleteArmed = false;
     }
 
     // == Telemetry ===========================================================
@@ -301,8 +424,9 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
                 DISTANCES[distIndex], ANGLES[angleIndex], target.x(), target.y(),
                 !onField(target) ? "OFF FIELD" : driving ? "DRIVING" : "");
         telemetry.addData("Pose", "%5.1f, %5.1f, %5.1f deg", pose.x(), pose.y(), Math.toDegrees(pose.heading()));
-        telemetry.addData("Distance : aim error", "%5.1f in : %5.1f deg",
-                robot.shooter.getDistance(), Math.toDegrees(robot.shooter.getAimError()));
+        telemetry.addData("Distance : aim error", "%5.1f in : %5.1f deg  aim %s",
+                robot.shooter.getDistance(), Math.toDegrees(robot.shooter.getAimError()),
+                aiming ? "ON" : "off");
         double measured = robot.shooter.getMeasuredRPM();
         telemetry.addData("RPM set : measured", "%5.0f : %5.0f  %s", flywheelOn ? rpm : 0, measured,
                 !flywheelOn ? "OFF" : Math.abs(measured - rpm) < AT_SPEED_RPM ? "AT SPEED" : "spinning up");
@@ -316,7 +440,14 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
                     meanFlight(), flights.size(), lo, hi, launches.size());
         }
         telemetry.addData("Balls", robot.intake.ballCount());
-        telemetry.addData("Saved", "%d rows  %s", rowsSaved, lastSave);
+        String[] here = saved.get(selectedKey());
+        telemetry.addData("Saved here", here == null ? "no" : String.format(Locale.US,
+                "rpm %s  hood %s  tof %s  (%s)", here[8], here[9],
+                here[10].isEmpty() ? "-" : here[10], here[0]));
+        if (deleteArmed && deleteTimer.seconds() <= DELETE_CONFIRM_S) {
+            telemetry.addLine(">>> DELETE this point?  Press Options again <<<");
+        }
+        telemetry.addData("Saved points", "%d  %s", saved.size(), lastSave);
         telemetry.update();
     }
 }

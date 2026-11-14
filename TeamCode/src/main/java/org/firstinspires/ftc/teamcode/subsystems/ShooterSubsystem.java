@@ -52,6 +52,14 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_OFFSET_X = 0.0;
     private static final double TURRET_OFFSET_Y = 0.0;
 
+    // == Simulation ==========================================================
+    // true: no shooter hardware is used (turret, flywheel and hood can be missing).  The flywheel
+    // speed follows the target with a SIM_SPINUP_S time constant; the turret is where it's told.
+    // TODO set false once the shooter is fitted.
+    public static final boolean SIMULATED   = false;
+    private static final double SIM_SPINUP_S = 0.4;
+    private final ElapsedTime  simTimer     = new ElapsedTime();
+
     // == Turret ==============================================================
     // false: the turret is held at 0 (straight ahead) and the chassis turns to aim instead
     // (teleop point-at-goal mode).  isReady() then checks the robot heading.
@@ -103,11 +111,31 @@ public class ShooterSubsystem extends SubsystemBase {
     // Rows sorted by distance: { distance (in), flywheel RPM, hood angle (deg), flight time (s) }
     // BEGIN GENERATED SHOT_TABLE
     private static final double[][] SHOT_TABLE = {
-        {  24, 4400,  5, 0.30 },
-        {  48, 4400, 10, 0.40 },
-        {  72, 4400, 15, 0.50 },
-        {  96, 4400, 20, 0.60 },
-        { 120, 4400, 25, 0.70 },
+        {   12.0,  2780,   0.0, 0.300 },
+        {   15.1,  2880,   2.0, 0.300 },
+        {   18.0,  2975,   4.5, 0.300 },
+        {   21.1,  3060,   6.0, 0.300 },
+        {   24.1,  3160,   7.8, 0.301 },
+        {   27.1,  3260,   9.8, 0.313 },
+        {   30.1,  3350,  11.0, 0.325 },
+        {   33.1,  3420,  13.2, 0.338 },
+        {   36.1,  3520,  15.2, 0.350 },
+        {   39.1,  3620,  17.0, 0.363 },
+        {   42.1,  3720,  19.0, 0.376 },
+        {   45.1,  3820,  21.0, 0.388 },
+        {   48.2,  3967,  23.3, 0.401 },
+        {   51.1,  4067,  25.0, 0.413 },
+        {   54.1,  4150,  25.0, 0.425 },
+        {   57.2,  4200,  25.0, 0.438 },
+        {   60.2,  4350,  25.0, 0.451 },
+        {   63.1,  4450,  25.0, 0.463 },
+        {   66.1,  4600,  25.0, 0.475 },
+        {   69.1,  4700,  25.0, 0.488 },
+        {   72.0,  4800,  25.0, 0.500 },
+        {   75.2,  4900,  25.0, 0.513 },
+        {   77.8,  5000,  25.0, 0.524 },
+        {   81.1,  5100,  25.0, 0.538 },
+        {   83.4,  5200,  25.0, 0.547 },
     };
     // END GENERATED SHOT_TABLE
 
@@ -123,6 +151,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private Servo     hood;
 
     private Mode    mode    = Mode.IDLE;
+    private boolean requireChassisAim = false;   // see setRequireChassisAim()
     private boolean redAlliance = true;
     private boolean farGoal     = true;     // which of the alliance's two goals is targeted
     private double  dFar        = 0;        // robot distance to each alliance goal (inches)
@@ -152,6 +181,12 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void init() {
+        targetHoodDeg = HOOD_MIN_DEG;
+        if (SIMULATED) {
+            idle();
+            return;
+        }
+
         turret   = opMode.hardwareMap.get(DcMotorEx.class, "turret");
         flywheel = opMode.hardwareMap.get(DcMotorEx.class, "shooter");
         hood     = opMode.hardwareMap.get(Servo.class, "hood");
@@ -168,7 +203,6 @@ public class ShooterSubsystem extends SubsystemBase {
             new PIDFCoefficients(3,0.5,0,10.0));
 
         // Move the hood to its minimum angle now, rather than waiting for the first periodic() after start.
-        targetHoodDeg = HOOD_MIN_DEG;
         hood.setPosition(hoodAngleToServo(targetHoodDeg));
 
         idle();
@@ -177,8 +211,15 @@ public class ShooterSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
 
-        actualRPM        = ticksPerSecToRpm(flywheel.getVelocity());
-        actualTurretRad  = turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
+        if (SIMULATED) {
+            double dt = Math.min(simTimer.seconds(), 0.1);
+            simTimer.reset();
+            actualRPM      += (targetRPM - actualRPM) * Math.min(1, dt / SIM_SPINUP_S);
+            actualTurretRad = targetTurretRad;
+        } else {
+            actualRPM        = ticksPerSecToRpm(flywheel.getVelocity());
+            actualTurretRad  = turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
+        }
 
         computeSolution();
 
@@ -193,6 +234,9 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     void showTelemetry() {
+        if (SIMULATED) {
+            opMode.telemetry.addLine("SIMULATED SHOOTER (no hardware)");
+        }
         opMode.telemetry.addData("SHOOTER", "%s %s %s  dist = %5.1f  ready = %b",
                 mode, redAlliance ? "RED" : "BLUE", farGoal ? "FAR" : "AUDIENCE", distance, isReady());
         opMode.telemetry.addData("  Goal dist audience : far", "%5.1f : %5.1f", dAudience, dFar);
@@ -236,16 +280,37 @@ public class ShooterSubsystem extends SubsystemBase {
         targetTurretRad = turretRad;
     }
 
+    /**
+     * Also require the chassis to point at the goal (within AIM_TOLERANCE_RAD) before isReady()
+     * while tracking, whatever TURRET_ENABLED says.  Teleop turns this on (the driver aims the
+     * chassis); auto leaves it off, since its paths don't turn to face the goal.
+     */
+    public void setRequireChassisAim(boolean require) {
+        requireChassisAim = require;
+    }
+
+    /** Chassis points at the aim point, within AIM_TOLERANCE_RAD. */
+    public boolean isAimed() {
+        return Math.abs(getAimError()) < AIM_TOLERANCE_RAD;
+    }
+
     /** True when the flywheel is at speed and the turret (or the robot, if no turret) is on target. */
     public boolean isReady() {
         boolean onTarget = TURRET_ENABLED
                 ? Math.abs(targetTurretRad - getactualTurretRad()) < TURRET_TOLERANCE_RAD && turretTargetReachable()
-                : mode != Mode.TRACKING || Math.abs(getAimError()) < AIM_TOLERANCE_RAD;
-        boolean atSpeed = Math.abs(getActualRPM() - targetRPM) < RPM_TOLERANCE;
+                : mode != Mode.TRACKING || isAimed();
+        if (requireChassisAim && mode == Mode.TRACKING) {
+            onTarget = onTarget && isAimed();
+        }
         return mode != Mode.IDLE
                 && targetRPM > 0
-                && atSpeed
+                && isAtSpeed()
                 && onTarget;
+    }
+
+    /** Flywheel within RPM_TOLERANCE of its target. */
+    public boolean isAtSpeed() {
+        return Math.abs(getActualRPM() - targetRPM) < RPM_TOLERANCE;
     }
 
     /** Pedro field direction (radians) from the turret to the lead-corrected aim point. */
@@ -269,7 +334,7 @@ public class ShooterSubsystem extends SubsystemBase {
     /** Turret angle relative to robot forward, radians, + is CCW. */
 
     public double getActualRPM() {
-        if (TURRET_SIMULATED) {
+        if (TURRET_SIMULATED && !SIMULATED) {   // SIMULATED models the spin-up instead
             return targetRPM;
         } else {
             return actualRPM;
@@ -287,7 +352,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public double getactualTurretRad() {
-        if (TURRET_SIMULATED) {
+        if (TURRET_SIMULATED || SIMULATED) {
             return targetTurretRad;
         } else {
             return turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
@@ -384,6 +449,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     private void applyOutputs() {
+        if (SIMULATED) return;
 
         // Control Turret
         // Turret: P on angle + feedforward to cancel chassis rotation.

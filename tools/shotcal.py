@@ -15,6 +15,13 @@ to /sdcard/FIRST/shooter_cal.csv on the Control Hub.  This tool:
 
 Usage:  python tools/shotcal.py [--csv FILE] [--dry-run]
 Then review with git diff, build and deploy.
+
+Removing data: delete a point on the robot (select it, press Options twice), or edit
+tools/shooter_cal.csv on the PC (delete the bad lines) and then
+        python tools/shotcal.py --push
+which copies it back to the hub (the hub's old file is kept as shooter_cal.csv.bak), so the next
+pull doesn't bring the deleted lines back.  To use local edits without pushing:
+        python tools/shotcal.py --csv tools/shooter_cal.csv
 """
 
 import argparse
@@ -55,11 +62,28 @@ def find_adb():
     return shutil.which("adb")
 
 
-def pull():
+def connect():
     adb = find_adb()
     if not adb:
         fail("adb not found (set sdk.dir in local.properties or ANDROID_HOME), or use --csv FILE")
     subprocess.run([adb, "connect", "192.168.43.1:5555"], capture_output=True, timeout=15)
+    return adb
+
+
+def push():
+    if not LOCAL_CSV.exists():
+        fail(f"{LOCAL_CSV.relative_to(ROOT)} not found")
+    adb = connect()
+    subprocess.run([adb, "shell", "cp", HUB_CSV, HUB_CSV + ".bak"], capture_output=True, timeout=15)
+    r = subprocess.run([adb, "push", str(LOCAL_CSV), HUB_CSV], capture_output=True, text=True, timeout=30)
+    if r.returncode != 0:
+        fail("adb push failed (on the hub's Wi-Fi?):\n" + (r.stderr or r.stdout).strip())
+    print(f"Pushed {LOCAL_CSV.relative_to(ROOT)} -> {HUB_CSV} (old copy: {HUB_CSV}.bak)")
+    print("Restart the Shooter Calibration opmode to see the change.")
+
+
+def pull():
+    adb = connect()
     r = subprocess.run([adb, "pull", HUB_CSV, str(LOCAL_CSV)], capture_output=True, text=True, timeout=30)
     if r.returncode != 0:
         fail("adb pull failed (on the hub's Wi-Fi?):\n" + (r.stderr or r.stdout).strip())
@@ -186,7 +210,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--csv", type=Path, help="use this local CSV instead of pulling from the hub")
     ap.add_argument("--dry-run", action="store_true", help="print the table, don't change the source")
+    ap.add_argument("--push", action="store_true",
+                    help="copy tools/shooter_cal.csv (after editing it) back to the hub, and stop")
     args = ap.parse_args()
+
+    if args.push:
+        push()
+        return
 
     path = args.csv if args.csv else pull()
     if not path.exists():

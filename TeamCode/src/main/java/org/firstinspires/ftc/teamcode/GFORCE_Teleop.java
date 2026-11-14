@@ -45,6 +45,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Commands.RobotCommands;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
 @TeleOp(name = "G-FORCE TELEOP", group = "Competition")
@@ -87,6 +88,12 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         robot.initialize();
 
+        // The shooter always tracks the goal: the flywheel is kept at the table speed (and the hood
+        // at the table angle) for wherever we are, from START to the end.  Fire only when it's at
+        // that speed AND the chassis points at the goal.
+        robot.shooter.track();
+        robot.shooter.setRequireChassisAim(true);
+
         setAlliance(robot.config.red);
 
         // Connect buttons with commands
@@ -97,6 +104,9 @@ public class GFORCE_Teleop extends CommandOpMode {
         telemetry.addData("chassis", chassis);
         telemetry.addData("aim at goal", "%s  error = %5.1f deg", aimAtGoal ? "ON" : "off",
                             Math.toDegrees(robot.shooter.getAimError()));
+        telemetry.addData("shooter", robot.shooter.getMode() == ShooterSubsystem.Mode.IDLE ? "idle"
+                            : robot.shooter.isReady() ? "READY (RB to fire)"
+                            : !robot.shooter.isAtSpeed() ? "spinning up" : "aiming");
         telemetry.addData("pos X: Y", "%5.1f : %5.1f", robot.drive.pose().x(), robot.drive.pose().y());
         telemetry.addData("heading", "%5.1f deg", Math.toDegrees(robot.drive.pose().heading()));
         telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", robot.drive.velocity().vx,
@@ -200,18 +210,25 @@ public class GFORCE_Teleop extends CommandOpMode {
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
             .whenPressed(new InstantCommand(() -> setHeadingTarget(270)));
 
-        // The shooter spins up and aims by itself when we're full, and spins down when empty.
-        // RobotCommands.bindAutoAim(robot);
+        // Point-at-goal: once we're full, the chassis turns to the goal by itself; once everything
+        // has been shot (or ejected) and fire is released, it stops.  The shooter keeps spinning.
+        new Trigger(robot.intake::isFull)
+            .whenActive(new InstantCommand(() -> setAimAtGoal(true)));
+        new Trigger(() -> robot.intake.isEmpty() && !robot.intake.isShooting())
+            .whenActive(new InstantCommand(() -> setAimAtGoal(false)));
+
+        // Right Stick press: point-at-goal on / off by hand.
+        driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
+            .whenPressed(new InstantCommand(this::toggleAimAtGoal));
 
         // The intake collects by itself (and spits out a 5th ball when full).
 
-        // Right Bumper: fire while held (waits for the shooter to be ready, then feeds until
-        // released).  Overrides eject and clear.
+        // Right Bumper: fire while held.  Pressing it also turns point-at-goal on (for a partial
+        // load), but no ball is fed until the shooter is ready (at speed and aimed); then it
+        // feeds until released.  Overrides eject and clear.
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-            .whenActive(robot.shooter.trackCommand())
-            //.whenActive(robot.intake.shootAllCommand())
-            .whenActive(RobotCommands.shootWhileHeld(robot))
-            .whenInactive(robot.shooter.idleCommand());
+            .whenPressed(new InstantCommand(() -> setAimAtGoal(true)))
+            .whileHeld(robot.intake.shootWhileHeldCommand());
 
         // B: intake out while held (the transfer holds its balls)
         driverOp.getGamepadButton(GamepadKeys.Button.B)
@@ -253,14 +270,14 @@ public class GFORCE_Teleop extends CommandOpMode {
         robot.shooter.setAlliance(red);
     }
 
-    /** Toggle point-at-goal, spinning the shooter up (tracking) or down to match. */
+    /** Toggle point-at-goal (the chassis turning to aim the shooter). */
     public void toggleAimAtGoal() {
-        aimAtGoal = !aimAtGoal;
-        if (aimAtGoal) {
-            robot.shooter.track();
-        } else {
-            robot.shooter.idle();
-        }
+        setAimAtGoal(!aimAtGoal);
+    }
+
+    /** Point-at-goal on or off.  The shooter keeps tracking (spinning at the table speed) either way. */
+    public void setAimAtGoal(boolean on) {
+        aimAtGoal = on;
     }
 
     /** Turn to a Pedro field heading (degrees) and hold it until the driver twists the stick. Cancels point-at-goal. */
