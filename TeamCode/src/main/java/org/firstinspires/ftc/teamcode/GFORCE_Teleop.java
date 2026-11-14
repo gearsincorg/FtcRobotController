@@ -228,6 +228,7 @@ public class GFORCE_Teleop extends CommandOpMode {
         // feeds until released.  Overrides eject and clear.
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
             .whenPressed(new InstantCommand(() -> setAimAtGoal(true)))
+            .whenReleased(new InstantCommand(() -> { if (robot.intake.isEmpty()) setAimAtGoal(false); }))
             .whileHeld(robot.intake.shootWhileHeldCommand());
 
         // B: intake out while held (the transfer holds its balls)

@@ -157,10 +157,6 @@ public class ShooterSubsystem extends SubsystemBase {
     private double  dFar        = 0;        // robot distance to each alliance goal (inches)
     private double  dAudience   = 0;
 
-    // FULL_SPEED spin-up
-    private final ElapsedTime spinupTimer = new ElapsedTime();
-    private boolean           wasSpinning = false;
-
     // Setpoints
     private double targetRPM        = 0;
     private double targetHoodDeg    = HOOD_MIN_DEG;

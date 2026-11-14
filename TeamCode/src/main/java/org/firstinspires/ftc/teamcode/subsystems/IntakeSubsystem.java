@@ -131,7 +131,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
             intake.setDirection(DcMotorSimple.Direction.REVERSE);
             intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            transfer.setDirection(DcMotorSimple.Direction.REVERSE);
+            transfer.setDirection(DcMotorSimple.Direction.REVERSE);   // REVERSE: positive power moves balls up toward the gate (confirmed on the robot 2026-11-14)
             transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         }
 

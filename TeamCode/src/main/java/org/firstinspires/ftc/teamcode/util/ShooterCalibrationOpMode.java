@@ -28,6 +28,7 @@ import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -83,6 +84,8 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
     private static final double FIELD_MARGIN = 9;
 
     private static final String CSV_NAME = "shooter_cal.csv";
+    private static final String BACKUP_TAG = ".bak-";       // backups: shooter_cal.csv.bak-yyyyMMdd-HHmmss
+    private static final int    MAX_BACKUPS = 5;
     private static final String CSV_HEADER =
             "time,goal,set_dist,set_angle,x,y,heading_deg,dist,rpm,hood_deg,tof_s,tof_n";
 
@@ -151,6 +154,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
             .whileHeld(robot.intake.shootWhileHeldCommand());
         pad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
             .whenPressed(new InstantCommand(this::ballIn));
+        // On the PS pad: Share = BACK, Options = START
         pad.getGamepadButton(GamepadKeys.Button.BACK)
             .whenPressed(new InstantCommand(this::savePoint));
         pad.getGamepadButton(GamepadKeys.Button.START)
@@ -298,7 +302,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
 
     // == Saving ==============================================================
     // Each point is saved once: saving again replaces it, and Options (twice) deletes it.  Before
-    // every change the old file is copied to shooter_cal.csv.bak, so one mistake can be undone.
+    // every change the old file is copied to shooter_cal.csv.bak-<time> (the newest 5 are kept), so mistakes can be undone.
 
     private File csvFile() {
         return new File(AppUtil.FIRST_FOLDER, CSV_NAME);
@@ -339,18 +343,32 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
         String sel = selectedKey();
         File file = csvFile();
         if (file.exists()) {
-            try (FileWriter bak = new FileWriter(new File(AppUtil.FIRST_FOLDER, CSV_NAME + ".bak"))) {
+            String stamp = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date());
+            try (FileWriter bak = new FileWriter(new File(AppUtil.FIRST_FOLDER, CSV_NAME + BACKUP_TAG + stamp))) {
                 for (String line : lines) bak.write(line + "\n");
             }
+            pruneBackups();
         }
         try (FileWriter out = new FileWriter(file, false)) {
             out.write(CSV_HEADER + "\n");
             for (String line : lines) {
                 String k = key(line.split(",", -1));
-                if (k != null && !k.equals(sel)) out.write(line + "\n");
+                if (k == null) {
+                    if (!line.startsWith("time,")) out.write(line + "\n");   // keep odd lines; the header is rewritten above
+                } else if (!k.equals(sel)) {
+                    out.write(line + "\n");
+                }
             }
             if (newRow != null) out.write(newRow + "\n");
         }
+    }
+
+    /** Keep only the newest MAX_BACKUPS timestamped backups (the names sort oldest first). */
+    private void pruneBackups() {
+        File[] old = AppUtil.FIRST_FOLDER.listFiles((dir, name) -> name.startsWith(CSV_NAME + BACKUP_TAG));
+        if (old == null || old.length <= MAX_BACKUPS) return;
+        Arrays.sort(old);
+        for (int i = 0; i < old.length - MAX_BACKUPS; i++) old[i].delete();
     }
 
     private void loadSaved() {
