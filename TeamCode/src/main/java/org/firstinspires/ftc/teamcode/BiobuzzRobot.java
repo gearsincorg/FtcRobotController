@@ -1,7 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.pedropathing.algorithm.Foresight;
+import com.pedropathing.controllers.Controller;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.Range;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.FunctionalCommand;
 
@@ -68,6 +72,51 @@ public class BiobuzzRobot {
      */
     public void update() {
         drive.update();
+    }
+
+    // == Heading control for manual driving ====================================
+
+    private static final Controller FALLBACK_HEADING = Controller.proportional(2.0);
+
+    /** The heading controller Foresight uses for path following (tuned in pedro/Constants). */
+    public Controller headingController() {
+        return drive.algorithm() instanceof Foresight
+                ? ((Foresight) drive.algorithm()).config.headingFeedback.get()
+                : FALLBACK_HEADING;
+    }
+
+    /** Clear the controller's memory; call when a heading lock or turn starts. */
+    public void resetHeadingController() {
+        headingController().reset();
+    }
+
+    private static final Controller NO_FEEDFORWARD = Controller.zero;
+
+    /** Foresight's static heading feedforward (pedro/Constants), or none if it isn't Foresight. */
+    private Controller headingStaticFF() {
+        return drive.algorithm() instanceof Foresight
+                ? ((Foresight) drive.algorithm()).config.headingStaticFF.get()
+                : NO_FEEDFORWARD;
+    }
+
+    /**
+     * Turn power (+ is counter-clockwise, like Pedro) that removes a heading error, limited to
+     * +/- maxTurn.  errorRad is target minus actual.  This mirrors Foresight.headingFeedback()
+     * (which is private): the tuned headingFeedback controller plus headingStaticFF in the
+     * direction of the error, so manual driving gets the same friction boost as paths.  No
+     * deadband, exactly as Foresight; add one here AND for paths only if buzzing at the target
+     * proves it necessary.
+     */
+    public double turnForError(double errorRad, double maxTurn) {
+        double error = Angle.normalizeSigned(errorRad);
+        double turn  = headingController().calculate(0, error)
+                     + headingStaticFF().calculate(0, Angle.turnDirection(error));
+        return Range.clip(turn, -maxTurn, maxTurn);
+    }
+
+    /** Turn power to point the robot at a field heading (radians), limited to +/- maxTurn. */
+    public double turnToHeading(double targetRad, double maxTurn) {
+        return turnForError(targetRad - drive.pose().heading(), maxTurn);
     }
 
     /**

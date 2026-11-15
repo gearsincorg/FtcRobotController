@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.util;
 
 import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.ManualDrive;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
@@ -23,10 +24,13 @@ import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
  * around it.  The gamepad LED is yellow while a ball is seen.
  * The color range is BiobuzzRobot.POLLEN_YELLOW.
  */
+@Disabled
 @TeleOp(name = "Color Tracking Test", group = "Test")
 public class ColorTrackingTestOpMode extends CommandOpMode {
 
-    // Chase speed and turn tuning are in VisionSubsystem (BALL_DRIVE_POWER, BALL_TURN_GAIN, MAX_BALL_TURN).
+    // The turn toward the ball comes from Foresight's heading controller (robot.turnForError) using
+    // VisionSubsystem.CAMERA_HFOV_DEG; this only limits it.
+    private static final double MAX_BALL_TURN = 0.4;
     private static final double DRIVE_SCALE = 0.7;
 
     private final BiobuzzRobot robot = new BiobuzzRobot(this);
@@ -65,7 +69,7 @@ public class ColorTrackingTestOpMode extends CommandOpMode {
         // Hold Left Bumper to drive forward and steer to the ball.  The sticks override.
         if (gamepad1.left_bumper) {
             if (axial == 0) axial = robot.vision.getBallForwardError();
-            if (yaw == 0)   yaw   = vision.getBallTurn();
+            if (yaw == 0)   yaw   = robot.turnForError(vision.getBallHeadingErrorRad(), MAX_BALL_TURN);
         }
 
         // A heading of 0 makes it robot-centric.

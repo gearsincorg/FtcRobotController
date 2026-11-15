@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * Ball finder (always on) shares the same camera: a color
  * locator finds yellow blobs (BiobuzzRobot.POLLEN_YELLOW) anywhere in the image and picks the one
  * lowest in the image (the nearest).  getBallError() says how far it is off center, for steering
- * toward it; getBallTurn() turns that into a turn power.
+ * toward it; getBallHeadingErrorRad() turns that into a heading error (radians) for the heading controller.
  *
  * The locator is never disabled: a disabled color locator crashes the camera preview (the SDK
  * draws it with no results), so it runs from init.
@@ -74,10 +74,10 @@ public class VisionSubsystem extends SubsystemBase {
     // Only blobs in this size range (pixels) count, as in the test program.  Tune.
     public static int MIN_BALL_AREA = 400;
     public static int MAX_BALL_AREA = 6000;
-    // Chasing a ball: turn power per unit of ball error (-1..+1 across the image), the most turn
-    // power to use, and the forward power to drive at.  Tune.
-    public static double BALL_TURN_GAIN    = 0.5;
-    public static double MAX_BALL_TURN     = 0.4;
+    // Horizontal field of view of the camera at the CAMERA_SIZE resolution, degrees.  Turns the
+    // ball's position in the image into a heading error.  Enter by hand (measure it: put a ball at
+    // the image edge and measure the angle).  The default is a guess for a 4:3 webcam.
+    public static double CAMERA_HFOV_DEG = 60;
 
     private ColorBlobLocatorProcessor ballLocator;
     private ColorBlobLocatorProcessor.Blob ball = null;
@@ -198,12 +198,22 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     /**
-     * @return the turn power (+ is counter-clockwise) that points the robot at the ball,
-     *         or 0 if no ball is seen.  A ball to the right needs a clockwise turn.
+     * @return the heading error to the ball in radians (+ is counter-clockwise, like Pedro): the
+     *         angle the robot must turn to point at it, or 0 if no ball is seen.  A ball to the
+     *         right is a negative (clockwise) error.  Pinhole camera: the image edge is at
+     *         +/- CAMERA_HFOV_DEG / 2.
      */
-    public double getBallTurn() {
+    public double getBallHeadingErrorRad() {
         if (ball == null) return 0;
-        return Range.clip(-getBallHeadingError() * BALL_TURN_GAIN, -MAX_BALL_TURN, MAX_BALL_TURN);
+        return -Math.atan(getBallHeadingError() * Math.tan(Math.toRadians(CAMERA_HFOV_DEG) / 2));
+    }
+
+    /**
+     * @return the heading error to the target cluster in radians (+ is counter-clockwise), from the
+     *         AprilTag bearing (degrees), or 0 if it is not visible.
+     */
+    public double getTargetHeadingErrorRad() {
+        return (targetCluster == null) ? 0 : Math.toRadians(targetCluster.ftcPose.bearing);
     }
 
     private void updateBall() {

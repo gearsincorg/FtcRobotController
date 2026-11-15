@@ -6,6 +6,7 @@ package org.firstinspires.ftc.teamcode.util;
 
 import android.util.Size;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Utility;
 
@@ -23,7 +24,7 @@ import java.util.List;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  */
-
+@Disabled
 @Utility(name = "Cluster Display", description="Displays Apriltag Cluster data")
 public class ClusterDisplay extends LinearOpMode {
 

@@ -55,16 +55,12 @@ public class GFORCE_Teleop extends CommandOpMode {
     // Declare robot Subsystems
     private BiobuzzRobot robot = new BiobuzzRobot(this);
 
-    // Point-at-target tuning
-    private static final double TARGET_TURN_GAIN = 0.04;
-    private static final double MAX_TARGET_TURN  = 0.6;
-
-    // Point-at-goal tuning (no turret: the chassis turns to aim the shooter)
-    private static final double AIM_GAIN     = 0.8;   // power per radian of aim error
-    private static final double MAX_AIM_TURN = 0.6;
-
-    // Heading lock / D-pad heading snap tuning
-    private static final double  MAX_SNAP_TURN = 0.6;
+    // All turning uses Foresight's heading controller (robot.turnForError / turnToHeading); these
+    // only limit the turn power.
+    private static final double MAX_TARGET_TURN = 0.6;   // point at the target cluster
+    private static final double MAX_BALL_TURN   = 0.4;   // chase a ball
+    private static final double MAX_AIM_TURN    = 0.6;   // point the shooter at the goal
+    private static final double MAX_SNAP_TURN   = 0.6;   // heading lock / D-pad heading snap
 
     // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
     private static final Pose RESET_POSE = new Pose(32.75, 6, Math.toRadians(180));
@@ -145,7 +141,6 @@ public class GFORCE_Teleop extends CommandOpMode {
         // Manual driving ===================================
         final double DRIVE_SCALE_FACTOR = 1.0;
         final double STEER_SCALE_FACTOR = 0.7;
-        final double HEADING_GAIN    = 0.5;
         final double MIN_ROTATE      = 0.1;
 
         double axial    = -gamepad1.left_stick_y  * DRIVE_SCALE_FACTOR;
@@ -158,29 +153,28 @@ public class GFORCE_Teleop extends CommandOpMode {
             // Chase the nearest yellow ball (the intake is always collecting).  With the left
             // stick idle, drive straight ahead (robot-forward) at BALL_DRIVE_POWER; pushing it
             // drives field-centric as usual.  Twisting the right stick overrides the turn.
-            if (yaw == 0) yaw = robot.vision.getBallTurn();
+            if (yaw == 0) yaw = robot.turnForError(robot.vision.getBallHeadingErrorRad(), MAX_BALL_TURN);
             headingLocked = false;
             if (axial == 0 && lateral == 0) {
                 robot.drive.manual(ManualDrive.fieldCentric(robot.vision.getBallForwardError(), 0, yaw, 0));
                 return;
             }
         } else if (gamepad1.right_bumper && robot.vision.hasTarget()) {
-            // Point at the target cluster: use the bearing (+ is CCW) as the error.
-            yaw = Range.clip(robot.vision.getTargetPose().bearing * TARGET_TURN_GAIN,
-                             -MAX_TARGET_TURN, MAX_TARGET_TURN);
+            // Point at the target cluster: use the bearing (+ is CCW) as the heading error.
+            yaw = robot.turnForError(robot.vision.getTargetHeadingErrorRad(), MAX_TARGET_TURN);
             headingLocked = false;
         } else if (yaw == 0 && aimAtGoal) {
             // Point the shooter at the goal (leading it when moving).  Twisting the stick overrides.
-            yaw = Range.clip(robot.shooter.getAimError() * AIM_GAIN, -MAX_AIM_TURN, MAX_AIM_TURN);
+            yaw = robot.turnForError(robot.shooter.getAimError(), MAX_AIM_TURN);
             headingLocked = false;
         } else if (yaw == 0 ) {
             // Lock heading if we aren't trying to turn.
             if (headingLocked) {
-                yaw = Range.clip(Angle.normalizeSigned(headingSetpoint - heading) * HEADING_GAIN,
-                                 -MAX_SNAP_TURN, MAX_SNAP_TURN);
+                yaw = robot.turnToHeading(headingSetpoint, MAX_SNAP_TURN);
             } else if (Math.abs(robot.drive.velocity().omega) < MIN_ROTATE) {
                 headingSetpoint = heading;
                 headingLocked = true;
+                robot.resetHeadingController();
             }
         } else {
             headingLocked = false;
@@ -297,6 +291,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     public void setHeadingTarget(double degrees) {
         headingSetpoint = Math.toRadians(degrees);
         headingLocked = true;
+        robot.resetHeadingController();
         aimAtGoal = false;
     }
 

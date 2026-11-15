@@ -6,6 +6,7 @@ package org.firstinspires.ftc.teamcode.util;
 
 import android.util.Size;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Utility;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -46,6 +47,7 @@ import java.util.concurrent.TimeUnit;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list.
  *
  */
+@Disabled
 @Utility(name="Cluster Tracking", description="Tracks Apriltag Cluster")
 public class ClusterTracking extends LinearOpMode
 {

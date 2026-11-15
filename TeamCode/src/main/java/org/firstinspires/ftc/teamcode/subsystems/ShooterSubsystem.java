@@ -89,8 +89,8 @@ public class ShooterSubsystem extends SubsystemBase {
     // Check with util/FlywheelTestOpMode: at full power the motor RPM it shows should be close to
     // the motor's free speed.
     public static final double MOTOR_TICKS_PER_REV  = 28;
-    public static final double MOTOR_FREE_RPM       = 6000;
-    public static final double FLYWHEEL_GEAR_RATIO  = 1.0;
+    public static final double MOTOR_FREE_RPM       = 5500;
+    public static final double FLYWHEEL_GEAR_RATIO  = 1.5;
 
     /** Flywheel RPM -> motor encoder ticks/s (what setVelocity takes). */
     public static double rpmToTicksPerSec(double flywheelRpm) {

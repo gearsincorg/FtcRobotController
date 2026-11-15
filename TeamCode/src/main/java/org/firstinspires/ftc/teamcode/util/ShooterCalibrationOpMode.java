@@ -105,10 +105,12 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
     private static final String KIND_BEST = "best";
     private static final String KIND_COMP = "comp";
 
-    // Aiming (same as teleop)
-    private static final double AIM_GAIN     = 1.5;
+    // Aiming: Foresight's heading controller (robot.turnForError), limited to this turn power
     private static final double MAX_AIM_TURN = 0.7;
     private static final double DRIVE_SCALE  = 0.5;
+    // With the sticks idle the robot holds its pose once it is slower than these (in/s, rad/s).
+    private static final double HOLD_SPEED_IPS = 1.0;
+    private static final double HOLD_TURN_RATE = 0.1;
 
     // Flight time: an LB press more than this long after a launch doesn't count.
     private static final double MAX_FLIGHT_S = 2.0;
@@ -126,6 +128,9 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
     private boolean aiming     = false;     // chassis points at the goal (right stick press, or after X)
 
     private FollowPathCommand driveTo;
+    private Pose    driveTarget;            // where driveTo is going
+    private boolean holding   = false;      // Pedro is holding a pose (sticks idle)
+    private boolean holdAimed = false;      // the aiming setting the hold was made with
 
     /** Everything about the last shot, taken as it left; this is what gets saved. */
     private static class Shot {
@@ -158,7 +163,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
     @Override
     public void initialize() {
         robot = new BiobuzzRobot(this);
-        robot.initialize();
+        robot.initialize(25);
         battery = hardwareMap.voltageSensor.iterator().next();
         robot.drive.setPose(CAL_START_POSE);
         robot.shooter.setAlliance(robot.config.red);
@@ -223,12 +228,26 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
                 driveTo.cancel();           // the driver takes over
             } else {
                 aiming = true;              // arrived: aim at the goal
+                holdAt(driveTarget);        // and hold the exact point (no drifting past it)
             }
             driveTo = null;
         }
 
+        if (sticks) {
+            holding = false;                // the driver has control
+        } else {
+            if (holding && aiming != holdAimed) holding = false;   // aim toggled: hold again
+            if (holding) return;            // Pedro is holding the pose
+            if (settled()) {                // sticks released and stopped: hold where we are
+                Pose p = robot.drive.pose();
+                double heading = aiming ? p.heading() + robot.shooter.getAimError() : p.heading();
+                holdAt(new Pose(p.x(), p.y(), heading));
+                return;
+            }
+        }
+
         if (yaw == 0 && aiming) {
-            yaw = Range.clip(robot.shooter.getAimError() * AIM_GAIN, -MAX_AIM_TURN, MAX_AIM_TURN);
+            yaw = robot.turnForError(robot.shooter.getAimError(), MAX_AIM_TURN);
         }
         DrivePowers powers = ManualDrive.fieldCentric(axial, lateral, yaw, robot.drive.pose().heading());
         robot.drive.manual(powers);
@@ -241,7 +260,22 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
         Pose start = robot.drive.pose();
         Path path = Paths.path(line(start, target).linear(start, target));
         driveTo = new FollowPathCommand(robot.drive, path);
+        driveTarget = target;
+        holding = false;
         schedule(driveTo);
+    }
+
+    /** Have Pedro hold this pose (position and heading) until the driver takes over. */
+    private void holdAt(Pose pose) {
+        robot.drive.hold(pose);
+        holding    = true;
+        holdAimed  = aiming;
+    }
+
+    /** True once the robot has (nearly) stopped moving and turning. */
+    private boolean settled() {
+        return Math.hypot(robot.drive.velocity().vx, robot.drive.velocity().vy) < HOLD_SPEED_IPS
+            && Math.abs(robot.drive.velocity().omega) < HOLD_TURN_RATE;
     }
 
     /** Field pose of the selected point, facing the goal. */

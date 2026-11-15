@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.util;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 
@@ -11,6 +12,7 @@ import org.firstinspires.ftc.teamcode.subsystems.GimbalSubsystem;
  *   Right stick left / right : roll
  * Releasing the stick re-centers the gimbal.
  */
+@Disabled
 @TeleOp(name = "Gimbal", group = "Test")
 public class GimbalOpMode extends CommandOpMode {
 
