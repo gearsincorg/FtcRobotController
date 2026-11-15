@@ -41,6 +41,7 @@ import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Commands.RobotCommands;
@@ -59,11 +60,11 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double MAX_TARGET_TURN  = 0.6;
 
     // Point-at-goal tuning (no turret: the chassis turns to aim the shooter)
-    private static final double AIM_GAIN     = 0.5;   // power per radian of aim error
+    private static final double AIM_GAIN     = 0.8;   // power per radian of aim error
     private static final double MAX_AIM_TURN = 0.6;
 
     // Heading lock / D-pad heading snap tuning
-    private static final double MAX_SNAP_TURN = 0.6;
+    private static final double  MAX_SNAP_TURN = 0.6;
 
     // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
     private static final Pose RESET_POSE = new Pose(32.75, 6, Math.toRadians(180));
@@ -101,6 +102,8 @@ public class GFORCE_Teleop extends CommandOpMode {
     }
 
     private void showTelemetry() {
+        telemetry.addData("cycle", "%5.1f ms  (avg %5.1f ms, %3.0f Hz)", cycleMs, cycleAvgMs,
+                cycleAvgMs > 0 ? 1000.0 / cycleAvgMs : 0);
         telemetry.addData("chassis", chassis);
         telemetry.addData("aim at goal", "%s  error = %5.1f deg", aimAtGoal ? "ON" : "off",
                             Math.toDegrees(robot.shooter.getAimError()));
@@ -116,8 +119,19 @@ public class GFORCE_Teleop extends CommandOpMode {
         showBallCountLed();
     }
 
+    // Loop (cycle) time: the time between run() calls, and a smoothed average.
+    private final ElapsedTime cycleTimer = new ElapsedTime();
+    private double cycleMs = 0, cycleAvgMs = 0;
+
+    private void timeCycle() {
+        cycleMs = cycleTimer.milliseconds();
+        cycleTimer.reset();
+        cycleAvgMs = cycleAvgMs == 0 ? cycleMs : cycleAvgMs + 0.05 * (cycleMs - cycleAvgMs);
+    }
+
     @Override
     public void run() {
+        timeCycle();
         super.run();
         gamepad2SimBalls();
         manualDrive();
@@ -155,8 +169,6 @@ public class GFORCE_Teleop extends CommandOpMode {
             yaw = Range.clip(robot.vision.getTargetPose().bearing * TARGET_TURN_GAIN,
                              -MAX_TARGET_TURN, MAX_TARGET_TURN);
             headingLocked = false;
-
-
         } else if (yaw == 0 && aimAtGoal) {
             // Point the shooter at the goal (leading it when moving).  Twisting the stick overrides.
             yaw = Range.clip(robot.shooter.getAimError() * AIM_GAIN, -MAX_AIM_TURN, MAX_AIM_TURN);

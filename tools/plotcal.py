@@ -31,6 +31,9 @@ FIELD = 144.0
 RAMP = ["#86b6ef", "#6da7ec", "#5598e7", "#3987e5", "#2a78d6", "#256abf",
         "#1c5cab", "#184f95", "#104281", "#0d366b"]
 
+COLUMNS = ["time", "goal", "set_dist", "set_angle", "x", "y", "heading_deg", "dist", "rpm", "hood_deg",
+           "tof_s", "tof_n", "kind", "rpm_meas", "volts"]
+
 
 def fail(msg):
     print("plotcal: " + msg, file=sys.stderr)
@@ -38,17 +41,21 @@ def fail(msg):
 
 
 def read_points(path):
-    """Latest row for each (goal, set_dist, set_angle), like shotcal.py."""
-    points = {}
+    """Every best row (comp rows skipped), like shotcal.py; repeats are all kept."""
+    points = []
     with open(path, newline="", encoding="utf-8") as f:
-        for n, row in enumerate(csv.DictReader(f), start=2):
+        # Columns by position, whatever the header says (an old file may still have the 12-column
+        # header above newer 15-column rows); missing trailing columns read as None.
+        for n, row in enumerate(csv.DictReader(f, fieldnames=COLUMNS), start=1):
+            if row["time"] == "time":
+                continue                    # the header line
             if (row.get("kind") or "").strip() == "comp":
                 continue                    # compensation shots are not table points
             try:
                 p = {
                     "goal": row["goal"].strip(),
-                    "set_dist": float(row["set_dist"]),
-                    "set_angle": float(row["set_angle"]),
+                    "set_dist": opt_float(row.get("set_dist")),     # blank: shot from anywhere
+                    "set_angle": opt_float(row.get("set_angle")),
                     "x": float(row["x"]),
                     "y": float(row["y"]),
                     "dist": float(row["dist"]),
@@ -59,8 +66,17 @@ def read_points(path):
                 }
             except (KeyError, ValueError, AttributeError) as e:
                 fail(f"{path}: line {n}: bad row ({e})")
-            points[(p["goal"], p["set_dist"], p["set_angle"])] = p
-    return sorted(points.values(), key=lambda p: (p["goal"], p["set_dist"], p["set_angle"]))
+            points.append(p)
+    return sorted(points, key=lambda p: (p["goal"], p["dist"]))
+
+
+def fmt(v, spec):
+    return "-" if v is None else format(v, spec)
+
+
+def opt_float(s):
+    s = (s or "").strip()
+    return float(s) if s else None
 
 
 def read_goals():
@@ -130,7 +146,7 @@ def build(points, goals, field_image, field_opacity, csv_name):
         f'<stop offset="{i / (len(RAMP) - 1):.3f}" stop-color="{c}"/>' for i, c in enumerate(RAMP))
 
     rows = "".join(
-        f"<tr><td>{p['goal']}</td><td>{p['set_dist']:.0f}</td><td>{p['set_angle']:+.0f}</td>"
+        f"<tr><td>{p['goal']}</td><td>{fmt(p['set_dist'], '.0f')}</td><td>{fmt(p['set_angle'], '+.0f')}</td>"
         f"<td>{p['x']:.1f}</td><td>{p['y']:.1f}</td><td>{p['dist']:.1f}</td>"
         f"<td>{p['rpm']:.0f}</td><td>{p['hood']:.1f}</td><td>{p['tof'] or '-'}</td></tr>"
         for p in points)
@@ -229,7 +245,9 @@ def build(points, goals, field_image, field_opacity, csv_name):
     el.addEventListener('mouseenter', () => {{
       el.classList.add('on');
       tip.innerHTML = `<b>${{p.rpm.toFixed(0)}} rpm</b> &nbsp;<span>hood ${{p.hood.toFixed(1)}}&deg;</span><br>` +
-        `<span>${{p.set_dist.toFixed(0)}} in @ ${{p.set_angle >= 0 ? '+' : ''}}${{p.set_angle.toFixed(0)}}&deg; from ${{p.goal.toLowerCase()}} goal</span><br>` +
+        (p.set_dist === null || p.set_angle === null
+          ? `<span>${{p.dist.toFixed(1)}} in from ${{p.goal.toLowerCase()}} goal</span><br>`
+          : `<span>${{p.set_dist.toFixed(0)}} in @ ${{p.set_angle >= 0 ? '+' : ''}}${{p.set_angle.toFixed(0)}}&deg; from ${{p.goal.toLowerCase()}} goal</span><br>`) +
         `<span>robot (${{p.x.toFixed(1)}}, ${{p.y.toFixed(1)}}), measured ${{p.dist.toFixed(1)}} in</span><br>` +
         `<span>flight ${{p.tof ? p.tof + ' s' : 'not timed'}} &middot; ${{p.time}}</span>`;
       tip.style.display = 'block';

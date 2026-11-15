@@ -67,7 +67,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // false: the turret is held at 0 (straight ahead) and the chassis turns to aim instead
     // (teleop point-at-goal mode).  isReady() then checks the robot heading.
     public static final boolean TURRET_ENABLED        = true;
-    public static final boolean TURRET_SIMULATED      = true;
+    public static final boolean TURRET_SIMULATED      = false;
     private static final double AIM_TOLERANCE_RAD     = Math.toRadians(10);
 
     // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
@@ -80,13 +80,31 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_TOLERANCE_RAD  = Math.toRadians(5);
 
     // == Flywheel ============================================================
-    // Ticks per rev of the flywheel (28 for a bare goBILDA/REV motor at 1:1).  Check with
-    // util/FlywheelTestOpMode: full power should read close to the motor's free speed.
-    public static final double FLYWHEEL_TICKS_PER_REV = 28;
+    // The encoder is on the motor; a belt drives the flywheel.  Every RPM in this code (the shot
+    // table, targets, tolerances, telemetry, the calibration file) is FLYWHEEL RPM; only the
+    // conversions below know about the motor.
+    //   MOTOR_TICKS_PER_REV : encoder ticks per motor rev (28 for a bare goBILDA 5203 / REV motor)
+    //   FLYWHEEL_GEAR_RATIO : flywheel revs per motor rev (> 1 for a speed increaser, e.g.
+    //                         motor pulley 36T / flywheel pulley 24T = 1.5).  TODO measure: count teeth.
+    // Check with util/FlywheelTestOpMode: at full power the motor RPM it shows should be close to
+    // the motor's free speed.
+    public static final double MOTOR_TICKS_PER_REV  = 28;
+    public static final double MOTOR_FREE_RPM       = 6000;
+    public static final double FLYWHEEL_GEAR_RATIO  = 1.0;
 
-    public static double rpmToTicksPerSec(double rpm) { return rpm * FLYWHEEL_TICKS_PER_REV / 60.0; }
-    public static double ticksPerSecToRpm(double tps) { return tps * 60.0 / FLYWHEEL_TICKS_PER_REV; }
-    private static final double FLYWHEEL_MAX_RPM       = 5500;
+    /** Flywheel RPM -> motor encoder ticks/s (what setVelocity takes). */
+    public static double rpmToTicksPerSec(double flywheelRpm) {
+        return flywheelToMotorRpm(flywheelRpm) * MOTOR_TICKS_PER_REV / 60.0;
+    }
+    /** Motor encoder ticks/s (what getVelocity returns) -> flywheel RPM. */
+    public static double ticksPerSecToRpm(double tps) {
+        return motorToFlywheelRpm(tps * 60.0 / MOTOR_TICKS_PER_REV);
+    }
+    public static double flywheelToMotorRpm(double flywheelRpm) { return flywheelRpm / FLYWHEEL_GEAR_RATIO; }
+    public static double motorToFlywheelRpm(double motorRpm)    { return motorRpm * FLYWHEEL_GEAR_RATIO; }
+
+    /** Flywheel speed with the motor at its free speed (no load); nothing can be asked above this. */
+    public static final double FLYWHEEL_MAX_RPM = MOTOR_FREE_RPM * FLYWHEEL_GEAR_RATIO;
     private static final double RPM_TOLERANCE          = 400;
     private static final double FLYWHEEL_IDLE_POWER    = 0.0;
     private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(3, 0.5, 0, 10.0);
@@ -96,9 +114,19 @@ public class ShooterSubsystem extends SubsystemBase {
     // the speed falls more than BOOST_ENTER_RPM below the target (a ball just left, or the target
     // rose), the flywheel runs open loop at BOOST_POWER until it is back within BOOST_EXIT_RPM,
     // then the closed loop takes over again.  Both margins are tunable (watch "Flywheel" telemetry).
+    // TEMPORARY: boost off (closed loop only).  Set true to turn it back on.
+    public static final boolean BOOST_ENABLED          = false;
     private static final double BOOST_ENTER_RPM        = 100;
     private static final double BOOST_EXIT_RPM         = 50;
     private static final double BOOST_POWER            = 1.0;
+
+    // Spin-up ramp: the flywheel is heavy, and asking for full speed from a standstill slips the
+    // belt.  So when it starts from (nearly) stopped, below RAMP_START_RPM, the speed asked of the
+    // closed loop rises from there at RAMP_RPM_PER_S until it reaches the target; boost is off
+    // while ramping.  Once running, speed changes (and boost) are not ramped.  Tune RAMP_RPM_PER_S
+    // up until the belt just starts to slip, then back off.
+    private static final double RAMP_START_RPM         = 300;
+    private static final double RAMP_RPM_PER_S         = 2000;
 
     // == Hood ================================================================
     // Hood angle is in degrees from vertical, forward positive.  Two measured points define the
@@ -124,31 +152,35 @@ public class ShooterSubsystem extends SubsystemBase {
     // Rows sorted by distance: { distance (in), flywheel RPM, hood angle (deg), flight time (s) }
     // BEGIN GENERATED SHOT_TABLE
     private static final double[][] SHOT_TABLE = {
-        {   12.0,  2780,   0.0, 0.300 },
-        {   15.1,  2880,   2.0, 0.300 },
-        {   18.0,  2975,   4.5, 0.300 },
-        {   21.1,  3060,   6.0, 0.300 },
-        {   24.1,  3160,   7.8, 0.301 },
-        {   27.1,  3260,   9.8, 0.313 },
-        {   30.1,  3350,  11.0, 0.325 },
-        {   33.1,  3420,  13.2, 0.338 },
-        {   36.1,  3520,  15.2, 0.350 },
-        {   39.1,  3620,  17.0, 0.363 },
-        {   42.1,  3720,  19.0, 0.376 },
-        {   45.1,  3820,  21.0, 0.388 },
-        {   48.2,  3967,  23.3, 0.401 },
-        {   51.1,  4067,  25.0, 0.413 },
-        {   54.1,  4150,  25.0, 0.425 },
-        {   57.2,  4200,  25.0, 0.438 },
-        {   60.2,  4350,  25.0, 0.451 },
-        {   63.1,  4450,  25.0, 0.463 },
-        {   66.1,  4600,  25.0, 0.475 },
-        {   69.1,  4700,  25.0, 0.488 },
-        {   72.0,  4800,  25.0, 0.500 },
-        {   75.2,  4900,  25.0, 0.513 },
-        {   77.8,  5000,  25.0, 0.524 },
-        {   81.1,  5100,  25.0, 0.538 },
-        {   83.4,  5200,  25.0, 0.547 },
+        {   12.0,  2413,   0.0, 0.736 },   // extrapolated, hood -1.2 clamped
+        {   15.0,  2435,   0.2, 0.731 },   // extrapolated
+        {   18.0,  2458,   1.6, 0.726 },   // extrapolated
+        {   21.0,  2480,   3.0, 0.721 },   // extrapolated
+        {   24.0,  2503,   4.3, 0.717 },   // extrapolated
+        {   27.0,  2525,   5.7, 0.712 },
+        {   30.0,  2548,   7.1, 0.707 },
+        {   33.0,  2570,   8.5, 0.702 },
+        {   36.0,  2593,   9.9, 0.697 },
+        {   39.0,  2615,  11.2, 0.693 },
+        {   42.0,  2638,  12.6, 0.688 },
+        {   45.0,  2660,  14.0, 0.683 },
+        {   48.0,  2683,  15.4, 0.678 },
+        {   51.0,  2705,  16.8, 0.673 },
+        {   54.0,  2728,  18.1, 0.668 },
+        {   57.0,  2750,  19.5, 0.664 },
+        {   60.0,  2773,  20.9, 0.659 },
+        {   63.0,  2795,  22.3, 0.654 },   // extrapolated
+        {   66.0,  2818,  23.7, 0.649 },   // extrapolated
+        {   69.0,  2840,  25.0, 0.644 },   // extrapolated, hood 25.0 clamped
+        {   72.0,  2863,  25.0, 0.640 },   // extrapolated, hood 26.4 clamped
+        {   75.0,  2885,  25.0, 0.635 },   // extrapolated, hood 27.8 clamped
+        {   78.0,  2908,  25.0, 0.630 },   // extrapolated, hood 29.2 clamped
+        {   81.0,  2930,  25.0, 0.625 },   // extrapolated, hood 30.6 clamped
+        {   84.0,  2953,  25.0, 0.620 },   // extrapolated, hood 31.9 clamped
+        {   87.0,  2975,  25.0, 0.615 },   // extrapolated, hood 33.3 clamped
+        {   90.0,  2998,  25.0, 0.611 },   // extrapolated, hood 34.7 clamped
+        {   93.0,  3020,  25.0, 0.606 },   // extrapolated, hood 36.1 clamped
+        {   96.0,  3043,  25.0, 0.601 },   // extrapolated, hood 37.5 clamped
     };
     // END GENERATED SHOT_TABLE
 
@@ -168,6 +200,9 @@ public class ShooterSubsystem extends SubsystemBase {
     private BooleanSupplier shooting = () -> false;   // see setShootingSupplier()
     private boolean boosting         = false;    // flywheel at full open-loop power to recover speed
     private boolean flywheelOpenLoop = false;    // flywheel motor is in RUN_WITHOUT_ENCODER
+    private boolean ramping          = false;    // spinning up from a stop at RAMP_RPM_PER_S
+    private double  commandRPM       = 0;        // speed asked of the closed loop (targetRPM unless ramping)
+    private final ElapsedTime rampTimer = new ElapsedTime();
     private boolean redAlliance = true;
     private boolean farGoal     = true;     // which of the alliance's two goals is targeted
     private double  dFar        = 0;        // robot distance to each alliance goal (inches)
@@ -225,7 +260,7 @@ public class ShooterSubsystem extends SubsystemBase {
         if (SIMULATED) {
             double dt = Math.min(simTimer.seconds(), 0.1);
             simTimer.reset();
-            actualRPM      += (targetRPM - actualRPM) * Math.min(1, dt / (boosting ? SIM_BOOST_S : SIM_SPINUP_S));
+            actualRPM      += (commandRPM - actualRPM) * Math.min(1, dt / (boosting ? SIM_BOOST_S : SIM_SPINUP_S));
             actualTurretRad = targetTurretRad;
         } else {
             actualRPM        = ticksPerSecToRpm(flywheel.getVelocity());
@@ -240,6 +275,7 @@ public class ShooterSubsystem extends SubsystemBase {
             targetTurretRad = TURRET_ENABLED ? turretAngleTo(shot.aimX, shot.aimY) : 0;
         }
 
+        updateRamp();
         updateBoost();
         applyOutputs();
         showTelemetry();
@@ -252,8 +288,9 @@ public class ShooterSubsystem extends SubsystemBase {
         opMode.telemetry.addData("SHOOTER", "%s %s %s  dist = %5.1f  ready = %b",
                 mode, redAlliance ? "RED" : "BLUE", farGoal ? "FAR" : "AUDIENCE", distance, isReady());
         opMode.telemetry.addData("  Goal dist audience : far", "%5.1f : %5.1f", dAudience, dFar);
-        opMode.telemetry.addData("  RPM tgt : act", "%5.0f : %5.0f  %s", targetRPM, getActualRPM(),
-                boosting ? "BOOST (full power)" : "closed loop");
+        opMode.telemetry.addData("  Flywheel RPM tgt : act", "%5.0f : %5.0f  %s", targetRPM, getActualRPM(),
+                ramping ? String.format("RAMP (asking %.0f)", commandRPM)
+                        : boosting ? "BOOST (full power)" : "closed loop");
         opMode.telemetry.addData("  Turret tgt : act", "%5.1f : %5.1f",
                 Math.toDegrees(targetTurretRad), Math.toDegrees(getactualTurretRad()));
 
@@ -472,12 +509,41 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     /**
+     * Spin-up ramp.  A start from (nearly) stopped begins a ramp from the measured speed; while it
+     * runs, the speed asked for rises at RAMP_RPM_PER_S (never above the target).  It ends when it
+     * reaches the target, or when the flywheel is told to stop.
+     */
+    private void updateRamp() {
+        double dt = Math.min(rampTimer.seconds(), 0.1);
+        rampTimer.reset();
+
+        if (targetRPM <= 0) {
+            ramping = false;
+        } else if (!ramping && actualRPM < RAMP_START_RPM && targetRPM > RAMP_START_RPM) {
+            ramping = true;
+            commandRPM = Math.max(actualRPM, 0);
+        }
+
+        if (ramping) {
+            commandRPM = Math.min(targetRPM, commandRPM + RAMP_RPM_PER_S * dt);
+            if (commandRPM >= targetRPM) ramping = false;
+        } else {
+            commandRPM = Math.max(targetRPM, 0);
+        }
+    }
+
+    /** True while the flywheel is ramping up from a stop. */
+    public boolean isRamping() {
+        return ramping;
+    }
+
+    /**
      * Boost (full open-loop power) while shooting whenever the flywheel is more than BOOST_ENTER_RPM
      * below its target; stop once it is within BOOST_EXIT_RPM (or when no longer shooting).
      */
     private void updateBoost() {
         double slow = targetRPM - actualRPM;                // positive: too slow
-        if (targetRPM <= 0 || !shooting.getAsBoolean()) {
+        if (!BOOST_ENABLED || targetRPM <= 0 || ramping || !shooting.getAsBoolean()) {
             boosting = false;
         } else if (!boosting) {
             boosting = slow > BOOST_ENTER_RPM;
@@ -496,8 +562,7 @@ public class ShooterSubsystem extends SubsystemBase {
         if (open) {
             flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         } else {
-            flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, FLYWHEEL_PIDF);   // make sure they survived the mode change
+            flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);   // PIDF is set once at init; it survives mode changes
         }
     }
 
@@ -518,14 +583,15 @@ public class ShooterSubsystem extends SubsystemBase {
         }
         turret.setPower(Range.clip(power, -TURRET_MAX_POWER, TURRET_MAX_POWER));
 
-        // Control Flywheel: the SDK's closed loop holds targetRPM; while boosting, full open-loop power.
+        // Control Flywheel: the SDK's closed loop holds commandRPM (targetRPM, or the spin-up ramp);
+        // while boosting, full open-loop power.
         if (targetRPM > 0 && boosting) {
             setFlywheelOpenLoop(true);
             flywheel.setPower(BOOST_POWER);
         } else {
             setFlywheelOpenLoop(false);
             if (targetRPM > 0) {
-                flywheel.setVelocity(rpmToTicksPerSec(targetRPM));   // setVelocity takes ticks/s
+                flywheel.setVelocity(rpmToTicksPerSec(commandRPM));  // setVelocity takes ticks/s
             } else {
                 flywheel.setPower(FLYWHEEL_IDLE_POWER);
             }

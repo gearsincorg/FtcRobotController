@@ -68,7 +68,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double INTAKE_REJECT_POWER   =-0.3;   // out            (EJECTING)
     private static final double INTAKE_EJECT_POWER    =-1.0;   // out, full speed (CLEAR_ALL)
     // Transfer motor
-    private static final double TRANSFER_POWER        = 1.0;   // up             (SHOOTING; INTAKING while not packed)
+    private static final double TRANSFER_POWER        = 0.8;   // up             (SHOOTING; INTAKING while not packed)
     private static final double TRANSFER_PACKED_POWER = 0.0;   // packed         (INTAKING while packed, FULL), balls stacked against the closed gate
     private static final double TRANSFER_HOLD_POWER   = 0.2;   // hold           (EJECTING), keeps the column in place
     private static final double TRANSFER_EJECT_POWER  =-1.0;   // down           (CLEAR_ALL)
@@ -131,8 +131,11 @@ public class IntakeSubsystem extends SubsystemBase {
 
             intake.setDirection(DcMotorSimple.Direction.REVERSE);
             intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
             transfer.setDirection(DcMotorSimple.Direction.REVERSE);   // REVERSE: positive power moves balls up toward the gate (confirmed on the robot 2026-11-14)
             transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            transfer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
         if (SIMULATE_SENSORS || SIMULATED) {

@@ -18,17 +18,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem.FLYWHEEL_TICKS_PER_REV;
+import static org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem.FLYWHEEL_GEAR_RATIO;
+import static org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem.MOTOR_TICKS_PER_REV;
+import static org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem.flywheelToMotorRpm;
 import static org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem.rpmToTicksPerSec;
 import static org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem.ticksPerSecToRpm;
 
 /**
  * Flywheel test: checks that the "shooter" motor holds the RPM it is asked for.
  * The motor is set up the same way as ShooterSubsystem (REVERSE, FLOAT, same ticks/rev).
+ * Every RPM shown is FLYWHEEL RPM (motor RPM x FLYWHEEL_GEAR_RATIO); the sweep also shows the
+ * motor RPM, to check against the motor's free speed.
  * Keep hands and balls clear of the flywheel.
  *
  *   A           open-loop sweep: setPower 0.2..1.0, read the speed.  Full power gives the free
- *               speed (checks FLYWHEEL_TICKS_PER_REV) and a suggested PIDF (F = 32767 / max ticks/s,
+ *               speed (checks MOTOR_TICKS_PER_REV) and a suggested PIDF (F = 32767 / max ticks/s,
  *               P = 0.1 F, I = 0.1 P)
  *   B           closed-loop steps: setVelocity at each STEP_RPMS, reports actual RPM, error,
  *               ripple and time to get within READY_TOL_RPM
@@ -66,7 +70,8 @@ public class FlywheelTestOpMode extends LinearOpMode {
         line("Motor type: " + flywheel.getMotorType().getName()
                 + String.format(Locale.US, " (%.1f ticks/rev, %.0f rpm)",
                     flywheel.getMotorType().getTicksPerRev(), flywheel.getMotorType().getMaxRPM()));
-        line(String.format(Locale.US, "Code ticks/rev: %.1f", FLYWHEEL_TICKS_PER_REV));
+        line(String.format(Locale.US, "Code: %.1f ticks/motor rev, flywheel/motor ratio %.3f",
+                MOTOR_TICKS_PER_REV, FLYWHEEL_GEAR_RATIO));
         line("Default PIDF: " + pidfText());
 
         while (opModeInInit()) {
@@ -111,14 +116,15 @@ public class FlywheelTestOpMode extends LinearOpMode {
     private void runSweep() {
         holding = false;
         line("");
-        line("OPEN LOOP  power   rpm   ticks/s  +/-rpm  volts");
+        line("OPEN LOOP  power  fly rpm  motor rpm  ticks/s  +/-rpm  volts");
         flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         for (double p : SWEEP_POWERS) {
             if (!opModeIsActive()) break;
             flywheel.setPower(p);
             double[] m = measure(String.format(Locale.US, "sweep power %.1f", p), Double.NaN);
-            line(String.format(Locale.US, "          %4.2f  %5.0f  %6.0f   %5.0f  %5.2f",
-                    p, ticksPerSecToRpm(m[0]), m[0], ticksPerSecToRpm(m[1]), m[3]));
+            line(String.format(Locale.US, "          %4.2f   %5.0f    %5.0f    %6.0f   %5.0f  %5.2f",
+                    p, ticksPerSecToRpm(m[0]), flywheelToMotorRpm(ticksPerSecToRpm(m[0])), m[0],
+                    ticksPerSecToRpm(m[1]), m[3]));
             if (p >= 1.0) maxTps = m[0];
         }
         flywheel.setPower(0);
@@ -126,8 +132,10 @@ public class FlywheelTestOpMode extends LinearOpMode {
 
         if (maxTps > 0) {
             double f = 32767 / maxTps;
-            line(String.format(Locale.US, "Free speed %.0f rpm.  Suggested PIDF  P %.2f  I %.3f  D 0  F %.2f",
-                    ticksPerSecToRpm(maxTps), 0.1 * f, 0.01 * f, f));
+            line(String.format(Locale.US, "Free speed: flywheel %.0f rpm (motor %.0f rpm)",
+                    ticksPerSecToRpm(maxTps), flywheelToMotorRpm(ticksPerSecToRpm(maxTps))));
+            line(String.format(Locale.US, "Suggested PIDF  P %.2f  I %.3f  D 0  F %.2f",
+                    0.1 * f, 0.01 * f, f));
         }
         saveLog();
     }
@@ -136,7 +144,7 @@ public class FlywheelTestOpMode extends LinearOpMode {
         holding = false;
         line("");
         line("CLOSED LOOP  PIDF " + pidfText());
-        line("  target  actual   err  +/-rpm  reach(s)  volts");
+        line("  flywheel rpm: target  actual   err  +/-rpm  reach(s)  volts");
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         for (double rpm : STEP_RPMS) {
             if (!opModeIsActive()) break;
