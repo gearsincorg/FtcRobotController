@@ -55,6 +55,11 @@ public class GFORCE_Teleop extends CommandOpMode {
     // Declare robot Subsystems
     private BiobuzzRobot robot = new BiobuzzRobot(this);
 
+    // Optional vision features.  Off: the camera does no detection work and the button does nothing
+    // extra.  On: the finder runs only while its bumper is held.
+    private static final boolean BALL_CHASE_ENABLED   = false;   // hold LB: chase the nearest yellow ball (was for testing)
+    private static final boolean CLUSTER_AIM_ENABLED  = false;   // hold RB: turn toward the AprilTag cluster when seen (fallback for goal aim)
+
     // All turning uses Foresight's heading controller (robot.turnForError / turnToHeading); these
     // only limit the turn power.
     private static final double MAX_TARGET_TURN = 0.6;   // point at the target cluster
@@ -149,7 +154,7 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         double heading = robot.drive.pose().heading();
 
-        if (gamepad1.left_bumper && robot.vision.hasBall()) {
+        if (BALL_CHASE_ENABLED && gamepad1.left_bumper && robot.vision.hasBall()) {
             // Chase the nearest yellow ball (the intake is always collecting).  With the left
             // stick idle, drive straight ahead (robot-forward) at BALL_DRIVE_POWER; pushing it
             // drives field-centric as usual.  Twisting the right stick overrides the turn.
@@ -159,7 +164,7 @@ public class GFORCE_Teleop extends CommandOpMode {
                 robot.drive.manual(ManualDrive.fieldCentric(robot.vision.getBallForwardError(), 0, yaw, 0));
                 return;
             }
-        } else if (gamepad1.right_bumper && robot.vision.hasTarget()) {
+        } else if (CLUSTER_AIM_ENABLED && gamepad1.right_bumper && robot.vision.hasTarget()) {
             // Point at the target cluster: use the bearing (+ is CCW) as the heading error.
             yaw = robot.turnForError(robot.vision.getTargetHeadingErrorRad(), MAX_TARGET_TURN);
             headingLocked = false;
@@ -232,10 +237,26 @@ public class GFORCE_Teleop extends CommandOpMode {
         // Right Bumper: fire while held.  Pressing it also turns point-at-goal on (for a partial
         // load), but no ball is fed until the shooter is ready (at speed and aimed); then it
         // feeds until released.  Overrides eject and clear.
+        // With CLUSTER_AIM_ENABLED, AprilTags run only while RB is held (manualDrive points at the
+        // cluster when it is seen).
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-            .whenPressed(new InstantCommand(() -> setAimAtGoal(true)))
-            .whenReleased(new InstantCommand(() -> { if (robot.intake.isEmpty()) setAimAtGoal(false); }))
+            .whenPressed(new InstantCommand(() -> {
+                setAimAtGoal(true);
+                if (CLUSTER_AIM_ENABLED) robot.vision.enableAprilTags(true);
+            }))
+            .whenReleased(new InstantCommand(() -> {
+                robot.vision.enableAprilTags(false);
+                if (robot.intake.isEmpty()) setAimAtGoal(false);
+            }))
             .whileHeld(robot.intake.shootWhileHeldCommand());
+
+        // Left Bumper (BALL_CHASE_ENABLED only): chase a ball (manualDrive).  The ball finder runs
+        // only while it is held.
+        if (BALL_CHASE_ENABLED) {
+            driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(new InstantCommand(() -> robot.vision.enableBallFinder(true)))
+                .whenReleased(new InstantCommand(() -> robot.vision.enableBallFinder(false)));
+        }
 
         // B: intake out while held (the transfer holds its balls)
         driverOp.getGamepadButton(GamepadKeys.Button.B)

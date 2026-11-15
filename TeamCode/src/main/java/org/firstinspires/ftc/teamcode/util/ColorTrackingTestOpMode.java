@@ -41,6 +41,7 @@ public class ColorTrackingTestOpMode extends CommandOpMode {
     public void initialize() {
         robot.initialize();
         vision = robot.vision;
+        vision.enableBallFinder(true);   // on from init, so the preview shows the ball before START
 
         GamepadEx driverOp = new GamepadEx(gamepad1);
         driverOp.getGamepadButton(GamepadKeys.Button.B)

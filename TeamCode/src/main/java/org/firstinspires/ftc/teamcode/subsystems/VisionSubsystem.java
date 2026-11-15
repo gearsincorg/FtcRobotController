@@ -1,16 +1,21 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import android.graphics.Canvas;
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.Range;
 import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.FunctionalCommand;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
+import org.firstinspires.ftc.vision.VisionProcessor;
+import org.opencv.core.Mat;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.teamcode.BiobuzzRobot;
@@ -34,13 +39,15 @@ import java.util.concurrent.TimeUnit;
  *
  * Call setTargetName() or setAlliance() to choose which cluster to look for.
  *
- * Ball finder (always on) shares the same camera: a color
+ * Ball finder shares the same camera: a color
  * locator finds yellow blobs (BiobuzzRobot.POLLEN_YELLOW) anywhere in the image and picks the one
  * lowest in the image (the nearest).  getBallError() says how far it is off center, for steering
  * toward it; getBallHeadingErrorRad() turns that into a heading error (radians) for the heading controller.
  *
- * The locator is never disabled: a disabled color locator crashes the camera preview (the SDK
- * draws it with no results), so it runs from init.
+ * Both finders are OFF after init; an opmode turns on what it needs with enableAprilTags() /
+ * enableBallFinder().  They are switched by a wrapper (Switchable), never with
+ * VisionPortal.setProcessorEnabled(): a disabled color locator crashes the camera preview (the
+ * SDK draws it with no results).
  */
 public class VisionSubsystem extends SubsystemBase {
     private static final String CAMERA_NAME = "Webcam 1";
@@ -82,11 +89,16 @@ public class VisionSubsystem extends SubsystemBase {
     private ColorBlobLocatorProcessor ballLocator;
     private ColorBlobLocatorProcessor.Blob ball = null;
 
+    // On/off wrappers around the two processors (both off after init).
+    private Switchable aprilTagSwitch;
+    private Switchable ballSwitch;
+
     // == standard Methods ===================================
     public VisionSubsystem(OpMode myOpMode) {
         opMode = myOpMode;
     }
 
+    /** Opens the camera with both finders OFF.  Opmodes turn on what they use (enableAprilTags / enableBallFinder). */
     public void init() {
         aprilTag = new AprilTagProcessor.Builder()
             .setDrawCubeProjection(true)
@@ -101,12 +113,68 @@ public class VisionSubsystem extends SubsystemBase {
             .setBlurSize(5)
             .build();
 
+        aprilTagSwitch = new Switchable(aprilTag);
+        ballSwitch     = new Switchable(ballLocator);
+
         visionPortal = new VisionPortal.Builder()
             .setCamera(opMode.hardwareMap.get(WebcamName.class, CAMERA_NAME))
             .setCameraResolution(CAMERA_SIZE)
             .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
-            .addProcessors(aprilTag, ballLocator)
+            .addProcessors(aprilTagSwitch, ballSwitch)
             .build();
+    }
+
+    // == Enabling =================================================
+    // Each finder costs camera-thread CPU (which slows the robot loop), so both start off and an
+    // opmode turns on only what it needs, when it needs it.  Not VisionPortal.setProcessorEnabled():
+    // a disabled color locator crashes the camera preview (the SDK draws it with no results).
+
+    /** AprilTag cluster tracking on/off.  Off: hasTarget() is false. */
+    public void enableAprilTags(boolean on)  { if (aprilTagSwitch != null) aprilTagSwitch.setEnabled(on); }
+    /** Yellow ball finder on/off.  Off: hasBall() is false. */
+    public void enableBallFinder(boolean on) { if (ballSwitch != null) ballSwitch.setEnabled(on); }
+    public boolean isAprilTagsEnabled()  { return aprilTagSwitch != null && aprilTagSwitch.isEnabled(); }
+    public boolean isBallFinderEnabled() { return ballSwitch != null && ballSwitch.isEnabled(); }
+
+    /**
+     * Wraps a processor so it can be switched off: while off, frames are not processed or drawn.
+     * After switching on, results count only once a new frame has been processed, so the
+     * processor's last (old) results are never used.
+     */
+    private static class Switchable implements VisionProcessor {
+        private final VisionProcessor inner;
+        private volatile boolean enabled = false;
+        private volatile boolean fresh   = false;   // a frame has been processed since enabling
+
+        Switchable(VisionProcessor inner) { this.inner = inner; }
+
+        void setEnabled(boolean on) {
+            if (on && !enabled) fresh = false;
+            enabled = on;
+        }
+        boolean isEnabled()   { return enabled; }
+        boolean hasResults()  { return enabled && fresh; }
+
+        @Override
+        public void init(int width, int height, CameraCalibration calibration) {
+            inner.init(width, height, calibration);
+        }
+
+        @Override
+        public Object processFrame(Mat frame, long captureTimeNanos) {
+            if (!enabled) return null;
+            Object ctx = inner.processFrame(frame, captureTimeNanos);
+            fresh = true;
+            return ctx;
+        }
+
+        @Override
+        public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight,
+                                float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
+            if (userContext == null) return;   // not processed (switched off)
+            inner.onDrawFrame(canvas, onscreenWidth, onscreenHeight, scaleBmpPxToCanvasPx,
+                    scaleCanvasDensity, userContext);
+        }
     }
 
     @Override
@@ -118,7 +186,9 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     private void showTelemetry() {
-        if (targetCluster != null) {
+        if (!isAprilTagsEnabled()) {
+            opMode.telemetry.addData("VISION", "AprilTags off");
+        } else if (targetCluster != null) {
             AprilTagPoseFtc pose = targetCluster.ftcPose;
             opMode.telemetry.addData("VISION", "%s  %d%%  X %5.1f Y %5.1f  R %5.1f B %5.1f Yaw %5.1f",
                     targetCluster.metadata.name, targetCluster.percentClusterFound,
@@ -126,7 +196,9 @@ public class VisionSubsystem extends SubsystemBase {
         } else {
             opMode.telemetry.addData("VISION", "no %s cluster", targetName);
         }
-        if (ball != null) {
+        if (!isBallFinderEnabled()) {
+            opMode.telemetry.addData("BALL", "finder off");
+        } else if (ball != null) {
             double error = getBallHeadingError();
             String side = Math.abs(error) < 0.1 ? "CENTER" : (error < 0 ? "LEFT" : "RIGHT");
             opMode.telemetry.addData("BALL", "%s  x %3.0f y %3.0f  error %5.2f  area %d",
@@ -218,7 +290,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     private void updateBall() {
         ball = null;
-        if (ballLocator == null) return;
+        if (ballLocator == null || !ballSwitch.hasResults()) return;
 
         // Copy: getBlobs() is the SDK's own list, and filtering removes from it.
         List<ColorBlobLocatorProcessor.Blob> blobs = new ArrayList<>(ballLocator.getBlobs());
@@ -248,7 +320,7 @@ public class VisionSubsystem extends SubsystemBase {
 
     private void updateTarget() {
         targetCluster = null;
-        if (aprilTag == null) return;
+        if (aprilTag == null || !aprilTagSwitch.hasResults()) return;
 
         List<AprilTagDetection> detections = aprilTag.getDetections();
         for (AprilTagDetection detection : detections) {
@@ -293,8 +365,12 @@ public class VisionSubsystem extends SubsystemBase {
      * is lost the wait just continues, and the baseline is kept.  Add a timeout in the caller.
      */
     public Command waitForTipCommand() {
-        return new SequentialCommandGroup(
-            new WaitUntilCommand(this::isTipped));
+        // Turns AprilTags on for the wait and off again when it ends (tipped, timed out or cancelled).
+        return new FunctionalCommand(
+                () -> enableAprilTags(true),
+                () -> {},
+                interrupted -> enableAprilTags(false),
+                this::isTipped);
     }
 
     /** Same, but gives up after timeoutMs as a safety net (for auto). */
