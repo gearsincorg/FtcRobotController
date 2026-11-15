@@ -4,9 +4,11 @@ import com.pedropathing.algorithm.Foresight;
 import com.pedropathing.controllers.Controller;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.utils.Angle;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.Range;
 import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.CommandScheduler;
 import com.seattlesolvers.solverslib.command.FunctionalCommand;
 
 import org.firstinspires.ftc.teamcode.pedro.Constants;
@@ -43,6 +45,13 @@ public class BiobuzzRobot {
 
     /** maxPathSpeed caps path following (inches/sec); 0 = no cap. */
     public void initialize(double maxPathSpeed) {
+        // Bulk reads: each hub's encoders, velocities and digital inputs come back in ONE
+        // transaction per loop instead of one per read (each read costs ~2 ms).  MANUAL: the
+        // scheduler clears the cache at the end of every CommandScheduler.run(), so the next loop
+        // reads fresh values.  Anything that reads hardware outside the scheduler (e.g. during
+        // init_loop) must call clearBulkCache() first, or it sees the same values forever.
+        CommandScheduler.getInstance().setBulkReading(opMode.hardwareMap, LynxModule.BulkCachingMode.MANUAL);
+
         vision = new VisionSubsystem(opMode);
         vision.init();
 
@@ -72,6 +81,13 @@ public class BiobuzzRobot {
      */
     public void update() {
         drive.update();
+    }
+
+    /** Throw away the bulk-read cache so the next hardware read is fresh (for reads outside the scheduler). */
+    public void clearBulkCache() {
+        for (LynxModule hub : opMode.hardwareMap.getAll(LynxModule.class)) {
+            hub.clearBulkCache();
+        }
     }
 
     // == Heading control for manual driving ====================================

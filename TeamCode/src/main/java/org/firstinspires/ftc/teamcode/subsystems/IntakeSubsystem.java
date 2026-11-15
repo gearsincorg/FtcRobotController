@@ -248,15 +248,18 @@ public class IntakeSubsystem extends SubsystemBase {
             }
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (boolean ball : raw) {
-            sb.append(ball ? "X " : "- ");
+        boolean changed = !java.util.Arrays.equals(raw, pendingSlots);
+        if (changed || pattern.isEmpty()) {   // rebuild the telemetry string only when it changes
+            StringBuilder sb = new StringBuilder();
+            for (boolean ball : raw) {
+                sb.append(ball ? "X " : "- ");
+            }
+            pattern = sb.toString();
         }
-        pattern = sb.toString();
 
         // Use the pattern once it has held steady, so a ball rolling between sensors doesn't
         // flicker the count or the packed state.
-        if (!java.util.Arrays.equals(raw, pendingSlots)) {
+        if (changed) {
             pendingSlots = raw;
             countTimer.reset();
         } else if (countTimer.milliseconds() > COUNT_DEBOUNCE_MS) {

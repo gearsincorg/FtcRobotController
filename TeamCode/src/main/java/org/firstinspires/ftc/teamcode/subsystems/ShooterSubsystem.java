@@ -411,11 +411,12 @@ public class ShooterSubsystem extends SubsystemBase {
         return target();
     }
 
+    /** Turret angle as read at the start of this loop's periodic() (one encoder read per loop). */
     public double getactualTurretRad() {
         if (TURRET_SIMULATED || SIMULATED) {
             return targetTurretRad;
         } else {
-            return turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
+            return actualTurretRad;
         }
     }
 
@@ -559,6 +560,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private void setFlywheelOpenLoop(boolean open) {
         if (open == flywheelOpenLoop) return;
         flywheelOpenLoop = open;
+        lastVelocityTicks = Integer.MIN_VALUE;   // resend the velocity after a mode change
         if (open) {
             flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         } else {
@@ -591,15 +593,31 @@ public class ShooterSubsystem extends SubsystemBase {
         } else {
             setFlywheelOpenLoop(false);
             if (targetRPM > 0) {
-                flywheel.setVelocity(rpmToTicksPerSec(commandRPM));  // setVelocity takes ticks/s
+                // setVelocity takes ticks/s, and the hub only uses whole ticks/s, so only send it
+                // when that changes (the SDK sends every setVelocity call to the hub).
+                int ticks = (int) Math.round(rpmToTicksPerSec(commandRPM));
+                if (ticks != lastVelocityTicks) {
+                    flywheel.setVelocity(ticks);
+                    lastVelocityTicks = ticks;
+                }
             } else {
                 flywheel.setPower(FLYWHEEL_IDLE_POWER);
+                lastVelocityTicks = Integer.MIN_VALUE;
             }
         }
 
-        // Control Hood Angle
-        hood.setPosition(hoodAngleToServo(targetHoodDeg));
+        // Control Hood Angle: skip changes too small for the servo to see (saves a hub write).
+        double hoodPos = hoodAngleToServo(targetHoodDeg);
+        if (Math.abs(hoodPos - lastHoodPos) >= HOOD_MIN_STEP) {
+            hood.setPosition(hoodPos);
+            lastHoodPos = hoodPos;
+        }
     }
+
+    // Last values sent to the hub, so unchanged ones aren't sent again.
+    private static final double HOOD_MIN_STEP = 0.001;   // servo position; ~0.08 deg of hood
+    private int    lastVelocityTicks = Integer.MIN_VALUE;
+    private double lastHoodPos       = -1;   // never a real position, so the first one is sent
 
     private static class Shot {
         final double aimX, aimY, rpm, hoodDeg;

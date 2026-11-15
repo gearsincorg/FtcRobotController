@@ -34,6 +34,7 @@ public class GFORCE_Auto extends CommandOpMode {
         robot.config.runMenu();
         applyConfig();
 
+        robot.clearBulkCache();   // the scheduler doesn't run during init, so clear it here
         robot.intake.refreshSensors();
 
         telemetry.addData("Preload", "%d balls  [ %s]%s", robot.intake.ballCount(),
