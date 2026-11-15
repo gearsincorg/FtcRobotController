@@ -58,7 +58,7 @@ public class Path_NearCenter {
                 curve(start, gardenControl1, gardenControl2, garden).linear(start, garden).with(maxVelocity(45))
         );
 
-        return new FollowPathCommand(robot.drive, path_startPath);
+        return new NamedFollowPathCommand(robot, "NearCenter_start", new String[] {"garden"}, path_startPath);
     }
 
     // Generated from NearCenter_2.turt
@@ -77,7 +77,7 @@ public class Path_NearCenter {
                 curve(transition, point2Control1, point2Control2, point2Control3, point2).linear(transition, point2)
         );
 
-        return new FollowPathCommand(robot.drive, path_2Path);
+        return new NamedFollowPathCommand(robot, "NearCenter_2", new String[] {"transition", "point2"}, path_2Path);
     }
 
     // Generated from NearCenter_3.turt
@@ -91,7 +91,7 @@ public class Path_NearCenter {
                 curve(start, nearFlowerControl1, nearFlowerControl2, nearFlower).linear(start, nearFlower).with(maxVelocity(45))
         );
 
-        return new FollowPathCommand(robot.drive, path_3Path);
+        return new NamedFollowPathCommand(robot, "NearCenter_3", new String[] {"nearFlower"}, path_3Path);
     }
 
     // Generated from NearCenter_4.turt
@@ -105,7 +105,7 @@ public class Path_NearCenter {
                 curve(start, nearShootControl1, nearShootControl2, nearShoot).linear(start, nearShoot).with(maxVelocity(45))
         );
 
-        return new FollowPathCommand(robot.drive, path_4Path);
+        return new NamedFollowPathCommand(robot, "NearCenter_4", new String[] {"nearShoot"}, path_4Path);
     }
 
     /** Caps path speed (in/s) on one line of a path; from maxSpeed in the .turt file. */

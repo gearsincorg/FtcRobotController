@@ -285,21 +285,22 @@ public class ShooterSubsystem extends SubsystemBase {
         if (SIMULATED) {
             opMode.telemetry.addLine("SIMULATED SHOOTER (no hardware)");
         }
-        opMode.telemetry.addData("SHOOTER", "%s %s %s  dist = %5.1f  ready = %b",
-                mode, redAlliance ? "RED" : "BLUE", farGoal ? "FAR" : "AUDIENCE", distance, isReady());
-        opMode.telemetry.addData("  Goal dist audience : far", "%5.1f : %5.1f", dAudience, dFar);
-        opMode.telemetry.addData("  Flywheel RPM tgt : act", "%5.0f : %5.0f  %s", targetRPM, getActualRPM(),
-                ramping ? String.format("RAMP (asking %.0f)", commandRPM)
-                        : boosting ? "BOOST (full power)" : "closed loop");
-        opMode.telemetry.addData("  Turret tgt : act", "%5.1f : %5.1f",
-                Math.toDegrees(targetTurretRad), Math.toDegrees(getactualTurretRad()));
-
-        // Where the turret should point to hit the cell, computed every loop even when not
-        // tracking.  "robot" is relative to robot forward (+ CCW, before soft limits);
-        // "field" is the Pedro field direction from the turret to the aim point.
-        opMode.telemetry.addData("  Aim robot : field", "%5.1f : %5.1f",
-                Math.toDegrees(getAimError()), Math.toDegrees(getAimHeading()));
-        opMode.telemetry.addData("  Hood tgt (deg)", "%5.1f", targetHoodDeg);
+        // Shooter  TRACKING RED FAR  45.2 in  READY
+        opMode.telemetry.addData("Shooter", "%s %s %s  %4.1f in  %s",
+                mode, redAlliance ? "RED" : "BLUE", farGoal ? "FAR" : "AUD", distance,
+                mode == Mode.IDLE ? "" : isReady() ? "READY" : !isAtSpeed() ? "spinning up" : "aiming");
+        // Flywheel  2600 T/A 2580 rpm  hood 14.0  (T/A = target / actual; how the speed is held)
+        opMode.telemetry.addData("Flywheel", "%4.0f T/A %4.0f rpm  hood %4.1f  %s",
+                targetRPM, getActualRPM(), targetHoodDeg,
+                ramping ? String.format("RAMP %.0f", commandRPM) : boosting ? "BOOST" : "");
+        // Turret target / actual.  Aim: where the turret should point to hit the cell, computed
+        // every loop even when not tracking: relative to robot forward (+ CCW, before soft limits).
+        opMode.telemetry.addData("Turret", "%4.1f T/A %4.1f  aim %4.1f",
+                Math.toDegrees(targetTurretRad), Math.toDegrees(getactualTurretRad()),
+                Math.toDegrees(getAimError()));
+        // Distance to each alliance goal, and the Pedro field direction to the aim point.
+        opMode.telemetry.addData("Goals", "aud %4.1f  far %4.1f  field hdg %4.0f",
+                dAudience, dFar, Math.toDegrees(getAimHeading()));
     }
 
     // == new elements =========================================

@@ -150,6 +150,7 @@ def build_method(turt_path, method, is_start):
             start_deg = first_heading["startDeg"]
     poses = [("start", start["x"], start["y"], start_deg)]
     segments = []
+    line_names = []                     # each line's end-point name, for telemetry
     used = {"start", "robot", "poseFactory", method + "Path"}
 
     def unique(name):
@@ -208,6 +209,7 @@ def build_method(turt_path, method, is_start):
         max_speed = line_max_speed(line)
         modifier = f".with(maxVelocity({num(max_speed)}))" if max_speed is not None else ""
         segments.append(geometry + interpolation + modifier)
+        line_names.append(name)
         prev_name, prev_xy, prev_deg = name, end_xy, end_deg
 
     if not segments:
@@ -225,7 +227,11 @@ def build_method(turt_path, method, is_start):
     out.append(",\n".join(" " * 16 + s for s in segments))
     out.append("        );")
     out.append("")
-    out.append(f"        return new FollowPathCommand(robot.drive, {method}Path);")
+    # NamedFollowPathCommand (same package) is a FollowPathCommand that also reports the path
+    # and line names for telemetry.
+    names = ", ".join(f'"{n}"' for n in line_names)
+    out.append(f"        return new NamedFollowPathCommand(robot, \"{turt_path.stem}\", "
+               f"new String[] {{{names}}}, {method}Path);")
     out.append("    }")
     start_pose = (num(poses[0][1]), num(poses[0][2]), num(poses[0][3]))
     return "\n".join(out), start_pose

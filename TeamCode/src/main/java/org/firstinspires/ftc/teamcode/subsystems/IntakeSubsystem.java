@@ -170,11 +170,18 @@ public class IntakeSubsystem extends SubsystemBase {
         } else if (sim != null) {
             opMode.telemetry.addLine("SIMULATED BALL SENSORS");
         }
-        opMode.telemetry.addData("In:Feed:Gate", "%4.2f, %4.2f, %4.2f",
-                intakePower, transferPower, gatePosition);
-        opMode.telemetry.addData("BALLS", "%d  [ %s]  %s%s", ballCount, pattern, mode,
+        opMode.telemetry.addData("Balls", "%d  [ %s]  %s%s", ballCount, pattern, mode,
                 isPacked() ? "  PACKED" : "");
+        if (showPowers) {
+            opMode.telemetry.addData("Intake : Transfer : Gate", "%4.2f : %4.2f : %4.2f",
+                    intakePower, transferPower, gatePosition);
+        }
     }
+
+    private boolean showPowers = false;
+
+    /** Also show the motor powers and gate position in telemetry (test opmodes). */
+    public void setShowPowers(boolean show) { showPowers = show; }
 
     /** Read the sensors without running anything else (e.g. to show the preload during init). */
     public void refreshSensors() {

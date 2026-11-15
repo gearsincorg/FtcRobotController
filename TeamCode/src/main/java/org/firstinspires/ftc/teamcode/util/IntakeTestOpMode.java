@@ -28,6 +28,7 @@ public class IntakeTestOpMode extends CommandOpMode {
     public void initialize() {
         intake = new IntakeSubsystem(this, () -> gamepad1.right_bumper);
         intake.init();
+        intake.setShowPowers(true);
 
         new Trigger(() -> gamepad1.a).whileActiveOnce(intake.shootWhileHeldCommand());
         new Trigger(() -> gamepad1.b).whileActiveOnce(intake.ejectCommand());

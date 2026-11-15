@@ -52,7 +52,7 @@ public class Path_FarCenter {
                 curve(start, farFlowerControl1, farFlowerControl2, farFlower).linear(start, farFlower)
         );
 
-        return new FollowPathCommand(robot.drive, path_startPath);
+        return new NamedFollowPathCommand(robot, "FarCenter_start", new String[] {"farFlower"}, path_startPath);
     }
 
     /** Caps path speed (in/s) on one line of a path; from maxSpeed in the .turt file. */

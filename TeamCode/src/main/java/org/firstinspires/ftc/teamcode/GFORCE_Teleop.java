@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
+import com.pedropathing.math.Velocity;
 import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -103,18 +104,12 @@ public class GFORCE_Teleop extends CommandOpMode {
     }
 
     private void showTelemetry() {
-        telemetry.addData("cycle", "%5.1f ms  (avg %5.1f ms, %3.0f Hz)", cycleMs, cycleAvgMs,
-                cycleAvgMs > 0 ? 1000.0 / cycleAvgMs : 0);
-        telemetry.addData("chassis", chassis);
-        telemetry.addData("aim at goal", "%s  error = %5.1f deg", aimAtGoal ? "ON" : "off",
-                            Math.toDegrees(robot.shooter.getAimError()));
-        telemetry.addData("shooter", robot.shooter.getMode() == ShooterSubsystem.Mode.IDLE ? "idle"
-                            : robot.shooter.isReady() ? "READY (RB to fire)"
-                            : !robot.shooter.isAtSpeed() ? "spinning up" : "aiming");
-        telemetry.addData("pos X: Y", "%5.1f : %5.1f", robot.drive.pose().x(), robot.drive.pose().y());
-        telemetry.addData("heading", "%5.1f deg", Math.toDegrees(robot.drive.pose().heading()));
-        telemetry.addData("vel X: Y: O", "%5.1f : %5.1f : %5.0f", robot.drive.velocity().vx,
-                robot.drive.velocity().vy,  robot.drive.velocity().omega);
+        Pose pose = robot.drive.pose();
+        Velocity vel = robot.drive.velocity();
+        telemetry.addData("Cycle", "%4.1f ms  (avg %4.1f)", cycleMs, cycleAvgMs);
+        telemetry.addData("Pose", "x %5.1f  y %5.1f  hdg %5.1f",
+                pose.x(), pose.y(), Math.toDegrees(pose.heading()));
+        telemetry.addData("Vel", "x %5.1f  y %5.1f  turn %5.2f", vel.vx, vel.vy, vel.omega);
         telemetry.update();
 
         showBallCountLed();

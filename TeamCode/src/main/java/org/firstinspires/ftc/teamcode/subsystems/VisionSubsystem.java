@@ -186,26 +186,27 @@ public class VisionSubsystem extends SubsystemBase {
     }
 
     private void showTelemetry() {
-        if (!isAprilTagsEnabled()) {
-            opMode.telemetry.addData("VISION", "AprilTags off");
-        } else if (targetCluster != null) {
-            AprilTagPoseFtc pose = targetCluster.ftcPose;
-            opMode.telemetry.addData("VISION", "%s  %d%%  X %5.1f Y %5.1f  R %5.1f B %5.1f Yaw %5.1f",
-                    targetCluster.metadata.name, targetCluster.percentClusterFound,
-                    pose.x, pose.y, pose.range, pose.bearing, pose.yaw);
-        } else {
-            opMode.telemetry.addData("VISION", "no %s cluster", targetName);
+        // Each finder's line shows only while it is on.
+        if (isAprilTagsEnabled()) {
+            if (targetCluster != null) {
+                AprilTagPoseFtc pose = targetCluster.ftcPose;
+                opMode.telemetry.addData("Tags", "%s %d%%  x %4.1f y %4.1f  rng %4.1f brg %4.1f yaw %4.1f",
+                        targetCluster.metadata.name, targetCluster.percentClusterFound,
+                        pose.x, pose.y, pose.range, pose.bearing, pose.yaw);
+            } else {
+                opMode.telemetry.addData("Tags", "no %s cluster", targetName);
+            }
         }
-        if (!isBallFinderEnabled()) {
-            opMode.telemetry.addData("BALL", "finder off");
-        } else if (ball != null) {
-            double error = getBallHeadingError();
-            String side = Math.abs(error) < 0.1 ? "CENTER" : (error < 0 ? "LEFT" : "RIGHT");
-            opMode.telemetry.addData("BALL", "%s  x %3.0f y %3.0f  error %5.2f  area %d",
-                    side, ball.getBoxFit().center.x, ball.getBoxFit().center.y,
-                    error, ball.getContourArea());
-        } else {
-            opMode.telemetry.addData("BALL", "none");
+        if (isBallFinderEnabled()) {
+            if (ball != null) {
+                double error = getBallHeadingError();
+                String side = Math.abs(error) < 0.1 ? "CENTER" : (error < 0 ? "LEFT" : "RIGHT");
+                opMode.telemetry.addData("Ball", "%s  x %3.0f y %3.0f  err %5.2f  area %d",
+                        side, ball.getBoxFit().center.x, ball.getBoxFit().center.y,
+                        error, ball.getContourArea());
+            } else {
+                opMode.telemetry.addData("Ball", "none");
+            }
         }
     }
 

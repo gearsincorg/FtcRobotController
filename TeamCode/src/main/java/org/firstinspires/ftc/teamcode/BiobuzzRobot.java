@@ -83,6 +83,28 @@ public class BiobuzzRobot {
         drive.update();
     }
 
+    // == Current path (for telemetry) ==========================================
+
+    private String   pathName  = null;
+    private String[] lineNames = new String[0];
+
+    /** Called by NamedFollowPathCommand when a generated path starts. */
+    public void setCurrentPath(String name, String[] lines) {
+        pathName  = name;
+        lineNames = lines;
+    }
+
+    /**
+     * The path being followed (or the last one, while holding its end), and the line within it:
+     * e.g. "NearCenter_2 > point2 (2/2)".  "none" before the first path.
+     */
+    public String pathStatus() {
+        if (pathName == null) return "none";
+        int i = drive.pathIndex();
+        if (i < 0 || i >= lineNames.length) return pathName;
+        return String.format("%s > %s (%d/%d)", pathName, lineNames[i], i + 1, lineNames.length);
+    }
+
     /** Throw away the bulk-read cache so the next hardware read is fresh (for reads outside the scheduler). */
     public void clearBulkCache() {
         for (LynxModule hub : opMode.hardwareMap.getAll(LynxModule.class)) {
