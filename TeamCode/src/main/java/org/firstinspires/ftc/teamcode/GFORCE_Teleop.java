@@ -99,7 +99,8 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         // The shooter always tracks the goal: the flywheel is kept at the table speed (and the hood
         // at the table angle) for wherever we are, from START to the end.  Fire only when it's at
-        // that speed AND the chassis points at the goal.
+        // that speed AND it points at the goal: the turret on target (TURRET_ENABLED), or else the
+        // chassis (setRequireChassisAim; only checked while the turret is disabled).
         robot.shooter.track();
         robot.shooter.setRequireChassisAim(true);
 
@@ -116,6 +117,12 @@ public class GFORCE_Teleop extends CommandOpMode {
         telemetry.addData("Pose", "x %5.1f  y %5.1f  hdg %5.1f",
                 pose.x(), pose.y(), Math.toDegrees(pose.heading()));
         telemetry.addData("Vel", "x %5.1f  y %5.1f  turn %5.2f", vel.vx, vel.vy, vel.omega);
+        telemetry.addData("Log", robot.shooterLogStatus());
+        // The shooter shows BLOCKED (with why) while R2 is held and it isn't ready; the one case it
+        // can't see is being ready with nothing to shoot.
+        if (robot.intake.isShooting() && robot.shooter.isReady() && robot.intake.isEmpty()) {
+            telemetry.addData("BLOCKED", "no balls (ready, but the sensors see none)");
+        }
         telemetry.update();
 
         showBallCountLed();
@@ -229,22 +236,13 @@ public class GFORCE_Teleop extends CommandOpMode {
         driverOp.getGamepadButton(GamepadKeys.Button.CIRCLE)
             .whenPressed(new InstantCommand(() -> setHeadingTarget(270)));
 
-        // Point-at-goal: once we're full, the chassis turns to the goal by itself; once everything
-        // has been shot (or ejected) and fire is released, it stops.  The shooter keeps spinning.
-        new Trigger(robot.intake::isFull)
-            .whenActive(new InstantCommand(() -> setAimAtGoal(true)));
-        new Trigger(() -> robot.intake.isEmpty() && !robot.intake.isShooting())
-            .whenActive(new InstantCommand(() -> setAimAtGoal(false)));
-
-        // R3 (right stick press): point-at-goal on / off by hand.
-        driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
-            .whenPressed(new InstantCommand(this::toggleAimAtGoal));
-
         // The intake collects by itself (and spits out a 5th ball when full).
 
-        // R2: fire while held (pulled past TRIGGER_PULL).  Pulling it also turns point-at-goal on
-        // (for a partial load), but no ball is fed until the shooter is ready (at speed and aimed);
-        // then it feeds until released.  Overrides Pass and eject.
+        // R2: fire while held (pulled past TRIGGER_PULL).  Point-at-goal (the chassis turning to aim,
+        // only while the turret is disabled, see setAimAtGoal) is on exactly while R2 is held:
+        // released, the chassis stops aiming and the heading is the driver's again.  No ball is fed
+        // until the shooter is ready (at speed and aimed); then it feeds until released.
+        // Overrides Pass and eject.  The shooter keeps spinning either way.
         // With CLUSTER_AIM_ENABLED, AprilTags run only while R2 is held (manualDrive points at the
         // cluster when it is seen).
         new Trigger(this::fireHeld)
@@ -254,7 +252,7 @@ public class GFORCE_Teleop extends CommandOpMode {
             }))
             .whenInactive(new InstantCommand(() -> {
                 robot.vision.enableAprilTags(false);
-                if (robot.intake.isEmpty()) setAimAtGoal(false);
+                setAimAtGoal(false);
             }))
             .whileActiveOnce(robot.intake.shootWhileHeldCommand());
 
@@ -322,14 +320,13 @@ public class GFORCE_Teleop extends CommandOpMode {
         return gamepad1.right_trigger > TRIGGER_PULL;
     }
 
-    /** Toggle point-at-goal (the chassis turning to aim the shooter). */
-    public void toggleAimAtGoal() {
-        setAimAtGoal(!aimAtGoal);
-    }
-
-    /** Point-at-goal on or off.  The shooter keeps tracking (spinning at the table speed) either way. */
+    /**
+     * Point-at-goal (the chassis turns to aim the shooter) on or off.  Only while the turret is
+     * disabled: with ShooterSubsystem.TURRET_ENABLED the turret aims and the robot heading is only
+     * changed by the driver, so this stays off.  The shooter keeps tracking either way.
+     */
     public void setAimAtGoal(boolean on) {
-        aimAtGoal = on;
+        aimAtGoal = on && !ShooterSubsystem.TURRET_ENABLED;
     }
 
     /** Nectar In while held.  TODO: not implemented yet (no mechanism or mode); does nothing. */

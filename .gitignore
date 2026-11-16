@@ -79,3 +79,5 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+# Shooter logs pulled from the hub (tools/shotlog.py)
+tools/logs/

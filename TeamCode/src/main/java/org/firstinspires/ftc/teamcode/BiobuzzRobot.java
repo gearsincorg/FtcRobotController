@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 import org.firstinspires.ftc.teamcode.util.AutoConfig;
+import org.firstinspires.ftc.teamcode.util.ShooterLog;
 import org.firstinspires.ftc.vision.opencv.ColorRange;
 import org.firstinspires.ftc.vision.opencv.ColorSpace;
 import org.opencv.core.Scalar;
@@ -27,6 +28,11 @@ public class BiobuzzRobot {
     public ShooterSubsystem shooter;
     public Follower drive;
     public AutoConfig config;
+
+    // Per-loop shooter log (util/ShooterLog): one CSV row per loop for the whole run, on the hub in
+    // /sdcard/FIRST/shooter_log/.  Pull and plot with `python tools/shotlog.py`.  false = off.
+    public static final boolean SHOOTER_LOG_ENABLED = true;
+    public ShooterLog shooterLog;
 
     private OpMode  opMode;
 
@@ -75,6 +81,11 @@ public class BiobuzzRobot {
         // Start on the alliance chosen in the auto setup menu (Share / Options still override).
         config = new AutoConfig(opMode);
         config.initialize();
+
+        if (SHOOTER_LOG_ENABLED) {
+            shooterLog = new ShooterLog(opMode);
+            shooterLog.start(opMode.getClass().getSimpleName());
+        }
     }
 
     /***
@@ -82,6 +93,12 @@ public class BiobuzzRobot {
      */
     public void update() {
         drive.update();
+        if (shooterLog != null) shooterLog.row(shooter, intake);   // after the subsystems ran this loop
+    }
+
+    /** One telemetry line about the shooter log: its file and row count, or why it isn't logging. */
+    public String shooterLogStatus() {
+        return shooterLog == null ? "off" : shooterLog.getStatus();
     }
 
     // == Current path (for telemetry) ==========================================

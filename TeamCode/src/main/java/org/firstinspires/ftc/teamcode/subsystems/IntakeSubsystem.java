@@ -294,7 +294,8 @@ public class IntakeSubsystem extends SubsystemBase {
         return count;
     }
 
-    private boolean isGateOpen() {
+    /** The gate is commanded open (nearer GATE_OPEN than GATE_CLOSED). */
+    public boolean isGateOpen() {
         return Math.abs(gatePosition - GATE_OPEN) < Math.abs(gatePosition - GATE_CLOSED);
     }
 
