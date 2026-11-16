@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.pedropathing.algorithm.Foresight;
 import com.pedropathing.controllers.Controller;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Vector2D;
 import com.pedropathing.utils.Angle;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -138,15 +139,30 @@ public class BiobuzzRobot {
     }
 
     /**
+     * How far (radians, + is CCW) the robot would keep turning if it braked now, from its turn rate
+     * and Foresight's headingBrakeCoefficients (x = linear, y = quadratic):
+     * omega * linear + omega * |omega| * quadratic.  Same model Foresight uses (getBrakeDisplacement).
+     */
+    public double headingBrakeDisplacement() {
+        if (!(drive.algorithm() instanceof Foresight)) return 0;
+        Vector2D k = ((Foresight) drive.algorithm()).config.headingBrakeCoefficients.get();
+        double omega = drive.velocity().omega;
+        return omega * k.x() + omega * Math.abs(omega) * k.y();
+    }
+
+    /**
      * Turn power (+ is counter-clockwise, like Pedro) that removes a heading error, limited to
-     * +/- maxTurn.  errorRad is target minus actual.  This mirrors Foresight.headingFeedback()
-     * (which is private): the tuned headingFeedback controller plus headingStaticFF in the
-     * direction of the error, so manual driving gets the same friction boost as paths.  No
-     * deadband, exactly as Foresight; add one here AND for paths only if buzzing at the target
-     * proves it necessary.
+     * +/- maxTurn.  errorRad is target minus actual.  This mirrors what Foresight does when it
+     * follows a path: the error is measured from where the heading would stop if the robot braked
+     * now (heading + headingBrakeDisplacement()), not from where it is.  That look-ahead is the
+     * loop's damping: without it the P gain (about 2.6 per radian) overshoots and oscillates after
+     * a large error (a bump, or turning while driving).  Driving and paths use the same
+     * coefficients, so they feel the same; tune the damping there (pedro/Constants).  Then the tuned headingFeedback controller
+     * plus headingStaticFF in the direction of the error, as Foresight.headingFeedback() (private).
+     * No deadband, exactly as Foresight.
      */
     public double turnForError(double errorRad, double maxTurn) {
-        double error = Angle.normalizeSigned(errorRad);
+        double error = Angle.normalizeSigned(errorRad - headingBrakeDisplacement());
         double turn  = headingController().calculate(0, error)
                      + headingStaticFF().calculate(0, Angle.turnDirection(error));
         return Range.clip(turn, -maxTurn, maxTurn);

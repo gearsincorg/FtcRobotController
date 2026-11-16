@@ -189,6 +189,14 @@ public class Constants {
     private static final double PRODUCTION_END_I_DECAY = 0.98;   // per loop
     private static final double PRODUCTION_END_I_MAX   = 0.5;    // inch-seconds (cap: 0.15 power)
 
+    // Heading damping: the tuned headingBrakeCoefficients (how far the heading coasts while braking)
+    // are multiplied by this.  Foresight aims the heading from where it predicts the robot would stop,
+    // so a bigger prediction eases off sooner = more damping.  Used by paths AND manual driving
+    // (BiobuzzRobot.turnForError), so both stay the same.  1.0 = as tuned (a hard bump in teleop
+    // still rang 4-5 times).  Raise in small steps until a bump settles cleanly; too high and turns
+    // stop short or creep in.  If the tuner is re-run, paste its numbers and keep this multiplier.
+    private static final double PRODUCTION_HEADING_BRAKE_SCALE = 1.0;    // 1.25 no visible change; 2.0 worse (never settles after a move)
+
     private static Controller productionEndIntegral() {
         return endIntegral(PRODUCTION_END_I_GAIN, PRODUCTION_END_I_ZONE, PRODUCTION_END_I_DECAY, PRODUCTION_END_I_MAX);
     }
@@ -226,8 +234,12 @@ public class Constants {
             c.coast.set(Controller.proportionalFeedforward(0.011397333661157808));
             c.brake.set(Controller.proportionalFeedforward(0.009687733611984137));
 
-            c.headingFeedback.set(Controller.proportional(2.6358512068828435));
-            c.headingBrakeCoefficients.set(Vector2D.cartesian(0.0718958549469754, 0.004568606568965923));
+            // Tuner (Oct 31) gave 2.636: heading rang after stopping from straight driving, and more
+            // damping made it worse, so back to the hand-set 2.0 used before (tuner then gave 2.43).
+            //c.headingFeedback.set(Controller.proportional(2.6358512068828435));
+            c.headingFeedback.set(Controller.proportional(2.0));
+            c.headingBrakeCoefficients.set(Vector2D.cartesian(0.0718958549469754, 0.004568606568965923)
+                    .times(PRODUCTION_HEADING_BRAKE_SCALE));
 
             c.linearBrakeCoefficients.set(Matrix.diag(0.04701364743842883, 0.046012576619526784));
             c.quadraticBrakeCoefficients.set(Matrix.diag(0.0018449888022454728, 0.001645090650035763));

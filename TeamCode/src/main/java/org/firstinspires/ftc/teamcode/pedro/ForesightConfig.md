@@ -37,7 +37,7 @@ Each loop, Foresight:
 |---|---|---|---|
 | `forwardTranslational` | required | Position error along the robot's forward axis (robot frame, in) → forward power. Called per axis, so a `piecewise` switch applies to the forward error alone. | Piecewise: secondary P (+ end integral) under 2.5 in, primary P above |
 | `strafeTranslational` | required | Same for the strafe axis. | Same, strafe gains |
-| `headingFeedback` | required | Heading error (rad) → turn power. | P 2.59 (proto), 2.0 (prod) |
+| `headingFeedback` | required | Heading error (rad) → turn power. | P 2.59 (proto), 2.0 (prod, set by hand: the tuner's 2.64 rang after stopping) |
 | `headingStaticFF` | `staticFeedforward(0)` | Fixed turn power added in the direction of the heading error, to overcome friction on small heading errors. | default (0) |
 | `coast` | required | Target speed → drive power while cruising. Tuned by AutoTune. | `proportionalFeedforward` |
 | `brake` | required | Target speed → drive power while braking at the end. Tuned by AutoTune. | `proportionalFeedforward` |
@@ -52,7 +52,7 @@ Each loop, Foresight:
 | `naturalStrafeDeceleration` | in/s² | Same for strafing. |
 | `linearBrakeCoefficients` | diag(fwd, strafe) | Stopping distance model: distance = linear·v + quadratic·v², per axis. Used to predict where the robot will stop (when to start braking) and the speed to brake from. |
 | `quadraticBrakeCoefficients` | diag(fwd, strafe) | The v² term of the same model. |
-| `headingBrakeCoefficients` | (linear, quadratic) | Same idea for how far the heading keeps turning while braking. |
+| `headingBrakeCoefficients` | (linear, quadratic) | Same idea for how far the heading keeps turning while braking. Foresight runs `headingFeedback` on the error from that predicted stopping heading, so this is the heading loop's damping (only the heading uses it). Production multiplies the tuned values by `PRODUCTION_HEADING_BRAKE_SCALE` (1.0 now; 2.0 made teleop heading worse); teleop driving uses the same values. |
 
 ## Speed limits while cruising
 

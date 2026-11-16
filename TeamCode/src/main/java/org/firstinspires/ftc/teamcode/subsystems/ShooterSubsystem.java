@@ -43,8 +43,8 @@ public class ShooterSubsystem extends SubsystemBase {
     // Goal locations in Pedro coordinates (inches, origin at a field corner, 0-144).
     // RED side is x = 60, BLUE side x = 84.  Blue is red with y flipped about 72.
     // Each alliance has two goals; we aim at the nearer one.
-    public static final Pose RED_GOAL_AUDIENCE  = new Pose(60, 54.5);
-    public static final Pose RED_GOAL_FAR       = new Pose(60, 144 - 54.5);
+    public static final Pose RED_GOAL_AUDIENCE  = new Pose(60, 59.5);
+    public static final Pose RED_GOAL_FAR       = new Pose(60, 84.5);
 
     // Only switch to the other alliance goal when it is this much closer (inches), so the
     // target doesn't flicker when the robot is about equidistant.
@@ -152,35 +152,35 @@ public class ShooterSubsystem extends SubsystemBase {
     // Rows sorted by distance: { distance (in), flywheel RPM, hood angle (deg), flight time (s) }
     // BEGIN GENERATED SHOT_TABLE
     private static final double[][] SHOT_TABLE = {
-        {   12.0,  2413,   0.0, 0.736 },   // extrapolated, hood -1.2 clamped
-        {   15.0,  2435,   0.2, 0.731 },   // extrapolated
-        {   18.0,  2458,   1.6, 0.726 },   // extrapolated
-        {   21.0,  2480,   3.0, 0.721 },   // extrapolated
-        {   24.0,  2503,   4.3, 0.717 },   // extrapolated
-        {   27.0,  2525,   5.7, 0.712 },
-        {   30.0,  2548,   7.1, 0.707 },
-        {   33.0,  2570,   8.5, 0.702 },
-        {   36.0,  2593,   9.9, 0.697 },
-        {   39.0,  2615,  11.2, 0.693 },
-        {   42.0,  2638,  12.6, 0.688 },
-        {   45.0,  2660,  14.0, 0.683 },
-        {   48.0,  2683,  15.4, 0.678 },
-        {   51.0,  2705,  16.8, 0.673 },
-        {   54.0,  2728,  18.1, 0.668 },
-        {   57.0,  2750,  19.5, 0.664 },
-        {   60.0,  2773,  20.9, 0.659 },
-        {   63.0,  2795,  22.3, 0.654 },   // extrapolated
-        {   66.0,  2818,  23.7, 0.649 },   // extrapolated
-        {   69.0,  2840,  25.0, 0.644 },   // extrapolated, hood 25.0 clamped
-        {   72.0,  2863,  25.0, 0.640 },   // extrapolated, hood 26.4 clamped
-        {   75.0,  2885,  25.0, 0.635 },   // extrapolated, hood 27.8 clamped
-        {   78.0,  2908,  25.0, 0.630 },   // extrapolated, hood 29.2 clamped
-        {   81.0,  2930,  25.0, 0.625 },   // extrapolated, hood 30.6 clamped
-        {   84.0,  2953,  25.0, 0.620 },   // extrapolated, hood 31.9 clamped
-        {   87.0,  2975,  25.0, 0.615 },   // extrapolated, hood 33.3 clamped
-        {   90.0,  2998,  25.0, 0.611 },   // extrapolated, hood 34.7 clamped
-        {   93.0,  3020,  25.0, 0.606 },   // extrapolated, hood 36.1 clamped
-        {   96.0,  3043,  25.0, 0.601 },   // extrapolated, hood 37.5 clamped
+        {   12.0,  3619,   0.0, 0.736 },   // extrapolated, hood -1.2 clamped
+        {   15.0,  3653,   0.2, 0.731 },   // extrapolated
+        {   18.0,  3687,   1.6, 0.726 },   // extrapolated
+        {   21.0,  3721,   3.0, 0.721 },   // extrapolated
+        {   24.0,  3754,   4.3, 0.717 },   // extrapolated
+        {   27.0,  3788,   5.7, 0.712 },
+        {   30.0,  3822,   7.1, 0.707 },
+        {   33.0,  3855,   8.5, 0.702 },
+        {   36.0,  3889,   9.9, 0.697 },
+        {   39.0,  3923,  11.2, 0.693 },
+        {   42.0,  3957,  12.6, 0.688 },
+        {   45.0,  3990,  14.0, 0.683 },
+        {   48.0,  4024,  15.4, 0.678 },
+        {   51.0,  4058,  16.8, 0.673 },
+        {   54.0,  4092,  18.1, 0.668 },
+        {   57.0,  4125,  19.5, 0.664 },
+        {   60.0,  4159,  20.9, 0.659 },
+        {   63.0,  4193,  22.3, 0.654 },   // extrapolated
+        {   66.0,  4227,  23.7, 0.649 },   // extrapolated
+        {   69.0,  4260,  25.0, 0.644 },   // extrapolated, hood 25.0 clamped
+        {   72.0,  4294,  25.0, 0.640 },   // extrapolated, hood 26.4 clamped
+        {   75.0,  4328,  25.0, 0.635 },   // extrapolated, hood 27.8 clamped
+        {   78.0,  4361,  25.0, 0.630 },   // extrapolated, hood 29.2 clamped
+        {   81.0,  4395,  25.0, 0.625 },   // extrapolated, hood 30.6 clamped
+        {   84.0,  4429,  25.0, 0.620 },   // extrapolated, hood 31.9 clamped
+        {   87.0,  4463,  25.0, 0.615 },   // extrapolated, hood 33.3 clamped
+        {   90.0,  4496,  25.0, 0.611 },   // extrapolated, hood 34.7 clamped
+        {   93.0,  4530,  25.0, 0.606 },   // extrapolated, hood 36.1 clamped
+        {   96.0,  4564,  25.0, 0.601 },   // extrapolated, hood 37.5 clamped
     };
     // END GENERATED SHOT_TABLE
 
