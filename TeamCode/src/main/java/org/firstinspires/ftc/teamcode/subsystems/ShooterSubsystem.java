@@ -112,7 +112,10 @@ public class ShooterSubsystem extends SubsystemBase {
     public static final double FLYWHEEL_MAX_RPM = MOTOR_FREE_RPM * FLYWHEEL_GEAR_RATIO;
     private static final double RPM_TOLERANCE          = 400;
     private static final double FLYWHEEL_IDLE_POWER    = 0.0;
-    private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(3, 0.5, 0, 10.0);
+    // F = 32767 / motor ticks/s at full speed (5500 RPM x 28 / 60 = 2567) = 12.8, so F alone holds
+    // the speed.  It was 10 (about 80%): after each boost the hub's controller resets (mode change),
+    // and the flywheel sagged 700-800 RPM for ~3 s while I wound back up (shooter log 2026-11-16).
+    private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(3, 0.5, 0, 12.8);
 
     // One speed target (targetRPM, from the shot table) at all times.  Normally the SDK's closed
     // loop (setVelocity + FLYWHEEL_PIDF) holds it, so there is no spin-up wait.  While shooting, if

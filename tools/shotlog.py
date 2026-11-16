@@ -3,7 +3,7 @@
 
 Every opmode run that uses BiobuzzRobot writes one CSV row per loop to
 /sdcard/FIRST/shooter_log/<OpMode>_<yyyyMMdd-HHmmss>.csv on the Control Hub (newest 10 kept).
-This tool pulls one into tools/logs/ (git-ignored) and writes tools/logs/<name>.html: flywheel
+This tool pulls one into tools/logs/ (the CSV is git-ignored) and writes tools/logs/<name>.html (committed): flywheel
 target, commanded and actual RPM over time, with gate-open periods shaded, boost and ramp periods
 marked, and the ball count.  Hover for every value in that loop, including why a shot was blocked.
 It also prints a summary: loop time, and for each ball fired, how far the flywheel dipped and how
