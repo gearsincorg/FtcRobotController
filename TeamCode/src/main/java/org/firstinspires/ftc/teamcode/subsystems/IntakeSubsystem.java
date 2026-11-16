@@ -34,8 +34,8 @@ import java.util.function.BooleanSupplier;
  *   SHOOTING   shoot held and the shooter is up to speed.  Gate open, intake in,
  *              transfer feeds.  The only mode with the gate open.
  *   SPINUP     shoot held but the shooter isn't up to speed (yet, or again after a shot slowed it):
- *              intake and transfer stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), clear and eject are ignored.
- *   CLEAR_ALL  clear held: intake out, transfer reversed, purges every ball.
+ *              intake and transfer stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), pass and eject are ignored.
+ *   PASS       pass held: intake out, transfer reversed, every ball goes out the intake.
  *   EJECTING   eject held: intake out, transfer holds the column.
  *   FULL       four balls: intake holds gently (INTAKE_HOLD_POWER), transfer at TRANSFER_PACKED_POWER.
  *   INTAKING   otherwise: intake in.  The transfer runs at TRANSFER_POWER until the balls are
@@ -66,12 +66,12 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double INTAKE_POWER          = 1.0;   // in             (INTAKING, SHOOTING)
     private static final double INTAKE_HOLD_POWER     = 0.1;   // hold           (FULL)
     private static final double INTAKE_REJECT_POWER   =-0.3;   // out            (EJECTING)
-    private static final double INTAKE_EJECT_POWER    =-1.0;   // out, full speed (CLEAR_ALL)
+    private static final double INTAKE_EJECT_POWER    =-1.0;   // out, full speed (PASS)
     // Transfer motor
     private static final double TRANSFER_POWER        = 0.8;   // up             (SHOOTING; INTAKING while not packed)
     private static final double TRANSFER_PACKED_POWER = 0.0;   // packed         (INTAKING while packed, FULL), balls stacked against the closed gate
     private static final double TRANSFER_HOLD_POWER   = 0.2;   // hold           (EJECTING), keeps the column in place
-    private static final double TRANSFER_EJECT_POWER  =-1.0;   // down           (CLEAR_ALL)
+    private static final double TRANSFER_EJECT_POWER  =-1.0;   // down           (PASS)
 
     // TODO tune on the robot.
     public static final double GATE_CLOSED         = 0.35;
@@ -82,7 +82,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
     private static final double SHOT_CLEAR_MS      = 300;   // auto volley: last ball leaves the flywheel
 
-    public enum Mode { INTAKING, FULL, EJECTING, CLEAR_ALL, SPINUP, SHOOTING }
+    public enum Mode { INTAKING, FULL, EJECTING, PASS, SPINUP, SHOOTING }
 
     private final OpMode          opMode;
     private final BooleanSupplier shooterReady;
@@ -100,7 +100,8 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // Driver requests
     private boolean  shootHeld       = false;
-    private boolean  clearHeld       = false;
+    private boolean  passHeld        = false;
+    private boolean  flowerHeld      = false;   // Flower Intake requested (TODO: no mode yet)
     private boolean  ejectHeld       = false;
     private boolean  fedThisPress    = false;  // SHOOTING has been reached since shoot was pressed
 
@@ -197,8 +198,14 @@ public class IntakeSubsystem extends SubsystemBase {
         fedThisPress = false;
     }
 
-    public void startClear() { clearHeld = true; }
-    public void stopClear()  { clearHeld = false; }
+    public void startPass() { passHeld = true; }
+    public void stopPass()  { passHeld = false; }
+
+    // Flower Intake: placeholder.  The button is wired (teleop L1) but the mode doesn't exist yet,
+    // so holding it only sets flowerHeld; updateMode() ignores it.  TODO: add the mode.
+    public void startFlowerIntake() { flowerHeld = true; }
+    public void stopFlowerIntake()  { flowerHeld = false; }
+    public boolean isFlowerIntakeHeld() { return flowerHeld; }
 
     public void startEject() { ejectHeld = true; }
     public void stopEject()  { ejectHeld = false; }
@@ -297,10 +304,10 @@ public class IntakeSubsystem extends SubsystemBase {
     private void updateMode() {
         Mode newMode;
         if (shootHeld) {
-            // Shoot overrides clear and eject.  Feed only while the shooter is up to speed.
+            // Shoot overrides pass and eject.  Feed only while the shooter is up to speed.
             newMode = shooterReady.getAsBoolean() ? Mode.SHOOTING : Mode.SPINUP;
-        } else if (clearHeld) {
-            newMode = Mode.CLEAR_ALL;
+        } else if (passHeld) {
+            newMode = Mode.PASS;
         } else if (ejectHeld) {
             newMode = Mode.EJECTING;
         } else if (isFull()) {
@@ -324,7 +331,7 @@ public class IntakeSubsystem extends SubsystemBase {
             case SPINUP:
                 set(0, 0, GATE_CLOSED);
                 break;
-            case CLEAR_ALL:
+            case PASS:
                 set(INTAKE_EJECT_POWER, TRANSFER_EJECT_POWER, GATE_CLOSED);
                 break;
             case EJECTING:
@@ -352,7 +359,7 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     // == Command methods  ==========================================
-    // These don't require the subsystem, so holding shoot and clear together doesn't cancel one
+    // These don't require the subsystem, so holding shoot and pass together doesn't cancel one
     // of them; updateMode() picks the winner.
 
     /** Wait until full (intaking is always on).  For auto; add a timeout. */
@@ -379,8 +386,13 @@ public class IntakeSubsystem extends SubsystemBase {
         return new StartEndCommand(this::startEject, this::stopEject);
     }
 
-    /** Purge every ball (intake and transfer reversed) while scheduled. */
-    public Command clearAllCommand() {
-        return new StartEndCommand(this::startClear, this::stopClear);
+    /** Pass: every ball out the intake (intake and transfer reversed) while scheduled. */
+    public Command passCommand() {
+        return new StartEndCommand(this::startPass, this::stopPass);
+    }
+
+    /** Flower Intake while scheduled.  Placeholder: does nothing yet (see startFlowerIntake()). */
+    public Command flowerIntakeCommand() {
+        return new StartEndCommand(this::startFlowerIntake, this::stopFlowerIntake);
     }
 }

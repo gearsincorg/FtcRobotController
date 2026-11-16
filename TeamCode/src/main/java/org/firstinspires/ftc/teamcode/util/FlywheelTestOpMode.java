@@ -31,15 +31,15 @@ import static org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem.ticksPe
  * motor RPM, to check against the motor's free speed.
  * Keep hands and balls clear of the flywheel.
  *
- *   A           open-loop sweep: setPower 0.2..1.0, read the speed.  Full power gives the free
+ *   Cross       open-loop sweep: setPower 0.2..1.0, read the speed.  Full power gives the free
  *               speed (checks MOTOR_TICKS_PER_REV) and a suggested PIDF (F = 32767 / max ticks/s,
  *               P = 0.1 F, I = 0.1 P)
- *   B           closed-loop steps: setVelocity at each STEP_RPMS, reports actual RPM, error,
+ *   Circle      closed-loop steps: setVelocity at each STEP_RPMS, reports actual RPM, error,
  *               ripple and time to get within READY_TOL_RPM
- *   X           apply the suggested PIDF (run A first); B again to compare
- *   Y           hold / stop the manual target RPM
+ *   Square      apply the suggested PIDF (run Cross first); Circle again to compare
+ *   Triangle    hold / stop the manual target RPM
  *   Dpad up/dn  manual target RPM +/- 100
- *   LB / RB     P -/+ 1        Dpad left/right  F -/+ 0.5   (live, while holding)
+ *   L1 / R1     P -/+ 1        Dpad left/right  F -/+ 0.5   (live, while holding)
  *
  * Results stay on screen and are written to FIRST/flywheel_test.txt on the hub.
  */
@@ -75,7 +75,7 @@ public class FlywheelTestOpMode extends LinearOpMode {
         line("Default PIDF: " + pidfText());
 
         while (opModeInInit()) {
-            showLog("Press START, then A (sweep) or B (steps)");
+            showLog("Press START, then Cross (sweep) or Circle (steps)");
         }
 
         Gamepad prev = new Gamepad();
@@ -84,14 +84,14 @@ public class FlywheelTestOpMode extends LinearOpMode {
             prev.copy(now);
             now.copy(gamepad1);
 
-            if (now.a && !prev.a) runSweep();
-            if (now.b && !prev.b) runSteps();
-            if (now.x && !prev.x) applySuggested();
-            if (now.y && !prev.y) holding = !holding;
+            if (now.cross && !prev.cross) runSweep();
+            if (now.circle && !prev.circle) runSteps();
+            if (now.square && !prev.square) applySuggested();
+            if (now.triangle && !prev.triangle) holding = !holding;
             if (now.dpad_up && !prev.dpad_up)     targetRpm += 100;
             if (now.dpad_down && !prev.dpad_down) targetRpm = Math.max(0, targetRpm - 100);
-            if (now.right_bumper && !prev.right_bumper) adjustPidf(1, 0);
-            if (now.left_bumper && !prev.left_bumper)   adjustPidf(-1, 0);
+            if (now.right_bumper && !prev.right_bumper) adjustPidf(1, 0);    // R1
+            if (now.left_bumper && !prev.left_bumper)   adjustPidf(-1, 0);   // L1
             if (now.dpad_right && !prev.dpad_right)     adjustPidf(0, 0.5);
             if (now.dpad_left && !prev.dpad_left)       adjustPidf(0, -0.5);
 
@@ -106,7 +106,7 @@ public class FlywheelTestOpMode extends LinearOpMode {
                     holding ? "HOLD" : "off", targetRpm, ticksPerSecToRpm(flywheel.getVelocity()),
                     battery.getVoltage());
             telemetry.addData("PIDF", pidfText());
-            showLog("A sweep  B steps  X apply suggested  Y hold");
+            showLog("Cross sweep  Circle steps  Square apply suggested  Triangle hold");
         }
         flywheel.setPower(0);
     }
@@ -197,7 +197,7 @@ public class FlywheelTestOpMode extends LinearOpMode {
 
     private void applySuggested() {
         if (maxTps <= 0) {
-            line("Run the sweep (A) before applying a suggested PIDF");
+            line("Run the sweep (Cross) before applying a suggested PIDF");
             return;
         }
         double f = 32767 / maxTps;

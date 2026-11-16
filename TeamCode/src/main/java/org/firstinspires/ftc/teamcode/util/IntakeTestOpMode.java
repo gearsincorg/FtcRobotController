@@ -10,9 +10,9 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
 /**
  * Bench test for the intake state machine.  No drive or shooter needed.
  *
- * The intake collects by itself.  Hold A shoot, hold B eject, hold Y clear all
- * (the teleop buttons, except shoot is A here instead of Right Bumper).
- * Hold Right Bumper to pretend the shooter is ready.
+ * The intake collects by itself.  Hold Cross shoot, hold Circle eject, hold Triangle pass
+ * (the teleop buttons, except shoot is Cross here instead of R1).
+ * Hold R1 to pretend the shooter is ready.
  * D-pad up / down adds / removes a simulated ball (when the sensors are simulated).
  */
 @Disabled
@@ -30,9 +30,9 @@ public class IntakeTestOpMode extends CommandOpMode {
         intake.init();
         intake.setShowPowers(true);
 
-        new Trigger(() -> gamepad1.a).whileActiveOnce(intake.shootWhileHeldCommand());
-        new Trigger(() -> gamepad1.b).whileActiveOnce(intake.ejectCommand());
-        new Trigger(() -> gamepad1.y).whileActiveOnce(intake.clearAllCommand());
+        new Trigger(() -> gamepad1.cross).whileActiveOnce(intake.shootWhileHeldCommand());
+        new Trigger(() -> gamepad1.circle).whileActiveOnce(intake.ejectCommand());
+        new Trigger(() -> gamepad1.triangle).whileActiveOnce(intake.passCommand());
     }
 
     @Override
@@ -44,7 +44,7 @@ public class IntakeTestOpMode extends CommandOpMode {
         lastUp   = gamepad1.dpad_up;
         lastDown = gamepad1.dpad_down;
 
-        telemetry.addLine("A shoot, B eject, Y clear all, RB = shooter ready");
+        telemetry.addLine("Cross shoot, Circle eject, Triangle pass, R1 = shooter ready");
         telemetry.addData("Shooter ready", gamepad1.right_bumper);
         if (intake.isSimulated()) {
             telemetry.addLine("D-pad up / down: add / remove a simulated ball");

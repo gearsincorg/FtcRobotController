@@ -35,7 +35,7 @@ public class AutoConfig {
     public AutoRoutine   routine  = AutoRoutine.values()[0];
     public int           cycles   = 2;
     public Park          park     = Park.BASE;
-    // Step mode (testing only): pause after each path until gamepad 1 A is pressed.
+    // Step mode (testing only): pause after each path until gamepad 1 Cross is pressed.
     // Never saved, so it is off every time the opmode starts and can't be left on for a match.
     public boolean       stepMode = false;
 
@@ -87,7 +87,7 @@ public class AutoConfig {
         line(2, "Path",        routine.label);
         line(3, "Cycles",      String.valueOf(cycles));
         line(4, "Park",        park.label);
-        line(5, "Step mode",   stepMode ? "ON (press A after each path)" : "Off");
+        line(5, "Step mode",   stepMode ? "ON (press Cross after each path)" : "Off");
     }
 
     private void line(int index, String name, String value) {

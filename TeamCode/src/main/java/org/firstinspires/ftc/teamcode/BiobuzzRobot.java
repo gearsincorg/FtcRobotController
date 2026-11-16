@@ -158,8 +158,8 @@ public class BiobuzzRobot {
     }
 
     /**
-     * Auto step mode: with step mode on (auto setup menu), wait here until gamepad 1 A is pressed;
-     * with it off, finish at once.  A must be released and pressed again, so holding it doesn't
+     * Auto step mode: with step mode on (auto setup menu), wait here until gamepad 1 Cross is pressed;
+     * with it off, finish at once.  Cross must be released and pressed again, so holding it doesn't
      * skip several pauses.  Pedro holds the robot at the end of the last path while paused.
      */
     public Command stepCommand(String label) {
@@ -168,13 +168,13 @@ public class BiobuzzRobot {
                 () -> released[0] = false,
                 () -> {
                     if (config.stepMode) {
-                        opMode.telemetry.addLine("PAUSED " + label + ": press A to continue");
+                        opMode.telemetry.addLine("PAUSED " + label + ": press Cross to continue");
                     }
                 },
                 interrupted -> {},
                 () -> {
                     if (!config.stepMode) return true;
-                    if (!opMode.gamepad1.a) {
+                    if (!opMode.gamepad1.cross) {
                         released[0] = true;
                         return false;
                     }

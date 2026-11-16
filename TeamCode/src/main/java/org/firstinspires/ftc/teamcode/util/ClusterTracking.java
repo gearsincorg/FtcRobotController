@@ -37,8 +37,8 @@ import java.util.concurrent.TimeUnit;
  *  The right stick will rotate the robot.
  *    Manually drive the robot until it displays Target data on the Driver Station.
  *
- * Press and hold the *Left Bumper* to enable the automatic "Point to target" mode.
- * Release the Left Bumper to return to manual driving mode.
+ * Press and hold *L1* to enable the automatic "Point to target" mode.
+ * Release L1 to return to manual driving mode.
  *
  * Under "Point To Target" mode, the robot has one goal:
  *  Turn the robot to always keep the Target centered on the camera frame. (Use the Target Bearing to turn the robot.)
@@ -85,14 +85,14 @@ public class ClusterTracking extends LinearOpMode
 
         // Wait for driver to press start
         while (opModeInInit()) {
-            if (gamepad1.a) {
+            if (gamepad1.cross) {
                 areWeRed = false;
-            } else if (gamepad1.b){
+            } else if (gamepad1.circle){
                 areWeRed = true;
             }
             telemetry.addData("Camera preview on/off", "3 dots, Camera Stream");
             telemetry.addData("Alliance color", areWeRed ? "RED" : "BLUE");
-            telemetry.addData(">", "cross-A/circle-B to set color.");
+            telemetry.addData(">", "Cross = blue, Circle = red.");
             telemetry.addData(">", "START to drive.");
             telemetry.update();
         };
@@ -128,7 +128,7 @@ public class ClusterTracking extends LinearOpMode
 
             // Tell the driver what we see, and what to do.
             if (targetCluster != null) {
-                telemetry.addData(">","HOLD Left-Bumper to Point to Target");
+                telemetry.addData(">","HOLD L1 to Point to Target");
 
                 telemetry.addLine(String.format("\n==== Tag Cluster (%s)", targetCluster.metadata.name));
                 telemetry.addLine(String.format("Percent tags found: %d", targetCluster.percentClusterFound));
@@ -144,7 +144,7 @@ public class ClusterTracking extends LinearOpMode
                 telemetry.addData("\n>","Drive using joysticks to find valid target\n");
             }
 
-            // If Left Bumper is being pressed, AND we have found the desired target, Point directly at it.
+            // If L1 is being pressed, AND we have found the desired target, Point directly at it.
             if (gamepad1.left_bumper && (targetCluster != null)) {
 
                 // We want targetBearing to be 0, so use it as the "error" term to set the turn power.  Clip the result

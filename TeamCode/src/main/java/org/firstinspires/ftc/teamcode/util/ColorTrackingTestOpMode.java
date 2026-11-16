@@ -16,9 +16,9 @@ import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
  * Test for yellow ball tracking while intaking (Webcam 1, shared with AprilTags).
  *
  * The intake collects by itself.  Drive robot-centric with the sticks.
- *   LB     hold to drive forward at 20% speed (BALL_DRIVE_POWER) and turn toward the nearest yellow ball (the one
+ *   L1     hold to drive forward at 20% speed (BALL_DRIVE_POWER) and turn toward the nearest yellow ball (the one
  *          lowest in the image); the sticks override.  Released = normal driving.
- *   B      eject (hold), Y clear all (hold)
+ *   Circle eject (hold), Triangle pass (hold)
  * Telemetry "BALL" shows the ball's side (LEFT / CENTER / RIGHT), its pixel position, how far off
  * center it is (-1 left edge .. +1 right edge) and its size.  The camera stream draws a rectangle
  * around it.  The gamepad LED is yellow while a ball is seen.
@@ -44,10 +44,10 @@ public class ColorTrackingTestOpMode extends CommandOpMode {
         vision.enableBallFinder(true);   // on from init, so the preview shows the ball before START
 
         GamepadEx driverOp = new GamepadEx(gamepad1);
-        driverOp.getGamepadButton(GamepadKeys.Button.B)
+        driverOp.getGamepadButton(GamepadKeys.Button.CIRCLE)
             .whileHeld(robot.intake.ejectCommand());
-        driverOp.getGamepadButton(GamepadKeys.Button.Y)
-            .whileHeld(robot.intake.clearAllCommand());
+        driverOp.getGamepadButton(GamepadKeys.Button.TRIANGLE)
+            .whileHeld(robot.intake.passCommand());
     }
 
     @Override
@@ -57,7 +57,7 @@ public class ColorTrackingTestOpMode extends CommandOpMode {
         robot.update();
         showLed();
 
-        telemetry.addLine("Hold LB drive to ball, B eject, Y clear all");
+        telemetry.addLine("Hold L1 drive to ball, Circle eject, Triangle pass");
         telemetry.addData("Steering", gamepad1.left_bumper ? "ON" : "off");
         telemetry.update();
     }
@@ -67,7 +67,7 @@ public class ColorTrackingTestOpMode extends CommandOpMode {
         double lateral = -gamepad1.left_stick_x  * DRIVE_SCALE;
         double yaw     = -gamepad1.right_stick_x * DRIVE_SCALE;
 
-        // Hold Left Bumper to drive forward and steer to the ball.  The sticks override.
+        // Hold L1 to drive forward and steer to the ball.  The sticks override.
         if (gamepad1.left_bumper) {
             if (axial == 0) axial = robot.vision.getBallForwardError();
             if (yaw == 0)   yaw   = robot.turnForError(vision.getBallHeadingErrorRad(), MAX_BALL_TURN);

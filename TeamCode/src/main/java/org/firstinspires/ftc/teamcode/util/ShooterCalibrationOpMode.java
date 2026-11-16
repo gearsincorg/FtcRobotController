@@ -38,16 +38,16 @@ import java.util.Locale;
  * Shooter calibration: collects the data for ShooterSubsystem.SHOT_TABLE.
  *
  * Shoot from anywhere: drive there by hand, or pick a preset point (a distance and an angle off the
- * front of the goal on the robot's side) and drive to it with X.  Load ONE ball and shoot it (RB) at
+ * front of the goal on the robot's side) and drive to it with Square.  Load ONE ball and shoot it (R1) at
  * the RPM and hood you set.  The shot is saved where it was taken (pose and distance to the goal),
  * whether or not that is a preset point.
- * Press LB when it enters the goal to time its flight.  Repeat, adjusting RPM and hood, until the
+ * Press L1 when it enters the goal to time its flight.  Repeat, adjusting RPM and hood, until the
  * shots are consistent, then save.  What is saved is the LAST SHOT (its RPM and hood as they were
  * when it left, the flywheel speed measured then, battery volts, flight time, field position), not
  * the current settings, so you can nudge things after the shot without spoiling the data.
  *
  *   Share      saves it as a best shot (feeds SHOT_TABLE)
- *   Left stick press saves it as a COMPENSATION shot: an intentionally different RPM (normally lower)
+ *   L3         saves it as a COMPENSATION shot: an intentionally different RPM (normally lower)
  *              with the hood that works for it.  Not used for SHOT_TABLE; only for working out hood compensation.
  * Every save adds a row: nothing is replaced, and repeats at the same spot are all kept.
  *
@@ -57,16 +57,16 @@ import java.util.Locale;
  * Start with the robot at CAL_START_POSE and the turret centered.
  *
  *   Sticks              : drive (field centric, half speed); cancels a drive-to
- *   Right stick press   : aim at the goal on / off (starts off; twisting the right stick overrides)
+ *   R3 (stick press)    : aim at the goal on / off (starts off; twisting the right stick overrides)
  *   D-pad up / down     : select distance;  left / right : select angle off the goal's front
- *   X                   : drive to the selected point, then aim at the goal
- *   B                   : flywheel on / off
- *   Y / A               : RPM +/- 100
- *   Right / left trigger: hood +/- 1 degree
- *   Right bumper (hold) : shoot
- *   Left bumper         : the ball went in (flight time of the last shot)
+ *   Square              : drive to the selected point, then aim at the goal
+ *   Circle              : flywheel on / off
+ *   Triangle / Cross    : RPM +/- 50
+ *   R2 / L2             : hood +/- 1 degree
+ *   R1 (hold)           : shoot
+ *   L1                  : the ball went in (flight time of the last shot)
  *   Share               : save the last shot as a best shot
- *   Left stick press    : save the last shot as a compensation shot
+ *   L3 (stick press)    : save the last shot as a compensation shot
  *   Options (twice)     : undo this session's last save
  *   Touchpad            : reset pose to CAL_START_POSE
  */
@@ -112,7 +112,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
     private static final double HOLD_SPEED_IPS = 1.0;
     private static final double HOLD_TURN_RATE = 0.1;
 
-    // Flight time: an LB press more than this long after a launch doesn't count.
+    // Flight time: an L1 press more than this long after a launch doesn't count.
     private static final double MAX_FLIGHT_S = 2.0;
     // How long the measured flywheel speed is remembered, to look up its value at the moment of a launch.
     private static final double RPM_HISTORY_S = 1.5;
@@ -125,7 +125,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
     private double  rpm        = 3000;
     private double  hoodDeg    = 12;
     private boolean flywheelOn = true;
-    private boolean aiming     = false;     // chassis points at the goal (right stick press, or after X)
+    private boolean aiming     = false;     // chassis points at the goal (R3, or after Square)
 
     private FollowPathCommand driveTo;
     private Pose    driveTarget;            // where driveTo is going
@@ -139,7 +139,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
         double rpmMeas;                 // measured flywheel speed as it left
         double volts;
         double x, y, headingDeg, dist;  // robot pose and distance to the goal
-        double tof = Double.NaN;        // flight time, once LB is pressed
+        double tof = Double.NaN;        // flight time, once L1 is pressed
         boolean savedBest, savedComp;   // so one shot isn't saved twice by a double press
     }
 
@@ -179,26 +179,25 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> selectPoint(0, 1)));
         pad.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
             .whenPressed(new InstantCommand(() -> selectPoint(0, -1)));
-        pad.getGamepadButton(GamepadKeys.Button.X)
+        pad.getGamepadButton(GamepadKeys.Button.SQUARE)
             .whenPressed(new InstantCommand(this::driveToPoint));
         pad.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
             .whenPressed(new InstantCommand(() -> aiming = !aiming));
-        pad.getGamepadButton(GamepadKeys.Button.B)
+        pad.getGamepadButton(GamepadKeys.Button.CIRCLE)
             .whenPressed(new InstantCommand(() -> { flywheelOn = !flywheelOn; applyShooter(); }));
-        pad.getGamepadButton(GamepadKeys.Button.Y)
+        pad.getGamepadButton(GamepadKeys.Button.TRIANGLE)
             .whenPressed(new InstantCommand(() -> adjust(50, 0)));
-        pad.getGamepadButton(GamepadKeys.Button.A)
+        pad.getGamepadButton(GamepadKeys.Button.CROSS)
             .whenPressed(new InstantCommand(() -> adjust(-50, 0)));
         pad.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
             .whileHeld(robot.intake.shootWhileHeldCommand());
         pad.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
             .whenPressed(new InstantCommand(this::ballIn));
-        // On the PS pad: Share = BACK, Options = START
-        pad.getGamepadButton(GamepadKeys.Button.BACK)
+        pad.getGamepadButton(GamepadKeys.Button.SHARE)
             .whenPressed(new InstantCommand(() -> saveShot(false)));
         pad.getGamepadButton(GamepadKeys.Button.LEFT_STICK_BUTTON)
             .whenPressed(new InstantCommand(() -> saveShot(true)));
-        pad.getGamepadButton(GamepadKeys.Button.START)
+        pad.getGamepadButton(GamepadKeys.Button.OPTIONS)
             .whenPressed(new InstantCommand(this::undoLastSave));
         pad.getGamepadButton(GamepadKeys.Button.TOUCHPAD)
             .whenPressed(new InstantCommand(() -> robot.drive.setPose(CAL_START_POSE)));
@@ -377,7 +376,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
         return best;
     }
 
-    /** LB: the last shot went in; its flight time is now - launch. */
+    /** L1: the last shot went in; its flight time is now - launch. */
     private void ballIn() {
         if (lastShot == null || !Double.isNaN(lastShot.tof)) return;
         double t = clock.seconds() - lastShot.launchT;
@@ -554,12 +553,12 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
                 !flywheelOn ? "OFF" : Math.abs(measured - rpm) < AT_SPEED_RPM ? "AT SPEED" : "spinning up");
         telemetry.addData("Hood (deg)", "%5.1f", hoodDeg);
         if (lastShot == null) {
-            telemetry.addData("Last shot", "none yet: load ONE ball and shoot (RB)");
+            telemetry.addData("Last shot", "none yet: load ONE ball and shoot (R1)");
         } else {
             Shot s = lastShot;
             telemetry.addData("Last shot", "rpm %.0f (meas %.0f)  hood %.1f  %.1f V  tof %s%s",
                     s.rpmSet, s.rpmMeas, s.hood, s.volts,
-                    Double.isNaN(s.tof) ? "none (LB when it goes in)" : String.format(Locale.US, "%.3f s", s.tof),
+                    Double.isNaN(s.tof) ? "none (L1 when it goes in)" : String.format(Locale.US, "%.3f s", s.tof),
                     (s.rpmSet != (flywheelOn ? rpm : 0) || s.hood != hoodDeg) ? "   [settings changed since]" : "");
             telemetry.addData("  at", "%.1f, %.1f, %.1f deg  dist %.1f", s.x, s.y, s.headingDeg, s.dist);
         }

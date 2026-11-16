@@ -36,8 +36,10 @@ import com.pedropathing.math.Velocity;
 import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.StartEndCommand;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
@@ -57,16 +59,19 @@ public class GFORCE_Teleop extends CommandOpMode {
     private BiobuzzRobot robot = new BiobuzzRobot(this);
 
     // Optional vision features.  Off: the camera does no detection work and the button does nothing
-    // extra.  On: the finder runs only while its bumper is held.
-    private static final boolean BALL_CHASE_ENABLED   = false;   // hold LB: chase the nearest yellow ball (was for testing)
-    private static final boolean CLUSTER_AIM_ENABLED  = false;   // hold RB: turn toward the AprilTag cluster when seen (fallback for goal aim)
+    // extra.  On: the finder runs only while its button (L1 / R2) is held.
+    private static final boolean BALL_CHASE_ENABLED   = false;   // hold L1: chase the nearest yellow ball (was for testing; L1 is now Flower Intake)
+    private static final boolean CLUSTER_AIM_ENABLED  = false;   // hold R2: turn toward the AprilTag cluster when seen (fallback for goal aim)
 
     // All turning uses Foresight's heading controller (robot.turnForError / turnToHeading); these
     // only limit the turn power.
+    // R2 (fire) and L2 (eject) count as held past this much pull (0..1).
+    private static final double TRIGGER_PULL = 0.5;
+
     private static final double MAX_TARGET_TURN = 0.6;   // point at the target cluster
     private static final double MAX_BALL_TURN   = 0.4;   // chase a ball
     private static final double MAX_AIM_TURN    = 0.6;   // point the shooter at the goal
-    private static final double MAX_SNAP_TURN   = 0.6;   // heading lock / D-pad heading snap
+    private static final double MAX_SNAP_TURN   = 0.6;   // heading lock / face-button heading snap
 
     // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
     private static final Pose RESET_POSE = new Pose(32.75, 6, Math.toRadians(180));
@@ -77,6 +82,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     // class Methods
     private Constants.Chassis   chassis;
     private boolean             aimAtGoal = false;
+    private boolean             aimingActive = false;   // the aim branch drove the turn last loop
     private boolean             headingLocked = false;
     private double              headingSetpoint = 0;
     private int                 lastLedCount = -1;
@@ -148,6 +154,7 @@ public class GFORCE_Teleop extends CommandOpMode {
         double yaw      = -gamepad1.right_stick_x * STEER_SCALE_FACTOR;
 
         double heading = robot.drive.pose().heading();
+        boolean aiming = false;     // set by the aim branch; a new aim resets the heading controller
 
         if (BALL_CHASE_ENABLED && gamepad1.left_bumper && robot.vision.hasBall()) {
             // Chase the nearest yellow ball (the intake is always collecting).  With the left
@@ -156,16 +163,20 @@ public class GFORCE_Teleop extends CommandOpMode {
             if (yaw == 0) yaw = robot.turnForError(robot.vision.getBallHeadingErrorRad(), MAX_BALL_TURN);
             headingLocked = false;
             if (axial == 0 && lateral == 0) {
+                aimingActive = false;
                 robot.drive.manual(ManualDrive.fieldCentric(robot.vision.getBallForwardError(), 0, yaw, 0));
                 return;
             }
-        } else if (CLUSTER_AIM_ENABLED && gamepad1.right_bumper && robot.vision.hasTarget()) {
+        } else if (CLUSTER_AIM_ENABLED && fireHeld() && robot.vision.hasTarget()) {
             // Point at the target cluster: use the bearing (+ is CCW) as the heading error.
             yaw = robot.turnForError(robot.vision.getTargetHeadingErrorRad(), MAX_TARGET_TURN);
             headingLocked = false;
         } else if (yaw == 0 && aimAtGoal) {
             // Point the shooter at the goal (leading it when moving).  Twisting the stick overrides.
+            // Start each aim with a fresh controller (no memory from earlier turning).
+            if (!aimingActive) robot.resetHeadingController();
             yaw = robot.turnForError(robot.shooter.getAimError(), MAX_AIM_TURN);
+            aiming = true;
             headingLocked = false;
         } else if (yaw == 0 ) {
             // Lock heading if we aren't trying to turn.
@@ -179,6 +190,7 @@ public class GFORCE_Teleop extends CommandOpMode {
         } else {
             headingLocked = false;
         }
+        aimingActive = aiming;
 
         // Field centric, relative to the driver's view rather than Pedro's +X axis.
         DrivePowers powers = ManualDrive.fieldCentric(
@@ -200,20 +212,21 @@ public class GFORCE_Teleop extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> resetHeading()));
 
         // Select the alliance (vision cluster and shooter target): Share = blue, Options = red.
-        // Hold Right Bumper to point at the cluster.
-        driverOp.getGamepadButton(GamepadKeys.Button.BACK)
+        // Hold R1 to point at the cluster (CLUSTER_AIM_ENABLED only).
+        driverOp.getGamepadButton(GamepadKeys.Button.SHARE)
             .whenPressed(new InstantCommand(() -> setAlliance(false)));
-        driverOp.getGamepadButton(GamepadKeys.Button.START)
+        driverOp.getGamepadButton(GamepadKeys.Button.OPTIONS)
             .whenPressed(new InstantCommand(() -> setAlliance(true)));
 
-        // D-pad turns to a field heading (as the driver sees it).  Twisting the stick takes over.
-        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+        // Face buttons turn to a field heading, laid out like a compass on the pad (Triangle up,
+        // Square left, Cross down, Circle right).  Twisting the stick takes over.
+        driverOp.getGamepadButton(GamepadKeys.Button.TRIANGLE)
             .whenPressed(new InstantCommand(() -> setHeadingTarget(0)));
-        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+        driverOp.getGamepadButton(GamepadKeys.Button.SQUARE)
             .whenPressed(new InstantCommand(() -> setHeadingTarget(90)));
-        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+        driverOp.getGamepadButton(GamepadKeys.Button.CROSS)
             .whenPressed(new InstantCommand(() -> setHeadingTarget(180)));
-        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+        driverOp.getGamepadButton(GamepadKeys.Button.CIRCLE)
             .whenPressed(new InstantCommand(() -> setHeadingTarget(270)));
 
         // Point-at-goal: once we're full, the chassis turns to the goal by itself; once everything
@@ -223,43 +236,54 @@ public class GFORCE_Teleop extends CommandOpMode {
         new Trigger(() -> robot.intake.isEmpty() && !robot.intake.isShooting())
             .whenActive(new InstantCommand(() -> setAimAtGoal(false)));
 
-        // Right Stick press: point-at-goal on / off by hand.
+        // R3 (right stick press): point-at-goal on / off by hand.
         driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_STICK_BUTTON)
             .whenPressed(new InstantCommand(this::toggleAimAtGoal));
 
         // The intake collects by itself (and spits out a 5th ball when full).
 
-        // Right Bumper: fire while held.  Pressing it also turns point-at-goal on (for a partial
-        // load), but no ball is fed until the shooter is ready (at speed and aimed); then it
-        // feeds until released.  Overrides eject and clear.
-        // With CLUSTER_AIM_ENABLED, AprilTags run only while RB is held (manualDrive points at the
+        // R2: fire while held (pulled past TRIGGER_PULL).  Pulling it also turns point-at-goal on
+        // (for a partial load), but no ball is fed until the shooter is ready (at speed and aimed);
+        // then it feeds until released.  Overrides Pass and eject.
+        // With CLUSTER_AIM_ENABLED, AprilTags run only while R2 is held (manualDrive points at the
         // cluster when it is seen).
-        driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-            .whenPressed(new InstantCommand(() -> {
+        new Trigger(this::fireHeld)
+            .whenActive(new InstantCommand(() -> {
                 setAimAtGoal(true);
                 if (CLUSTER_AIM_ENABLED) robot.vision.enableAprilTags(true);
             }))
-            .whenReleased(new InstantCommand(() -> {
+            .whenInactive(new InstantCommand(() -> {
                 robot.vision.enableAprilTags(false);
                 if (robot.intake.isEmpty()) setAimAtGoal(false);
             }))
-            .whileHeld(robot.intake.shootWhileHeldCommand());
+            .whileActiveOnce(robot.intake.shootWhileHeldCommand());
 
-        // Left Bumper (BALL_CHASE_ENABLED only): chase a ball (manualDrive).  The ball finder runs
-        // only while it is held.
+        // D-pad down: Nectar In, D-pad up: Nectar Out, while held.  Placeholders: not implemented yet,
+        // so they do nothing (see nectarInCommand() / nectarOutCommand()).
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+            .whileHeld(nectarInCommand());
+        driverOp.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+            .whileHeld(nectarOutCommand());
+
+        // L1: Flower Intake while held.  Placeholder: the mode doesn't exist yet, so it does nothing.
+        driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
+            .whileHeld(robot.intake.flowerIntakeCommand());
+
+        // L1 also chases a ball when BALL_CHASE_ENABLED (manualDrive); they would share the button,
+        // so give ball chase another one before turning it on.  The ball finder runs only while held.
         if (BALL_CHASE_ENABLED) {
             driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(new InstantCommand(() -> robot.vision.enableBallFinder(true)))
                 .whenReleased(new InstantCommand(() -> robot.vision.enableBallFinder(false)));
         }
 
-        // B: intake out while held (the transfer holds its balls)
-        driverOp.getGamepadButton(GamepadKeys.Button.B)
-            .whileHeld(robot.intake.ejectCommand());
+        // L2: eject while held (pulled past TRIGGER_PULL): intake out, the transfer holds its balls.
+        new Trigger(() -> gamepad1.left_trigger > TRIGGER_PULL)
+            .whileActiveOnce(robot.intake.ejectCommand());
 
-        // Y: clear every ball out (intake and transfer reversed) while held
-        driverOp.getGamepadButton(GamepadKeys.Button.Y)
-            .whileHeld(robot.intake.clearAllCommand());
+        // R1: Pass while held: intake and transfer reversed, every ball goes out the intake.
+        driverOp.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+            .whileHeld(robot.intake.passCommand());
 
         // Driver feedback
         new Trigger(robot.intake::isFull).whenActive(() -> gamepad1.rumble(300));
@@ -293,6 +317,11 @@ public class GFORCE_Teleop extends CommandOpMode {
         robot.shooter.setAlliance(red);
     }
 
+    /** R2 pulled far enough to fire. */
+    private boolean fireHeld() {
+        return gamepad1.right_trigger > TRIGGER_PULL;
+    }
+
     /** Toggle point-at-goal (the chassis turning to aim the shooter). */
     public void toggleAimAtGoal() {
         setAimAtGoal(!aimAtGoal);
@@ -301,6 +330,16 @@ public class GFORCE_Teleop extends CommandOpMode {
     /** Point-at-goal on or off.  The shooter keeps tracking (spinning at the table speed) either way. */
     public void setAimAtGoal(boolean on) {
         aimAtGoal = on;
+    }
+
+    /** Nectar In while held.  TODO: not implemented yet (no mechanism or mode); does nothing. */
+    private Command nectarInCommand() {
+        return new StartEndCommand(() -> {}, () -> {});
+    }
+
+    /** Nectar Out while held.  TODO: not implemented yet (no mechanism or mode); does nothing. */
+    private Command nectarOutCommand() {
+        return new StartEndCommand(() -> {}, () -> {});
     }
 
     /** Turn to a Pedro field heading (degrees) and hold it until the driver twists the stick. Cancels point-at-goal. */

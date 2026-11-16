@@ -57,7 +57,7 @@ public class GFORCE_Auto extends CommandOpMode {
 
     public void showTelemetry() {
         if (robot.config.stepMode) {
-            telemetry.addLine("STEP MODE: pauses after each path, press A to continue");
+            telemetry.addLine("STEP MODE: pauses after each path, press Cross to continue");
         }
         Pose pose = robot.drive.pose();
         telemetry.addData("Pose", "x %5.1f  y %5.1f  hdg %5.1f",
