@@ -9,18 +9,29 @@ marked, and the ball count.  Hover for every value in that loop, including why a
 It also prints a summary: loop time, and for each ball fired, how far the flywheel dipped and how
 long it took to get back within tolerance.
 
+Every run also rewrites tools/logs/index.html: a list of every log page in tools/logs/ (newest
+first) with its opmode, date, time, duration and loop count, each linking to its page.  A CSV in
+tools/logs/ with no page yet gets its page made first.
+
 Usage:
-  python tools/shotlog.py              pull the newest log and plot it
+  python tools/shotlog.py              pull every hub log not yet in tools/logs (and the newest again,
+                                       in case it was still being written), plot them, summarise the
+                                       newest, update the index
   python tools/shotlog.py --list       list the logs on the hub
-  python tools/shotlog.py --file NAME  pull and plot that log
-  python tools/shotlog.py --csv FILE   plot a local CSV (no ADB)
+  python tools/shotlog.py --file NAME  pull and plot that log, update the index
+  python tools/shotlog.py --csv FILE   plot a local CSV (no ADB), update the index
+  python tools/shotlog.py --index      only make missing pages and rewrite the index (no ADB)
+  python tools/shotlog.py --rebuild    remake every page that has its CSV (after a plot change), then
+                                       the index (no ADB)
 """
 
 import argparse
 import csv
 import html
 import json
+import re
 import subprocess
+from datetime import datetime
 import sys
 from pathlib import Path
 
@@ -30,6 +41,7 @@ from shotcal import find_adb  # noqa: E402  (same ADB lookup as shotcal.py)
 ROOT = Path(__file__).resolve().parent.parent
 LOGS = ROOT / "tools" / "logs"
 HUB_DIR = "/sdcard/FIRST/shooter_log"
+INDEX = LOGS / "index.html"
 RPM_TOLERANCE = 400          # ShooterSubsystem.RPM_TOLERANCE (isAtSpeed)
 NUMERIC = ["t_s", "dt_ms", "target_rpm", "command_rpm", "actual_rpm", "rpm_err", "ramping", "boosting",
            "at_speed", "ready", "gate_pos", "gate_open", "balls", "shoot_held", "dist_in", "hood_deg",
@@ -135,21 +147,24 @@ PAGE = """<!doctype html>
 <style>
   :root { --bg:#ffffff; --fg:#1f2328; --muted:#6b7280; --grid:#e5e7eb; --target:#9ca3af;
           --command:#2563eb; --actual:#dc2626; --balls:#7c3aed; --gate:rgba(22,163,74,.16);
-          --boost:#f59e0b; --ramp:#8b5cf6; --tip:#111827; --tipfg:#f9fafb; }
+          --boost:#f59e0b; --ramp:#8b5cf6; --volts:#0891b2; --tip:#111827; --tipfg:#f9fafb; }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) { --bg:#0f1115; --fg:#e5e7eb; --muted:#9ca3af; --grid:#272b33;
       --target:#6b7280; --command:#60a5fa; --actual:#f87171; --balls:#a78bfa; --gate:rgba(74,222,128,.14);
-      --boost:#fbbf24; --ramp:#a78bfa; --tip:#f3f4f6; --tipfg:#111827; }
+      --boost:#fbbf24; --ramp:#a78bfa; --volts:#22d3ee; --tip:#f3f4f6; --tipfg:#111827; }
   }
   :root[data-theme="dark"] { --bg:#0f1115; --fg:#e5e7eb; --muted:#9ca3af; --grid:#272b33;
       --target:#6b7280; --command:#60a5fa; --actual:#f87171; --balls:#a78bfa; --gate:rgba(74,222,128,.14);
-      --boost:#fbbf24; --ramp:#a78bfa; --tip:#f3f4f6; --tipfg:#111827; }
+      --boost:#fbbf24; --ramp:#a78bfa; --volts:#22d3ee; --tip:#f3f4f6; --tipfg:#111827; }
   body { margin:0; padding:16px; background:var(--bg); color:var(--fg); font:14px system-ui,sans-serif; }
   h1 { font-size:18px; margin:0 0 4px; }  .sub { color:var(--muted); margin:0 0 12px; }
   .legend { display:flex; flex-wrap:wrap; gap:14px; margin:0 0 8px; color:var(--muted); }
   .legend i { display:inline-block; width:14px; height:3px; vertical-align:middle; margin-right:5px; }
   .legend b { display:inline-block; width:14px; height:10px; vertical-align:middle; margin-right:5px; }
-  .wrap { overflow-x:auto; border:1px solid var(--grid); border-radius:6px; }
+  .frame { position:relative; border:1px solid var(--grid); border-radius:6px; overflow:hidden; }
+  .wrap { overflow-x:auto; }
+  .ax { position:absolute; top:0; pointer-events:none; }
+  .ax.left { left:0; }  .ax.right { right:0; }
   svg text { fill:var(--muted); font-size:11px; }
   #tip { position:fixed; pointer-events:none; background:var(--tip); color:var(--tipfg); padding:6px 8px;
          border-radius:4px; font:12px ui-monospace,monospace; white-space:pre; display:none; z-index:2; }
@@ -165,23 +180,47 @@ PAGE = """<!doctype html>
   <span><b style="background:var(--gate)"></b>gate open</span>
   <span><b style="background:var(--boost)"></b>boost</span>
   <span><b style="background:var(--ramp)"></b>ramp</span>
+  <span><i style="background:var(--volts)"></i>battery volts (lower panel)</span>
 </div>
 <div class="ctl">Zoom: <input id="zoom" type="range" min="20" max="400" value="80"> <span id="zl"></span> px per second</div>
-<div class="wrap" id="wrap"><svg id="plot"></svg></div>
+<div class="frame">
+  <div class="wrap" id="wrap"><svg id="plot"></svg></div>
+  <svg id="axL" class="ax left"></svg>
+  <svg id="axR" class="ax right"></svg>
+</div>
 <div id="tip"></div>
 <script>
 const R = __DATA__;
-const H = 420, M = {l:52, r:40, t:24, b:28};
+// Layout: RPM chart on top (balls on its right axis), battery volts panel below, one shared time axis.
+// The value axes are drawn in two small SVGs pinned over the left and right edges of the scrolling
+// chart, so they stay visible while scrolling sideways.
+const M = {l:52, r:34, t:24};
+const H1 = 400;                   // RPM chart bottom
+const VT = H1 + 22, VB = VT + 90; // volts panel top / bottom
+const H = VB + 30;                // total (time labels below)
 const svg = document.getElementById('plot'), tip = document.getElementById('tip');
+const axL = document.getElementById('axL'), axR = document.getElementById('axR');
 const t0 = R.length ? R[0].t_s : 0, tEnd = R.length ? R[R.length-1].t_s : 1;
 let rpmMax = 1000;
 for (const r of R) rpmMax = Math.max(rpmMax, r.target_rpm, r.command_rpm, r.actual_rpm);
 rpmMax = Math.ceil(rpmMax * 1.08 / 500) * 500;
+// Volts: only the measured range (0 = not read yet), padded and rounded to 0.5 V.
+const vs = R.map(r => r.volts).filter(v => v > 0);
+let vMin = vs.length ? Math.min(...vs) : 11, vMax = vs.length ? Math.max(...vs) : 13;
+vMin = Math.floor((vMin - 0.1) * 2) / 2; vMax = Math.ceil((vMax + 0.1) * 2) / 2;
+if (vMax - vMin < 1) vMax = vMin + 1;
+const vStep = vMax - vMin > 3 ? 1 : 0.5;
 let pxs = 80, X;
-const Y = v => M.t + (H - M.t - M.b) * (1 - v / rpmMax);
-const YB = v => M.t + (H - M.t - M.b) * (1 - v / 4.5);
+const Y  = v => M.t + (H1 - M.t) * (1 - v / rpmMax);
+const YB = v => M.t + (H1 - M.t) * (1 - v / 4.5);
+const YV = v => VT + (VB - VT) * (1 - (v - vMin) / (vMax - vMin));
 const NS = 'http://www.w3.org/2000/svg';
 function el(n, a) { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; }
+function txt(parent, x, y, s, anchor, color) {
+  const t = el('text', {x, y, 'text-anchor': anchor || 'start'});
+  if (color) t.style.fill = color;
+  t.textContent = s; parent.appendChild(t);
+}
 function bands(key, y, h, color) {
   let start = null;
   const out = [];
@@ -192,42 +231,62 @@ function bands(key, y, h, color) {
   });
   for (const [a, b] of out) svg.appendChild(el('rect', {x: X(a), y, width: Math.max(1, X(b) - X(a)), height: h, fill: color}));
 }
-function line(key, color, w, step) {
+function line(key, color, w, yOf, step, skipZero) {
   let d = '';
-  R.forEach((r, i) => {
-    const x = X(r.t_s).toFixed(1), y = (step ? YB(r[key]) : Y(r[key])).toFixed(1);
-    if (i === 0) d = `M${x},${y}`;
+  R.forEach(r => {
+    if (skipZero && !(r[key] > 0)) return;
+    const x = X(r.t_s).toFixed(1), y = yOf(r[key]).toFixed(1);
+    if (!d) d = `M${x},${y}`;
     else d += step ? `H${x}V${y}` : `L${x},${y}`;
   });
-  svg.appendChild(el('path', {d, fill: 'none', stroke: color, 'stroke-width': w, 'stroke-linejoin': 'round'}));
+  if (d) svg.appendChild(el('path', {d, fill: 'none', stroke: color, 'stroke-width': w, 'stroke-linejoin': 'round'}));
 }
 function draw() {
   const W = Math.max(document.getElementById('wrap').clientWidth - 2, M.l + M.r + (tEnd - t0) * pxs);
   X = t => M.l + (t - t0) * pxs;
-  svg.setAttribute('width', W); svg.setAttribute('height', H);
-  svg.replaceChildren();
+  for (const s of [svg, axL, axR]) { s.setAttribute('height', H); s.replaceChildren(); }
+  svg.setAttribute('width', W);
+  axL.setAttribute('width', M.l); axR.setAttribute('width', M.r);
   const css = getComputedStyle(document.documentElement);
   const c = n => css.getPropertyValue(n).trim();
-  bands('gate_open', M.t, H - M.t - M.b, c('--gate'));
+  // Background panels on the pinned axes, so the chart scrolls underneath them.
+  axL.appendChild(el('rect', {x: 0, y: 0, width: M.l, height: H, fill: c('--bg')}));
+  axR.appendChild(el('rect', {x: 0, y: 0, width: M.r, height: H, fill: c('--bg')}));
+
+  // RPM chart
+  bands('gate_open', M.t, H1 - M.t, c('--gate'));
   bands('boost_on', M.t - 10, 5, c('--boost'));
   bands('ramp_on', M.t - 18, 5, c('--ramp'));
   for (let v = 0; v <= rpmMax; v += 500) {
-    svg.appendChild(el('line', {x1: M.l, x2: W - M.r, y1: Y(v), y2: Y(v), stroke: c('--grid')}));
-    const t = el('text', {x: M.l - 6, y: Y(v) + 4, 'text-anchor': 'end'}); t.textContent = v; svg.appendChild(t);
+    svg.appendChild(el('line', {x1: 0, x2: W, y1: Y(v), y2: Y(v), stroke: c('--grid')}));
+    txt(axL, M.l - 6, Y(v) + 4, v, 'end');
   }
-  for (let b = 0; b <= 4; b++) {
-    const t = el('text', {x: W - M.r + 6, y: YB(b) + 4}); t.textContent = b; svg.appendChild(t);
+  txt(axL, 4, M.t - 8, 'rpm');
+  for (let b = 0; b <= 4; b++) txt(axR, 6, YB(b) + 4, b, 'start', c('--balls'));
+  txt(axR, 2, M.t - 8, 'balls', 'start', c('--balls'));
+
+  // Volts panel (measured range only)
+  bands('gate_open', VT, VB - VT, c('--gate'));
+  for (let v = vMin; v <= vMax + 1e-9; v += vStep) {
+    svg.appendChild(el('line', {x1: 0, x2: W, y1: YV(v), y2: YV(v), stroke: c('--grid')}));
+    txt(axL, M.l - 6, YV(v) + 4, v.toFixed(1), 'end');
   }
+  txt(axL, 4, VT - 8, 'volts');
+
+  // Time axis
   const step = pxs >= 150 ? 0.5 : pxs >= 60 ? 1 : 5;
   for (let s = Math.ceil(t0 / step) * step; s <= tEnd; s += step) {
-    svg.appendChild(el('line', {x1: X(s), x2: X(s), y1: H - M.b, y2: H - M.b + 4, stroke: c('--muted')}));
-    const t = el('text', {x: X(s), y: H - 8, 'text-anchor': 'middle'}); t.textContent = s.toFixed(step < 1 ? 1 : 0) + 's'; svg.appendChild(t);
+    svg.appendChild(el('line', {x1: X(s), x2: X(s), y1: VB, y2: VB + 4, stroke: c('--muted')}));
+    txt(svg, X(s), VB + 18, s.toFixed(step < 1 ? 1 : 0) + 's', 'middle');
   }
-  line('balls', c('--balls'), 1.5, true);
-  line('target_rpm', c('--target'), 1.5, false);
-  line('command_rpm', c('--command'), 1.5, false);
-  line('actual_rpm', c('--actual'), 2, false);
-  const cursor = el('line', {y1: M.t, y2: H - M.b, stroke: c('--muted'), 'stroke-dasharray': '3 3', visibility: 'hidden'});
+
+  line('balls', c('--balls'), 1.5, YB, true);
+  line('target_rpm', c('--target'), 1.5, Y, false);
+  line('command_rpm', c('--command'), 1.5, Y, false);
+  line('actual_rpm', c('--actual'), 2, Y, false);
+  line('volts', c('--volts'), 1.5, YV, true, true);
+
+  const cursor = el('line', {y1: M.t, y2: VB, stroke: c('--muted'), 'stroke-dasharray': '3 3', visibility: 'hidden'});
   svg.appendChild(cursor);
   svg.onmousemove = e => {
     const box = svg.getBoundingClientRect();
@@ -242,7 +301,7 @@ function draw() {
       `rpm target ${r.target_rpm}  cmd ${r.command_rpm}  actual ${r.actual_rpm}  err ${r.rpm_err > 0 ? '+' : ''}${r.rpm_err}\\n` +
       `${r.ramping ? 'RAMP ' : ''}${r.boosting ? 'BOOST ' : ''}at speed ${r.at_speed ? 'yes' : 'no'}  ready ${r.ready ? 'yes' : 'no'}\\n` +
       `gate ${r.gate_open ? 'OPEN' : 'closed'} (${r.gate_pos})  balls ${r.balls}  fire ${r.shoot_held ? 'held' : '-'}\\n` +
-      `dist ${r.dist_in} in  hood ${r.hood_deg}  aim err ${r.aim_err_deg} deg  ${r.volts} V` +
+      `dist ${r.dist_in} in  hood ${r.hood_deg}  aim err ${r.aim_err_deg} deg  battery ${r.volts} V` +
       (r.blocked ? `\\nBLOCKED: ${r.blocked}` : '');
     tip.style.display = 'block';
     tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + 'px';
@@ -259,7 +318,7 @@ addEventListener('resize', draw);
 """
 
 
-def write_html(rows, src):
+def write_html(rows, src, quiet=False):
     keep = ["t_s", "dt_ms", "shooter_mode", "target_rpm", "command_rpm", "actual_rpm", "rpm_err", "ramping",
             "boosting", "at_speed", "ready", "blocked", "intake_mode", "gate_pos", "gate_open", "balls",
             "shoot_held", "dist_in", "hood_deg", "aim_err_deg", "volts"]
@@ -276,7 +335,97 @@ def write_html(rows, src):
                 .replace("__DUR__", f"{dur:.1f}"))
     out = src.with_suffix(".html")
     out.write_text(page, encoding="utf-8")
-    print(f"\nPlot: {out}")
+    if not quiet:
+        print(f"\nPlot: {out}")
+
+
+# == Index of every log page in tools/logs =====================================
+
+INDEX_PAGE = """<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shooter Logs</title>
+<style>
+  :root { --bg:#ffffff; --fg:#1f2328; --muted:#6b7280; --line:#e5e7eb; --link:#2563eb; --hover:#f3f4f6; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg:#0f1115; --fg:#e5e7eb; --muted:#9ca3af; --line:#272b33;
+      --link:#60a5fa; --hover:#181b21; }
+  }
+  :root[data-theme="dark"] { --bg:#0f1115; --fg:#e5e7eb; --muted:#9ca3af; --line:#272b33;
+      --link:#60a5fa; --hover:#181b21; }
+  body { margin:0; padding:16px; background:var(--bg); color:var(--fg); font:14px system-ui,sans-serif; }
+  h1 { font-size:18px; margin:0 0 4px; }  .sub { color:var(--muted); margin:0 0 12px; }
+  .wrap { overflow-x:auto; }
+  table { border-collapse:collapse; min-width:100%; }
+  th, td { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th { color:var(--muted); font-weight:600; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  tr:hover td { background:var(--hover); }
+  a { color:var(--link); text-decoration:none; }  a:hover { text-decoration:underline; }
+</style></head><body>
+<h1>Shooter logs</h1>
+<p class="sub">__COUNT__ log(s), newest first. Made by tools/shotlog.py.</p>
+<div class="wrap"><table>
+<thead><tr><th>Date</th><th>Time</th><th>OpMode</th><th class="num">Duration</th><th class="num">Loops</th><th>Page</th></tr></thead>
+<tbody>
+__ROWS__
+</tbody></table></div>
+</body></html>
+"""
+
+PAGE_INFO = re.compile(r"(\d+) loops over ([\d.]+) s")
+
+
+def page_info(page):
+    """(opmode, datetime or None, duration s or None, loops or None) for a log page."""
+    stem = page.stem
+    opmode, stamp = (stem.rsplit("_", 1) + [""])[:2] if "_" in stem else (stem, "")
+    try:
+        when = datetime.strptime(stamp, "%Y%m%d-%H%M%S")
+    except ValueError:
+        when, opmode = None, stem
+    dur = loops = None
+    # The page's own subtitle says "<n> loops over <s> s"; it is near the top, so read only the start.
+    with open(page, encoding="utf-8", errors="replace") as f:
+        m = PAGE_INFO.search(f.read(8000))
+    if m:
+        loops, dur = int(m.group(1)), float(m.group(2))
+    return opmode, when, dur, loops
+
+
+def fmt_duration(s):
+    if s is None:
+        return "-"
+    m, sec = divmod(int(round(s)), 60)
+    return f"{m}:{sec:02d}" if m else f"{sec} s"
+
+
+def build_index():
+    """Make a page for any CSV in tools/logs without one, then rewrite tools/logs/index.html."""
+    if not LOGS.is_dir():
+        return
+    for csv_path in sorted(LOGS.glob("*.csv")):
+        if not csv_path.with_suffix(".html").exists():
+            rows = read_rows(csv_path)
+            if rows:
+                write_html(rows, csv_path, quiet=True)
+                print(f"Made missing page {csv_path.with_suffix('.html').name}")
+    pages = [p for p in LOGS.glob("*.html") if p.name != INDEX.name]
+    infos = [(p,) + page_info(p) for p in pages]
+    infos.sort(key=lambda i: (i[2] or datetime.min, i[0].name), reverse=True)
+    rows = []
+    for page, opmode, when, dur, loops in infos:
+        rows.append(
+            "<tr>"
+            f"<td><a href=\"{html.escape(page.name)}\">{when.strftime('%Y-%m-%d') if when else '-'}</a></td>"
+            f"<td>{when.strftime('%H:%M:%S') if when else '-'}</td>"
+            f"<td>{html.escape(opmode)}</td>"
+            f"<td class=\"num\">{fmt_duration(dur)}</td>"
+            f"<td class=\"num\">{loops if loops is not None else '-'}</td>"
+            f"<td><a href=\"{html.escape(page.name)}\">{html.escape(page.name)}</a></td>"
+            "</tr>")
+    INDEX.write_text(INDEX_PAGE.replace("__COUNT__", str(len(rows))).replace("__ROWS__", "\n".join(rows)),
+                     encoding="utf-8")
+    print(f"Index: {INDEX} ({len(rows)} log(s))")
 
 
 def main():
@@ -284,7 +433,24 @@ def main():
     ap.add_argument("--list", action="store_true", help="list the logs on the hub")
     ap.add_argument("--file", help="pull and plot this log (a name from --list)")
     ap.add_argument("--csv", type=Path, help="plot a local CSV instead of pulling from the hub")
+    ap.add_argument("--index", action="store_true",
+                    help="only make missing pages and rewrite tools/logs/index.html (no ADB)")
+    ap.add_argument("--rebuild", action="store_true",
+                    help="remake every page from its CSV in tools/logs, then the index (no ADB)")
     args = ap.parse_args()
+
+    if args.rebuild:
+        for csv_path in sorted(LOGS.glob("*.csv")):
+            rows = read_rows(csv_path)
+            if rows:
+                write_html(rows, csv_path, quiet=True)
+                print(f"Remade {csv_path.with_suffix('.html').name}")
+        build_index()
+        return
+
+    if args.index:
+        build_index()
+        return
 
     if args.csv:
         if not args.csv.exists():
@@ -299,14 +465,32 @@ def main():
             return
         if not names:
             fail("no logs on the hub yet")
-        name = args.file or names[-1]
-        if name not in names:
-            fail(f"{name} is not on the hub (try --list)")
-        path = pull(exe, name)
+        if args.file:
+            if args.file not in names:
+                fail(f"{args.file} is not on the hub (try --list)")
+            path = pull(exe, args.file)
+        else:
+            # Every log we don't have yet (no CSV and no page), plus the newest again: it may have been
+            # pulled while its opmode was still running.  Older ones only get their page; the newest
+            # is summarised below.
+            newest = names[-1]
+            wanted = [n for n in names if n == newest
+                      or not ((LOGS / n).exists() or (LOGS / n).with_suffix(".html").exists())]
+            for n in wanted:
+                pulled = pull(exe, n)
+                if n != newest:
+                    old = read_rows(pulled)
+                    if old:
+                        write_html(old, pulled, quiet=True)
+            have = len(names) - len(wanted)
+            if have:
+                print(f"({have} older log(s) already in tools/logs)")
+            path = LOGS / newest
 
     rows = read_rows(path)
     summary(rows)
     write_html(rows, path)
+    build_index()
 
 
 if __name__ == "__main__":
