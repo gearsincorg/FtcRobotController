@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.seattlesolvers.solverslib.command.Command;
@@ -112,31 +112,59 @@ public class ShooterSubsystem extends SubsystemBase {
     public static final double FLYWHEEL_MAX_RPM = MOTOR_FREE_RPM * FLYWHEEL_GEAR_RATIO;
     private static final double RPM_TOLERANCE          = 200;   // isAtSpeed(): within this of the target (was 400)
     private static final double FLYWHEEL_IDLE_POWER    = 0.0;
-    // F = 32767 / motor ticks/s at full speed (5500 RPM x 28 / 60 = 2567) = 12.8, so F alone holds
-    // the speed.  It was 10 (about 80%): after each boost the hub's controller resets (mode change),
-    // and the flywheel sagged 700-800 RPM for ~3 s while I wound back up (shooter log 2026-11-16).
-    private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(4, 0.5, 0, 12.8);
 
-    // One speed target (targetRPM, from the shot table) at all times.  Normally the SDK's closed
-    // loop (setVelocity + FLYWHEEL_PIDF) holds it, so there is no spin-up wait.  While boost is
-    // allowed (setBoostSupplier: shoot held or the intake full), if
-    // the speed falls more than BOOST_ENTER_RPM below the target (a ball just left, or the target
-    // rose), the flywheel runs open loop at BOOST_POWER until it is back within BOOST_EXIT_RPM (0: at or above the target),
-    // then the closed loop takes over again.  Both margins are tunable (watch "Flywheel" telemetry).
-    // false = closed loop only (boost off).  Was off while the loop time was slow; back on to try
-    // now that it is about 20 ms.
+    // Speed control: our own loop, run once per robot loop in periodic(), with the motor in
+    // RUN_WITHOUT_ENCODER (the hub's velocity PIDF is not used).  We replaced the hub's loop
+    // (2026-11-17) because it has no battery compensation, its P was far too weak to matter
+    // (P 3 = 2.5% power for an 880 RPM error), and every boost changed the motor mode, which reset
+    // its integrator, so the flywheel sagged ~880 RPM for seconds after each volley.
+    //
+    //   power = (KS + KV * commandRPM) / volts                     feedforward: the volts that speed
+    //                                                             needs, as a fraction of the battery
+    //         + KP * (commandRPM - actualRPM)                    proportional, in power per RPM
+    //         + integral                                         KI * error * dt, clamped to
+    //                                                             +-I_MAX_POWER; only builds within
+    //                                                             I_ZONE_RPM of the command and
+    //                                                             is frozen while ramping/boosting
+    // clipped to 0..1 (never reverse power on the belt).  While boosting: BOOST_POWER.
+    //
+    // KS / KV: fit to a 1000-6000 RPM sweep on a fresh battery (2026-11-17 15:57 calibration log;
+    // within 0.3 V of a straight line over the whole range).  The log
+    // has power and volts, and `python tools/shotlog.py` prints a KS / KV fit from the steady
+    // stretches: paste it in here.  The feedforward should do nearly all the work; P and I only
+    // trim.  Battery volts are read every VOLTS_PERIOD_S (it costs a hub call; not in the bulk read).
+    private static final double NOMINAL_VOLTS          = 12.0;
+    private static final double FLYWHEEL_KS            = 2.45;    // volts (the line's offset, not a true stiction value)
+    private static final double FLYWHEEL_KV            = 0.00149; // volts per flywheel RPM
+    private static final double FLYWHEEL_KP            = 0.0005;  // power per RPM of error (10% per 200 RPM)
+    private static final double FLYWHEEL_KI            = 0.0003;  // power per RPM*s of error
+    private static final double FLYWHEEL_I_MAX_POWER   = 0.15;    // integral limit (power)
+    private static final double FLYWHEEL_I_ZONE_RPM    = 300;     // integral builds only this near the command
+    private static final double MIN_VOLTS              = 8.0;     // floor for the compensation (bad reading)
+    private static final double VOLTS_PERIOD_S         = 0.25;
+    private static final double POWER_MIN_STEP         = 0.005;   // skip smaller power changes (saves a hub write)
+
+    // Boost: while allowed (setBoostSupplier: shoot held or the intake full), if the speed falls
+    // more than BOOST_ENTER_RPM below the target (a ball just left, or the target rose), the
+    // flywheel runs at BOOST_POWER until it is at or above the target (BOOST_EXIT_RPM 0), then the
+    // loop above takes over again with nothing reset.  The speed reading moves in ~64 RPM steps, so
+    // BOOST_ENTER_RPM must be more than one step (at 50, one step down started it and it chattered
+    // on and off every 0.2-0.3 s while full).  false = loop only (boost off).
     public static final boolean BOOST_ENABLED          = true;
-    private static final double BOOST_ENTER_RPM        = 50;    // start boost this far below target
+    private static final double BOOST_ENTER_RPM        = 100;   // start boost this far below target
     private static final double BOOST_EXIT_RPM         = 0;     // stop once at or above the target
     private static final double BOOST_POWER            = 1.0;
 
     // Spin-up ramp: the flywheel is heavy, and asking for full speed from a standstill slips the
     // belt.  So when it starts from (nearly) stopped, below RAMP_START_RPM, the speed asked of the
-    // closed loop rises from there at RAMP_RPM_PER_S until it reaches the target; boost is off
-    // while ramping.  Once running, speed changes (and boost) are not ramped.  Tune RAMP_RPM_PER_S
-    // up until the belt just starts to slip, then back off.
+    // loop (commandRPM) rises at RAMP_RPM_PER_S, but never more than RAMP_MAX_LEAD_RPM above the
+    // measured speed (it used to run 1200 RPM ahead, which wound up the hub's integrator and
+    // overshot 650 RPM), until it reaches the target; boost and the integral are off while
+    // ramping.  Once running, speed changes are not ramped.  Tune RAMP_RPM_PER_S up until the belt
+    // just starts to slip, then back off.
     private static final double RAMP_START_RPM         = 300;
-    private static final double RAMP_RPM_PER_S         = 2000;
+    private static final double RAMP_RPM_PER_S         = 3000;  // was 2000: the flywheel kept up (lead 450-620), 4435 in 2.2 s
+    private static final double RAMP_MAX_LEAD_RPM      = 800;   // was 400: spin-up took ~4 s
 
     // == Hood ================================================================
     // Hood angle is in degrees from vertical, forward positive.  Two measured points define the
@@ -209,8 +237,15 @@ public class ShooterSubsystem extends SubsystemBase {
     private boolean requireChassisAim = false;   // see setRequireChassisAim()
     private BooleanSupplier shooting = () -> false;   // see setShootingSupplier()
     private BooleanSupplier boostAllowed = () -> false;   // see setBoostSupplier()
-    private boolean boosting         = false;    // flywheel at full open-loop power to recover speed
-    private boolean flywheelOpenLoop = false;    // flywheel motor is in RUN_WITHOUT_ENCODER
+    private boolean boosting         = false;    // flywheel at BOOST_POWER to recover speed
+    private VoltageSensor battery;
+    private double  volts            = NOMINAL_VOLTS;   // battery, read every VOLTS_PERIOD_S
+    private final ElapsedTime voltsTimer = new ElapsedTime();
+    private final ElapsedTime loopTimer  = new ElapsedTime();
+    private double  ffPower          = 0;        // this loop's feedforward part of the power
+    private double  integralPower    = 0;        // integral part, kept between loops
+    private double  flywheelPower    = 0;        // power sent this loop
+    private double  lastSentPower    = Double.NaN;
     private boolean ramping          = false;    // spinning up from a stop at RAMP_RPM_PER_S
     private double  commandRPM       = 0;        // speed asked of the closed loop (targetRPM unless ramping)
     private final ElapsedTime rampTimer = new ElapsedTime();
@@ -253,8 +288,11 @@ public class ShooterSubsystem extends SubsystemBase {
 
         flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        flywheel.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, FLYWHEEL_PIDF);
+        // Our own speed loop (see FLYWHEEL_KV): plain power; the encoder is still read for speed.
+        flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        battery = opMode.hardwareMap.voltageSensor.iterator().hasNext()
+                ? opMode.hardwareMap.voltageSensor.iterator().next() : null;
+        readVolts();
 
         // Move the hood to its minimum angle now, rather than waiting for the first periodic() after start.
         hood.setPosition(hoodAngleToServo(targetHoodDeg));
@@ -268,6 +306,7 @@ public class ShooterSubsystem extends SubsystemBase {
         // One read of each per loop.  Simulated: read back what was last commanded instead.
         actualRPM       = SHOOTER_SIMULATED ? commandRPM : ticksPerSecToRpm(flywheel.getVelocity());
         actualTurretRad = TURRET_SIMULATED  ? targetTurretRad : turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
+        if (voltsTimer.seconds() >= VOLTS_PERIOD_S) readVolts();
 
         computeSolution();
 
@@ -298,9 +337,9 @@ public class ShooterSubsystem extends SubsystemBase {
             opMode.telemetry.addData("BLOCKED", blockedReason());
         }
         // Flywheel  2600 T/A 2580 rpm  hood 14.0  (T/A = target / actual; how the speed is held)
-        opMode.telemetry.addData("Flywheel", "%4.0f T/A %4.0f rpm  hood %4.1f  %s",
-                targetRPM, getActualRPM(), targetHoodDeg,
-                ramping ? String.format("RAMP %.0f", commandRPM) : boosting ? "BOOST" : "");
+        opMode.telemetry.addData("Flywheel", "%4.0f T/A %4.0f rpm  pwr %.2f  hood %4.1f  %s",
+                targetRPM, getActualRPM(), flywheelPower, targetHoodDeg,
+                ramping ? String.format(Locale.US, "RAMP %.0f", commandRPM) : boosting ? "BOOST" : "");
         // Turret target / actual.  Aim: where the turret should point to hit the cell, computed
         // every loop even when not tracking: relative to robot forward (+ CCW, before soft limits).
         opMode.telemetry.addData("Turret", "%4.1f T/A %4.1f  aim %4.1f  %s",
@@ -476,6 +515,12 @@ public class ShooterSubsystem extends SubsystemBase {
     public double getTargetRPM()       { return targetRPM; }
     /** Speed asked of the motor this loop: the target, or the spin-up ramp's value while ramping. */
     public double getCommandRPM()      { return commandRPM; }
+    /** Flywheel motor power sent this loop, its feedforward part, and its integral part. */
+    public double getFlywheelPower()   { return flywheelPower; }
+    public double getFeedforwardPower() { return ffPower; }
+    public double getIntegralPower()   { return integralPower; }
+    /** Battery volts, read every VOLTS_PERIOD_S (used for the flywheel's voltage compensation). */
+    public double getBatteryVolts()    { return volts; }
     public double getTargetHoodDeg()   { return targetHoodDeg; }
     public double getTargetTurretRad() { return targetTurretRad; }
 
@@ -581,7 +626,9 @@ public class ShooterSubsystem extends SubsystemBase {
         }
 
         if (ramping) {
-            commandRPM = Math.min(targetRPM, commandRPM + RAMP_RPM_PER_S * dt);
+            // Rise at RAMP_RPM_PER_S, but never run far ahead of the flywheel itself.
+            commandRPM = Math.min(targetRPM, Math.min(commandRPM + RAMP_RPM_PER_S * dt,
+                                                      actualRPM + RAMP_MAX_LEAD_RPM));
             if (commandRPM >= targetRPM) ramping = false;
         } else {
             commandRPM = Math.max(targetRPM, 0);
@@ -608,19 +655,34 @@ public class ShooterSubsystem extends SubsystemBase {
         }
     }
 
-    /**
-     * Switch the flywheel motor between the SDK's closed loop (RUN_USING_ENCODER, where setPower
-     * would only ask for a speed) and real open-loop power (RUN_WITHOUT_ENCODER).  Only on a change.
-     */
-    private void setFlywheelOpenLoop(boolean open) {
-        if (open == flywheelOpenLoop) return;
-        flywheelOpenLoop = open;
-        lastVelocityTicks = Integer.MIN_VALUE;   // resend the velocity after a mode change
-        if (open) {
-            flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        } else {
-            flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);   // PIDF is set once at init; it survives mode changes
+    private void readVolts() {
+        voltsTimer.reset();
+        if (battery != null) {
+            double v = battery.getVoltage();
+            if (v > 0) volts = v;
         }
+    }
+
+    /**
+     * This loop's flywheel power (see FLYWHEEL_KV): voltage-compensated feedforward on commandRPM,
+     * plus P and a clamped integral on the error; BOOST_POWER while boosting.
+     */
+    private double flywheelPower() {
+        double dt = Math.min(loopTimer.seconds(), 0.1);
+        loopTimer.reset();
+        if (targetRPM <= 0) {
+            integralPower = 0;
+            ffPower = 0;
+            return FLYWHEEL_IDLE_POWER;
+        }
+        double error = commandRPM - actualRPM;
+        ffPower = (FLYWHEEL_KS + FLYWHEEL_KV * commandRPM) / Math.max(volts, MIN_VOLTS);   // volts needed / volts available
+        if (boosting) return BOOST_POWER;
+        if (!ramping && Math.abs(error) < FLYWHEEL_I_ZONE_RPM) {
+            integralPower = Range.clip(integralPower + FLYWHEEL_KI * error * dt,
+                                       -FLYWHEEL_I_MAX_POWER, FLYWHEEL_I_MAX_POWER);
+        }
+        return Range.clip(ffPower + FLYWHEEL_KP * error + integralPower, 0, 1);
     }
 
     private void applyOutputs() {
@@ -638,25 +700,13 @@ public class ShooterSubsystem extends SubsystemBase {
         }
         turret.setPower(Range.clip(power, -TURRET_MAX_POWER, TURRET_MAX_POWER));
 
-        // Control Flywheel: the SDK's closed loop holds commandRPM (targetRPM, or the spin-up ramp);
-        // while boosting, full open-loop power.
-        if (targetRPM > 0 && boosting) {
-            setFlywheelOpenLoop(true);
-            flywheel.setPower(BOOST_POWER);
-        } else {
-            setFlywheelOpenLoop(false);
-            if (targetRPM > 0) {
-                // setVelocity takes ticks/s, and the hub only uses whole ticks/s, so only send it
-                // when that changes (the SDK sends every setVelocity call to the hub).
-                int ticks = (int) Math.round(rpmToTicksPerSec(commandRPM));
-                if (ticks != lastVelocityTicks) {
-                    flywheel.setVelocity(ticks);
-                    lastVelocityTicks = ticks;
-                }
-            } else {
-                flywheel.setPower(FLYWHEEL_IDLE_POWER);
-                lastVelocityTicks = Integer.MIN_VALUE;
-            }
+        // Control Flywheel: our own loop holds commandRPM (targetRPM, or the spin-up ramp).  Each
+        // setPower is a hub write, so skip changes too small to matter.
+        flywheelPower = flywheelPower();
+        if (Double.isNaN(lastSentPower) || Math.abs(flywheelPower - lastSentPower) >= POWER_MIN_STEP
+                || (flywheelPower == 0) != (lastSentPower == 0)) {
+            flywheel.setPower(flywheelPower);
+            lastSentPower = flywheelPower;
         }
 
         // Control Hood Angle: skip changes too small for the servo to see (saves a hub write).
@@ -669,7 +719,6 @@ public class ShooterSubsystem extends SubsystemBase {
 
     // Last values sent to the hub, so unchanged ones aren't sent again.
     private static final double HOOD_MIN_STEP = 0.001;   // servo position; ~0.08 deg of hood
-    private int    lastVelocityTicks = Integer.MIN_VALUE;
     private double lastHoodPos       = -1;   // never a real position, so the first one is sent
 
     private static class Shot {

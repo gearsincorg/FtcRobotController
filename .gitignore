@@ -82,3 +82,4 @@ lint/tmp/
 # Shooter logs pulled from the hub (tools/shotlog.py): the CSVs stay local, the HTML plots
 # (which hold all the data) are committed.
 tools/logs/*.csv
+tools/logs/*.csv.nopage

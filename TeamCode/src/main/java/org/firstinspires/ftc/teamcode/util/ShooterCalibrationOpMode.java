@@ -203,8 +203,19 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> robot.drive.setPose(CAL_START_POSE)));
     }
 
+    // Loop (cycle) time, as in teleop: the time between run() calls, and a smoothed average.
+    private final ElapsedTime cycleTimer = new ElapsedTime();
+    private double cycleMs = 0, cycleAvgMs = 0;
+
+    private void timeCycle() {
+        cycleMs = cycleTimer.milliseconds();
+        cycleTimer.reset();
+        cycleAvgMs = cycleAvgMs == 0 ? cycleMs : cycleAvgMs + 0.05 * (cycleMs - cycleAvgMs);
+    }
+
     @Override
     public void run() {
+        timeCycle();
         super.run();
         hoodTriggers();
         watchLaunches();
@@ -534,24 +545,29 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
 
     // == Telemetry ===========================================================
 
+    // Above these lines the subsystems have already shown theirs, as in teleop: Balls, Shooter (and
+    // BLOCKED), Flywheel (target / actual, power, hood), Turret (aim error), Goals.  So only what
+    // teleop shows itself (Cycle, Pose, Log) and the calibration's own state is added here.
     private void showTelemetry() {
         Pose pose   = robot.drive.pose();
         Pose target = selectedPose();
         boolean driving = driveTo != null && driveTo.isScheduled();
 
-        telemetry.addData("Goal", "%s (%.1f, %.1f)", goalName(robot.shooter.getGoal()),
-                robot.shooter.getGoal().x(), robot.shooter.getGoal().y());
+        telemetry.addData("Cycle", "%4.1f ms  (avg %4.1f)", cycleMs, cycleAvgMs);
+        telemetry.addData("Pose", "x %5.1f  y %5.1f  hdg %5.1f",
+                pose.x(), pose.y(), Math.toDegrees(pose.heading()));
+        telemetry.addData("Log", robot.shooterLogStatus());
+
+        // The set speed is shown even while off (Triangle/Cross still change it; the Flywheel line
+        // above then says 0), so a flywheel switched off with Circle doesn't look stuck at zero.
+        double measured = robot.shooter.getMeasuredRPM();
+        telemetry.addData("Cal", "set %4.0f rpm  %s  aim %s", rpm,
+                !flywheelOn ? "OFF (Circle to start)"
+                        : Math.abs(measured - rpm) < AT_SPEED_RPM ? "AT SPEED" : "spinning up",
+                aiming ? "ON" : "off");
         telemetry.addData("Point", "%.0f in @ %+.0f deg -> (%.1f, %.1f) %s",
                 DISTANCES[distIndex], ANGLES[angleIndex], target.x(), target.y(),
                 !onField(target) ? "OFF FIELD" : driving ? "DRIVING" : "");
-        telemetry.addData("Pose", "%5.1f, %5.1f, %5.1f deg", pose.x(), pose.y(), Math.toDegrees(pose.heading()));
-        telemetry.addData("Distance : aim error", "%5.1f in : %5.1f deg  aim %s",
-                robot.shooter.getDistance(), Math.toDegrees(robot.shooter.getAimError()),
-                aiming ? "ON" : "off");
-        double measured = robot.shooter.getMeasuredRPM();
-        telemetry.addData("Flywheel RPM set : measured", "%5.0f : %5.0f  %s", flywheelOn ? rpm : 0, measured,
-                !flywheelOn ? "OFF" : Math.abs(measured - rpm) < AT_SPEED_RPM ? "AT SPEED" : "spinning up");
-        telemetry.addData("Hood (deg)", "%5.1f", hoodDeg);
         if (lastShot == null) {
             telemetry.addData("Last shot", "none yet: load ONE ball and shoot (R1)");
         } else {
@@ -559,18 +575,16 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
             telemetry.addData("Last shot", "rpm %.0f (meas %.0f)  hood %.1f  %.1f V  tof %s%s",
                     s.rpmSet, s.rpmMeas, s.hood, s.volts,
                     Double.isNaN(s.tof) ? "none (L1 when it goes in)" : String.format(Locale.US, "%.3f s", s.tof),
-                    (s.rpmSet != (flywheelOn ? rpm : 0) || s.hood != hoodDeg) ? "   [settings changed since]" : "");
-            telemetry.addData("  at", "%.1f, %.1f, %.1f deg  dist %.1f", s.x, s.y, s.headingDeg, s.dist);
+                    (s.rpmSet != (flywheelOn ? rpm : 0) || s.hood != hoodDeg) ? "  [changed since]" : "");
+            telemetry.addData("  at", "x %.1f  y %.1f  hdg %.1f  dist %.1f", s.x, s.y, s.headingDeg, s.dist);
         }
-        telemetry.addData("Balls", robot.intake.ballCount());
-        telemetry.addData("Best saved within " + (int) NEAR_DIST + " in", "%s",
-                savedNear(robot.shooter.getDistance()));
         if (deleteArmed && deleteTimer.seconds() <= DELETE_CONFIRM_S) {
             telemetry.addLine(">>> UNDO the last save?  Press Options again <<<");
         }
         int comps = 0;
         for (String[] f : saved) if (isComp(f)) comps++;
         telemetry.addData("Saved", "%d best, %d comp  %s", saved.size() - comps, comps, lastSave);
+        telemetry.addData("Near (" + (int) NEAR_DIST + " in)", "%s", savedNear(robot.shooter.getDistance()));
         telemetry.update();
     }
 }

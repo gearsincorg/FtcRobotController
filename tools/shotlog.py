@@ -45,7 +45,7 @@ INDEX = LOGS / "index.html"
 RPM_TOLERANCE = 200          # ShooterSubsystem.RPM_TOLERANCE (isAtSpeed)
 NUMERIC = ["t_s", "dt_ms", "target_rpm", "command_rpm", "actual_rpm", "rpm_err", "ramping", "boosting",
            "at_speed", "ready", "gate_pos", "gate_open", "balls", "shoot_held", "dist_in", "hood_deg",
-           "aim_err_deg", "volts"]
+           "aim_err_deg", "volts", "power", "ff_power", "i_power"]
 
 
 def fail(msg):
@@ -100,6 +100,66 @@ def read_rows(path):
     return rows
 
 
+def fit_feedforward(rows):
+    """Fit volts = KS + KV * rpm from the steady stretches (ShooterSubsystem.FLYWHEEL_KS / KV).
+
+    Steady: not boosting or ramping, gate closed, the speed within 64 RPM (one reading step) of
+    where it is 0.3 s later.  There P and I have settled, so the volts applied (power x battery)
+    are what that speed needs, whatever the gains.  Logs from before the power column was added
+    have no data for it.
+    """
+    pts = []
+    j = 0
+    for i, r in enumerate(rows):
+        # Skip full power: the motor can't give more, so it says nothing about what the speed needs.
+        if (r["boosting"] or r["ramping"] or r["gate_open"] or r["power"] <= 0 or r["power"] >= 0.99
+                or r["volts"] <= 0):
+            continue
+        while j < len(rows) and rows[j]["t_s"] < r["t_s"] + 0.3:
+            j += 1
+        if j >= len(rows):
+            break
+        later = rows[j]
+        if later["boosting"] or later["gate_open"] or abs(later["actual_rpm"] - r["actual_rpm"]) > 64:
+            continue
+        pts.append((r["actual_rpm"], r["power"] * r["volts"]))
+    if len(pts) < 50:
+        print("Feedforward fit: not enough steady data" + ("" if any(r["power"] for r in rows)
+                                                            else " (no power column in this log)"))
+        return
+    n = len(pts)
+    mx = sum(x for x, _ in pts) / n
+    my = sum(y for _, y in pts) / n
+    sxx = sum((x - mx) ** 2 for x, _ in pts)
+    # Separate KS and KV only from a real spread of targets (the speed reading alone wanders a few
+    # hundred RPM around one target, which gives nonsense).  Otherwise keep the current KS and
+    # give the KV that makes the feedforward right at this speed.
+    targets = [r["command_rpm"] for r in rows if r["command_rpm"] > 0 and not r["ramping"]]
+    spread = (max(targets) - min(targets)) if targets else 0
+    if spread < 800:
+        ks_now = current_ks()
+        print(f"Feedforward ({n} steady rows near {mx:.0f} rpm, needs {my:.2f} V there; targets only "
+              f"span {spread:.0f} rpm, too little to fit KS): with FLYWHEEL_KS = {ks_now:.2f} V, "
+              f"FLYWHEEL_KV = {(my - ks_now) / mx:.5f} V/rpm")
+        return
+    kv = sum((x - mx) * (y - my) for x, y in pts) / sxx
+    ks = my - kv * mx
+    lo, hi = min(x for x, _ in pts), max(x for x, _ in pts)
+    print(f"Feedforward fit ({n} steady rows, {lo:.0f}-{hi:.0f} rpm): FLYWHEEL_KS = {ks:.2f} V, "
+          f"FLYWHEEL_KV = {kv:.5f} V/rpm")
+
+
+SHOOTER_JAVA = ROOT / "TeamCode/src/main/java/org/firstinspires/ftc/teamcode/subsystems/ShooterSubsystem.java"
+
+
+def current_ks():
+    """FLYWHEEL_KS as it is in ShooterSubsystem.java now (0.5 if it can't be read)."""
+    try:
+        m = re.search(r"FLYWHEEL_KS\s*=\s*([-\d.]+)", SHOOTER_JAVA.read_text(encoding="utf-8"))
+        return float(m.group(1))
+    except (OSError, AttributeError, ValueError):
+        return 0.5
+
 def summary(rows):
     if not rows:
         fail("no rows in the log (did the opmode get past START?)")
@@ -110,6 +170,8 @@ def summary(rows):
 
     opens = sum(1 for a, b in zip(rows, rows[1:]) if b["gate_open"] and not a["gate_open"])
     print(f"Gate opened {opens} time(s)")
+
+    fit_feedforward(rows)
 
     # Balls fired: the count drops while shoot is held.  The count is debounced, so the drop is
     # usually seen after the gate has already closed again (SPINUP), not while SHOOTING.  Each drop is
@@ -308,7 +370,8 @@ function draw() {
       `rpm target ${r.target_rpm}  cmd ${r.command_rpm}  actual ${r.actual_rpm}  err ${r.rpm_err > 0 ? '+' : ''}${r.rpm_err}\\n` +
       `${r.ramping ? 'RAMP ' : ''}${r.boosting ? 'BOOST ' : ''}at speed ${r.at_speed ? 'yes' : 'no'}  ready ${r.ready ? 'yes' : 'no'}\\n` +
       `gate ${r.gate_open ? 'OPEN' : 'closed'} (${r.gate_pos})  balls ${r.balls}  fire ${r.shoot_held ? 'held' : '-'}\\n` +
-      `dist ${r.dist_in} in  hood ${r.hood_deg}  aim err ${r.aim_err_deg} deg  battery ${r.volts} V` +
+      `power ${r.power}  (ff ${r.ff_power}  i ${r.i_power})  battery ${r.volts} V` + '\\n' +
+      `dist ${r.dist_in} in  hood ${r.hood_deg}  aim err ${r.aim_err_deg} deg` +
       (r.blocked ? `\\nBLOCKED: ${r.blocked}` : '');
     tip.style.display = 'block';
     tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + 'px';
@@ -328,7 +391,7 @@ addEventListener('resize', draw);
 def write_html(rows, src, quiet=False):
     keep = ["t_s", "dt_ms", "shooter_mode", "target_rpm", "command_rpm", "actual_rpm", "rpm_err", "ramping",
             "boosting", "at_speed", "ready", "blocked", "intake_mode", "gate_pos", "gate_open", "balls",
-            "shoot_held", "dist_in", "hood_deg", "aim_err_deg", "volts"]
+            "shoot_held", "dist_in", "hood_deg", "aim_err_deg", "volts", "power", "ff_power", "i_power"]
     data = []
     for r in rows:
         d = {k: r[k] for k in keep}

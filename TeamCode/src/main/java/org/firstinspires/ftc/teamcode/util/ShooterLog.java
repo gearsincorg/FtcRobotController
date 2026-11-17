@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
@@ -40,18 +39,18 @@ import java.util.Locale;
  *   gate_pos          gate servo position commanded;  gate_open: it is the open position
  *   balls             ball count;  shoot_held: fire held
  *   dist_in, hood_deg, aim_err_deg   distance to the aim point, hood target, chassis aim error
- *   volts             battery, read once a second (it isn't in the bulk read)
+ *   volts             battery, as the shooter's speed loop uses it (read every 0.25 s; not in the bulk read)
+ *   power, ff_power, i_power   flywheel motor power sent, and its feedforward and integral parts
  */
 public class ShooterLog {
 
     public static final String FOLDER = "shooter_log";
     private static final int    MAX_FILES        = 10;
     private static final int    FLUSH_EVERY_ROWS = 25;
-    private static final double VOLTS_EVERY_S    = 1.0;
 
     private static final String HEADER = "t_s,dt_ms,shooter_mode,target_rpm,command_rpm,actual_rpm,rpm_err,"
             + "ramping,boosting,at_speed,ready,blocked,intake_mode,gate_pos,gate_open,balls,shoot_held,"
-            + "dist_in,hood_deg,aim_err_deg,volts";
+            + "dist_in,hood_deg,aim_err_deg,volts,power,ff_power,i_power";
 
     private final OpMode opMode;
     private BufferedWriter out;
@@ -61,9 +60,6 @@ public class ShooterLog {
 
     private final ElapsedTime clock      = new ElapsedTime();
     private double            lastT      = -1;
-    private VoltageSensor     battery;
-    private double            volts      = 0;
-    private double            lastVoltsT = -1e9;
 
     public ShooterLog(OpMode opMode) {
         this.opMode = opMode;
@@ -79,8 +75,6 @@ public class ShooterLog {
             out.write(HEADER);
             out.newLine();
             pruneOldFiles(dir);
-            battery = opMode.hardwareMap.voltageSensor.iterator().hasNext()
-                    ? opMode.hardwareMap.voltageSensor.iterator().next() : null;
             status = "ok";
         } catch (IOException e) {
             fail(e);
@@ -94,23 +88,20 @@ public class ShooterLog {
         double t  = clock.seconds();
         double dt = lastT < 0 ? 0 : (t - lastT) * 1000.0;
         lastT = t;
-        if (battery != null && t - lastVoltsT >= VOLTS_EVERY_S) {
-            volts = battery.getVoltage();
-            lastVoltsT = t;
-        }
 
         String blocked = shooter.blockedReason();
         blocked = blocked == null ? "" : blocked.replace(',', ';');
         double actual = shooter.getActualRPM();
         String line = String.format(Locale.US,
-                "%.3f,%.1f,%s,%.0f,%.0f,%.0f,%.0f,%d,%d,%d,%d,%s,%s,%.3f,%d,%d,%d,%.1f,%.1f,%.1f,%.2f",
+                "%.3f,%.1f,%s,%.0f,%.0f,%.0f,%.0f,%d,%d,%d,%d,%s,%s,%.3f,%d,%d,%d,%.1f,%.1f,%.1f,%.2f,%.3f,%.3f,%.3f",
                 t, dt, shooter.getMode(), shooter.getTargetRPM(), shooter.getCommandRPM(), actual,
                 actual - shooter.getTargetRPM(),
                 b(shooter.isRamping()), b(shooter.isBoosting()), b(shooter.isAtSpeed()), b(shooter.isReady()),
                 blocked, intake.getMode(), intake.getGatePosition(), b(intake.isGateOpen()),
                 intake.ballCount(), b(intake.isShooting()),
                 shooter.getDistance(), shooter.getTargetHoodDeg(), Math.toDegrees(shooter.getAimError()),
-                volts);
+                shooter.getBatteryVolts(), shooter.getFlywheelPower(),
+                shooter.getFeedforwardPower(), shooter.getIntegralPower());
         try {
             out.write(line);
             out.newLine();
