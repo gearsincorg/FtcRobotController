@@ -111,17 +111,25 @@ def summary(rows):
     opens = sum(1 for a, b in zip(rows, rows[1:]) if b["gate_open"] and not a["gate_open"])
     print(f"Gate opened {opens} time(s)")
 
-    # A ball fired: the count drops while the intake is SHOOTING.
-    shots = [i for i in range(1, len(rows))
-             if rows[i]["balls"] < rows[i - 1]["balls"] and rows[i]["intake_mode"] == "SHOOTING"]
+    # Balls fired: the count drops while shoot is held.  The count is debounced, so the drop is
+    # usually seen after the gate has already closed again (SPINUP), not while SHOOTING.  Each drop is
+    # timed from the gate opening that let the ball(s) out, the last one before the drop.
+    shots = []
+    for i in range(1, len(rows)):
+        drop = rows[i - 1]["balls"] - rows[i]["balls"]
+        if drop > 0 and rows[i]["shoot_held"]:
+            j = i
+            while j > 0 and not (rows[j]["gate_open"] and not rows[j - 1]["gate_open"]):
+                j -= 1
+            shots.append((j, drop))
     if not shots:
         print("No balls fired.")
         return
-    print(f"\n{'ball':>4} {'t (s)':>7} {'target':>7} {'lowest':>7} {'dip':>6} {'back in tol':>12}")
-    for n, i in enumerate(shots, 1):
+    print(f"\n{'shot':>4} {'balls':>5} {'gate t':>7} {'target':>7} {'lowest':>7} {'dip':>6} {'back in tol':>12}")
+    for n, (i, drop) in enumerate(shots):
         t0 = rows[i]["t_s"]
-        # Up to 1 s after the ball, but not into the next ball's dip.
-        t_end = min(t0 + 1.0, rows[shots[n]]["t_s"] if n < len(shots) else t0 + 1.0)
+        # Up to 1 s after the gate opened, but not into the next shot's dip.
+        t_end = min(t0 + 1.0, rows[shots[n + 1][0]]["t_s"] if n + 1 < len(shots) else t0 + 1.0)
         window = [r for r in rows[i:] if r["t_s"] < t_end] or [rows[i]]
         low = min(window, key=lambda r: r["actual_rpm"])
         back = "-"
@@ -137,9 +145,8 @@ def summary(rows):
                 break
         if not left:
             back = "stayed in"
-        print(f"{n:>4} {t0:>7.2f} {rows[i]['target_rpm']:>7.0f} {low['actual_rpm']:>7.0f} "
+        print(f"{n + 1:>4} {drop:>5.0f} {t0:>7.2f} {rows[i]['target_rpm']:>7.0f} {low['actual_rpm']:>7.0f} "
               f"{low['actual_rpm'] - rows[i]['target_rpm']:>+6.0f} {back:>12}")
-
 
 PAGE = """<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
