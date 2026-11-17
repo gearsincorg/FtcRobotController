@@ -38,7 +38,8 @@ import java.util.function.BooleanSupplier;
  *   PASS       pass held: intake out, transfer reversed, every ball goes out the intake.
  *   EJECTING   eject held: intake out, transfer holds the column.
  *   FULL       four balls: intake holds gently (INTAKE_HOLD_POWER), transfer at TRANSFER_PACKED_POWER.
- *   INTAKING   otherwise: intake in.  The transfer runs at TRANSFER_POWER until the balls are
+ *   INTAKING   otherwise: intake in.  With no balls the transfer runs slowly (TRANSFER_EMPTY_POWER);
+ *              with balls it runs at TRANSFER_POWER until they are
  *              packed (stacked from slot4 down with no gaps, see isPacked()), then TRANSFER_PACKED_POWER so
  *              it doesn't stall against the closed gate.  A new ball at slot1 makes a gap and
  *              starts it again.
@@ -69,6 +70,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double INTAKE_EJECT_POWER    =-1.0;   // out, full speed (PASS)
     // Transfer motor
     private static final double TRANSFER_POWER        = 0.8;   // up             (SHOOTING; INTAKING while not packed)
+    private static final double TRANSFER_EMPTY_POWER  = 0.2;   // up, slow       (INTAKING with no balls)
     private static final double TRANSFER_PACKED_POWER = 0.0;   // packed         (INTAKING while packed, FULL), balls stacked against the closed gate
     private static final double TRANSFER_HOLD_POWER   = 0.2;   // hold           (EJECTING), keeps the column in place
     private static final double TRANSFER_EJECT_POWER  =-1.0;   // down           (PASS)
@@ -345,7 +347,10 @@ public class IntakeSubsystem extends SubsystemBase {
             default:
                 // Move balls up until they're stacked under the gate, then ease off so the
                 // transfer doesn't stall against the closed gate.
-                set(INTAKE_POWER, isPacked() ? TRANSFER_PACKED_POWER : TRANSFER_POWER, GATE_CLOSED);
+                double transferPower = isEmpty()  ? TRANSFER_EMPTY_POWER
+                                     : isPacked() ? TRANSFER_PACKED_POWER
+                                     :              TRANSFER_POWER;
+                set(INTAKE_POWER, transferPower, GATE_CLOSED);
                 break;
         }
     }

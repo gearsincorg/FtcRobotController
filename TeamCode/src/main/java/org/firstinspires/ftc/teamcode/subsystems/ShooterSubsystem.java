@@ -73,7 +73,7 @@ public class ShooterSubsystem extends SubsystemBase {
     public static final boolean TURRET_SIMULATED  = true;
 
     // == Turret ==============================================================
-    private static final double AIM_TOLERANCE_RAD     = Math.toRadians(10);   // chassis aim (turret disabled)
+    private static final double AIM_TOLERANCE_RAD     = Math.toRadians(5);   // chassis aim (turret disabled)
 
     // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
     private static final double TURRET_TICKS_PER_RAD  = 537.7 / (2 * Math.PI);
@@ -110,23 +110,24 @@ public class ShooterSubsystem extends SubsystemBase {
 
     /** Flywheel speed with the motor at its free speed (no load); nothing can be asked above this. */
     public static final double FLYWHEEL_MAX_RPM = MOTOR_FREE_RPM * FLYWHEEL_GEAR_RATIO;
-    private static final double RPM_TOLERANCE          = 400;
+    private static final double RPM_TOLERANCE          = 200;   // isAtSpeed(): within this of the target (was 400)
     private static final double FLYWHEEL_IDLE_POWER    = 0.0;
     // F = 32767 / motor ticks/s at full speed (5500 RPM x 28 / 60 = 2567) = 12.8, so F alone holds
     // the speed.  It was 10 (about 80%): after each boost the hub's controller resets (mode change),
     // and the flywheel sagged 700-800 RPM for ~3 s while I wound back up (shooter log 2026-11-16).
-    private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(3, 0.5, 0, 12.8);
+    private static final PIDFCoefficients FLYWHEEL_PIDF = new PIDFCoefficients(4, 0.5, 0, 12.8);
 
     // One speed target (targetRPM, from the shot table) at all times.  Normally the SDK's closed
-    // loop (setVelocity + FLYWHEEL_PIDF) holds it, so there is no spin-up wait.  While shooting, if
+    // loop (setVelocity + FLYWHEEL_PIDF) holds it, so there is no spin-up wait.  While boost is
+    // allowed (setBoostSupplier: shoot held or the intake full), if
     // the speed falls more than BOOST_ENTER_RPM below the target (a ball just left, or the target
-    // rose), the flywheel runs open loop at BOOST_POWER until it is back within BOOST_EXIT_RPM,
+    // rose), the flywheel runs open loop at BOOST_POWER until it is back within BOOST_EXIT_RPM (0: at or above the target),
     // then the closed loop takes over again.  Both margins are tunable (watch "Flywheel" telemetry).
     // false = closed loop only (boost off).  Was off while the loop time was slow; back on to try
     // now that it is about 20 ms.
     public static final boolean BOOST_ENABLED          = true;
-    private static final double BOOST_ENTER_RPM        = 100;
-    private static final double BOOST_EXIT_RPM         = 50;
+    private static final double BOOST_ENTER_RPM        = 50;    // start boost this far below target
+    private static final double BOOST_EXIT_RPM         = 0;     // stop once at or above the target
     private static final double BOOST_POWER            = 1.0;
 
     // Spin-up ramp: the flywheel is heavy, and asking for full speed from a standstill slips the
@@ -207,6 +208,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private Mode    mode    = Mode.IDLE;
     private boolean requireChassisAim = false;   // see setRequireChassisAim()
     private BooleanSupplier shooting = () -> false;   // see setShootingSupplier()
+    private BooleanSupplier boostAllowed = () -> false;   // see setBoostSupplier()
     private boolean boosting         = false;    // flywheel at full open-loop power to recover speed
     private boolean flywheelOpenLoop = false;    // flywheel motor is in RUN_WITHOUT_ENCODER
     private boolean ramping          = false;    // spinning up from a stop at RAMP_RPM_PER_S
@@ -347,9 +349,17 @@ public class ShooterSubsystem extends SubsystemBase {
         requireChassisAim = require;
     }
 
-    /** True while a shot is wanted (normally IntakeSubsystem::isShooting); enables the full-power speed recovery. */
+    /** True while a shot is wanted (normally IntakeSubsystem::isShooting); shows the BLOCKED line. */
     public void setShootingSupplier(BooleanSupplier shooting) {
         this.shooting = shooting;
+    }
+
+    /**
+     * True while the full-power speed recovery (boost) may run: in BiobuzzRobot, shoot held or the
+     * intake full, so the flywheel is already at speed when the driver fires.
+     */
+    public void setBoostSupplier(BooleanSupplier boostAllowed) {
+        this.boostAllowed = boostAllowed;
     }
 
     /** Flywheel is at full open-loop power to recover its speed. */
@@ -584,12 +594,12 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     /**
-     * Boost (full open-loop power) while shooting whenever the flywheel is more than BOOST_ENTER_RPM
-     * below its target; stop once it is within BOOST_EXIT_RPM (or when no longer shooting).
+     * Boost (full open-loop power) while allowed (setBoostSupplier) whenever the flywheel is more than
+     * BOOST_ENTER_RPM below its target; stop once it is within BOOST_EXIT_RPM (or when no longer allowed).
      */
     private void updateBoost() {
         double slow = targetRPM - actualRPM;                // positive: too slow
-        if (!BOOST_ENABLED || targetRPM <= 0 || ramping || !shooting.getAsBoolean()) {
+        if (!BOOST_ENABLED || targetRPM <= 0 || ramping || !boostAllowed.getAsBoolean()) {
             boosting = false;
         } else if (!boosting) {
             boosting = slow > BOOST_ENTER_RPM;

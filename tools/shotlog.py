@@ -42,7 +42,7 @@ ROOT = Path(__file__).resolve().parent.parent
 LOGS = ROOT / "tools" / "logs"
 HUB_DIR = "/sdcard/FIRST/shooter_log"
 INDEX = LOGS / "index.html"
-RPM_TOLERANCE = 400          # ShooterSubsystem.RPM_TOLERANCE (isAtSpeed)
+RPM_TOLERANCE = 200          # ShooterSubsystem.RPM_TOLERANCE (isAtSpeed)
 NUMERIC = ["t_s", "dt_ms", "target_rpm", "command_rpm", "actual_rpm", "rpm_err", "ramping", "boosting",
            "at_speed", "ready", "gate_pos", "gate_open", "balls", "shoot_held", "dist_in", "hood_deg",
            "aim_err_deg", "volts"]

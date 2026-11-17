@@ -75,8 +75,10 @@ public class BiobuzzRobot {
         intake = new IntakeSubsystem(opMode, shooter::isReady);
         intake.init();
 
-        // While a shot is wanted the shooter recovers its speed at full power after each ball.
+        // Shoot held shows why a shot is blocked.  Boost (full-power speed recovery) runs while shoot
+        // is held (after each ball) or the intake is full (ready before the driver fires).
         shooter.setShootingSupplier(intake::isShooting);
+        shooter.setBoostSupplier(() -> intake.isShooting() || intake.isFull());
 
         // Start on the alliance chosen in the auto setup menu (Share / Options still override).
         config = new AutoConfig(opMode);
