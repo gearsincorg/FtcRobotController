@@ -96,7 +96,8 @@ public class ShooterSubsystem extends SubsystemBase {
     //   MOTOR_TICKS_PER_REV : encoder ticks per motor rev (28 for a bare goBILDA 5203 / REV motor)
     //   FLYWHEEL_GEAR_RATIO : flywheel revs per motor rev (> 1 for a speed increaser, e.g.
     //                         motor pulley 36T / flywheel pulley 24T = 1.5).  4/3 (1:1.333) since
-    //                         2026-11-17 (was 1.5).
+    //                         2026-11-17.  Before that it was really 48:29 (1.655), though the
+    //                         code said 1.0 and then 1.5; the calibration data is corrected for it.
     // Check with util/FlywheelTestOpMode: at full power the motor RPM it shows should be close to
     // the motor's free speed.
     public static final double MOTOR_TICKS_PER_REV  = 28;
@@ -198,35 +199,35 @@ public class ShooterSubsystem extends SubsystemBase {
     // Rows sorted by distance: { distance (in), flywheel RPM, hood angle (deg), flight time (s) }
     // BEGIN GENERATED SHOT_TABLE
     private static final double[][] SHOT_TABLE = {
-        {   12.0,  3619,   0.0, 0.736 },   // extrapolated, hood -1.2 clamped
-        {   15.0,  3653,   0.2, 0.731 },   // extrapolated
-        {   18.0,  3687,   1.6, 0.726 },   // extrapolated
-        {   21.0,  3721,   3.0, 0.721 },   // extrapolated
-        {   24.0,  3754,   4.3, 0.717 },   // extrapolated
-        {   27.0,  3788,   5.7, 0.712 },
-        {   30.0,  3822,   7.1, 0.707 },
-        {   33.0,  3855,   8.5, 0.702 },
-        {   36.0,  3889,   9.9, 0.697 },
-        {   39.0,  3923,  11.2, 0.693 },
-        {   42.0,  3957,  12.6, 0.688 },
-        {   45.0,  3990,  14.0, 0.683 },
-        {   48.0,  4024,  15.4, 0.678 },
-        {   51.0,  4058,  16.8, 0.673 },
-        {   54.0,  4092,  18.1, 0.668 },
-        {   57.0,  4125,  19.5, 0.664 },
-        {   60.0,  4159,  20.9, 0.659 },
-        {   63.0,  4193,  22.3, 0.654 },   // extrapolated
-        {   66.0,  4227,  23.7, 0.649 },   // extrapolated
-        {   69.0,  4260,  25.0, 0.644 },   // extrapolated, hood 25.0 clamped
-        {   72.0,  4294,  25.0, 0.640 },   // extrapolated, hood 26.4 clamped
-        {   75.0,  4328,  25.0, 0.635 },   // extrapolated, hood 27.8 clamped
-        {   78.0,  4361,  25.0, 0.630 },   // extrapolated, hood 29.2 clamped
-        {   81.0,  4395,  25.0, 0.625 },   // extrapolated, hood 30.6 clamped
-        {   84.0,  4429,  25.0, 0.620 },   // extrapolated, hood 31.9 clamped
-        {   87.0,  4463,  25.0, 0.615 },   // extrapolated, hood 33.3 clamped
-        {   90.0,  4496,  25.0, 0.611 },   // extrapolated, hood 34.7 clamped
-        {   93.0,  4530,  25.0, 0.606 },   // extrapolated, hood 36.1 clamped
-        {   96.0,  4564,  25.0, 0.601 },   // extrapolated, hood 37.5 clamped
+        {   12.0,  3993,   0.0, 0.736 },   // extrapolated, hood -1.2 clamped
+        {   15.0,  4031,   0.2, 0.731 },   // extrapolated
+        {   18.0,  4068,   1.6, 0.726 },   // extrapolated
+        {   21.0,  4105,   3.0, 0.721 },   // extrapolated
+        {   24.0,  4142,   4.3, 0.717 },   // extrapolated
+        {   27.0,  4180,   5.7, 0.712 },
+        {   30.0,  4217,   7.1, 0.707 },
+        {   33.0,  4254,   8.5, 0.702 },
+        {   36.0,  4291,   9.9, 0.697 },
+        {   39.0,  4329,  11.2, 0.693 },
+        {   42.0,  4366,  12.6, 0.688 },
+        {   45.0,  4403,  14.0, 0.683 },
+        {   48.0,  4441,  15.4, 0.678 },
+        {   51.0,  4478,  16.8, 0.673 },
+        {   54.0,  4515,  18.1, 0.668 },
+        {   57.0,  4552,  19.5, 0.664 },
+        {   60.0,  4590,  20.9, 0.659 },
+        {   63.0,  4627,  22.3, 0.654 },   // extrapolated
+        {   66.0,  4664,  23.7, 0.649 },   // extrapolated
+        {   69.0,  4701,  25.0, 0.644 },   // extrapolated, hood 25.0 clamped
+        {   72.0,  4739,  25.0, 0.640 },   // extrapolated, hood 26.4 clamped
+        {   75.0,  4776,  25.0, 0.635 },   // extrapolated, hood 27.8 clamped
+        {   78.0,  4813,  25.0, 0.630 },   // extrapolated, hood 29.2 clamped
+        {   81.0,  4850,  25.0, 0.625 },   // extrapolated, hood 30.6 clamped
+        {   84.0,  4888,  25.0, 0.620 },   // extrapolated, hood 31.9 clamped
+        {   87.0,  4925,  25.0, 0.615 },   // extrapolated, hood 33.3 clamped
+        {   90.0,  4962,  25.0, 0.611 },   // extrapolated, hood 34.7 clamped
+        {   93.0,  4999,  25.0, 0.606 },   // extrapolated, hood 36.1 clamped
+        {   96.0,  5037,  25.0, 0.601 },   // extrapolated, hood 37.5 clamped
     };
     // END GENERATED SHOT_TABLE
 

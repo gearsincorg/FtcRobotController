@@ -245,10 +245,11 @@ def poly(c, x):
 
 
 def java_const(text, name):
-    m = re.search(r"\b" + name + r"\s*=\s*([-0-9.]+)\s*;", text)
+    # A number, or simple arithmetic on numbers (e.g. FLYWHEEL_GEAR_RATIO = 4.0 / 3.0).
+    m = re.search(r"\b" + name + r"\s*=\s*([-0-9.+*/() ]+?)\s*;", text)
     if not m:
         fail(f"{SHOOTER.name}: can't find {name}")
-    return float(m.group(1))
+    return float(eval(m.group(1), {"__builtins__": {}}))
 
 
 def fit_table(points, text, degree):
