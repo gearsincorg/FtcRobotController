@@ -7,6 +7,7 @@ import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
+import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -288,14 +289,15 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
             && Math.abs(robot.drive.velocity().omega) < HOLD_TURN_RATE;
     }
 
-    /** Field pose of the selected point, facing the goal. */
+    /** Field pose of the selected point, with the shooter (turret at 0, so the robot's back) facing the goal. */
     private Pose selectedPose() {
         Pose goal = robot.shooter.getGoal();
         double dir = Math.toRadians(goalFacingDeg(goal) + ANGLES[angleIndex]);
         double d   = DISTANCES[distIndex];
         double x   = goal.x() + d * Math.cos(dir);
         double y   = goal.y() + d * Math.sin(dir);
-        return new Pose(x, y, Math.atan2(goal.y() - y, goal.x() - x));
+        return new Pose(x, y, Angle.normalizeSigned(
+                Math.atan2(goal.y() - y, goal.x() - x) - ShooterSubsystem.TURRET_ZERO_RAD));
     }
 
     /** from, from + step, ... to. */

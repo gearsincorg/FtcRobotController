@@ -30,11 +30,12 @@ import java.util.function.BooleanSupplier;
  *     "virtual target" = target - robotVelocity * flightTime (iterated a few times).
  *   - Distance to the virtual target selects flywheel RPM, hood angle and flight time from
  *     an interpolated lookup table (SHOT_TABLE).
- *   - The turret angle (relative to robot forward, + is CCW) points at the virtual target, with a
+ *   - The turret angle (from its zero, + is CCW) points at the virtual target, with a
  *     feedforward that counter-rotates the turret while the chassis turns.
  *
- * The turret encoder is zeroed in init(), so the turret MUST be centered (pointing robot-forward)
- * when the opmode is initialized.
+ * The turret encoder is zeroed in init(), so the turret MUST be centered (at its zero, where the
+ * shooter points TURRET_ZERO_RAD from robot forward: straight backwards) when the opmode is
+ * initialized.  Every aim (turret or chassis) allows for that offset.
  *
  * Intake and transfer (feeding balls) are handled by IntakeSubsystem.
  */
@@ -55,11 +56,15 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_OFFSET_X = 0.0;
     private static final double TURRET_OFFSET_Y = 0.0;
 
+    // Direction the shooter points, relative to robot forward (+ is CCW), with the turret at 0.
+    // 180 deg: the shooter faces straight backwards, so the chassis aims its back at the goal.
+    public static final double TURRET_ZERO_RAD = Math.toRadians(180);
+
     // == Mode flags ==========================================================
     // TURRET_ENABLED
     //   true : the turret aims the shooter.  The robot heading is only changed by the driver.
     //          isReady() checks the turret is on its target (and can reach it).
-    //   false: the turret is held at 0 (straight ahead) and the chassis turns to aim the shooter
+    //   false: the turret is held at 0 (backwards) and the chassis turns to aim the shooter
     //          (teleop point-at-goal).  isReady() checks the robot heading (if setRequireChassisAim).
     // SHOOTER_SIMULATED: the flywheel motor is still commanded as normal, but its speed is read
     //   back as the speed commanded, not from the encoder (so isAtSpeed() follows the command).
@@ -90,12 +95,13 @@ public class ShooterSubsystem extends SubsystemBase {
     // conversions below know about the motor.
     //   MOTOR_TICKS_PER_REV : encoder ticks per motor rev (28 for a bare goBILDA 5203 / REV motor)
     //   FLYWHEEL_GEAR_RATIO : flywheel revs per motor rev (> 1 for a speed increaser, e.g.
-    //                         motor pulley 36T / flywheel pulley 24T = 1.5).  TODO measure: count teeth.
+    //                         motor pulley 36T / flywheel pulley 24T = 1.5).  4/3 (1:1.333) since
+    //                         2026-11-17 (was 1.5).
     // Check with util/FlywheelTestOpMode: at full power the motor RPM it shows should be close to
     // the motor's free speed.
     public static final double MOTOR_TICKS_PER_REV  = 28;
     public static final double MOTOR_FREE_RPM       = 5500;
-    public static final double FLYWHEEL_GEAR_RATIO  = 1.5;
+    public static final double FLYWHEEL_GEAR_RATIO  = 4.0 / 3.0;
 
     /** Flywheel RPM -> motor encoder ticks/s (what setVelocity takes). */
     public static double rpmToTicksPerSec(double flywheelRpm) {
@@ -129,13 +135,15 @@ public class ShooterSubsystem extends SubsystemBase {
     // clipped to 0..1 (never reverse power on the belt).  While boosting: BOOST_POWER.
     //
     // KS / KV: fit to a 1000-6000 RPM sweep on a fresh battery (2026-11-17 15:57 calibration log;
-    // within 0.3 V of a straight line over the whole range).  The log
+    // within 0.3 V of a straight line over the whole range; KV 0.00149 then, at ratio 1.5).  With the
+    // 4/3 pulleys the load dropped: KV 0.00116 from the 2026-11-17 21:48 teleop log (7.1 V at ~4000
+    // RPM with KS 2.45; only ~300 RPM of targets, so KS is unchecked: re-sweep).  The log
     // has power and volts, and `python tools/shotlog.py` prints a KS / KV fit from the steady
     // stretches: paste it in here.  The feedforward should do nearly all the work; P and I only
     // trim.  Battery volts are read every VOLTS_PERIOD_S (it costs a hub call; not in the bulk read).
     private static final double NOMINAL_VOLTS          = 12.0;
     private static final double FLYWHEEL_KS            = 2.45;    // volts (the line's offset, not a true stiction value)
-    private static final double FLYWHEEL_KV            = 0.00149; // volts per flywheel RPM
+    private static final double FLYWHEEL_KV            = 0.00116;  // volts per flywheel RPM
     private static final double FLYWHEEL_KP            = 0.0005;  // power per RPM of error (10% per 200 RPM)
     private static final double FLYWHEEL_KI            = 0.0003;  // power per RPM*s of error
     private static final double FLYWHEEL_I_MAX_POWER   = 0.15;    // integral limit (power)
@@ -163,7 +171,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // ramping.  Once running, speed changes are not ramped.  Tune RAMP_RPM_PER_S up until the belt
     // just starts to slip, then back off.
     private static final double RAMP_START_RPM         = 300;
-    private static final double RAMP_RPM_PER_S         = 3000;  // was 2000: the flywheel kept up (lead 450-620), 4435 in 2.2 s
+    private static final double RAMP_RPM_PER_S         = 2000;  // back from 3000 (2026-11-17); at 2000 it kept up (lead 450-620), 4435 in 2.2 s
     private static final double RAMP_MAX_LEAD_RPM      = 800;   // was 400: spin-up took ~4 s
 
     // == Hood ================================================================
@@ -477,8 +485,9 @@ public class ShooterSubsystem extends SubsystemBase {
         return Math.atan2(shot.aimY - turretY, shot.aimX - turretX);
     }
 
-    /** How far to turn the robot (radians, + is CCW) to point straight at the aim point. */
-    public double getAimError() { return Angle.normalizeSigned(getAimHeading() - drive.pose().heading());
+    /** How far to turn the robot (radians, + is CCW) to point the shooter (turret at 0) at the aim point. */
+    public double getAimError() {
+        return Angle.normalizeSigned(getAimHeading() - drive.pose().heading() - TURRET_ZERO_RAD);
     }
 
     /** Distance (inches) from the turret to the (virtual) target. */
@@ -489,8 +498,6 @@ public class ShooterSubsystem extends SubsystemBase {
     public Mode getMode() {
         return mode;
     }
-
-    /** Turret angle relative to robot forward, radians, + is CCW. */
 
     /** Flywheel speed as read this loop (the commanded speed while SHOOTER_SIMULATED). */
     public double getActualRPM() {
@@ -573,10 +580,10 @@ public class ShooterSubsystem extends SubsystemBase {
         turretY = ty;
     }
 
-    /** Turret angle (relative to robot forward) that points at a field location. */
+    /** Turret angle (from its zero, which faces TURRET_ZERO_RAD from robot forward) that points at a field location. */
     private double turretAngleTo(double x, double y) {
         double fieldAngle = Math.atan2(y - turretY, x - turretX);
-        double angle = Angle.normalizeSigned(fieldAngle - drive.pose().heading());
+        double angle = Angle.normalizeSigned(fieldAngle - drive.pose().heading() - TURRET_ZERO_RAD);
         return Range.clip(angle, TURRET_MIN_RAD, TURRET_MAX_RAD);
     }
 
@@ -584,7 +591,7 @@ public class ShooterSubsystem extends SubsystemBase {
     private boolean turretTargetReachable() {
         if (mode != Mode.TRACKING) return true;
         double fieldAngle = Math.atan2(shot.aimY - turretY, shot.aimX - turretX);
-        double angle = Angle.normalizeSigned(fieldAngle - drive.pose().heading());
+        double angle = Angle.normalizeSigned(fieldAngle - drive.pose().heading() - TURRET_ZERO_RAD);
         return angle >= TURRET_MIN_RAD && angle <= TURRET_MAX_RAD;
     }
 
