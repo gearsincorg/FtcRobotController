@@ -65,7 +65,7 @@ public class IntakeSubsystem extends SubsystemBase {
     // == Tuning (all placeholders) ===========================================
     // Intake motor
     private static final double INTAKE_POWER          = 1.0;   // in             (INTAKING, SHOOTING)
-    private static final double INTAKE_HOLD_POWER     = 0.1;   // hold           (FULL)
+    private static final double INTAKE_HOLD_POWER     = 0.0;   // hold           (FULL)
     private static final double INTAKE_REJECT_POWER   =-0.3;   // out            (EJECTING)
     private static final double INTAKE_EJECT_POWER    =-1.0;   // out, full speed (PASS)
     // Transfer motor
@@ -76,7 +76,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double TRANSFER_EJECT_POWER  =-1.0;   // down           (PASS)
 
     // TODO tune on the robot.
-    public static final double GATE_CLOSED         = 0.35;
+    public static final double GATE_CLOSED         = 0.33;
     public static final double GATE_OPEN           = 0.44;
     public static final double GATE_INIT           = 0.5;   // during init only (until START).  Placeholder.
 
