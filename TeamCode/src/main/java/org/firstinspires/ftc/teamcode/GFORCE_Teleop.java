@@ -263,9 +263,9 @@ public class GFORCE_Teleop extends CommandOpMode {
         driverOp.getGamepadButton(GamepadKeys.Button.DPAD_UP)
             .whileHeld(nectarOutCommand());
 
-        // L1: Flower Intake while held.  Placeholder: the mode doesn't exist yet, so it does nothing.
+        // L1: Flower Intake: each press toggles the flower servo between UP and DOWN.
         driverOp.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER)
-            .whileHeld(robot.intake.flowerIntakeCommand());
+            .whenPressed(robot.intake.toggleFlowerCommand());
 
         // L1 also chases a ball when BALL_CHASE_ENABLED (manualDrive); they would share the button,
         // so give ball chase another one before turning it on.  The ball finder runs only while held.

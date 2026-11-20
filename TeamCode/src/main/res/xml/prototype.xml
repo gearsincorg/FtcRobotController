@@ -21,14 +21,9 @@
             <goBILDA5202SeriesMotor name="intake" port="0" />
             <goBILDA5202SeriesMotor name="transfer" port="3" />
 
-
             <Servo name="hood" port="0" />
-            <Servo name="pitch" port="1" />
-            <Servo name="roll" port="2" />
             <Servo name="gate" port="3" />
-
-
-
+            <Servo name="flower" port="4" />
         </LynxModule>
     </LynxUsbDevice>
     <Webcam name="Webcam 1" serialNumber="UC852"/>

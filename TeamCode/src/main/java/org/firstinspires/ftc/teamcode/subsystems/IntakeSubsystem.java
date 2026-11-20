@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.FunctionalCommand;
+import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.StartEndCommand;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.command.WaitUntilCommand;
@@ -80,6 +81,10 @@ public class IntakeSubsystem extends SubsystemBase {
     public static final double GATE_OPEN           = 0.44;
     public static final double GATE_INIT           = 0.5;   // during init only (until START).  Placeholder.
 
+    // Flower Intake servo ("flower"): UP from init, each teleop L1 press toggles UP / DOWN.
+    public static final double FLOWER_DOWN         = 0.5;
+    public static final double FLOWER_UP           = 0.7;   // TODO measure UP.
+
     public  static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
     private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
     private static final double SHOT_CLEAR_MS      = 300;   // auto volley: last ball leaves the flywheel
@@ -91,6 +96,8 @@ public class IntakeSubsystem extends SubsystemBase {
     private DcMotorEx        intake;
     private DcMotorEx        transfer;
     private Servo            gate;
+    private Servo            flower;
+    private boolean          flowerDown = false;
     private DigitalChannel[] slotSensors = new DigitalChannel[SLOT_NAMES.length];
     private SimulatedSlots   sim;
 
@@ -103,7 +110,6 @@ public class IntakeSubsystem extends SubsystemBase {
     // Driver requests
     private boolean  shootHeld       = false;
     private boolean  passHeld        = false;
-    private boolean  flowerHeld      = false;   // Flower Intake requested (TODO: no mode yet)
     private boolean  ejectHeld       = false;
     private boolean  fedThisPress    = false;  // SHOOTING has been reached since shoot was pressed
 
@@ -131,6 +137,7 @@ public class IntakeSubsystem extends SubsystemBase {
             intake = opMode.hardwareMap.get(DcMotorEx.class, "intake");
             transfer = opMode.hardwareMap.get(DcMotorEx.class, "transfer");
             gate   = opMode.hardwareMap.tryGet(Servo.class, "gate");
+            flower = opMode.hardwareMap.get(Servo.class, "flower");
 
             intake.setDirection(DcMotorSimple.Direction.REVERSE);
             intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -157,6 +164,7 @@ public class IntakeSubsystem extends SubsystemBase {
         // Motors off and gate at GATE_INIT until the first loop after START (the scheduler doesn't
         // run during init); from then on the mode decides, so the gate closes once intaking starts.
         set(0, 0, GATE_INIT);
+        setFlowerDown(false);   // flower UP from init
     }
 
     @Override
@@ -173,8 +181,9 @@ public class IntakeSubsystem extends SubsystemBase {
         } else if (sim != null) {
             opMode.telemetry.addLine("SIMULATED BALL SENSORS");
         }
-        opMode.telemetry.addData("Balls", "%d  [ %s]  %s%s", ballCount, pattern, mode,
-                isPacked() ? "  PACKED" : "");
+        // Balls : 3  [ - X X X ]  INTAKING  PACKED  flwr UP
+        opMode.telemetry.addData("Balls", "%d  [ %s]  %s%s%s", ballCount, pattern, mode,
+                isPacked() ? "  PACKED" : "", flowerDown ? "  flwr DN" : "  flwr UP");
         if (showPowers) {
             opMode.telemetry.addData("Intake : Transfer : Gate", "%4.2f : %4.2f : %4.2f",
                     intakePower, transferPower, gatePosition);
@@ -182,6 +191,17 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     private boolean showPowers = false;
+
+    // == Flower Intake ========================================================
+
+    /** Flower servo DOWN (true) or UP (false). */
+    public void setFlowerDown(boolean down) {
+        flowerDown = down;
+        if (flower != null) flower.setPosition(down ? FLOWER_DOWN : FLOWER_UP);
+    }
+
+    public void toggleFlower()       { setFlowerDown(!flowerDown); }
+    public boolean isFlowerDown()    { return flowerDown; }
 
     /** Also show the motor powers and gate position in telemetry (test opmodes). */
     public void setShowPowers(boolean show) { showPowers = show; }
@@ -202,12 +222,6 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public void startPass() { passHeld = true; }
     public void stopPass()  { passHeld = false; }
-
-    // Flower Intake: placeholder.  The button is wired (teleop L1) but the mode doesn't exist yet,
-    // so holding it only sets flowerHeld; updateMode() ignores it.  TODO: add the mode.
-    public void startFlowerIntake() { flowerHeld = true; }
-    public void stopFlowerIntake()  { flowerHeld = false; }
-    public boolean isFlowerIntakeHeld() { return flowerHeld; }
 
     public void startEject() { ejectHeld = true; }
     public void stopEject()  { ejectHeld = false; }
@@ -393,12 +407,15 @@ public class IntakeSubsystem extends SubsystemBase {
     }
 
     /** Pass: every ball out the intake (intake and transfer reversed) while scheduled. */
-    public Command passCommand() {
-        return new StartEndCommand(this::startPass, this::stopPass);
+    /** Flip the flower between UP and DOWN (bind with whenPressed). */
+    public Command toggleFlowerCommand() {
+        return new InstantCommand(this::toggleFlower);
     }
 
-    /** Flower Intake while scheduled.  Placeholder: does nothing yet (see startFlowerIntake()). */
-    public Command flowerIntakeCommand() {
-        return new StartEndCommand(this::startFlowerIntake, this::stopFlowerIntake);
+    public Command flowerUpCommand()   { return new InstantCommand(() -> setFlowerDown(false)); }
+    public Command flowerDownCommand() { return new InstantCommand(() -> setFlowerDown(true)); }
+
+    public Command passCommand() {
+        return new StartEndCommand(this::startPass, this::stopPass);
     }
 }
