@@ -110,6 +110,23 @@ public class GFORCE_Teleop extends CommandOpMode {
         bindButtons();
     }
 
+    private boolean lastInitL1 = false;
+
+    /**
+     * During init the scheduler doesn't run, so button bindings don't work yet.  L1 (Flower Intake)
+     * is the one control that also works before START: each fresh press toggles the flower here.
+     * After START the L1 binding in bindButtons() takes over, from wherever the flower was left.
+     */
+    @Override
+    public void initialize_loop() {
+        boolean l1 = gamepad1.left_bumper;   // L1
+        if (l1 && !lastInitL1) robot.intake.toggleFlower();
+        lastInitL1 = l1;
+
+        telemetry.addData("Flower", "%s  (L1 toggles)", robot.intake.isFlowerDown() ? "DOWN" : "UP");
+        telemetry.update();
+    }
+
     private void showTelemetry() {
         Pose pose = robot.drive.pose();
         Velocity vel = robot.drive.velocity();
