@@ -76,7 +76,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
 
     // == Setup ===============================================================
     // TODO placeholder: a known, easy-to-reproduce starting spot (the Auto1 start position).
-    private static final Pose CAL_START_POSE = new Pose(32.75, 6, Math.toRadians(180));
+    private static final Pose CAL_START_POSE = new Pose(33.875, 7.125, Math.toRadians(180));
 
     // Calibration points: distance from the goal (inches) x angle off the goal's front (degrees,
     // + is CCW seen from above).  0 is straight in front of the goal.

@@ -14,7 +14,7 @@ to /sdcard/FIRST/shooter_cal.csv on the Control Hub.  This tool:
   4. prints the table and the spread within each bin, and rewrites the lines between
      "// BEGIN GENERATED SHOT_TABLE" and "// END GENERATED SHOT_TABLE" in ShooterSubsystem.java.
 
-Usage:  python tools/shotcal.py [--csv FILE] [--dry-run] [--fit [--degree 2]]
+Usage:  python tools/shotcal.py [--csv FILE] [--dry-run] [--fit [--degree 2|3]]
 
 --fit replaces step 3: RPM, hood and flight time are each fitted to distance (least squares, a line by
 default), and the table gets a row every 3 in from 12 to 96 in, extrapolating past the measured shots
@@ -313,8 +313,9 @@ def main():
     ap.add_argument("--fit", action="store_true",
                     help=f"fill {FIT_MIN:.0f}-{FIT_MAX:.0f} in every {FIT_STEP:.0f} in from a least-squares fit "
                          "(extrapolates past the measured range)")
-    ap.add_argument("--degree", type=int, default=1, choices=[1, 2],
-                    help="--fit: 1 = straight line (default, safest to extrapolate), 2 = curve")
+    ap.add_argument("--degree", type=int, default=1, choices=[1, 2, 3],
+                    help="--fit: 1 = straight line (default, safest to extrapolate), 2 = curve, 3 = cubic "
+                         "(follows the data closely, but bends sharply past the measured range)")
     args = ap.parse_args()
 
     if args.push:
