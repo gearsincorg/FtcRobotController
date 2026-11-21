@@ -200,6 +200,12 @@ public class BiobuzzRobot {
     public static final long   AIM_TIMEOUT_MS        = 2000;
     /** Aimed counts only once the turn has (nearly) stopped, so the volley doesn't start mid-swing. */
     private static final double AIM_SETTLED_TURN_RATE = Math.toRadians(20);   // rad/s
+    /**
+     * Longest an auto volley may take from when shoot is asked for, spin-up and aiming included.
+     * shootAllCommand's own VOLLEY_TIMEOUT_MS only starts at the first feed, so if the shooter never
+     * gets ready (flywheel short of target, chassis never aimed) the volley would wait forever.
+     */
+    public static final long   VOLLEY_MAX_MS         = 3000;
     /** Re-send the hold heading when the aim moves this much (the turret pivot moves as the robot turns). */
     private static final double AIM_RETARGET_RAD      = Math.toRadians(1);
 
@@ -237,13 +243,14 @@ public class BiobuzzRobot {
 
     /**
      * Auto volley: turn to the goal (at most AIM_TIMEOUT_MS), then fire every ball
-     * (intake.shootAllCommand()).  The shooter must already be tracking.  Auto turns on
+     * (intake.shootAllCommand(), at most VOLLEY_MAX_MS; on timeout shoot is released and any balls
+     * left stay in the column).  The shooter must already be tracking.  Auto turns on
      * setRequireChassisAim(true), so no ball is fed while the chassis is off target.
      */
     public Command aimAndShootCommand() {
         return new SequentialCommandGroup(
                 aimAtGoalCommand().withTimeout(AIM_TIMEOUT_MS),
-                intake.shootAllCommand());
+                intake.shootAllCommand().withTimeout(VOLLEY_MAX_MS));
     }
 
     /**

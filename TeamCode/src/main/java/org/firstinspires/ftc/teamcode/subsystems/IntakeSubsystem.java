@@ -382,9 +382,13 @@ public class IntakeSubsystem extends SubsystemBase {
     // These don't require the subsystem, so holding shoot and pass together doesn't cancel one
     // of them; updateMode() picks the winner.
 
-    /** Wait until full (intaking is always on).  For auto; add a timeout. */
-    public Command intakeUntilFullCommand() {
-        return new WaitUntilCommand(this::isFull);
+    /**
+     * Wait until full (intaking is always on), for auto.  Gives up after timeoutMs (and auto moves
+     * on with whatever it has); 0 = no timeout (waits for full, however long that takes).
+     */
+    public Command intakeUntilFullCommand(long timeoutMs) {
+        Command wait = new WaitUntilCommand(this::isFull);
+        return timeoutMs > 0 ? wait.withTimeout(timeoutMs) : wait;
     }
 
     /** Fire every ball in one volley (auto); finishes when the last one has left. */
