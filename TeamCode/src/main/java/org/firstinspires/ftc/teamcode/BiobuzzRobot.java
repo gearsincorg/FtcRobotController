@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.pedropathing.algorithm.Foresight;
 import com.pedropathing.controllers.Controller;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Pose;
 import com.pedropathing.math.Vector2D;
 import com.pedropathing.utils.Angle;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -11,6 +12,7 @@ import com.qualcomm.robotcore.util.Range;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.CommandScheduler;
 import com.seattlesolvers.solverslib.command.FunctionalCommand;
+import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
@@ -192,8 +194,67 @@ public class BiobuzzRobot {
         return turnForError(targetRad - drive.pose().heading(), maxTurn);
     }
 
+    // == Auto aiming (turret disabled: the chassis aims) ========================
+
+    /** Give up turning to the goal after this long and shoot anyway (the volley still needs isAimed()). */
+    public static final long   AIM_TIMEOUT_MS        = 2000;
+    /** Aimed counts only once the turn has (nearly) stopped, so the volley doesn't start mid-swing. */
+    private static final double AIM_SETTLED_TURN_RATE = Math.toRadians(20);   // rad/s
     /**
-     * Auto step mode: with step mode on (auto setup menu), wait here until gamepad 1 Cross is pressed;
+     * Longest an auto volley may take from when shoot is asked for, spin-up and aiming included.
+     * shootAllCommand's own VOLLEY_TIMEOUT_MS only starts at the first feed, so if the shooter never
+     * gets ready (flywheel short of target, chassis never aimed) the volley would wait forever.
+     */
+    public static final long   VOLLEY_MAX_MS         = 3000;
+    /** Re-send the hold heading when the aim moves this much (the turret pivot moves as the robot turns). */
+    private static final double AIM_RETARGET_RAD      = Math.toRadians(1);
+
+    /**
+     * Auto: turn in place until the shooter points at the goal, using Pedro's hold (so the turn uses
+     * the same Foresight heading controller as paths; no separate gains).  Holds the x/y where it
+     * started and the heading pose.heading + shooter.getAimError(), re-aimed as that moves.  Finishes
+     * when shooter.isAimed() and the turn has settled; at once while TURRET_ENABLED (the turret
+     * aims).  Pedro keeps holding that pose afterwards, until the next path.  Use with a timeout
+     * (aimAndShootCommand does).
+     */
+    public Command aimAtGoalCommand() {
+        double[] hold = new double[3];   // x, y, heading being held
+        return new FunctionalCommand(
+                () -> {
+                    if (ShooterSubsystem.TURRET_ENABLED) return;
+                    Pose p = drive.pose();
+                    hold[0] = p.x();
+                    hold[1] = p.y();
+                    hold[2] = p.heading() + shooter.getAimError();
+                    drive.hold(new Pose(hold[0], hold[1], hold[2]));
+                },
+                () -> {
+                    if (ShooterSubsystem.TURRET_ENABLED) return;
+                    double heading = drive.pose().heading() + shooter.getAimError();
+                    if (Math.abs(Angle.normalizeSigned(heading - hold[2])) >= AIM_RETARGET_RAD) {
+                        hold[2] = heading;
+                        drive.hold(new Pose(hold[0], hold[1], hold[2]));
+                    }
+                },
+                interrupted -> {},
+                () -> ShooterSubsystem.TURRET_ENABLED
+                        || (shooter.isAimed() && Math.abs(drive.velocity().omega) < AIM_SETTLED_TURN_RATE));
+    }
+
+    /**
+     * Auto volley: turn to the goal (at most AIM_TIMEOUT_MS), then fire every ball
+     * (intake.shootAllCommand(), at most VOLLEY_MAX_MS; on timeout shoot is released and any balls
+     * left stay in the column).  The shooter must already be tracking.  Auto turns on
+     * setRequireChassisAim(true), so no ball is fed while the chassis is off target.
+     */
+    public Command aimAndShootCommand() {
+        return new SequentialCommandGroup(
+                aimAtGoalCommand().withTimeout(AIM_TIMEOUT_MS),
+                intake.shootAllCommand().withTimeout(VOLLEY_MAX_MS));
+    }
+
+    /**
+     * Auto step mode:with step mode on (auto setup menu), wait here until gamepad 1 Cross is pressed;
      * with it off, finish at once.  Cross must be released and pressed again, so holding it doesn't
      * skip several pauses.  Pedro holds the robot at the end of the last path while paused.
      */

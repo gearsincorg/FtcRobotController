@@ -22,6 +22,10 @@ public class GFORCE_Auto extends CommandOpMode {
 
         // Initialize Subsystems
         robot.initialize(AUTO_MAX_SPEED);
+
+        // Volleys (robot.aimAndShootCommand) turn the chassis to the goal first; don't feed a ball
+        // until it's there (ignored while ShooterSubsystem.TURRET_ENABLED: the turret aims).
+        robot.shooter.setRequireChassisAim(true);
     }
 
     /** Push the menu choices (goal side, start pose) to the robot whenever they change. */
