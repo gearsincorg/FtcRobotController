@@ -10,8 +10,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.FunctionalCommand;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.StartEndCommand;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
+import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 
 import java.util.function.BooleanSupplier;
@@ -84,6 +86,7 @@ public class IntakeSubsystem extends SubsystemBase {
     // Flower Intake servo ("flower"): UP from init, each teleop L1 press toggles UP / DOWN.
     public static final double FLOWER_DOWN         = 0.5;
     public static final double FLOWER_UP           = 0.7;   // TODO measure UP.
+    public static final long   FLOWER_MOVE_MS      = 200;   // flowerUp/DownCommand wait this long for the servo
 
     public  static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
     private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
@@ -416,8 +419,17 @@ public class IntakeSubsystem extends SubsystemBase {
         return new InstantCommand(this::toggleFlower);
     }
 
-    public Command flowerUpCommand()   { return new InstantCommand(() -> setFlowerDown(false)); }
-    public Command flowerDownCommand() { return new InstantCommand(() -> setFlowerDown(true)); }
+    /** Flower UP (auto); ends FLOWER_MOVE_MS later, once the servo has had time to get there. */
+    public Command flowerUpCommand() {
+        return new SequentialCommandGroup(
+                new InstantCommand(() -> setFlowerDown(false)), new WaitCommand(FLOWER_MOVE_MS));
+    }
+
+    /** Flower DOWN (auto); ends FLOWER_MOVE_MS later, once the servo has had time to get there. */
+    public Command flowerDownCommand() {
+        return new SequentialCommandGroup(
+                new InstantCommand(() -> setFlowerDown(true)), new WaitCommand(FLOWER_MOVE_MS));
+    }
 
     public Command passCommand() {
         return new StartEndCommand(this::startPass, this::stopPass);
