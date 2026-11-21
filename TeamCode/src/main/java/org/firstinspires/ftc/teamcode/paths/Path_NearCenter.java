@@ -29,11 +29,11 @@ public class Path_NearCenter {
         robot.drive.setPose(getStartPose());
 
         // Add paths and other subsystem commands here
-        auto.addCommands(robot.shooter.startTrackingCommand(), robot.intake.shootAllCommand());
+        auto.addCommands(robot.shooter.startTrackingCommand(), robot.aimAndShootCommand());
         auto.addCommands(new ParallelCommandGroup(path_start().withTimeout(2000), robot.intake.intakeUntilFullCommand()), robot.stepCommand("after path_start"));
-        auto.addCommands(path_2().withTimeout(8000), robot.stepCommand("after path_2"), robot.intake.shootAllCommand());
+        auto.addCommands(path_2().withTimeout(8000), robot.stepCommand("after path_2"), robot.aimAndShootCommand());
         auto.addCommands(path_3(), robot.stepCommand("after path_3"), robot.intake.intakeUntilFullCommand());
-        auto.addCommands(path_4(), robot.stepCommand("after path_4"), robot.intake.shootAllCommand(), robot.shooter.idleCommand());
+        auto.addCommands(path_4(), robot.stepCommand("after path_4"), robot.aimAndShootCommand(), robot.shooter.idleCommand());
 
         return auto;
     }
