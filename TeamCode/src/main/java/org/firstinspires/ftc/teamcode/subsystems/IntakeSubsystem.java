@@ -67,10 +67,10 @@ public class IntakeSubsystem extends SubsystemBase {
     // Intake motor
     private static final double INTAKE_POWER          = 1.0;   // in             (INTAKING, SHOOTING)
     private static final double INTAKE_HOLD_POWER     = 0.0;   // hold           (FULL)
-    private static final double INTAKE_REJECT_POWER   =-0.3;   // out            (EJECTING)
+    private static final double INTAKE_REJECT_POWER   =-0.9;   // out            (EJECTING)
     private static final double INTAKE_EJECT_POWER    =-1.0;   // out, full speed (PASS)
     // Transfer motor
-    private static final double TRANSFER_POWER        = 0.8;   // up             (SHOOTING; INTAKING while not packed)
+    private static final double TRANSFER_POWER        = 0.5;   // up             (SHOOTING; INTAKING while not packed)
     private static final double TRANSFER_EMPTY_POWER  = 0.2;   // up, slow       (INTAKING with no balls)
     private static final double TRANSFER_PACKED_POWER = 0.0;   // packed         (INTAKING while packed, FULL), balls stacked against the closed gate
     private static final double TRANSFER_HOLD_POWER   = 0.2;   // hold           (EJECTING), keeps the column in place
@@ -83,7 +83,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // Flower Intake servo ("flower"): UP from init, each teleop L1 press toggles UP / DOWN.
     public static final double FLOWER_DOWN         = 0.5;
-    public static final double FLOWER_UP           = 0.7;   // TODO measure UP.
+    public static final double FLOWER_UP           = 0.02;  // TODO measure UP.
 
     public  static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
     private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
