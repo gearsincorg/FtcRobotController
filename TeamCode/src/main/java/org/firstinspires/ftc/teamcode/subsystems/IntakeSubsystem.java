@@ -85,7 +85,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // Flower Intake servo ("flower"): UP from init, each teleop L1 press toggles UP / DOWN.
     public static final double FLOWER_DOWN         = 0.5;
-    public static final double FLOWER_UP           = 0.7;   // TODO measure UP.
+    public static final double FLOWER_UP           = 0.02;
     public static final long   FLOWER_MOVE_MS      = 200;   // flowerUp/DownCommand wait this long for the servo
 
     public  static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
