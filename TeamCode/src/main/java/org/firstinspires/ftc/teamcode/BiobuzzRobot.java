@@ -205,7 +205,7 @@ public class BiobuzzRobot {
      * shootAllCommand's own VOLLEY_TIMEOUT_MS only starts at the first feed, so if the shooter never
      * gets ready (flywheel short of target, chassis never aimed) the volley would wait forever.
      */
-    public static final long   VOLLEY_MAX_MS         = 3000;
+    public static final long   VOLLEY_MAX_MS         = 3500;
     /** Re-send the hold heading when the aim moves this much (the turret pivot moves as the robot turns). */
     private static final double AIM_RETARGET_RAD      = Math.toRadians(1);
 

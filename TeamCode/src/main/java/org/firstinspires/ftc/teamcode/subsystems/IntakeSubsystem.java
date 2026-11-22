@@ -29,7 +29,7 @@ import java.util.function.BooleanSupplier;
  * The ball count is simply the number of sensors that see a ball (briefly debounced).  No sensor
  * seeing a ball is "empty", all four is "full".  Nothing is inferred from a ball passing a sensor.
  *
- * During init (until START) the gate sits at GATE_INIT; after that the mode sets it.
+ * During init (until START) the gate is closed; after that the mode sets it.
  *
  * The mode is worked out every loop from what the driver is holding and the ball count, highest
  * priority first:
@@ -72,7 +72,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double INTAKE_REJECT_POWER   =-0.9;   // out            (EJECTING)
     private static final double INTAKE_EJECT_POWER    =-1.0;   // out, full speed (PASS)
     // Transfer motor
-    private static final double TRANSFER_POWER        = 0.5;   // up             (SHOOTING; INTAKING while not packed)
+    private static final double TRANSFER_POWER        = 0.8;   // up             (SHOOTING; INTAKING while not packed)
     private static final double TRANSFER_EMPTY_POWER  = 0.2;   // up, slow       (INTAKING with no balls)
     private static final double TRANSFER_PACKED_POWER = 0.0;   // packed         (INTAKING while packed, FULL), balls stacked against the closed gate
     private static final double TRANSFER_HOLD_POWER   = 0.2;   // hold           (EJECTING), keeps the column in place
@@ -81,10 +81,9 @@ public class IntakeSubsystem extends SubsystemBase {
     // TODO tune on the robot.
     public static final double GATE_CLOSED         = 0.33;
     public static final double GATE_OPEN           = 0.44;
-    public static final double GATE_INIT           = 0.5;   // during init only (until START).  Placeholder.
 
     // Flower Intake servo ("flower"): UP from init, each teleop L1 press toggles UP / DOWN.
-    public static final double FLOWER_DOWN         = 0.5;
+    public static final double FLOWER_DOWN         = 0.475;
     public static final double FLOWER_UP           = 0.02;
     public static final long   FLOWER_MOVE_MS      = 200;   // flowerUp/DownCommand wait this long for the servo
 
@@ -98,7 +97,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private final BooleanSupplier shooterReady;
     private DcMotorEx        intake;
     private DcMotorEx        transfer;
-    private Servo            gate;
+    private   Servo            gate;
     private Servo            flower;
     private boolean          flowerDown = false;
     private DigitalChannel[] slotSensors = new DigitalChannel[SLOT_NAMES.length];
@@ -164,9 +163,9 @@ public class IntakeSubsystem extends SubsystemBase {
         slots = pendingSlots.clone();               // trust the first reading (preload)
         ballCount = countBalls(slots);
 
-        // Motors off and gate at GATE_INIT until the first loop after START (the scheduler doesn't
-        // run during init); from then on the mode decides, so the gate closes once intaking starts.
-        set(0, 0, GATE_INIT);
+        // Motors off and gate closed until the first loop after START (the scheduler doesn't run
+        // during init); from then on the mode decides.
+        set(0, 0, GATE_CLOSED);
         setFlowerDown(false);   // flower UP from init
     }
 
@@ -396,11 +395,18 @@ public class IntakeSubsystem extends SubsystemBase {
 
     /** Fire every ball in one volley (auto); finishes when the last one has left. */
     public Command shootAllCommand() {
+        // Shoot is released in isFinished as well as in end(): SolversLib 0.3.6's withTimeout()
+        // (a ParallelRaceGroup) never calls end() on a command that finished by itself, so
+        // relying on end() left shoot held after every auto volley (intake stuck in SPINUP).
         return new FunctionalCommand(
                 this::startShoot,
                 () -> {},
                 interrupted -> stopShoot(),
-                this::volleyDone);
+                () -> {
+                    if (!volleyDone()) return false;
+                    stopShoot();
+                    return true;
+                });
     }
 
     /** Fire while scheduled (e.g. while a button is held). */

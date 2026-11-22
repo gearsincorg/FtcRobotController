@@ -7,11 +7,11 @@
   },
   "startPoint": {
     "x": 7,
-    "y": 6,
+    "y": 10,
     "locked": false,
     "heading": "linear",
-    "startDeg": 180,
-    "endDeg": 90
+    "startDeg": 270,
+    "endDeg": 110
   },
   "lines": [
     {
@@ -25,50 +25,50 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 36,
-        "y": 36,
+        "x": 32.067108856808424,
+        "y": 33.37807257120562,
         "heading": "linear",
-        "startDeg": 180,
+        "startDeg": 270,
         "endDeg": 90
       },
       "controlPoints": [
         {
-          "x": 30.071236466870047,
-          "y": 18.768630511119785
+          "x": 23.141856833627752,
+          "y": 18.581349980491606
         },
         {
-          "x": 36.222937726463776,
-          "y": 20.146872877462506
+          "x": 32.067108856808424,
+          "y": 15.839420673014589
         }
       ],
       "eventMarkers": [],
       "hidden": false,
-      "chainMaxSpeed": 45,
       "globalStartDeg": 90,
-      "globalEndDeg": 90
+      "globalEndDeg": 90,
+      "maxSpeed": 30
     },
     {
       "id": "mvwwb99h-aoqsot",
       "name": "",
       "endPoint": {
-        "x": 48,
-        "y": 130.5,
+        "x": 37.98049161139291,
+        "y": 104.14124073351542,
         "heading": "linear",
         "startDeg": 90,
         "endDeg": 90
       },
       "controlPoints": [
         {
-          "x": 36,
-          "y": 95.25906552497499
+          "x": 32.067108856808424,
+          "y": 92.44985756555243
         },
         {
-          "x": 33.33754888093852,
-          "y": 127.1676662166163
+          "x": 29.264197339775816,
+          "y": 95.84499746905485
         },
         {
-          "x": 48,
-          "y": 105.97192574236324
+          "x": 35.07764338665626,
+          "y": 99.08936624177801
         }
       ],
       "color": "#88CBCA",
@@ -78,6 +78,33 @@
       "waitBeforeName": "",
       "waitAfterName": "",
       "isChain": true,
+      "hidden": false,
+      "maxSpeed": 55
+    },
+    {
+      "id": "mwqsns39-vqera4",
+      "name": "",
+      "endPoint": {
+        "x": 43.84415584415584,
+        "y": 122.67125578284376,
+        "heading": "linear",
+        "startDeg": 90,
+        "endDeg": 110
+      },
+      "controlPoints": [
+        {
+          "x": 43.84415584415584,
+          "y": 110.43659773702696
+        }
+      ],
+      "color": "#958A6D",
+      "eventMarkers": [],
+      "waitBeforeMs": 0,
+      "waitAfterMs": 0,
+      "waitBeforeName": "",
+      "waitAfterName": "",
+      "isChain": true,
+      "maxSpeed": 20,
       "hidden": false
     }
   ],
@@ -89,6 +116,11 @@
     {
       "kind": "path",
       "lineId": "mvwwb99h-aoqsot",
+      "isChain": true
+    },
+    {
+      "kind": "path",
+      "lineId": "mwqsns39-vqera4",
       "isChain": true
     }
   ],

@@ -371,7 +371,13 @@ public class VisionSubsystem extends SubsystemBase {
                 () -> enableAprilTags(true),
                 () -> {},
                 interrupted -> enableAprilTags(false),
-                this::isTipped);
+                () -> {
+                    // Also off here: SolversLib 0.3.6's withTimeout() never calls end() on a
+                    // command that finished by itself (see IntakeSubsystem.shootAllCommand).
+                    if (!isTipped()) return false;
+                    enableAprilTags(false);
+                    return true;
+                });
     }
 
     /** Same, but gives up after timeoutMs as a safety net (for auto). */

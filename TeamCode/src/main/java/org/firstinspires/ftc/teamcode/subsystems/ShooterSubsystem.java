@@ -172,7 +172,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // ramping.  Once running, speed changes are not ramped.  Tune RAMP_RPM_PER_S up until the belt
     // just starts to slip, then back off.
     private static final double RAMP_START_RPM         = 300;
-    private static final double RAMP_RPM_PER_S         = 2000;  // back from 3000 (2026-11-17); at 2000 it kept up (lead 450-620), 4435 in 2.2 s
+    private static final double RAMP_RPM_PER_S         = 4000;  // 2026-11-21 (was 2000: it kept up, lead 450-620, but took ~2.2 s to 4400; 3000 tried on 2026-11-17 and set back)
     private static final double RAMP_MAX_LEAD_RPM      = 800;   // was 400: spin-up took ~4 s
 
     // == Hood ================================================================

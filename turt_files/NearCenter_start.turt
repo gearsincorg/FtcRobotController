@@ -6,34 +6,25 @@
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 32,
-    "y": 6,
+    "x": 30.875,
+    "y": 10.125,
     "heading": "linear",
     "locked": false,
-    "startDeg": 180,
-    "endDeg": 180
+    "startDeg": 270,
+    "endDeg": 230
   },
   "lines": [
     {
       "id": "line-mvk1b2dn-4ashjr",
       "name": "Garden",
       "endPoint": {
-        "x": 7,
-        "y": 6,
+        "x": 30.875,
+        "y": 16,
         "heading": "linear",
-        "startDeg": 180,
-        "endDeg": 180
+        "startDeg": 270,
+        "endDeg": 230
       },
-      "controlPoints": [
-        {
-          "x": 15.750611910432971,
-          "y": 6
-        },
-        {
-          "x": 26.897539683712097,
-          "y": 6
-        }
-      ],
+      "controlPoints": [],
       "color": "#8CD6B8",
       "eventMarkers": [],
       "locked": false,
@@ -42,7 +33,7 @@
       "waitBeforeName": "",
       "waitAfterName": "",
       "hidden": false,
-      "maxSpeed": 45
+      "maxSpeed": 30
     }
   ],
   "sequence": [
