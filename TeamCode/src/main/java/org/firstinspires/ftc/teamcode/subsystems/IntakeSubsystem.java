@@ -35,7 +35,8 @@ import java.util.function.BooleanSupplier;
  * priority first:
  *
  *   SHOOTING   shoot held and the shooter is up to speed.  Gate open, intake in,
- *              transfer feeds.  The only mode with the gate open.
+ *              transfer feeds (TRANSFER_POWER; TRANSFER_LAST_POWER with one ball left and for
+ *              TRANSFER_LAST_HOLD_MS after the count reads empty).  The only mode with the gate open.
  *   SPINUP     shoot held but the shooter isn't up to speed (yet, or again after a shot slowed it):
  *              intake and transfer stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), pass and eject are ignored.
  *   PASS       pass held: intake out, transfer reversed, every ball goes out the intake.
@@ -73,6 +74,8 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double INTAKE_EJECT_POWER    =-1.0;   // out, full speed (PASS)
     // Transfer motor
     private static final double TRANSFER_POWER        = 0.8;   // up             (SHOOTING; INTAKING while not packed)
+    private static final double TRANSFER_LAST_POWER   = 1.0;   // up, full speed (SHOOTING with one ball left, and TRANSFER_LAST_HOLD_MS after it's gone)
+    private static final double TRANSFER_LAST_HOLD_MS = 250;   // keep TRANSFER_LAST_POWER this long after the count reads empty
     private static final double TRANSFER_EMPTY_POWER  = 0.2;   // up, slow       (INTAKING with no balls)
     private static final double TRANSFER_PACKED_POWER = 0.0;   // packed         (INTAKING while packed, FULL), balls stacked against the closed gate
     private static final double TRANSFER_HOLD_POWER   = 0.2;   // hold           (EJECTING), keeps the column in place
@@ -345,7 +348,13 @@ public class IntakeSubsystem extends SubsystemBase {
     private void applyOutputs() {
         switch (mode) {
             case SHOOTING:
-                set(INTAKE_POWER, TRANSFER_POWER, GATE_OPEN);
+                // Last ball: full speed so it doesn't hang at the gate, and keep it up for a
+                // moment after the count reads empty to push it all the way out.  (emptyTimer
+                // is reset whenever there's a ball, so a column that was already empty long
+                // ago runs at the normal speed.)
+                boolean lastBall = ballCount == 1
+                        || (isEmpty() && emptyTimer.milliseconds() < TRANSFER_LAST_HOLD_MS);
+                set(INTAKE_POWER, lastBall ? TRANSFER_LAST_POWER : TRANSFER_POWER, GATE_OPEN);
                 break;
             case SPINUP:
                 set(0, 0, GATE_CLOSED);
