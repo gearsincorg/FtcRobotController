@@ -83,6 +83,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     private boolean             aimingActive = false;   // the aim branch drove the turn last loop
     private boolean             headingLocked = false;
     private double              headingSetpoint = 0;
+    private boolean             poseAutoReset = false;   // init found no start pose set, so reset it
     private int                 lastLedCount = -1;
     private boolean             lastSimUp, lastSimDown;
 
@@ -94,6 +95,12 @@ public class GFORCE_Teleop extends CommandOpMode {
         chassis = Constants.chassis();
 
         robot.initialize();
+
+        // Odometry: keep the pose auto left us.  If no auto (or anything else) has set a start pose
+        // since the app started, e.g. testing teleop on its own, start from the auto start pose,
+        // as if the driver had pressed Touchpad.
+        poseAutoReset = !BiobuzzRobot.isPoseSet();
+        if (poseAutoReset) resetHeading();
 
         // The shooter always tracks the goal: the flywheel is kept at the table speed (and the hood
         // at the table angle) for wherever we are, from START to the end.  Fire only when it's at
@@ -122,6 +129,9 @@ public class GFORCE_Teleop extends CommandOpMode {
         lastInitL1 = l1;
 
         telemetry.addData("Flower", "%s  (L1 toggles)", robot.intake.isFlowerDown() ? "DOWN" : "UP");
+        telemetry.addData("Start pose", poseAutoReset
+                ? "not set (no auto run): reset to the auto start"
+                : "kept from auto");
         telemetry.update();
     }
 
@@ -368,7 +378,7 @@ public class GFORCE_Teleop extends CommandOpMode {
      */
     public void resetHeading () {
         Pose resetPose = new Path_NearCenter(robot).getStartPose();
-        robot.drive.setPose(resetPose);
+        robot.setStartPose(resetPose);
         headingSetpoint = resetPose.heading();
     }
 }

@@ -29,7 +29,7 @@ public class Path_NearCenter {
     public Command autoCommand() {
 
         SequentialCommandGroup auto = new SequentialCommandGroup();
-        robot.drive.setPose(getStartPose());
+        robot.setStartPose(getStartPose());
 
         // Add paths and other subsystem commands here
         // Jiggles run in a deadline group: they stop as soon as the intake is full (or its wait times out).

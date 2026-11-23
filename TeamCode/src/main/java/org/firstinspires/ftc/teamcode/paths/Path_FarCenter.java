@@ -25,7 +25,7 @@ public class Path_FarCenter {
     public Command autoCommand() {
 
         SequentialCommandGroup auto = new SequentialCommandGroup();
-        robot.drive.setPose(getStartPose());
+        robot.setStartPose(getStartPose());
 
         // Add paths and other subsystem commands here
         auto.addCommands(path_start(), robot.stepCommand("after path_start"));
