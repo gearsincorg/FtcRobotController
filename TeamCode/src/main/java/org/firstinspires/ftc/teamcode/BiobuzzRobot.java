@@ -226,7 +226,7 @@ public class BiobuzzRobot {
         return turnForError(targetRad - drive.pose().heading(), maxTurn);
     }
 
-    // == Auto aiming (turret disabled: the chassis aims) ========================
+    // == Auto aiming (the chassis turns by shooter.getAimError()) ================
 
     /** Give up turning to the goal after this long and shoot anyway (the volley still needs isAimed()). */
     public static final long   AIM_TIMEOUT_MS        = 2000;
@@ -245,15 +245,15 @@ public class BiobuzzRobot {
      * Auto: turn in place until the shooter points at the goal, using Pedro's hold (so the turn uses
      * the same Foresight heading controller as paths; no separate gains).  Holds the x/y where it
      * started and the heading pose.heading + shooter.getAimError(), re-aimed as that moves.  Finishes
-     * when shooter.isAimed() and the turn has settled; at once while TURRET_ENABLED (the turret
-     * aims).  Pedro keeps holding that pose afterwards, until the next path.  Use with a timeout
-     * (aimAndShootCommand does).
+     * when shooter.isAimed() and the turn has settled.  With TURRET_ENABLED, getAimError() is 0
+     * while the turret can reach the goal, so this just holds where it is and finishes once
+     * settled; it only turns if the turret is at a soft limit.  Pedro keeps holding that pose
+     * afterwards, until the next path.  Use with a timeout (aimAndShootCommand does).
      */
     public Command aimAtGoalCommand() {
         double[] hold = new double[3];   // x, y, heading being held
         return new FunctionalCommand(
                 () -> {
-                    if (ShooterSubsystem.TURRET_ENABLED) return;
                     Pose p = drive.pose();
                     hold[0] = p.x();
                     hold[1] = p.y();
@@ -261,7 +261,6 @@ public class BiobuzzRobot {
                     drive.hold(new Pose(hold[0], hold[1], hold[2]));
                 },
                 () -> {
-                    if (ShooterSubsystem.TURRET_ENABLED) return;
                     double heading = drive.pose().heading() + shooter.getAimError();
                     if (Math.abs(Angle.normalizeSigned(heading - hold[2])) >= AIM_RETARGET_RAD) {
                         hold[2] = heading;
@@ -269,8 +268,7 @@ public class BiobuzzRobot {
                     }
                 },
                 interrupted -> {},
-                () -> ShooterSubsystem.TURRET_ENABLED
-                        || (shooter.isAimed() && Math.abs(drive.velocity().omega) < AIM_SETTLED_TURN_RATE));
+                () -> shooter.isAimed() && Math.abs(drive.velocity().omega) < AIM_SETTLED_TURN_RATE);
     }
 
     /**

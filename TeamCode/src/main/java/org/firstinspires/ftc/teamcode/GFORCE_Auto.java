@@ -23,8 +23,13 @@ public class GFORCE_Auto extends CommandOpMode {
         // Initialize Subsystems
         robot.initialize(AUTO_MAX_SPEED);
 
+        // Home the turret at every auto init: it must be centered by hand (pointing straight
+        // backwards).  Teleop keeps this count, so it doesn't home again.
+        robot.shooter.homeTurret();
+
         // Volleys (robot.aimAndShootCommand) turn the chassis to the goal first; don't feed a ball
-        // until it's there (ignored while ShooterSubsystem.TURRET_ENABLED: the turret aims).
+        // until it's there (ignored while ShooterSubsystem.TURRET_ENABLED: the turret aims, and the
+        // chassis only turns if the turret is at a soft limit).
         robot.shooter.setRequireChassisAim(true);
     }
 
@@ -44,6 +49,7 @@ public class GFORCE_Auto extends CommandOpMode {
 
         telemetry.addData("Preload", "%d balls  [ %s]%s", robot.intake.ballCount(),
                 robot.intake.slotPattern(), robot.intake.isSimulated() ? "  (SIMULATED)" : "");
+        telemetry.addData("Turret", "homed at init: it must point straight back (re-init if not)");
         telemetry.update();
     }
 

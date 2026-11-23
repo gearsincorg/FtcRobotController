@@ -33,9 +33,21 @@ import java.util.function.BooleanSupplier;
  *   - The turret angle (from its zero, + is CCW) points at the virtual target, with a
  *     feedforward that counter-rotates the turret while the chassis turns.
  *
- * The turret encoder is zeroed in init(), so the turret MUST be centered (at its zero, where the
- * shooter points TURRET_ZERO_RAD from robot forward: straight backwards) when the opmode is
- * initialized.  Every aim (turret or chassis) allows for that offset.
+ * Homing: the turret has no home sensor, so homeTurret() zeroes the encoder where the turret is
+ * now, and the turret MUST be centered by hand first (its zero, the middle of its travel, where the
+ * shooter points TURRET_ZERO_RAD from robot forward: straight backwards).  Auto homes at every
+ * init; other opmodes home only if nothing has since the app started (turretHomed), so teleop keeps
+ * the count auto left (the hub keeps encoder counts between opmodes).  Every aim (turret or
+ * chassis) allows for the TURRET_ZERO_RAD offset.
+ *
+ * Turret range (TURRET_ENABLED): the cabling limits travel to TURRET_MIN/MAX_RAD (+-230 deg).
+ * The turret angle is continuous (it doesn't wrap at +-180), so it follows the goal smoothly:
+ *   - Not shooting: kept within +-180 deg (plus TURRET_FLIP_MARGIN_RAD, so it doesn't flip back
+ *     and forth when the goal is right in front).  Past that it flips: a full 360 to the same aim
+ *     from the other side.
+ *   - Shooting (shoot held): never flips (it would miss shots); it follows the goal up to the
+ *     soft limits, and past them it stays at the limit and getAimError() asks the chassis to turn
+ *     the rest (teleop point-at-goal, auto aimAtGoalCommand).
  *
  * Intake and transfer (feeding balls) are handled by IntakeSubsystem.
  */
@@ -87,12 +99,16 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_MOTOR_TICKS_PER_REV = 28;
     private static final double TURRET_GEAR_RATIO     = (40.0 / 20.0) * (176.0 / 24.0);   // motor revs per turret rev
     private static final double TURRET_TICKS_PER_RAD  = TURRET_MOTOR_TICKS_PER_REV * TURRET_GEAR_RATIO / (2 * Math.PI);
-    private static final double TURRET_MIN_RAD        = Math.toRadians(-200);
-    private static final double TURRET_MAX_RAD        = Math.toRadians(200);
+    private static final double TURRET_MIN_RAD        = Math.toRadians(-230);
+    private static final double TURRET_MAX_RAD        = Math.toRadians(230);
     private static final double TURRET_KP             = 0.5;    // power per radian of error
     private static final double TURRET_KV             = 0.15;   // power per rad/s of chassis turn
     private static final double TURRET_MAX_POWER      = 0.8;
     private static final double TURRET_TOLERANCE_RAD  = Math.toRadians(5);
+    // Not shooting: the turret is kept within +-180 deg; it flips only once the aim is this far past
+    // 180, so it doesn't flip back and forth with the goal straight ahead.  Keep 180 + this inside
+    // TURRET_MIN/MAX_RAD.
+    private static final double TURRET_FLIP_MARGIN_RAD = Math.toRadians(15);
 
     // == Flywheel ============================================================
     // The encoder is on the motor; a belt drives the flywheel.  Every RPM in this code (the shot
@@ -274,6 +290,13 @@ public class ShooterSubsystem extends SubsystemBase {
     private double targetTurretRad  = 0;
     private double actualRPM        = 0;
     private double actualTurretRad  = 0;
+    private double turretWantRad    = 0;    // turret angle wanted (continuous, before the soft limits)
+    private double turretOverflowRad = 0;   // want - target: what the chassis must turn (at a limit while shooting)
+    private boolean turretFlipping  = false; // a flip is under way (telemetry)
+
+    // Static: the hub keeps the encoder count between opmodes, so one homing lasts until the app
+    // restarts (power cycle or new deploy).  See homeTurret().
+    private static boolean turretHomed = false;
 
     // Latest solution (also computed when not tracking, for telemetry and tuning)
     private double distance         = 0;
@@ -295,10 +318,15 @@ public class ShooterSubsystem extends SubsystemBase {
         flywheel = opMode.hardwareMap.get(DcMotorEx.class, "shooter");
         hood     = opMode.hardwareMap.get(Servo.class, "hood");
 
-        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        turret.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        turret.setDirection(DcMotorSimple.Direction.REVERSE);
+        turret.setDirection(DcMotorSimple.Direction.REVERSE);   // before any encoder read: it sets the count's sign
+        if (turretHomed) {
+            // Keep the count from the last opmode (e.g. auto -> teleop); just read where it is.
+            turret.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            actualTurretRad = readTurretRad();
+        } else {
+            homeTurret();   // first opmode since the app started: the turret must be centered now
+        }
 
         flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
         flywheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -319,7 +347,7 @@ public class ShooterSubsystem extends SubsystemBase {
 
         // One read of each per loop.  Simulated: read back what was last commanded instead.
         actualRPM       = SHOOTER_SIMULATED ? commandRPM : ticksPerSecToRpm(flywheel.getVelocity());
-        actualTurretRad = TURRET_SIMULATED  ? targetTurretRad : turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
+        actualTurretRad = readTurretRad();
         if (voltsTimer.seconds() >= VOLTS_PERIOD_S) readVolts();
 
         computeSolution();
@@ -327,7 +355,17 @@ public class ShooterSubsystem extends SubsystemBase {
         if (mode == Mode.TRACKING) {
             targetRPM       = shot.rpm;
             targetHoodDeg   = shot.hoodDeg;
-            targetTurretRad = TURRET_ENABLED ? turretAngleTo(shot.aimX, shot.aimY) : 0;
+            if (TURRET_ENABLED) {
+                updateTurretTarget();
+            } else {
+                targetTurretRad = turretWantRad = turretOverflowRad = 0;
+            }
+        } else {
+            turretWantRad = targetTurretRad;
+            turretOverflowRad = 0;
+        }
+        if (turretFlipping && Math.abs(targetTurretRad - actualTurretRad) < TURRET_TOLERANCE_RAD) {
+            turretFlipping = false;
         }
 
         updateRamp();
@@ -354,11 +392,22 @@ public class ShooterSubsystem extends SubsystemBase {
         opMode.telemetry.addData("Flywheel", "%4.0f T/A %4.0f rpm  pwr %.2f  hood %4.1f  %s",
                 targetRPM, getActualRPM(), flywheelPower, targetHoodDeg,
                 ramping ? String.format(Locale.US, "RAMP %.0f", commandRPM) : boosting ? "BOOST" : "");
-        // Turret target / actual.  Aim: where the turret should point to hit the cell, computed
-        // every loop even when not tracking: relative to robot forward (+ CCW, before soft limits).
-        opMode.telemetry.addData("Turret", "%4.1f T/A %4.1f  aim %4.1f  %s",
-                Math.toDegrees(targetTurretRad), Math.toDegrees(getactualTurretRad()),
-                Math.toDegrees(getAimError()), TURRET_ENABLED ? "turret aims" : "CHASSIS aims");
+        // Turret target / actual (deg from its zero).  Turret enabled: want = the angle it would like
+        // (before the soft limits), then FLIP (a 360 under way), LIMIT (shooting past a limit: the
+        // chassis turns the rest) or turret aims.  Disabled: aim = how far the chassis must turn.
+        if (TURRET_ENABLED) {
+            opMode.telemetry.addData("Turret", "%4.1f T/A %4.1f  want %4.1f  %s",
+                    Math.toDegrees(targetTurretRad), Math.toDegrees(getactualTurretRad()),
+                    Math.toDegrees(turretWantRad),
+                    turretFlipping ? "FLIP"
+                            : !turretTargetReachable() ? String.format(Locale.US, "LIMIT chassis %+.0f",
+                                                                       Math.toDegrees(turretOverflowRad))
+                            : "turret aims");
+        } else {
+            opMode.telemetry.addData("Turret", "%4.1f T/A %4.1f  aim %4.1f  CHASSIS aims",
+                    Math.toDegrees(targetTurretRad), Math.toDegrees(getactualTurretRad()),
+                    Math.toDegrees(getAimError()));
+        }
         // Distance to each alliance goal, and the Pedro field direction to the aim point.
         opMode.telemetry.addData("Goals", "aud %4.1f  far %4.1f  field hdg %4.0f",
                 dAudience, dFar, Math.toDegrees(getAimHeading()));
@@ -470,8 +519,9 @@ public class ShooterSubsystem extends SubsystemBase {
                         turretErr, Math.toDegrees(TURRET_TOLERANCE_RAD)));
             }
             if (!turretTargetReachable()) {
-                sb.append(String.format(Locale.US, "turret can't reach %.0f deg (limit %.0f..%.0f)  ",
-                        Math.toDegrees(getAimError()), Math.toDegrees(TURRET_MIN_RAD), Math.toDegrees(TURRET_MAX_RAD)));
+                sb.append(String.format(Locale.US, "turret at limit: wants %.0f deg (limit %.0f..%.0f), chassis to turn %+.0f  ",
+                        Math.toDegrees(turretWantRad), Math.toDegrees(TURRET_MIN_RAD), Math.toDegrees(TURRET_MAX_RAD),
+                        Math.toDegrees(turretOverflowRad)));
             }
         }
         if (chassisAimRequired() && !isAimed()) {
@@ -491,8 +541,15 @@ public class ShooterSubsystem extends SubsystemBase {
         return Math.atan2(shot.aimY - turretY, shot.aimX - turretX);
     }
 
-    /** How far to turn the robot (radians, + is CCW) to point the shooter (turret at 0) at the aim point. */
+    /**
+     * How far to turn the robot (radians, + is CCW) so the shooter can point at the aim point.
+     * Turret disabled: to point the shooter (turret at 0) at it.  Turret enabled: 0 while the turret
+     * can reach it; while shooting with the turret at a soft limit, the rest of the way (see the
+     * class comment).  Teleop point-at-goal, auto aimAtGoalCommand and Shooter Calibration all turn
+     * the chassis by this, so they work either way.
+     */
     public double getAimError() {
+        if (TURRET_ENABLED) return turretOverflowRad;
         return Angle.normalizeSigned(getAimHeading() - drive.pose().heading() - TURRET_ZERO_RAD);
     }
 
@@ -586,19 +643,54 @@ public class ShooterSubsystem extends SubsystemBase {
         turretY = ty;
     }
 
-    /** Turret angle (from its zero, which faces TURRET_ZERO_RAD from robot forward) that points at a field location. */
-    private double turretAngleTo(double x, double y) {
-        double fieldAngle = Math.atan2(y - turretY, x - turretX);
-        double angle = Angle.normalizeSigned(fieldAngle - drive.pose().heading() - TURRET_ZERO_RAD);
-        return Range.clip(angle, TURRET_MIN_RAD, TURRET_MAX_RAD);
+    // == Turret ================================================================
+
+    /**
+     * Home the turret: zero its encoder where it is now.  No home sensor, so the turret MUST be
+     * centered by hand first (pointing straight backwards).  Auto calls this at every init; init()
+     * calls it if nothing has since the app started.
+     */
+    public void homeTurret() {
+        turret.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        turret.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        turretHomed       = true;
+        actualTurretRad   = 0;
+        targetTurretRad   = 0;
+        turretWantRad     = 0;
+        turretOverflowRad = 0;
+        turretFlipping    = false;
     }
 
-    /** False if the aim point is outside the turret's travel (clipped at a soft limit). */
+    /** Turret angle from the encoder (radians from its zero, + CCW); the target while TURRET_SIMULATED. */
+    private double readTurretRad() {
+        return TURRET_SIMULATED ? targetTurretRad : turret.getCurrentPosition() / TURRET_TICKS_PER_RAD;
+    }
+
+    /**
+     * Tracking with TURRET_ENABLED: pick the turret target for this loop (see the class comment).
+     * The aim direction repeats every 360 deg; take the copy nearest the last target so the turret
+     * follows the goal continuously.  Not shooting: if that copy is more than 180 +
+     * TURRET_FLIP_MARGIN_RAD from zero, use the one within +-180 instead (a flip).  Shooting: never
+     * flip; clamp at the soft limits and leave the rest (turretOverflowRad) to the chassis.
+     */
+    private void updateTurretTarget() {
+        double desired = Angle.normalizeSigned(getAimHeading() - drive.pose().heading() - TURRET_ZERO_RAD);
+        double turn    = 2 * Math.PI;
+        double nearest = desired + turn * Math.round((targetTurretRad - desired) / turn);
+
+        double want = nearest;
+        if (!shooting.getAsBoolean() && Math.abs(nearest) > Math.PI + TURRET_FLIP_MARGIN_RAD) {
+            want = desired;             // flip: the same aim from the other side, within +-180
+            turretFlipping = true;
+        }
+        targetTurretRad   = Range.clip(want, TURRET_MIN_RAD, TURRET_MAX_RAD);
+        turretWantRad     = want;
+        turretOverflowRad = want - targetTurretRad;
+    }
+
+    /** False while the turret wants to go past a soft limit (shooting), so the chassis must turn. */
     private boolean turretTargetReachable() {
-        if (mode != Mode.TRACKING) return true;
-        double fieldAngle = Math.atan2(shot.aimY - turretY, shot.aimX - turretX);
-        double angle = Angle.normalizeSigned(fieldAngle - drive.pose().heading() - TURRET_ZERO_RAD);
-        return angle >= TURRET_MIN_RAD && angle <= TURRET_MAX_RAD;
+        return Math.abs(turretOverflowRad) < 1e-6;
     }
 
     /** Linear interpolation of SHOT_TABLE by distance, clamped to the end rows. */

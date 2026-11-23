@@ -202,8 +202,12 @@ public class GFORCE_Teleop extends CommandOpMode {
             // Point at the target cluster: use the bearing (+ is CCW) as the heading error.
             yaw = robot.turnForError(robot.vision.getTargetHeadingErrorRad(), MAX_TARGET_TURN);
             headingLocked = false;
-        } else if (yaw == 0 && aimAtGoal) {
+        } else if (yaw == 0 && aimAtGoal
+                   && (!ShooterSubsystem.TURRET_ENABLED || robot.shooter.getAimError() != 0)) {
             // Point the shooter at the goal (leading it when moving).  Twisting the stick overrides.
+            // With the turret enabled the turret aims, and this only turns the chassis while the
+            // turret is held at a soft limit (getAimError() is the rest); otherwise the heading
+            // lock below keeps the driver's heading.
             // Start each aim with a fresh controller (no memory from earlier turning).
             if (!aimingActive) robot.resetHeadingController();
             yaw = robot.turnForError(robot.shooter.getAimError(), MAX_AIM_TURN);
@@ -262,8 +266,8 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         // The intake collects by itself; when full (four balls) it stops (INTAKE_HOLD_POWER).
 
-        // R2: fire while held (pulled past TRIGGER_PULL).  Point-at-goal (the chassis turning to aim,
-        // only while the turret is disabled, see setAimAtGoal) is on exactly while R2 is held:
+        // R2: fire while held (pulled past TRIGGER_PULL).  Point-at-goal (the chassis turning to aim;
+        // with the turret enabled, only when the turret is at a soft limit) is on exactly while R2 is held:
         // released, the chassis stops aiming and the heading is the driver's again.  No ball is fed
         // until the shooter is ready (at speed and aimed); then it feeds until released.
         // Overrides Pass and eject.  The shooter keeps spinning either way.
@@ -345,12 +349,13 @@ public class GFORCE_Teleop extends CommandOpMode {
     }
 
     /**
-     * Point-at-goal (the chassis turns to aim the shooter) on or off.  Only while the turret is
-     * disabled: with ShooterSubsystem.TURRET_ENABLED the turret aims and the robot heading is only
-     * changed by the driver, so this stays off.  The shooter keeps tracking either way.
+     * Point-at-goal (the chassis turns by shooter.getAimError()) on or off.  Turret disabled: the
+     * chassis points the shooter at the goal.  Turret enabled: the turret aims, and the chassis
+     * only turns while shooting pushes the turret past a soft limit.  The shooter keeps tracking
+     * either way.
      */
     public void setAimAtGoal(boolean on) {
-        aimAtGoal = on && !ShooterSubsystem.TURRET_ENABLED;
+        aimAtGoal = on;
     }
 
     /** Nectar In while held.  TODO: not implemented yet (no mechanism or mode); does nothing. */
