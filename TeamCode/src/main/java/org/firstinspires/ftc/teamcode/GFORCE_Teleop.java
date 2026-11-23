@@ -93,6 +93,10 @@ public class GFORCE_Teleop extends CommandOpMode {
     public void initialize() {
         robot.initialize();
 
+        // AprilTag cluster tracking is off in teleop (auto turns it off at its end; make sure).
+        // With CLUSTER_AIM_ENABLED it comes on only while R2 is held.
+        robot.vision.enableAprilTags(false);
+
         // Odometry: the OctoQuad was just reset to (0, 0, 0), so put back the pose auto ended at
         // (saved every loop, see BiobuzzRobot.savedPose); field-centric driving needs the real
         // heading.  If nothing has saved one since the app started, e.g. testing teleop on its own,

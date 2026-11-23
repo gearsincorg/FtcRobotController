@@ -190,9 +190,9 @@ public class VisionSubsystem extends SubsystemBase {
         if (isAprilTagsEnabled()) {
             if (targetCluster != null) {
                 AprilTagPoseFtc pose = targetCluster.ftcPose;
-                opMode.telemetry.addData("Tags", "%s %d%%  x %4.1f y %4.1f  rng %4.1f brg %4.1f yaw %4.1f",
+                opMode.telemetry.addData("Tags", "%s %d%%  x %4.1f y %4.1f  rng %4.1f brg %4.1f yaw %4.1f  pitch %4.1f",
                         targetCluster.metadata.name, targetCluster.percentClusterFound,
-                        pose.x, pose.y, pose.range, pose.bearing, pose.yaw);
+                        pose.x, pose.y, pose.range, pose.bearing, pose.yaw, pose.pitch);
             } else {
                 opMode.telemetry.addData("Tags", "no %s cluster", targetName);
             }
@@ -366,16 +366,21 @@ public class VisionSubsystem extends SubsystemBase {
      * is lost the wait just continues, and the baseline is kept.  Add a timeout in the caller.
      */
     public Command waitForTipCommand() {
-        // Turns AprilTags on for the wait and off again when it ends (tipped, timed out or cancelled).
+        // Turns AprilTags on for the wait, and back to how they were when it ends (tipped, timed out
+        // or cancelled): auto keeps them on for the whole run, so this mustn't turn them off.
+        boolean[] wasOn = { false };
         return new FunctionalCommand(
-                () -> enableAprilTags(true),
-                () -> {},
-                interrupted -> enableAprilTags(false),
                 () -> {
-                    // Also off here: SolversLib 0.3.6's withTimeout() never calls end() on a
+                    wasOn[0] = isAprilTagsEnabled();
+                    enableAprilTags(true);
+                },
+                () -> {},
+                interrupted -> enableAprilTags(wasOn[0]),
+                () -> {
+                    // Also restored here: SolversLib 0.3.6's withTimeout() never calls end() on a
                     // command that finished by itself (see IntakeSubsystem.shootAllCommand).
                     if (!isTipped()) return false;
-                    enableAprilTags(false);
+                    enableAprilTags(wasOn[0]);
                     return true;
                 });
     }

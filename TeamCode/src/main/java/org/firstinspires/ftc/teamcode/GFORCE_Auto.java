@@ -27,6 +27,9 @@ public class GFORCE_Auto extends CommandOpMode {
         // backwards).  Teleop keeps this count, so it doesn't home again.
         robot.shooter.homeTurret();
 
+        // AprilTag cluster tracking is on for the whole of auto, from init; end() turns it off.
+        robot.vision.enableAprilTags(true);
+
         // Volleys (robot.aimAndShootCommand) turn the chassis to the goal first; don't feed a ball
         // until it's there (ignored while ShooterSubsystem.TURRET_ENABLED: the turret aims, and the
         // chassis only turns if the turret is at a soft limit).
@@ -63,6 +66,12 @@ public class GFORCE_Auto extends CommandOpMode {
         super.run();
         robot.update();
         showTelemetry();
+    }
+
+    /** End of the run (CommandOpMode calls this however it ends, even a stop during init). */
+    @Override
+    public void end() {
+        if (robot.vision != null) robot.vision.enableAprilTags(false);
     }
 
     public void showTelemetry() {
