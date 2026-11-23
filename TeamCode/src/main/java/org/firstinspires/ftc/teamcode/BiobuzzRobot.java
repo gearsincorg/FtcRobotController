@@ -105,6 +105,24 @@ public class BiobuzzRobot {
         return shooterLog == null ? "off" : shooterLog.getStatus();
     }
 
+    // == Odometry start ========================================================
+
+    /**
+     * True once the odometry has been given a known start pose (auto, teleop Touchpad, Shooter
+     * Calibration).  The OctoQuad keeps tracking from one opmode to the next, so teleop trusts the
+     * pose auto left it.  Static, so it survives opmode changes but is false again after the Robot
+     * Controller app restarts (a power cycle, which also loses the OctoQuad pose, or a new deploy).
+     */
+    private static boolean poseSet = false;
+
+    public static boolean isPoseSet() { return poseSet; }
+
+    /** Set the odometry to a known pose and remember that it has been set.  Use this, not drive.setPose(). */
+    public void setStartPose(Pose pose) {
+        drive.setPose(pose);
+        poseSet = true;
+    }
+
     // == Current path (for telemetry) ==========================================
 
     private String   pathName  = null;

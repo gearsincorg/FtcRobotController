@@ -9,6 +9,7 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
+import com.seattlesolvers.solverslib.command.ParallelDeadlineGroup;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
@@ -28,18 +29,19 @@ public class Path_NearCenter {
     public Command autoCommand() {
 
         SequentialCommandGroup auto = new SequentialCommandGroup();
-        robot.drive.setPose(getStartPose());
+        robot.setStartPose(getStartPose());
 
         // Add paths and other subsystem commands here
+        // Jiggles run in a deadline group: they stop as soon as the intake is full (or its wait times out).
         auto.addCommands(robot.shooter.startTrackingCommand(), path_start(), robot.aimAndShootCommand());
         auto.addCommands(path_1().withTimeout(2000), robot.intake.intakeUntilFullCommand(1000));
         auto.addCommands(path_2(), new ParallelCommandGroup( robot.intake.flowerDownCommand(), robot.aimAndShootCommand()));
-        auto.addCommands(path_3().withTimeout(1500), new ParallelCommandGroup( robot.intake.intakeUntilFullCommand(2000), new JiggleCommand(robot,2000)), robot.aimAndShootCommand());
+        auto.addCommands(path_3().withTimeout(1500));
+        auto.addCommands(new ParallelDeadlineGroup(robot.intake.intakeUntilFullCommand(2000), new JiggleCommand(robot, 2000)), robot.aimAndShootCommand());
         auto.addCommands(new ParallelCommandGroup( path_4().withTimeout(6000),
-                    new SequentialCommandGroup(new WaitCommand(200), robot.intake.flowerUpCommand(),new WaitCommand(1600),robot.intake.flowerDownCommand())));
-        auto.addCommands(new ParallelCommandGroup(robot.intake.intakeUntilFullCommand(1000), new JiggleCommand(robot,2000)), path_5(),robot.aimAndShootCommand(), robot.intake.flowerUpCommand());
-
-
+                            new SequentialCommandGroup(new WaitCommand(200), robot.intake.flowerUpCommand(),new WaitCommand(1500),robot.intake.flowerDownCommand())));
+        auto.addCommands(new ParallelDeadlineGroup(robot.intake.intakeUntilFullCommand(1000), new JiggleCommand(robot, 1000)));
+        auto.addCommands(path_5(),new ParallelCommandGroup(robot.aimAndShootCommand(), robot.intake.flowerUpCommand()));
         auto.addCommands(robot.shooter.stopTrackingCommand());
         return auto;
     }

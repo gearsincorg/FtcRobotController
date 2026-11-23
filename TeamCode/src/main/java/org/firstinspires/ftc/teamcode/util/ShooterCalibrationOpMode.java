@@ -75,7 +75,7 @@ import java.util.Locale;
 public class ShooterCalibrationOpMode extends CommandOpMode {
 
     // == Setup ===============================================================
-    // TODO placeholder: a known, easy-to-reproduce starting spot (the Auto1 start position).
+    // TODO placeholder: a known, easy-to-reproduce starting spot (the old auto start position; auto now starts from NearCenter_start.turt).
     private static final Pose CAL_START_POSE = new Pose(33.875, 7.125, Math.toRadians(180));
 
     // Calibration points: distance from the goal (inches) x angle off the goal's front (degrees,
@@ -166,7 +166,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
         robot = new BiobuzzRobot(this);
         robot.initialize(25);
         battery = hardwareMap.voltageSensor.iterator().next();
-        robot.drive.setPose(CAL_START_POSE);
+        robot.setStartPose(CAL_START_POSE);
         robot.shooter.setAlliance(robot.config.red);
         applyShooter();
         loadSaved();
@@ -201,7 +201,7 @@ public class ShooterCalibrationOpMode extends CommandOpMode {
         pad.getGamepadButton(GamepadKeys.Button.OPTIONS)
             .whenPressed(new InstantCommand(this::undoLastSave));
         pad.getGamepadButton(GamepadKeys.Button.TOUCHPAD)
-            .whenPressed(new InstantCommand(() -> robot.drive.setPose(CAL_START_POSE)));
+            .whenPressed(new InstantCommand(() -> robot.setStartPose(CAL_START_POSE)));
     }
 
     // Loop (cycle) time, as in teleop: the time between run() calls, and a smoothed average.

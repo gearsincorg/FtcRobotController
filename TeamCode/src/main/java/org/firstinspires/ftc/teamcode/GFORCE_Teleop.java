@@ -48,6 +48,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Commands.RobotCommands;
+import org.firstinspires.ftc.teamcode.paths.Path_NearCenter;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
@@ -73,9 +74,6 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double MAX_AIM_TURN    = 0.6;   // point the shooter at the goal
     private static final double MAX_SNAP_TURN   = 0.6;   // heading lock / face-button heading snap
 
-    // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
-    private static final Pose RESET_POSE = new Pose(30.875, 10.125, Math.toRadians(180));
-
     // Pedro field direction that "stick forward" means to the driver (away from the driver station).
     private static final double DRIVER_FORWARD = Math.toRadians(0);
 
@@ -85,6 +83,7 @@ public class GFORCE_Teleop extends CommandOpMode {
     private boolean             aimingActive = false;   // the aim branch drove the turn last loop
     private boolean             headingLocked = false;
     private double              headingSetpoint = 0;
+    private boolean             poseAutoReset = false;   // init found no start pose set, so reset it
     private int                 lastLedCount = -1;
     private boolean             lastSimUp, lastSimDown;
 
@@ -96,6 +95,12 @@ public class GFORCE_Teleop extends CommandOpMode {
         chassis = Constants.chassis();
 
         robot.initialize();
+
+        // Odometry: keep the pose auto left us.  If no auto (or anything else) has set a start pose
+        // since the app started, e.g. testing teleop on its own, start from the auto start pose,
+        // as if the driver had pressed Touchpad.
+        poseAutoReset = !BiobuzzRobot.isPoseSet();
+        if (poseAutoReset) resetHeading();
 
         // The shooter always tracks the goal: the flywheel is kept at the table speed (and the hood
         // at the table angle) for wherever we are, from START to the end.  Fire only when it's at
@@ -124,6 +129,9 @@ public class GFORCE_Teleop extends CommandOpMode {
         lastInitL1 = l1;
 
         telemetry.addData("Flower", "%s  (L1 toggles)", robot.intake.isFlowerDown() ? "DOWN" : "UP");
+        telemetry.addData("Start pose", poseAutoReset
+                ? "not set (no auto run): reset to the auto start"
+                : "kept from auto");
         telemetry.update();
     }
 
@@ -364,9 +372,14 @@ public class GFORCE_Teleop extends CommandOpMode {
         aimAtGoal = false;
     }
 
+    /**
+     * Touchpad: set the pose to the NearCenter auto start (from NearCenter_start.turt), so a robot
+     * placed where auto starts gets the same pose and heading as auto gives it.
+     */
     public void resetHeading () {
-        robot.drive.setPose(RESET_POSE);
-        headingSetpoint = RESET_POSE.heading();
+        Pose resetPose = new Path_NearCenter(robot).getStartPose();
+        robot.setStartPose(resetPose);
+        headingSetpoint = resetPose.heading();
     }
 }
 
