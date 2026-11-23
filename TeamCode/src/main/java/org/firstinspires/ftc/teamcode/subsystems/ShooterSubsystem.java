@@ -85,9 +85,9 @@ public class ShooterSubsystem extends SubsystemBase {
     //   feedback either way.)
     // Now: the shooter works, the turret can't rotate yet, so the chassis aims and the turret is
     // simulated (its loop then never pushes against the stuck turret).
-    public static final boolean TURRET_ENABLED    = false;
+    public static final boolean TURRET_ENABLED    = true;
+    public static final boolean TURRET_SIMULATED  = false;
     public static final boolean SHOOTER_SIMULATED = false;
-    public static final boolean TURRET_SIMULATED  = true;
 
     // == Turret ==============================================================
     private static final double AIM_TOLERANCE_RAD     = Math.toRadians(5);   // chassis aim (turret disabled)
@@ -99,9 +99,9 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_MOTOR_TICKS_PER_REV = 28;
     private static final double TURRET_GEAR_RATIO     = (40.0 / 20.0) * (176.0 / 24.0);   // motor revs per turret rev
     private static final double TURRET_TICKS_PER_RAD  = TURRET_MOTOR_TICKS_PER_REV * TURRET_GEAR_RATIO / (2 * Math.PI);
-    private static final double TURRET_MIN_RAD        = Math.toRadians(-230);
-    private static final double TURRET_MAX_RAD        = Math.toRadians(230);
-    private static final double TURRET_KP             = 0.5;    // power per radian of error
+    private static final double TURRET_MIN_RAD        = Math.toRadians(-190);
+    private static final double TURRET_MAX_RAD        = Math.toRadians(190);
+    private static final double TURRET_KP             = 0.6;    // power per radian of error
     private static final double TURRET_KV             = 0.15;   // power per rad/s of chassis turn
     private static final double TURRET_MAX_POWER      = 0.8;
     private static final double TURRET_TOLERANCE_RAD  = Math.toRadians(5);

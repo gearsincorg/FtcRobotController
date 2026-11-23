@@ -9,6 +9,7 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Utility;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -71,7 +72,7 @@ import java.util.Locale;
  *   Options (twice)     : undo this session's last save
  *   Touchpad            : reset pose to CAL_START_POSE
  */
-@TeleOp(name = "Shooter Calibration", group = "Tuning")
+@Utility(name = "Shooter Calibration", description = "Shooter tuning")
 public class ShooterCalibrationOpMode extends CommandOpMode {
 
     // == Setup ===============================================================

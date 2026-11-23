@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Utility;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -43,7 +44,7 @@ import static org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem.ticksPe
  *
  * Results stay on screen and are written to FIRST/flywheel_test.txt on the hub.
  */
-@TeleOp(name = "Flywheel Test", group = "Tuning")
+@Utility(name = "Flywheel Test", description = "Tuning")
 public class FlywheelTestOpMode extends LinearOpMode {
 
     private static final double[] SWEEP_POWERS  = { 0.2, 0.4, 0.6, 0.8, 1.0 };

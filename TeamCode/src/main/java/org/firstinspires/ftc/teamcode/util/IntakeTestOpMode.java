@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Utility;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.button.Trigger;
 
@@ -16,7 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeSubsystem;
  * D-pad up / down adds / removes a simulated ball (when the sensors are simulated).
  */
 @Disabled
-@TeleOp(name = "Intake Test", group = "Test")
+@Utility(name = "Intake Test", description = "Test")
 public class IntakeTestOpMode extends CommandOpMode {
 
     private IntakeSubsystem intake;

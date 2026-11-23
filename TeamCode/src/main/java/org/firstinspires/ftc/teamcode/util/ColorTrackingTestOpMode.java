@@ -4,6 +4,7 @@ import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.ManualDrive;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Utility;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
@@ -25,7 +26,7 @@ import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
  * The color range is BiobuzzRobot.POLLEN_YELLOW.
  */
 @Disabled
-@TeleOp(name = "Color Tracking Test", group = "Test")
+@Utility(name = "Color Tracking Test", description = "Runs the color tracking sample")
 public class ColorTrackingTestOpMode extends CommandOpMode {
 
     // The turn toward the ball comes from Foresight's heading controller (robot.turnForError) using
