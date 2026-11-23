@@ -34,8 +34,8 @@ import java.util.function.BooleanSupplier;
  * The mode is worked out every loop from what the driver is holding and the ball count, highest
  * priority first:
  *
- *   SHOOTING   shoot held and the shooter is up to speed.  Gate open, intake in,
- *              transfer feeds (TRANSFER_POWER; TRANSFER_LAST_POWER with one ball left and for
+ *   SHOOTING   shoot held and the shooter is up to speed.  Gate open, then (GATE_OPEN_LEAD_MS
+ *              after it opens) intake in, transfer feeds (TRANSFER_POWER; TRANSFER_LAST_POWER with one ball left and for
  *              TRANSFER_LAST_HOLD_MS after the count reads empty).  The only mode with the gate open.
  *   SPINUP     shoot held but the shooter isn't up to speed (yet, or again after a shot slowed it):
  *              intake and transfer stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), pass and eject are ignored.
@@ -84,6 +84,9 @@ public class IntakeSubsystem extends SubsystemBase {
     // TODO tune on the robot.
     public static final double GATE_CLOSED         = 0.33;
     public static final double GATE_OPEN           = 0.44;
+    // SHOOTING: each time the gate opens, intake and transfer wait this long so the servo is
+    // out of the way before the first ball is pushed into it.
+    private static final double GATE_OPEN_LEAD_MS  = 150;
 
     // Flower Intake servo ("flower"): UP from init, each teleop L1 press toggles UP / DOWN.
     public static final double FLOWER_DOWN         = 0.475;
@@ -129,6 +132,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private final ElapsedTime countTimer = new ElapsedTime();   // time the raw pattern has been stable
     private final ElapsedTime volleyTimer = new ElapsedTime();  // time since this press first reached SHOOTING
     private final ElapsedTime emptyTimer = new ElapsedTime();   // time the count has read empty
+    private final ElapsedTime gateOpenTimer = new ElapsedTime(); // time since the gate was last commanded open
 
     // == standard Methods ===================================
     /** shooterReady: true when the shooter can take a ball (normally ShooterSubsystem::isReady). */
@@ -146,11 +150,11 @@ public class IntakeSubsystem extends SubsystemBase {
 
             intake.setDirection(DcMotorSimple.Direction.REVERSE);
             intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             transfer.setDirection(DcMotorSimple.Direction.REVERSE);   // REVERSE: positive power moves balls up toward the gate (confirmed on the robot 2026-11-14)
             transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            transfer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //transfer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
         if (SIMULATE_SENSORS || SIMULATED) {
@@ -348,6 +352,13 @@ public class IntakeSubsystem extends SubsystemBase {
     private void applyOutputs() {
         switch (mode) {
             case SHOOTING:
+                // Open the gate first; feed only once it has had GATE_OPEN_LEAD_MS to move.
+                // (Restarts whenever the gate was closed last loop, e.g. after a SPINUP dip.)
+                if (!isGateOpen()) gateOpenTimer.reset();
+                if (gateOpenTimer.milliseconds() < GATE_OPEN_LEAD_MS) {
+                    set(0, 0, GATE_OPEN);
+                    break;
+                }
                 // Last ball: full speed so it doesn't hang at the gate, and keep it up for a
                 // moment after the count reads empty to push it all the way out.  (emptyTimer
                 // is reset whenever there's a ball, so a column that was already empty long
