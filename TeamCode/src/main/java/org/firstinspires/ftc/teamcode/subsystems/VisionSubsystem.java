@@ -29,6 +29,8 @@ import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 
 /**
  * Webcam AprilTag Cluster tracking.
@@ -71,9 +73,11 @@ public class VisionSubsystem extends SubsystemBase {
     private String targetName = "RED";
     private AprilTagClusterDetection targetCluster = null;
 
-    // Goal tip detection: how far the tag's pitch must change (degrees) to count as tipped.  Tune.
-    public static double TIP_DEG = 5;
-    public static double TIP_THRESHOLD = 10;
+    // Hive tilt (getTiltAngleDeg(): the cluster's pitch in degrees, signed, + = tipping down).  waitForTipUpCommand()
+    // waits for the tilt to drop below this, waitForTipDownCommand() for it to rise above it.  Tune.
+    public static double TILT_THRESHOLD_DEG = 10;
+    // Tilt reported when the cluster isn't seen: counts as above the threshold (tipped down).
+    public static final double NO_CLUSTER_TILT_DEG = 90;
 
     private int exposureStep = 0;  // 0 = waiting for camera, 1 = manual mode set, 2 = done
 
@@ -237,6 +241,36 @@ public class VisionSubsystem extends SubsystemBase {
         return (targetCluster != null) ? targetCluster.ftcPose : null;
     }
 
+    /**
+     * Hive tilt in degrees: the target cluster's pitch, signed; positive as the hive tips down.
+     * With no valid cluster (not seen, AprilTags off, or no frame processed yet) it is
+     * NO_CLUSTER_TILT_DEG, i.e. above TILT_THRESHOLD_DEG (counts as tipped down).
+     */
+    public double getTiltAngleDeg() {
+        return (targetCluster == null) ? NO_CLUSTER_TILT_DEG : targetCluster.ftcPose.pitch;
+    }
+
+    /**
+     * The tilt angle (getTiltAngleDeg()) as a DoubleSupplier, for conditional commands, e.g.
+     * new ConditionalCommand(a, b, () -> vision.tiltAngle().getAsDouble() < 10).
+     */
+    public DoubleSupplier tiltAngle() {
+        return this::getTiltAngleDeg;
+    }
+
+    /**
+     * True when the hive is up: the tilt is below TILT_THRESHOLD_DEG (the test waitForTipUpCommand()
+     * waits for).  False with no valid cluster (the tilt then counts as above the threshold).
+     */
+    public boolean isHiveUp() {
+        return getTiltAngleDeg() < TILT_THRESHOLD_DEG;
+    }
+
+    /** isHiveUp() as a BooleanSupplier, for conditional commands and triggers. */
+    public BooleanSupplier hiveUp() {
+        return this::isHiveUp;
+    }
+
     /** @return percent of the cluster's tags that are visible (0 if no target). */
     public int getTargetPercentFound() {
         return (targetCluster != null) ? targetCluster.percentClusterFound : 0;
@@ -361,13 +395,40 @@ public class VisionSubsystem extends SubsystemBase {
     // == Command methods  ==========================================
 
     /**
-     * Wait for the goal to tip up.  The first pitch seen is the resting pitch; this finishes
-     * once the target's pitch has moved TIP_DELTA_DEG from it (either direction).  If the target
-     * is lost the wait just continues, and the baseline is kept.  Add a timeout in the caller.
+     * Wait for the hive to tip up: finishes once getTiltAngleDeg() is below TILT_THRESHOLD_DEG.
+     * With no valid cluster the tilt counts as above the threshold, so it keeps waiting.  Add a
+     * timeout (waitForTipUpCommand(timeoutMs)).
      */
-    public Command waitForTipCommand() {
-        // Turns AprilTags on for the wait, and back to how they were when it ends (tipped, timed out
-        // or cancelled): auto keeps them on for the whole run, so this mustn't turn them off.
+    public Command waitForTipUpCommand() {
+        return waitForTilt(this::isHiveUp);
+    }
+
+    /** Same, but gives up after timeoutMs as a safety net (for auto). */
+    public Command waitForTipUpCommand(long timeoutMs) {
+        return waitForTipUpCommand().withTimeout(timeoutMs);
+    }
+
+    /**
+     * Wait for the hive to tip down: finishes once getTiltAngleDeg() is above TILT_THRESHOLD_DEG.
+     * With no valid cluster the tilt counts as above the threshold, so losing the cluster ends
+     * the wait.  Add a timeout (waitForTipDownCommand(timeoutMs)).
+     */
+    public Command waitForTipDownCommand() {
+        return waitForTilt(() -> getTiltAngleDeg() > TILT_THRESHOLD_DEG);
+    }
+
+    /** Same, but gives up after timeoutMs as a safety net (for auto). */
+    public Command waitForTipDownCommand(long timeoutMs) {
+        return waitForTipDownCommand().withTimeout(timeoutMs);
+    }
+
+    /**
+     * Wait until done is true.  Turns AprilTags on for the wait, and back to how they were when it
+     * ends (done, timed out or cancelled): auto keeps them on for the whole run, so this mustn't
+     * turn them off.  Nothing is decided until a frame has been processed with them on, so
+     * turning them on here doesn't read as "no cluster" (and end a tip-down wait at once).
+     */
+    private Command waitForTilt(BooleanSupplier done) {
         boolean[] wasOn = { false };
         return new FunctionalCommand(
                 () -> {
@@ -379,21 +440,11 @@ public class VisionSubsystem extends SubsystemBase {
                 () -> {
                     // Also restored here: SolversLib 0.3.6's withTimeout() never calls end() on a
                     // command that finished by itself (see IntakeSubsystem.shootAllCommand).
-                    if (!isTipped()) return false;
+                    boolean processed = aprilTagSwitch == null || aprilTagSwitch.hasResults();   // no camera: decide now
+                    if (!processed || !done.getAsBoolean()) return false;
                     enableAprilTags(wasOn[0]);
                     return true;
                 });
-    }
-
-    /** Same, but gives up after timeoutMs as a safety net (for auto). */
-    public Command waitForTipCommand(long timeoutMs) {
-        return waitForTipCommand().withTimeout(timeoutMs);
-    }
-
-    private boolean isTipped() {
-        if (targetCluster == null) return false;
-        double pitch = targetCluster.ftcPose.pitch;
-        return  Math.abs(pitch - TIP_DEG) <= TIP_THRESHOLD;
     }
 
     public Command stopStreamingCommand() {
