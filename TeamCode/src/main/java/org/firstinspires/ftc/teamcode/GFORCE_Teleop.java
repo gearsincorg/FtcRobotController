@@ -48,6 +48,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Commands.RobotCommands;
+import org.firstinspires.ftc.teamcode.paths.Path_NearCenter;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
@@ -72,9 +73,6 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double MAX_BALL_TURN   = 0.4;   // chase a ball
     private static final double MAX_AIM_TURN    = 0.6;   // point the shooter at the goal
     private static final double MAX_SNAP_TURN   = 0.6;   // heading lock / face-button heading snap
-
-    // Pose set by the Touchpad (the Auto1 start position).  Heading is in radians.
-    private static final Pose RESET_POSE = new Pose(30.875, 10.125, Math.toRadians(180));
 
     // Pedro field direction that "stick forward" means to the driver (away from the driver station).
     private static final double DRIVER_FORWARD = Math.toRadians(0);
@@ -364,9 +362,14 @@ public class GFORCE_Teleop extends CommandOpMode {
         aimAtGoal = false;
     }
 
+    /**
+     * Touchpad: set the pose to the NearCenter auto start (from NearCenter_start.turt), so a robot
+     * placed where auto starts gets the same pose and heading as auto gives it.
+     */
     public void resetHeading () {
-        robot.drive.setPose(RESET_POSE);
-        headingSetpoint = RESET_POSE.heading();
+        Pose resetPose = new Path_NearCenter(robot).getStartPose();
+        robot.drive.setPose(resetPose);
+        headingSetpoint = resetPose.heading();
     }
 }
 

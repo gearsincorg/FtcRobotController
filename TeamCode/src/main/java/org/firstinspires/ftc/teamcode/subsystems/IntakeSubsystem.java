@@ -100,7 +100,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private final BooleanSupplier shooterReady;
     private DcMotorEx        intake;
     private DcMotorEx        transfer;
-    private   Servo            gate;
+    private Servo            gate;
     private Servo            flower;
     private boolean          flowerDown = false;
     private DigitalChannel[] slotSensors = new DigitalChannel[SLOT_NAMES.length];
