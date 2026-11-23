@@ -243,7 +243,7 @@ public class GFORCE_Teleop extends CommandOpMode {
             .whenPressed(new InstantCommand(() -> resetHeading()));
 
         // Select the alliance (vision cluster and shooter target): Share = blue, Options = red.
-        // Hold R1 to point at the cluster (CLUSTER_AIM_ENABLED only).
+        // (With CLUSTER_AIM_ENABLED, holding R2 also points at the AprilTag cluster; see below.)
         driverOp.getGamepadButton(GamepadKeys.Button.SHARE)
             .whenPressed(new InstantCommand(() -> setAlliance(false)));
         driverOp.getGamepadButton(GamepadKeys.Button.OPTIONS)
@@ -260,7 +260,7 @@ public class GFORCE_Teleop extends CommandOpMode {
         driverOp.getGamepadButton(GamepadKeys.Button.CIRCLE)
             .whenPressed(new InstantCommand(() -> setHeadingTarget(270)));
 
-        // The intake collects by itself (and spits out a 5th ball when full).
+        // The intake collects by itself; when full (four balls) it stops (INTAKE_HOLD_POWER).
 
         // R2: fire while held (pulled past TRIGGER_PULL).  Point-at-goal (the chassis turning to aim,
         // only while the turret is disabled, see setAimAtGoal) is on exactly while R2 is held:
