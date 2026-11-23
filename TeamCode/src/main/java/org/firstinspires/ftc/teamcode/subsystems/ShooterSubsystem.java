@@ -80,10 +80,15 @@ public class ShooterSubsystem extends SubsystemBase {
     // == Turret ==============================================================
     private static final double AIM_TOLERANCE_RAD     = Math.toRadians(5);   // chassis aim (turret disabled)
 
-    // Encoder ticks per radian of turret rotation: 537.7 CPR motor, direct drive (no gear ratio).
-    private static final double TURRET_TICKS_PER_RAD  = 537.7 / (2 * Math.PI);
-    private static final double TURRET_MIN_RAD        = Math.toRadians(-170);
-    private static final double TURRET_MAX_RAD        = Math.toRadians(170);
+    // Encoder ticks per radian of turret rotation.  Bare goBILDA motor (28 ticks per motor rev,
+    // encoder on the motor) through two reductions: 20T -> 40T, then 24T -> 176T, so
+    // (40/20) x (176/24) = 14.667 motor revs per turret rev: 410.7 ticks per turret rev, 65.4 per
+    // radian (about 1.1 ticks per degree).
+    private static final double TURRET_MOTOR_TICKS_PER_REV = 28;
+    private static final double TURRET_GEAR_RATIO     = (40.0 / 20.0) * (176.0 / 24.0);   // motor revs per turret rev
+    private static final double TURRET_TICKS_PER_RAD  = TURRET_MOTOR_TICKS_PER_REV * TURRET_GEAR_RATIO / (2 * Math.PI);
+    private static final double TURRET_MIN_RAD        = Math.toRadians(-200);
+    private static final double TURRET_MAX_RAD        = Math.toRadians(200);
     private static final double TURRET_KP             = 0.5;    // power per radian of error
     private static final double TURRET_KV             = 0.15;   // power per rad/s of chassis turn
     private static final double TURRET_MAX_POWER      = 0.8;
