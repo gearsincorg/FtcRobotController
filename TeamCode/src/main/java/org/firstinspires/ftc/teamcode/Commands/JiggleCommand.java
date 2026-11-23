@@ -16,7 +16,7 @@ import org.firstinspires.ftc.teamcode.BiobuzzRobot;
  * little; the aimAndShootCommand() that follows in auto re-aims anyway.
  */
 public class JiggleCommand extends CommandBase {
-    private static final double JIGGLE_POWER = 0.2;   // strafe power
+    private static final double JIGGLE_POWER = 0.3;   // strafe power
     private static final int    STROKE_MS    = 200;   // one full stroke (left or right)
 
     private final BiobuzzRobot robot;

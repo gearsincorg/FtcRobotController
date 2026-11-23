@@ -49,7 +49,6 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.Commands.RobotCommands;
 import org.firstinspires.ftc.teamcode.paths.Path_NearCenter;
-import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
@@ -58,6 +57,8 @@ public class GFORCE_Teleop extends CommandOpMode {
 
     // Declare robot Subsystems
     private BiobuzzRobot robot = new BiobuzzRobot(this);
+    private final double DRIVE_SCALE_FACTOR = 0.75;  // was 1.0
+    private final double STEER_SCALE_FACTOR = 0.55;  // was 0.7
 
     // Optional vision features.  Off: the camera does no detection work and the button does nothing
     // extra.  On: the finder runs only while its button (L1 / R2) is held.
@@ -78,7 +79,6 @@ public class GFORCE_Teleop extends CommandOpMode {
     private static final double DRIVER_FORWARD = Math.toRadians(0);
 
     // class Methods
-    private Constants.Chassis   chassis;
     private boolean             aimAtGoal = false;
     private boolean             aimingActive = false;   // the aim branch drove the turn last loop
     private boolean             headingLocked = false;
@@ -91,16 +91,15 @@ public class GFORCE_Teleop extends CommandOpMode {
     // == Standard Methods ===================================================
     @Override
     public void initialize() {
-        // Create subsystems here (not as field initializers) so they register with the
-        chassis = Constants.chassis();
-
         robot.initialize();
 
-        // Odometry: keep the pose auto left us.  If no auto (or anything else) has set a start pose
-        // since the app started, e.g. testing teleop on its own, start from the auto start pose,
-        // as if the driver had pressed Touchpad.
-        poseAutoReset = !BiobuzzRobot.isPoseSet();
+        // Odometry: the OctoQuad was just reset to (0, 0, 0), so put back the pose auto ended at
+        // (saved every loop, see BiobuzzRobot.savedPose); field-centric driving needs the real
+        // heading.  If nothing has saved one since the app started, e.g. testing teleop on its own,
+        // start from the auto start pose, as if the driver had pressed Touchpad.
+        poseAutoReset = !robot.restoreSavedPose();
         if (poseAutoReset) resetHeading();
+        else headingSetpoint = robot.drive.pose().heading();
 
         // The shooter always tracks the goal: the flywheel is kept at the table speed (and the hood
         // at the table angle) for wherever we are, from START to the end.  Fire only when it's at
@@ -130,8 +129,10 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         telemetry.addData("Flower", "%s  (L1 toggles)", robot.intake.isFlowerDown() ? "DOWN" : "UP");
         telemetry.addData("Start pose", poseAutoReset
-                ? "not set (no auto run): reset to the auto start"
-                : "kept from auto");
+                ? "none saved (no auto run): reset to the auto start"
+                : String.format(java.util.Locale.US, "from last run: x %.1f  y %.1f  hdg %.0f",
+                        robot.drive.pose().x(), robot.drive.pose().y(),
+                        Math.toDegrees(robot.drive.pose().heading())));
         telemetry.update();
     }
 
@@ -177,8 +178,6 @@ public class GFORCE_Teleop extends CommandOpMode {
 
     public void manualDrive() {
         // Manual driving ===================================
-        final double DRIVE_SCALE_FACTOR = 1.0;
-        final double STEER_SCALE_FACTOR = 0.7;
         final double MIN_ROTATE      = 0.1;
 
         double axial    = -gamepad1.left_stick_y  * DRIVE_SCALE_FACTOR;

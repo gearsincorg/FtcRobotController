@@ -89,7 +89,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double GATE_OPEN_LEAD_MS  = 150;
 
     // Flower Intake servo ("flower"): UP from init, each teleop L1 press toggles UP / DOWN.
-    public static final double FLOWER_DOWN         = 0.475;
+    public static final double FLOWER_DOWN         = 0.45;  // was 0.475
     public static final double FLOWER_UP           = 0.02;
     public static final long   FLOWER_MOVE_MS      = 200;   // flowerUp/DownCommand wait this long for the servo
 
@@ -150,11 +150,11 @@ public class IntakeSubsystem extends SubsystemBase {
 
             intake.setDirection(DcMotorSimple.Direction.REVERSE);
             intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            //intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
             transfer.setDirection(DcMotorSimple.Direction.REVERSE);   // REVERSE: positive power moves balls up toward the gate (confirmed on the robot 2026-11-14)
             transfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            //transfer.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            // Both motors run on plain power (no RUN_USING_ENCODER, dropped 2026-11-21): stronger,
+            // but the speed for a given power now drops as the battery sags.
         }
 
         if (SIMULATE_SENSORS || SIMULATED) {

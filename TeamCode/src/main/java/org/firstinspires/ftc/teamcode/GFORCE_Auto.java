@@ -4,7 +4,7 @@ import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 
-@Autonomous(name = "G-FORCE AUTO", group = "Competition")
+@Autonomous(name = "G-FORCE AUTO", group = "Competition", preselectTeleOp = "G-FORCE TELEOP")
 public class GFORCE_Auto extends CommandOpMode {
     // Top path speed in auto (inches/sec).  The production chassis can do about 94 forward.
     private static final double AUTO_MAX_SPEED = 20;

@@ -97,6 +97,7 @@ public class BiobuzzRobot {
      */
     public void update() {
         drive.update();
+        if (startPoseSet) savedPose = drive.pose();   // for the next opmode (see savedPose)
         if (shooterLog != null) shooterLog.row(shooter, intake);   // after the subsystems ran this loop
     }
 
@@ -108,19 +109,32 @@ public class BiobuzzRobot {
     // == Odometry start ========================================================
 
     /**
-     * True once the odometry has been given a known start pose (auto, teleop Touchpad, Shooter
-     * Calibration).  The OctoQuad keeps tracking from one opmode to the next, so teleop trusts the
-     * pose auto left it.  Static, so it survives opmode changes but is false again after the Robot
-     * Controller app restarts (a power cycle, which also loses the OctoQuad pose, or a new deploy).
+     * The odometry does NOT carry over between opmodes: Pedro's OctoQuadLocalizer constructor calls
+     * resetLocalizerAndCalibrateIMU(), so every opmode starts at (0, 0, 0).  So the pose is saved
+     * here, every loop (update()), by any opmode that was given a known start pose (auto, teleop,
+     * Shooter Calibration), and teleop restores it at init with restoreSavedPose().  Static, so it
+     * survives opmode changes; null again after the Robot Controller app restarts (a power cycle
+     * or a new deploy).  An opmode that never set a start pose (e.g. a test opmode starting at
+     * (0, 0, 0)) doesn't overwrite it.
      */
-    private static boolean poseSet = false;
+    private static Pose savedPose = null;
+    private boolean startPoseSet = false;   // this opmode has set a start pose, so its pose is real
 
-    public static boolean isPoseSet() { return poseSet; }
+    /** The pose the last opmode with a known start ended at, or null if none since the app started. */
+    public static Pose getSavedPose() { return savedPose; }
 
-    /** Set the odometry to a known pose and remember that it has been set.  Use this, not drive.setPose(). */
+    /** Set the odometry to a known pose and save it.  Use this, not drive.setPose(). */
     public void setStartPose(Pose pose) {
         drive.setPose(pose);
-        poseSet = true;
+        savedPose = pose;
+        startPoseSet = true;
+    }
+
+    /** Set the odometry to the saved pose (where the last opmode ended).  False if there is none. */
+    public boolean restoreSavedPose() {
+        if (savedPose == null) return false;
+        setStartPose(savedPose);
+        return true;
     }
 
     // == Current path (for telemetry) ==========================================
