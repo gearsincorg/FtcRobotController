@@ -47,7 +47,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  * See the sensor's product page: https://www.tindie.com/products/37799/
  */
 
-@Disabled
+//@Disabled
 @TeleOp(name="OctoQuad Localizer", group="OctoQuad")
 public class SensorOctoQuadLocalization extends LinearOpMode
 {

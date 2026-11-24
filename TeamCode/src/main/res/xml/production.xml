@@ -7,7 +7,7 @@
             <goBILDA5202SeriesMotor name="back_left_drive"   port="1" />
             <goBILDA5202SeriesMotor name="front_right_drive" port="2" />
             <goBILDA5202SeriesMotor name="back_right_drive"  port="3" />
-            <OctoQuadFTC name="octoquad" port="0" bus="1"/>
+            <OctoQuadFTC name="octoquad" port="0" bus="2"/>
 
             <DigitalDevice name="slot1" port="1" />
             <DigitalDevice name="slot2" port="3" />
