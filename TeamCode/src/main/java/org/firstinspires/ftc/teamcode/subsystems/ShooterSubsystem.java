@@ -40,7 +40,7 @@ import java.util.function.BooleanSupplier;
  * the count auto left (the hub keeps encoder counts between opmodes).  Every aim (turret or
  * chassis) allows for the TURRET_ZERO_RAD offset.
  *
- * Turret range (TURRET_ENABLED): the cabling limits travel to TURRET_MIN/MAX_RAD (+-230 deg).
+ * Turret range (TURRET_ENABLED): the cabling limits travel to TURRET_MIN/MAX_RAD (+-190 deg while testing).
  * The turret angle is continuous (it doesn't wrap at +-180), so it follows the goal smoothly:
  *   - Not shooting: kept within +-180 deg (plus TURRET_FLIP_MARGIN_RAD, so it doesn't flip back
  *     and forth when the goal is right in front).  Past that it flips: a full 360 to the same aim
@@ -83,8 +83,8 @@ public class ShooterSubsystem extends SubsystemBase {
     // TURRET_SIMULATED: the turret motor and hood servo are still commanded as normal, but the turret
     //   angle is read back as the angle commanded, not from the encoder.  (The hood servo has no
     //   feedback either way.)
-    // Now: the shooter works, the turret can't rotate yet, so the chassis aims and the turret is
-    // simulated (its loop then never pushes against the stuck turret).
+    // Now: the shooter and turret both work (turret testing), so the turret aims and nothing is
+    // simulated.  The turret limits are narrowed to +-190 deg while testing.
     public static final boolean TURRET_ENABLED    = true;
     public static final boolean TURRET_SIMULATED  = false;
     public static final boolean SHOOTER_SIMULATED = false;
@@ -108,7 +108,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // Not shooting: the turret is kept within +-180 deg; it flips only once the aim is this far past
     // 180, so it doesn't flip back and forth with the goal straight ahead.  Keep 180 + this inside
     // TURRET_MIN/MAX_RAD.
-    private static final double TURRET_FLIP_MARGIN_RAD = Math.toRadians(15);
+    private static final double TURRET_FLIP_MARGIN_RAD = Math.toRadians(10);
 
     // == Flywheel ============================================================
     // The encoder is on the motor; a belt drives the flywheel.  Every RPM in this code (the shot
