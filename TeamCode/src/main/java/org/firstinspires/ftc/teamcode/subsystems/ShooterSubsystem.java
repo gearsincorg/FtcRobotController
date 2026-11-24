@@ -102,15 +102,15 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_MIN_RAD        = Math.toRadians(-190);
     private static final double TURRET_MAX_RAD        = Math.toRadians(190);
     // Turret loop gains (the defaults; the loop uses the instance fields below, which TurretTuneOpMode
-    // can change live through setTurretGains()).  From Turret Tune step tests, 2026-11-24 (10 and 20 deg
-    // steps: overshoot 0-5%, settle 115-270 ms, on the nearest tick except one repeatable stall 1.2 deg
-    // short at one spot, which KI is for; KI not finished: try 3).  KV is still Plant ID's guess (1/K):
-    // run the Kv test (Circle) next.
+    // can change live through setTurretGains()).  Tuned with Turret Tune, 2026-11-24, 12.4 V: 10 and
+    // 20 deg steps settle on the tick nearest the target in 120-410 ms with 0-9% overshoot.  KI clears
+    // a repeatable stall 1.2 deg short at one spot (0.5 was too slow to).  KV from the Kv test: 0.2033,
+    // then 0.205 with it applied, so the tracking lag is cancelled (Plant ID's 1/K guess was 0.057).
     public static final double TURRET_KP          = 1.2;    // power per radian of error
-    public static final double TURRET_KI          = 0.5;    // power per radian of error, per second
+    public static final double TURRET_KI          = 1.0;    // power per radian of error, per second
     public static final double TURRET_KD          = 0.11;   // power per rad/s of turret speed (on the measurement)
     public static final double TURRET_KS          = 0.14;   // power to break static friction, added in the direction of the error
-    public static final double TURRET_KV          = 0.057;  // power per rad/s of chassis turn
+    public static final double TURRET_KV          = 0.205;  // power per rad/s of chassis turn
     private static final double TURRET_I_ZONE_RAD   = Math.toRadians(10);  // integral only builds within this error
     private static final double TURRET_I_MAX_POWER  = 0.2;                 // and is clamped to this power
     private static final double TURRET_D_FILTER     = 0.3;                 // 0..1: weight of the newest speed sample
