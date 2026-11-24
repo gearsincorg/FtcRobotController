@@ -85,6 +85,13 @@ public class TurretTuneOpMode extends CommandOpMode {
     private int stepsAnalysed;
     private double worstOvershoot, sumSettle, worstErr;
     private int settledCount;
+    // Every completed step-test run this session, newest first, for Panels (the Driver Station
+    // only has room for the last few lines).  Each run: a header with the gains, one line per step, the summary.
+    private static final int MAX_STEP_RUNS = 8;
+    private final List<List<String>> stepRuns = new ArrayList<>();
+    private int stepRunCount;
+    private String stepRunHeader;
+    private boolean resultsInHistory;   // results are the newest step run (don't show them twice on Panels)
 
     // == Kv test =================================================================
     private double kvTheta0, kvHeading0, kvKvUsed, kvKpUsed;
@@ -203,6 +210,7 @@ public class TurretTuneOpMode extends CommandOpMode {
 
     private void begin(Stage s, String why) {
         results.clear();
+        resultsInHistory = false;
         stage = s;
         center = angle;
         status = why;
@@ -367,6 +375,10 @@ public class TurretTuneOpMode extends CommandOpMode {
         stepIndex = 0;
         stepsAnalysed = 0;
         worstOvershoot = 0; sumSettle = 0; worstErr = 0; settledCount = 0;
+        stepRunHeader = String.format(Locale.US,
+                "RUN %d   step %.1f deg   Kp %.3f  Ki %.3f  Kd %.4f  Ks %.3f  Kv %.3f   %.1f V",
+                stepRunCount + 1, Math.toDegrees(stepSize), TurretTuneConfig.KP, TurretTuneConfig.KI,
+                TurretTuneConfig.KD, TurretTuneConfig.KS, TurretTuneConfig.KV, volts());
         stepFrom = center;
         stepTo   = stepTargets[0];
         shooter.holdTurretAt(stepTo);
@@ -403,6 +415,17 @@ public class TurretTuneOpMode extends CommandOpMode {
                     worstOvershoot,
                     settledCount > 0 ? String.format(Locale.US, "%.0f ms", 1000 * sumSettle / settledCount) : "-",
                     worstErr, hint);
+            List<String> run = new ArrayList<>();
+            run.add(stepRunHeader);
+            for (String s : results) run.add("    " + s);
+            run.add(String.format(Locale.US, "    => worst overshoot %.0f%%, mean settle %s, worst final err %.2f deg.  %s",
+                    worstOvershoot,
+                    settledCount > 0 ? String.format(Locale.US, "%.0f ms", 1000 * sumSettle / settledCount) : "-",
+                    worstErr, hint.toString().trim()));
+            stepRuns.add(0, run);
+            stepRunCount++;
+            resultsInHistory = true;
+            while (stepRuns.size() > MAX_STEP_RUNS) stepRuns.remove(stepRuns.size() - 1);
             return;
         }
         stepFrom = stepTo;
@@ -477,9 +500,18 @@ public class TurretTuneOpMode extends CommandOpMode {
         panels.addData("omega", omega);
         panels.addData("volts", volts());
         panels.addData("status", status);
-        for (String s : results) panels.addLine(s);
+        if (!resultsInHistory) for (String s : results) panels.addLine(s);
         if (!Double.isNaN(sKp)) {
             panels.addLine(String.format(Locale.US, "SUGGEST Kp %.4f Ki %.4f Kd %.4f Ks %.4f Kv %.4f", sKp, sKi, sKd, sKs, sKv));
+        }
+        // Every step-test run this session (Triangle), newest first, with the gains it ran with.
+        if (!stepRuns.isEmpty()) {
+            panels.addLine("");
+            panels.addLine("===== STEP TESTS (newest first) =====");
+            for (List<String> run : stepRuns) {
+                for (String s : run) panels.addLine(s);
+                panels.addLine("");
+            }
         }
         panels.update();
     }

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.util;
 
+import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
+
 import java.util.Arrays;
 
 /** The arithmetic for TurretTuneOpMode: line fits, step-response metrics and the gain design. */
@@ -52,15 +54,16 @@ public final class TurretTuneMath {
 
     /**
      * Analyse a step from `from` to `to` (radians): t is seconds since the step, angle the turret
-     * angle, power the power sent, n samples.  Settled = within max(2% of the step, 0.3 deg) from
-     * then on.
+     * angle, power the power sent, n samples.  Settled = within max(2% of the step, the Ks deadband)
+     * from then on: the deadband is just over half an encoder tick, so resting on the tick nearest
+     * the target counts as settled (a tighter band can't be met when the target falls between ticks).
      */
     public static StepResult analyseStep(double[] t, double[] angle, double[] power, int n, double from, double to) {
         StepResult r = new StepResult();
         double size = to - from;
         r.sizeDeg = Math.toDegrees(size);
         if (n < 3 || Math.abs(size) < 1e-6) return r;
-        double band = Math.max(0.02 * Math.abs(size), Math.toRadians(0.3));
+        double band = Math.max(0.02 * Math.abs(size), ShooterSubsystem.TURRET_KS_DEADBAND_RAD);
         double peak = 0, t10 = Double.NaN, t90 = Double.NaN;
         double lastOutside = 0;
         for (int i = 0; i < n; i++) {

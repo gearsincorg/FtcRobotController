@@ -102,16 +102,23 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_MIN_RAD        = Math.toRadians(-190);
     private static final double TURRET_MAX_RAD        = Math.toRadians(190);
     // Turret loop gains (the defaults; the loop uses the instance fields below, which TurretTuneOpMode
-    // can change live through setTurretGains()).  Ki, Kd and Ks are 0 = off until they have been tuned.
-    public static final double TURRET_KP          = 0.6;    // power per radian of error
-    public static final double TURRET_KI          = 0.0;    // power per radian of error, per second
-    public static final double TURRET_KD          = 0.0;    // power per rad/s of turret speed (on the measurement)
-    public static final double TURRET_KS          = 0.0;    // power to break static friction, added in the direction of the error
-    public static final double TURRET_KV          = 0.15;   // power per rad/s of chassis turn
+    // can change live through setTurretGains()).  From Turret Tune step tests, 2026-11-24 (10 and 20 deg
+    // steps: overshoot 0-5%, settle 115-270 ms, on the nearest tick except one repeatable stall 1.2 deg
+    // short at one spot, which KI is for; KI not finished: try 3).  KV is still Plant ID's guess (1/K):
+    // run the Kv test (Circle) next.
+    public static final double TURRET_KP          = 1.2;    // power per radian of error
+    public static final double TURRET_KI          = 0.5;    // power per radian of error, per second
+    public static final double TURRET_KD          = 0.11;   // power per rad/s of turret speed (on the measurement)
+    public static final double TURRET_KS          = 0.14;   // power to break static friction, added in the direction of the error
+    public static final double TURRET_KV          = 0.057;  // power per rad/s of chassis turn
     private static final double TURRET_I_ZONE_RAD   = Math.toRadians(10);  // integral only builds within this error
     private static final double TURRET_I_MAX_POWER  = 0.2;                 // and is clamped to this power
     private static final double TURRET_D_FILTER     = 0.3;                 // 0..1: weight of the newest speed sample
-    private static final double TURRET_KS_DEADBAND_RAD = Math.toRadians(0.3); // no Ks push inside this error
+    // No Ks push inside this error.  It must be more than half an encoder tick (0.44 deg): the angle is
+    // only read in ticks, so when the target falls between two ticks, a narrower deadband has no tick
+    // inside it and Ks (about breakaway) pushes the turret back and forth for ever (seen 2026-11-24 with
+    // 0.3 deg on 10 and 20 deg steps).  0.6 tick (0.53 deg): the nearest tick is always inside.
+    public static final double TURRET_KS_DEADBAND_RAD = 0.6 / TURRET_TICKS_PER_RAD;
     private static final double TURRET_MAX_POWER      = 0.8;
     private static final double TURRET_TOLERANCE_RAD  = Math.toRadians(5);
     // Not shooting: the turret is kept within +-180 deg; it flips only once the aim is this far past
@@ -858,9 +865,15 @@ public class ShooterSubsystem extends SubsystemBase {
             double error = targetTurretRad - angle;
             power = error * turretKp;
             if (turretKi != 0) {
-                turretIntegral = Math.abs(error) < TURRET_I_ZONE_RAD
-                        ? Range.clip(turretIntegral + turretKi * error * dt, -TURRET_I_MAX_POWER, TURRET_I_MAX_POWER)
-                        : 0;
+                // Builds only between the Ks deadband and the I zone, and is held (not reset) inside
+                // the deadband: resting on the tick nearest the target leaves up to half a tick of
+                // error for good, and integrating that would creep the turret off the tick and back.
+                if (Math.abs(error) >= TURRET_I_ZONE_RAD) {
+                    turretIntegral = 0;
+                } else if (Math.abs(error) > TURRET_KS_DEADBAND_RAD) {
+                    turretIntegral = Range.clip(turretIntegral + turretKi * error * dt,
+                                                -TURRET_I_MAX_POWER, TURRET_I_MAX_POWER);
+                }
                 power += turretIntegral;
             }
             if (turretKd != 0 && dt > 1e-4) {
