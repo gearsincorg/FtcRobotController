@@ -101,8 +101,17 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double TURRET_TICKS_PER_RAD  = TURRET_MOTOR_TICKS_PER_REV * TURRET_GEAR_RATIO / (2 * Math.PI);
     private static final double TURRET_MIN_RAD        = Math.toRadians(-190);
     private static final double TURRET_MAX_RAD        = Math.toRadians(190);
-    private static final double TURRET_KP             = 0.6;    // power per radian of error
-    private static final double TURRET_KV             = 0.15;   // power per rad/s of chassis turn
+    // Turret loop gains (the defaults; the loop uses the instance fields below, which TurretTuneOpMode
+    // can change live through setTurretGains()).  Ki, Kd and Ks are 0 = off until they have been tuned.
+    public static final double TURRET_KP          = 0.6;    // power per radian of error
+    public static final double TURRET_KI          = 0.0;    // power per radian of error, per second
+    public static final double TURRET_KD          = 0.0;    // power per rad/s of turret speed (on the measurement)
+    public static final double TURRET_KS          = 0.0;    // power to break static friction, added in the direction of the error
+    public static final double TURRET_KV          = 0.15;   // power per rad/s of chassis turn
+    private static final double TURRET_I_ZONE_RAD   = Math.toRadians(10);  // integral only builds within this error
+    private static final double TURRET_I_MAX_POWER  = 0.2;                 // and is clamped to this power
+    private static final double TURRET_D_FILTER     = 0.3;                 // 0..1: weight of the newest speed sample
+    private static final double TURRET_KS_DEADBAND_RAD = Math.toRadians(0.3); // no Ks push inside this error
     private static final double TURRET_MAX_POWER      = 0.8;
     private static final double TURRET_TOLERANCE_RAD  = Math.toRadians(5);
     // Not shooting: the turret is kept within +-180 deg; it flips only once the aim is this far past
@@ -294,6 +303,18 @@ public class ShooterSubsystem extends SubsystemBase {
     private double turretOverflowRad = 0;   // want - target: what the chassis must turn (at a limit while shooting)
     private boolean turretFlipping  = false; // a flip is under way (telemetry)
 
+    // Turret loop state and live gains (see TURRET_KP).  openLoop: NaN = closed loop; else a raw power
+    // for characterization (soft limits still cut it).  kvAlways: apply Kv outside TRACKING (tuning).
+    private double  turretKp = TURRET_KP, turretKi = TURRET_KI, turretKd = TURRET_KD,
+                    turretKs = TURRET_KS, turretKv = TURRET_KV;
+    private double  turretOpenLoopPower = Double.NaN;
+    private boolean turretKvAlways      = false;
+    private double  turretIntegral      = 0;
+    private double  turretDTerm         = 0;
+    private double  lastTurretRad       = 0;
+    private double  turretPower         = 0;    // last power sent to the turret
+    private final ElapsedTime turretTimer = new ElapsedTime();
+
     // Static: the hub keeps the encoder count between opmodes, so one homing lasts until the app
     // restarts (power cycle or new deploy).  See homeTurret().
     private static boolean turretHomed = false;
@@ -438,8 +459,39 @@ public class ShooterSubsystem extends SubsystemBase {
         mode            = Mode.MANUAL;
         targetRPM       = rpm;
         targetHoodDeg   = hoodDeg;
+        if (turretRad != targetTurretRad) turretIntegral = 0;
         targetTurretRad = turretRad;
     }
+
+    // == Turret tuning API (TurretTuneOpMode) ====================================
+
+    /** Replace the turret loop gains (instance values; the TURRET_* constants stay the defaults). */
+    public void setTurretGains(double kp, double ki, double kd, double ks, double kv) {
+        turretKp = kp; turretKi = ki; turretKd = kd; turretKs = ks; turretKv = kv;
+    }
+
+    /** Raw turret power for characterization; Double.NaN returns to the closed loop.  Soft limits still apply. */
+    public void setTurretOpenLoop(double power) {
+        turretOpenLoopPower = power;
+    }
+
+    /** Closed-loop hold of the turret at an angle (radians from its zero), flywheel off.  For tuning steps. */
+    public void holdTurretAt(double rad) {
+        mode      = Mode.MANUAL;
+        targetRPM = 0;
+        if (rad != targetTurretRad) turretIntegral = 0;
+        targetTurretRad = rad;
+    }
+
+    /** Apply the chassis-rotation feedforward (Kv) in every mode, not only TRACKING (tuning Kv). */
+    public void setTurretKvAlways(boolean on) {
+        turretKvAlways = on;
+    }
+
+    public double getTurretTargetRad() { return targetTurretRad; }
+    public double getTurretPower()     { return turretPower; }
+    public static double turretMinRad() { return TURRET_MIN_RAD; }
+    public static double turretMaxRad() { return TURRET_MAX_RAD; }
 
     /**
      * With TURRET_ENABLED false (the chassis aims), require the chassis to point at the goal
@@ -792,18 +844,44 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private void applyOutputs() {
         // Control Turret
-        // Turret: P on angle + feedforward to cancel chassis rotation.
-        double error = targetTurretRad - getactualTurretRad();
-        double power = error * TURRET_KP;
-        if (mode == Mode.TRACKING && TURRET_ENABLED) {
-            power -= drive.velocity().omega * TURRET_KV;
-        }
-        // Never drive past the soft limits.
+        // P on angle (+ I within a zone, + D on the measurement, + Ks to break friction) plus a
+        // feedforward that cancels chassis rotation.  Open loop (tuning only) sends a raw power.
         double angle = getactualTurretRad();
+        double dt    = Math.min(turretTimer.seconds(), 0.1);
+        turretTimer.reset();
+        double power;
+        if (!Double.isNaN(turretOpenLoopPower)) {
+            power = turretOpenLoopPower;
+            turretIntegral = 0;
+            turretDTerm    = 0;
+        } else {
+            double error = targetTurretRad - angle;
+            power = error * turretKp;
+            if (turretKi != 0) {
+                turretIntegral = Math.abs(error) < TURRET_I_ZONE_RAD
+                        ? Range.clip(turretIntegral + turretKi * error * dt, -TURRET_I_MAX_POWER, TURRET_I_MAX_POWER)
+                        : 0;
+                power += turretIntegral;
+            }
+            if (turretKd != 0 && dt > 1e-4) {
+                double speed = (angle - lastTurretRad) / dt;
+                turretDTerm += TURRET_D_FILTER * (-turretKd * speed - turretDTerm);
+                power += turretDTerm;
+            }
+            if ((mode == Mode.TRACKING && TURRET_ENABLED) || turretKvAlways) {
+                power -= drive.velocity().omega * turretKv;
+            }
+            if (turretKs != 0 && Math.abs(error) > TURRET_KS_DEADBAND_RAD) {
+                power += Math.copySign(turretKs, error);
+            }
+        }
+        lastTurretRad = angle;
+        // Never drive past the soft limits.
         if ((angle >= TURRET_MAX_RAD && power > 0) || (angle <= TURRET_MIN_RAD && power < 0)) {
             power = 0;
         }
-        turret.setPower(Range.clip(power, -TURRET_MAX_POWER, TURRET_MAX_POWER));
+        turretPower = Range.clip(power, -TURRET_MAX_POWER, TURRET_MAX_POWER);
+        turret.setPower(turretPower);
 
         // Control Flywheel: our own loop holds commandRPM (targetRPM, or the spin-up ramp).  Each
         // setPower is a hub write, so skip changes too small to matter.
