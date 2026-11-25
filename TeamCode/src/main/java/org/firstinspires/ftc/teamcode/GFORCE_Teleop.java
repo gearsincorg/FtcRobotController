@@ -33,7 +33,6 @@ import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
 import com.pedropathing.math.Velocity;
-import com.pedropathing.utils.Angle;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.seattlesolvers.solverslib.command.Command;
@@ -45,12 +44,9 @@ import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.teamcode.Commands.RobotCommands;
-import org.firstinspires.ftc.teamcode.paths.Path_NearCenter;
+import org.firstinspires.ftc.teamcode.paths.Path_G1A_NT;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
-import org.firstinspires.ftc.teamcode.subsystems.VisionSubsystem;
 
 @TeleOp(name = "G-FORCE TELEOP", group = "Competition")
 public class GFORCE_Teleop extends CommandOpMode {
@@ -381,11 +377,11 @@ public class GFORCE_Teleop extends CommandOpMode {
     }
 
     /**
-     * Touchpad: set the pose to the NearCenter auto start (from NearCenter_start.turt), so a robot
+     * Touchpad: set the pose to the Garden auto start (from G1A_NT_start.turt), so a robot
      * placed where auto starts gets the same pose and heading as auto gives it.
      */
     public void resetHeading () {
-        Pose resetPose = new Path_NearCenter(robot).getStartPose();
+        Pose resetPose = new Path_G1A_NT(robot).getStartPose();
         robot.setStartPose(resetPose);
         headingSetpoint = resetPose.heading();
     }

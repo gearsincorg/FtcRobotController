@@ -1,23 +1,23 @@
 {
-  "version": "2.7.0",
+  "version": "2.7.1",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 48,
-    "y": 130,
+    "x": 8,
+    "y": 10,
     "locked": false,
     "heading": "linear",
-    "startDeg": 90,
-    "endDeg": 180
+    "startDeg": 270,
+    "endDeg": 110
   },
   "lines": [
     {
       "id": "line-mug5hmgu-6gzak1",
       "color": "#ffc516",
-      "name": "NearShoot",
+      "name": "Transition",
       "locked": false,
       "waitBeforeMs": 0,
       "waitAfterMs": 0,
@@ -25,39 +25,74 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 20.124463519313313,
-        "y": 47,
+        "x": 32.067108856808424,
+        "y": 33.37807257120562,
         "heading": "linear",
-        "startDeg": 90,
-        "endDeg": 180
+        "startDeg": 270,
+        "endDeg": 90
       },
       "controlPoints": [
         {
           "x": 25,
-          "y": 120.14358174014826
+          "y": 17.843847195650373
+        },
+        {
+          "x": 32.067108856808424,
+          "y": 15.839420673014589
         }
       ],
       "eventMarkers": [],
       "hidden": false,
-      "maxSpeed": 45
+      "globalStartDeg": 90,
+      "globalEndDeg": 90,
+      "maxSpeed": 30
     },
     {
-      "id": "mwqz2efz-abgiu1",
+      "id": "mvwwb99h-aoqsot",
       "name": "",
       "endPoint": {
-        "x": 12,
-        "y": 47,
+        "x": 32.067108856808424,
+        "y": 106.0095811217799,
         "heading": "linear",
-        "startDeg": 180,
-        "endDeg": 180
+        "startDeg": 90,
+        "endDeg": 90
       },
       "controlPoints": [],
-      "color": "#6876C8",
+      "color": "#88CBCA",
       "eventMarkers": [],
       "waitBeforeMs": 0,
       "waitAfterMs": 0,
       "waitBeforeName": "",
-      "waitAfterName": ""
+      "waitAfterName": "",
+      "isChain": true,
+      "hidden": false,
+      "maxSpeed": 55
+    },
+    {
+      "id": "mwqsns39-vqera4",
+      "name": "",
+      "endPoint": {
+        "x": 44,
+        "y": 120,
+        "heading": "linear",
+        "startDeg": 90,
+        "endDeg": 110
+      },
+      "controlPoints": [
+        {
+          "x": 32.067108856808424,
+          "y": 115.48111678534107
+        }
+      ],
+      "color": "#958A6D",
+      "eventMarkers": [],
+      "waitBeforeMs": 0,
+      "waitAfterMs": 0,
+      "waitBeforeName": "",
+      "waitAfterName": "",
+      "isChain": true,
+      "maxSpeed": 30,
+      "hidden": false
     }
   ],
   "sequence": [
@@ -67,7 +102,13 @@
     },
     {
       "kind": "path",
-      "lineId": "mwqz2efz-abgiu1"
+      "lineId": "mvwwb99h-aoqsot",
+      "isChain": true
+    },
+    {
+      "kind": "path",
+      "lineId": "mwqsns39-vqera4",
+      "isChain": true
     }
   ],
   "shapes": [

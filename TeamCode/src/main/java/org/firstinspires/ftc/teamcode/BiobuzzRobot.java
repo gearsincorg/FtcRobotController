@@ -150,7 +150,7 @@ public class BiobuzzRobot {
 
     /**
      * The path being followed (or the last one, while holding its end), and the line within it:
-     * e.g. "NearCenter_2 > point2 (2/2)".  "none" before the first path.
+     * e.g. "G1A_NT_2 > point2 (2/2)".  "none" before the first path.
      */
     public String pathStatus() {
         if (pathName == null) return "none";

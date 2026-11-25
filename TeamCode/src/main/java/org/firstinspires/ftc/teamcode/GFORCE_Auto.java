@@ -61,7 +61,7 @@ public class GFORCE_Auto extends CommandOpMode {
 
         if (!autoStarted) {
             autoStarted = true;
-            schedule(robot.config.routine.command(robot));   // runs from START
+            schedule(robot.config.routine.command(robot, robot.config.noTurret));   // runs from START
         }
         super.run();
         robot.update();
@@ -81,7 +81,7 @@ public class GFORCE_Auto extends CommandOpMode {
         Pose pose = robot.drive.pose();
         telemetry.addData("Pose", "x %5.1f  y %5.1f  hdg %5.1f",
                 pose.x(), pose.y(), Math.toDegrees(pose.heading()));
-        // Follower : FOLLOWING busy  NearCenter_2 > point2 (2/2)
+        // Follower : FOLLOWING busy  G1A_NT_2 > point2 (2/2)
         telemetry.addData("Follower", "%s%s  %s", robot.drive.mode(),
                 robot.drive.isBusy() ? " busy" : "", robot.pathStatus());
         telemetry.update();

@@ -8,16 +8,20 @@ import com.pedropathing.api.PoseFactory;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
+import com.seattlesolvers.solverslib.command.ParallelDeadlineGroup;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
+import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
 import org.firstinspires.ftc.teamcode.BiobuzzRobot;
+import org.firstinspires.ftc.teamcode.Commands.JiggleCommand;
 
-public class Path_FarCenter {
+public class Path_L1A_NT {
     private PoseFactory poseFactory;
     private BiobuzzRobot robot;
 
-    public Path_FarCenter(BiobuzzRobot robot) {
+    public Path_L1A_NT(BiobuzzRobot robot) {
         this.robot = robot;
         poseFactory = PoseFactory.degrees();
     }
@@ -28,7 +32,7 @@ public class Path_FarCenter {
         robot.setStartPose(getStartPose());
 
         // Add paths and other subsystem commands here
-        auto.addCommands(path_start(), robot.stepCommand("after path_start"));
+        // Jiggles run in a deadline group: they stop as soon as the intake is full (or its wait times out).
         return auto;
     }
 
@@ -37,7 +41,7 @@ public class Path_FarCenter {
     //        Create a public method below for each file in the pp folder.
     // =================================================
 
-    // Generated from FarCenter_start.turt
+    // Generated from L1A_NT_start.turt
     public Pose getStartPose() {
         return poseFactory.of(65.6446, 134.7929, 90); // from start path in this name group
     }
@@ -52,7 +56,7 @@ public class Path_FarCenter {
                 curve(start, farFlowerControl1, farFlowerControl2, farFlower).linear(start, farFlower)
         );
 
-        return new NamedFollowPathCommand(robot, "FarCenter_start", new String[] {"farFlower"}, path_startPath);
+        return new NamedFollowPathCommand(robot, "L1A_NT_start", new String[] {"farFlower"}, path_startPath);
     }
 
     /** Caps path speed (in/s) on one line of a path; from maxSpeed in the .turt file. */

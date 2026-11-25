@@ -1,5 +1,5 @@
 {
-  "version": "2.7.0",
+  "version": "2.7.1",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
@@ -7,29 +7,24 @@
   },
   "startPoint": {
     "x": 30.875,
-    "y": 16,
+    "y": 10,
     "heading": "linear",
     "locked": false,
-    "startDeg": 230,
-    "endDeg": 270
+    "startDeg": 270,
+    "endDeg": 230
   },
   "lines": [
     {
       "id": "line-mvk1b2dn-4ashjr",
       "name": "Garden",
       "endPoint": {
-        "x": 7,
-        "y": 10,
+        "x": 30.875,
+        "y": 16,
         "heading": "linear",
-        "startDeg": 230,
-        "endDeg": 270
+        "startDeg": 270,
+        "endDeg": 230
       },
-      "controlPoints": [
-        {
-          "x": 13.22239563012095,
-          "y": 16
-        }
-      ],
+      "controlPoints": [],
       "color": "#8CD6B8",
       "eventMarkers": [],
       "locked": false,

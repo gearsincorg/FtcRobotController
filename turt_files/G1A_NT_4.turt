@@ -1,17 +1,17 @@
 {
-  "version": "2.7.0",
+  "version": "2.7.1",
   "header": {
     "info": "Created with Turtle Tracer",
     "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 12,
-    "y": 47,
+    "x": 48,
+    "y": 128,
     "locked": false,
     "heading": "linear",
-    "startDeg": 180,
-    "endDeg": 210
+    "startDeg": 90,
+    "endDeg": 180
   },
   "lines": [
     {
@@ -25,13 +25,22 @@
       "waitAfterName": "",
       "kind": "atomic",
       "endPoint": {
-        "x": 25,
-        "y": 34,
+        "x": 15,
+        "y": 48,
         "heading": "linear",
-        "startDeg": 180,
-        "endDeg": 210
+        "startDeg": 90,
+        "endDeg": 180
       },
-      "controlPoints": [],
+      "controlPoints": [
+        {
+          "x": 21.029776674937963,
+          "y": 113.13730528415644
+        },
+        {
+          "x": 46.20216026857394,
+          "y": 46.459203036053125
+        }
+      ],
       "eventMarkers": [],
       "hidden": false,
       "maxSpeed": 45

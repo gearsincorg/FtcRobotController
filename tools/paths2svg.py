@@ -18,14 +18,31 @@ OUT = os.path.join(ROOT, "tools", "auto_paths.svg")
 
 FIELD = 144          # inches, Pedro coordinates (0,0 = bottom-left, y up)
 S = 6                # pixels per inch
+ROBOT_LENGTH = 15    # inches, along the heading
+ROBOT_WIDTH = 13     # inches, across
 PAD = 30
 W = FIELD * S + 2 * PAD
 LEGEND_W = 290
-GROUP_COLORS = {
-    "NearCenter": ["#ff9f1c", "#2ec4b6", "#e71d36", "#9b5de5"],
-    "FarCenter": ["#06d6a0", "#118ab2"],
-}
-FALLBACK = ["#ff9f1c", "#2ec4b6", "#e71d36", "#9b5de5", "#06d6a0", "#118ab2"]
+# One colour per path family (Fred and Fred_NT share it).  The turret version is drawn solid,
+# the no-turret (_NT) version dotted.
+FAMILY_COLORS = ["#e71d36", "#118ab2", "#ff9f1c", "#2ec4b6", "#9b5de5", "#06d6a0"]
+NO_TURRET_TAG = "_NT"
+DOTTED = "0.1 9"       # with round caps this draws dots
+
+
+def family_of(group):
+    """Fred_NT -> Fred (as in turt2java.py)."""
+    if group.endswith(NO_TURRET_TAG) and len(group) > len(NO_TURRET_TAG):
+        return group[:-len(NO_TURRET_TAG)]
+    return group
+
+
+def is_no_turret(group):
+    return family_of(group) != group
+
+
+def dash_attr(group):
+    return ' stroke-dasharray="%s"' % DOTTED if is_no_turret(group) else ""
 
 
 def px(x):
@@ -128,15 +145,18 @@ def main():
     # paths
     legend = []
     gi = 0
-    for group in sorted(groups):
+    family_color = {f: FAMILY_COLORS[i % len(FAMILY_COLORS)]
+                    for i, f in enumerate(sorted({family_of(g) for g in groups}))}
+    group_order = sorted(groups, key=lambda g: (family_of(g), is_no_turret(g)))
+    for group in group_order:
         files = groups[group]
         if "start" not in files:
             continue
         order = ["start"] + sorted((k for k in files if k != "start"), key=natural_key)
-        colors = GROUP_COLORS.get(group, FALLBACK)
+        dash = dash_attr(group)
         for n, suffix in enumerate(order):
             d = files[suffix]
-            color = colors[n % len(colors)]
+            color = family_color[family_of(group)]
             sp = d["startPoint"]
             cur = (sp["x"], sp["y"])
             lines = {l["id"]: l for l in d["lines"]}
@@ -151,10 +171,10 @@ def main():
                 poly = " ".join("%.1f,%.1f" % (px(x), py(y)) for x, y in pts)
                 svg.append('<polyline points="%s" fill="none" stroke="#111" '
                            'stroke-width="7" stroke-linecap="round" '
-                           'stroke-linejoin="round" opacity="0.35"/>' % poly)
+                           'stroke-linejoin="round" opacity="0.35"%s/>' % (poly, dash))
                 svg.append('<polyline points="%s" fill="none" stroke="%s" '
                            'stroke-width="4" stroke-linecap="round" '
-                           'stroke-linejoin="round"/>' % (poly, color))
+                           'stroke-linejoin="round"%s/>' % (poly, color, dash))
                 # direction chevron mid-path
                 mid = len(pts) // 2
                 dx = pts[mid + 1][0] - pts[mid - 1][0]
@@ -175,24 +195,24 @@ def main():
             # start marker
             svg.append('<circle cx="%.1f" cy="%.1f" r="5" fill="%s" stroke="#111" '
                        'stroke-width="1.5"/>' % (px(sp["x"]), py(sp["y"]), color))
-            legend.append((group, label, color, names, d["startPoint"], ep))
+            legend.append((group, label, color, names, d["startPoint"], ep, dash))
         gi += 1
 
-    # start-pose robot footprints (18 in square) with heading
+    # start-pose robot footprints (ROBOT_LENGTH x ROBOT_WIDTH) with heading
     for group in sorted(groups):
         d = groups[group].get("start")
         if not d:
             continue
         sp = d["startPoint"]
         deg = sp.get("startDeg", 0)
-        half = 9 * S
+        half_l, half_w = ROBOT_LENGTH * S / 2, ROBOT_WIDTH * S / 2
         svg.append('<g transform="translate(%.1f %.1f) rotate(%.1f)">'
                    '<rect x="%d" y="%d" width="%d" height="%d" fill="#ffffff" '
                    'fill-opacity="0.35" stroke="#111" stroke-width="1.5" '
                    'stroke-dasharray="5 3"/>'
                    '<line x1="0" y1="0" x2="%d" y2="0" stroke="#111" stroke-width="2"/>'
-                   '</g>' % (px(sp["x"]), py(sp["y"]), -deg, -half, -half,
-                             2 * half, 2 * half, half))
+                   '</g>' % (px(sp["x"]), py(sp["y"]), -deg, -half_l, -half_w,
+                             2 * half_l, 2 * half_w, half_l))
 
     # legend panel
     lx = W + 10
@@ -203,7 +223,7 @@ def main():
                '144 x 144 in</text>' % (lx, y + 34))
     y += 62
     last_group = None
-    for group, label, color, names, sp, ep in legend:
+    for group, label, color, names, sp, ep, dash in legend:
         if group != last_group:
             y += 10
             svg.append('<text x="%d" y="%d" font-size="15" font-weight="700" '
@@ -211,8 +231,8 @@ def main():
             y += 22
             last_group = group
         svg.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" '
-                   'stroke-width="5" stroke-linecap="round"/>'
-                   % (lx, y - 4, lx + 30, y - 4, color))
+                   'stroke-width="5" stroke-linecap="round"%s/>'
+                   % (lx, y - 4, lx + 30, y - 4, color, dash))
         svg.append('<text x="%d" y="%d" font-size="13" fill="#111">%s</text>'
                    % (lx + 40, y, label.split("_", 1)[-1] if False else label))
         y += 15
@@ -221,6 +241,15 @@ def main():
                                   "  " + ", ".join(names) if names else ""))
         y += 24
     y += 14
+    svg.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="#555" stroke-width="5" '
+               'stroke-linecap="round"/><text x="%d" y="%d" font-size="12" fill="#333">'
+               'solid = turret</text>' % (lx, y - 4, lx + 30, y - 4, lx + 40, y))
+    y += 20
+    svg.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="#555" stroke-width="5" '
+               'stroke-linecap="round" stroke-dasharray="%s"/><text x="%d" y="%d" '
+               'font-size="12" fill="#333">dotted = no turret (_NT)</text>'
+               % (lx, y - 4, lx + 30, y - 4, DOTTED, lx + 40, y))
+    y += 28
     svg.append('<circle cx="%d" cy="%d" r="5" fill="#bbb" stroke="#111" '
                'stroke-width="1.5"/><text x="%d" y="%d" font-size="12" fill="#333">'
                'path start</text>' % (lx + 6, y - 4, lx + 20, y))
@@ -231,7 +260,8 @@ def main():
     y += 20
     svg.append('<rect x="%d" y="%d" width="14" height="14" fill="#fff" fill-opacity="0.5" '
                'stroke="#111" stroke-dasharray="4 2"/><text x="%d" y="%d" font-size="12" '
-               'fill="#333">robot at start pose (18 in)</text>' % (lx, y - 12, lx + 20, y))
+               'fill="#333">robot at start pose (%g x %g in)</text>'
+               % (lx, y - 12, lx + 20, y, ROBOT_LENGTH, ROBOT_WIDTH))
 
     svg.append("</svg>")
     with open(OUT, "w", encoding="utf-8") as f:
