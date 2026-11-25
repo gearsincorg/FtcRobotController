@@ -283,6 +283,27 @@ def template_source(template_text):
     raise TurtError(f"no template Path_{TEMPLATE_NAME}.java and no existing path class to copy from")
 
 
+NEW_AUTO_COMMAND = """    public Command autoCommand() {
+
+        SequentialCommandGroup auto = new SequentialCommandGroup();
+        robot.setStartPose(getStartPose());
+
+        // Add paths and other subsystem commands here
+        return auto;
+    }""".splitlines()
+
+
+def replace_auto_command(header):
+    """Swap the template's autoCommand() method for the empty one (NEW_AUTO_COMMAND)."""
+    start = next((i for i, l in enumerate(header) if "public Command autoCommand()" in l), None)
+    if start is None:
+        raise TurtError("the template has no autoCommand() method to reset")
+    end = next((j for j in range(start + 1, len(header)) if header[j] == "    }"), None)
+    if end is None:
+        raise TurtError("could not find the end of autoCommand() in the template")
+    return header[:start] + NEW_AUTO_COMMAND + header[end + 1:]
+
+
 def build_group(group, members, template_text):
     """Returns (file text, target path) for Path_<group>.java, or raises TurtError."""
     cls = f"Path_{group}"
@@ -328,9 +349,8 @@ def build_group(group, members, template_text):
         source_name, source_text = template_source(template_text)
         header = header_of(source_text, source_name)
         header = [l.replace(source_name[:-len(".java")], cls) for l in header]
-        # Fill in the command list for a brand-new file.
-        calls = ", ".join(n + "()" for n in names)
-        header = [re.sub(r"auto\.addCommands\(.*\);", lambda _: f"auto.addCommands({calls});", l) for l in header]
+        # A brand-new file gets an empty autoCommand() to fill in by hand.
+        header = replace_auto_command(header)
     return "\n".join(header) + "\n\n" + "\n\n".join(methods) + "\n}\n", target
 
 

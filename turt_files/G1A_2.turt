@@ -1,0 +1,129 @@
+{
+  "version": "2.7.1",
+  "header": {
+    "info": "Created with Turtle Tracer",
+    "copyright": "Copyright 2026 Matthew Allen. Licensed under the Modified Apache License, Version 2.0.",
+    "link": "https://github.com/Mallen220/TurtleTracer"
+  },
+  "startPoint": {
+    "x": 36,
+    "y": 24,
+    "heading": "linear",
+    "locked": false,
+    "startDeg": 90,
+    "endDeg": 90
+  },
+  "lines": [
+    {
+      "id": "mwwduxqk-7pkpwd",
+      "name": "To Flower",
+      "endPoint": {
+        "x": 36,
+        "y": 109.98905269303752,
+        "heading": "linear",
+        "startDeg": 90,
+        "endDeg": 90
+      },
+      "controlPoints": [],
+      "color": "#5559D8",
+      "eventMarkers": [],
+      "waitBeforeMs": 0,
+      "waitAfterMs": 0,
+      "waitBeforeName": "",
+      "waitAfterName": "",
+      "hidden": false
+    },
+    {
+      "id": "mwwdvn4o-u9bzge",
+      "name": "",
+      "endPoint": {
+        "x": 47.94,
+        "y": 128.34491315136472,
+        "heading": "linear",
+        "startDeg": 90,
+        "endDeg": 90
+      },
+      "controlPoints": [
+        {
+          "x": 36,
+          "y": 118.57057363888484
+        },
+        {
+          "x": 47.711574952561676,
+          "y": 118.54079696394687
+        }
+      ],
+      "color": "#567DA6",
+      "eventMarkers": [],
+      "waitBeforeMs": 0,
+      "waitAfterMs": 0,
+      "waitBeforeName": "",
+      "waitAfterName": "",
+      "maxSpeed": 30,
+      "hidden": false
+    }
+  ],
+  "sequence": [
+    {
+      "kind": "path",
+      "lineId": "mwwduxqk-7pkpwd"
+    },
+    {
+      "kind": "path",
+      "lineId": "mwwdvn4o-u9bzge"
+    }
+  ],
+  "shapes": [
+    {
+      "id": "biobuzz-hive-red",
+      "name": "HiveRedSide",
+      "vertices": [
+        {
+          "x": 46.5,
+          "y": 92
+        },
+        {
+          "x": 46.5,
+          "y": 52
+        },
+        {
+          "x": 49,
+          "y": 52
+        },
+        {
+          "x": 49,
+          "y": 92
+        }
+      ],
+      "color": "#3f3f3f",
+      "fillColor": "#fca5a5",
+      "type": "obstacle"
+    },
+    {
+      "id": "biobuzz-hive-blue",
+      "name": "HiveBlueSide",
+      "vertices": [
+        {
+          "x": 95,
+          "y": 92
+        },
+        {
+          "x": 95,
+          "y": 52
+        },
+        {
+          "x": 97.5,
+          "y": 52
+        },
+        {
+          "x": 97.5,
+          "y": 92
+        }
+      ],
+      "color": "#3f3f3f",
+      "fillColor": "#fca5a5",
+      "type": "obstacle"
+    }
+  ],
+  "extraData": {}
+}

@@ -9,9 +9,9 @@ import org.firstinspires.ftc.teamcode.BiobuzzRobot;
  * no-turret version).  Do not edit.
  */
 public enum AutoRoutine {
-    G_1_A("Garden 1 A", false, true) {
+    G_1_A("Garden 1 A", true, true) {
         public Command command(BiobuzzRobot robot, boolean noTurret) {
-            return noTurret ? new Path_G1A_NT(robot).autoCommand() : new Path_G1A_NT(robot).autoCommand();
+            return noTurret ? new Path_G1A_NT(robot).autoCommand() : new Path_G1A(robot).autoCommand();
         }
     },
     L_1_A("Loading 1 A", false, true) {

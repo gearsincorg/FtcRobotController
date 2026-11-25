@@ -1,0 +1,100 @@
+package org.firstinspires.ftc.teamcode.paths;
+
+import static com.pedropathing.api.Paths.curve;
+import static com.pedropathing.api.Paths.line;
+
+import com.pedropathing.api.Paths;
+import com.pedropathing.api.PoseFactory;
+import com.pedropathing.math.Pose;
+import com.pedropathing.paths.Path;
+import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
+import com.seattlesolvers.solverslib.command.ParallelDeadlineGroup;
+import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
+import com.seattlesolvers.solverslib.command.WaitCommand;
+import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
+
+import org.firstinspires.ftc.teamcode.BiobuzzRobot;
+import org.firstinspires.ftc.teamcode.Commands.JiggleCommand;
+
+public class Path_G1A {
+    private PoseFactory poseFactory;
+    private BiobuzzRobot robot;
+
+    public Path_G1A(BiobuzzRobot robot) {
+        this.robot = robot;
+        poseFactory = PoseFactory.degrees();
+    }
+
+    public Command autoCommand() {
+
+        SequentialCommandGroup auto = new SequentialCommandGroup();
+        robot.setStartPose(getStartPose());
+
+        // Add paths and other subsystem commands here
+        return auto;
+    }
+
+    // =================================================
+    // Note:  Do not change anything above this line.
+    //        Create a public method below for each file in the pp folder.
+    // =================================================
+
+    // Generated from G1A_start.turt
+    public Pose getStartPose() {
+        return poseFactory.of(32.3543, 10.0533, 270); // from start path in this name group
+    }
+
+    public FollowPathCommand path_start() {
+        final Pose start = getStartPose();
+        final Pose toGarden = poseFactory.of(8, 10, 270);
+        final Pose toGardenControl1 = poseFactory.of(19.1833, 22.3761, 0);
+
+        Path path_startPath = Paths.path(
+                curve(start, toGardenControl1, toGarden).linear(start, toGarden).with(maxVelocity(30))
+        );
+
+        return new NamedFollowPathCommand(robot, "G1A_start", new String[] {"toGarden"}, path_startPath);
+    }
+
+    // Generated from G1A_1.turt
+    public FollowPathCommand path_1() {
+        final Pose start = poseFactory.of(8, 10, 270);
+        final Pose tiltCheck = poseFactory.of(36, 24, 90);
+        final Pose tiltCheckControl1 = poseFactory.of(19.1833, 22.3761, 0);
+        final Pose point2 = poseFactory.of(36, 109.9891, 90);
+        final Pose point3 = poseFactory.of(47.94, 128.3449, 90);
+        final Pose point3Control1 = poseFactory.of(36, 118.5706, 0);
+        final Pose point3Control2 = poseFactory.of(47.7116, 118.5408, 0);
+
+        Path path_1Path = Paths.path(
+                curve(start, tiltCheckControl1, tiltCheck).linear(start, tiltCheck),
+                line(tiltCheck, point2).linear(tiltCheck, point2),
+                curve(point2, point3Control1, point3Control2, point3).linear(point2, point3).with(maxVelocity(30))
+        );
+
+        return new NamedFollowPathCommand(robot, "G1A_1", new String[] {"tiltCheck", "point2", "point3"}, path_1Path);
+    }
+
+    // Generated from G1A_2.turt
+    public FollowPathCommand path_2() {
+        final Pose start = poseFactory.of(36, 24, 90);
+        final Pose toFlower = poseFactory.of(36, 109.9891, 90);
+        final Pose point2 = poseFactory.of(47.94, 128.3449, 90);
+        final Pose point2Control1 = poseFactory.of(36, 118.5706, 0);
+        final Pose point2Control2 = poseFactory.of(47.7116, 118.5408, 0);
+
+        Path path_2Path = Paths.path(
+                line(start, toFlower).linear(start, toFlower),
+                curve(toFlower, point2Control1, point2Control2, point2).linear(toFlower, point2).with(maxVelocity(30))
+        );
+
+        return new NamedFollowPathCommand(robot, "G1A_2", new String[] {"toFlower", "point2"}, path_2Path);
+    }
+
+    /** Caps path speed (in/s) on one line of a path; from maxSpeed in the .turt file. */
+    private com.pedropathing.config.Modifier maxVelocity(double inchesPerSec) {
+        return ((com.pedropathing.algorithm.Foresight) robot.drive.algorithm())
+                .config.maxVelocityConstraint.at(inchesPerSec);
+    }
+}
