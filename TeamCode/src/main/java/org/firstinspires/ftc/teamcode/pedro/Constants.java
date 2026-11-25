@@ -142,7 +142,7 @@ public class Constants {
         c.yPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
         c.xPodOffset.set(0.2362204724409449);
         c.yPodOffset.set(-1.5748031496062993);
-        c.headingScalar.set(1.0053120122844978);
+        c.headingScalar.set(1.009115985239217);
     });
 
     private static final Configuration<ForesightConfig> PROTOTYPE_FORESIGHT = (
@@ -217,7 +217,7 @@ public class Constants {
         c.yPodOffset.set(0.125);
         c.xPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
         c.yPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
-        c.headingScalar.set(1.009115985239217);
+        c.headingScalar.set(1.0053120122844978);
     });
 
     private static final Configuration<ForesightConfig> PRODUCTION_FORESIGHT = (
