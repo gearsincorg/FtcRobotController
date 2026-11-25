@@ -42,7 +42,7 @@ public class Path_G1A {
 
     // Generated from G1A_start.turt
     public Pose getStartPose() {
-        return poseFactory.of(32.3543, 10.0533, 270); // from start path in this name group
+        return poseFactory.of(32.3543, 10, 270); // from start path in this name group
     }
 
     public FollowPathCommand path_start() {

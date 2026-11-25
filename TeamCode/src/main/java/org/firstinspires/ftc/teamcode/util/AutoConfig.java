@@ -17,17 +17,10 @@ import java.util.Properties;
  */
 public class AutoConfig {
 
-    public enum Park {
-        NONE("None"), BASE("Base");
-        public final String label;
-        Park(String label) { this.label = label; }
-    }
-
     public static final int MAX_DELAY_SEC = 15;
-    public static final int MAX_CYCLES    = 2;
 
     private static final String FILE_NAME = "GFORCE_auto.properties";
-    private static final int ITEMS = 6;     // alliance, delay, path, no turret, cycles, park
+    private static final int ITEMS = 4;     // alliance, delay, path, no turret
 
     // Settings
     public boolean       red      = true;
@@ -35,8 +28,6 @@ public class AutoConfig {
     public AutoRoutine   routine  = AutoRoutine.values()[0];
     // Run the family's _NT (no turret, robot-only goal pointing) paths instead of the turret ones.
     public boolean       noTurret = false;
-    public int           cycles   = 2;
-    public Park          park     = Park.BASE;
     // Step mode (testing only): pause after each path until gamepad 1 Cross is pressed.
     // DISABLED: no menu item turns it on, so it is always off.  To bring it back, add a menu item that toggles it.
     // Never saved, so it is off every time the opmode starts and can't be left on for a match.
@@ -78,8 +69,6 @@ public class AutoConfig {
             case 1: delaySec = clamp(delaySec + dir, 0, MAX_DELAY_SEC); break;
             case 2: routine = AutoRoutine.values()[wrap(routine.ordinal() + dir, AutoRoutine.values().length)]; break;
             case 3: noTurret = !noTurret; break;
-            case 4: cycles = clamp(cycles + dir, 0, MAX_CYCLES); break;
-            case 5: park = Park.values()[wrap(park.ordinal() + dir, Park.values().length)]; break;
         }
     }
 
@@ -93,8 +82,6 @@ public class AutoConfig {
             opMode.telemetry.addLine("   (no " + (noTurret ? "no-turret" : "turret") + " version of this path: running the "
                     + (noTurret ? "turret" : "no-turret") + " one)");
         }
-        line(4, "Cycles",      String.valueOf(cycles));
-        line(5, "Park",        park.label);
     }
 
     private void line(int index, String name, String value) {
@@ -109,8 +96,6 @@ public class AutoConfig {
             p.setProperty("delaySec", Integer.toString(delaySec));
             p.setProperty("routine", routine.name());
             p.setProperty("noTurret", Boolean.toString(noTurret));
-            p.setProperty("cycles", Integer.toString(cycles));
-            p.setProperty("park", park.name());
             p.store(out, "G-FORCE auto setup");
         } catch (Exception e) {
             opMode.telemetry.addData("Auto setup", "save failed: " + e);
@@ -124,9 +109,7 @@ public class AutoConfig {
             red      = Boolean.parseBoolean(p.getProperty("red", "true"));
             delaySec = clamp(parseInt(p.getProperty("delaySec"), 0), 0, MAX_DELAY_SEC);
             noTurret = Boolean.parseBoolean(p.getProperty("noTurret", "false"));
-            cycles   = clamp(parseInt(p.getProperty("cycles"), 2), 0, MAX_CYCLES);
             routine  = parseEnum(AutoRoutine.class, p.getProperty("routine"), AutoRoutine.values()[0]);
-            park     = parseEnum(Park.class, p.getProperty("park"), Park.BASE);
         } catch (Exception e) {
             // No file yet (or unreadable): keep the defaults.
         }
