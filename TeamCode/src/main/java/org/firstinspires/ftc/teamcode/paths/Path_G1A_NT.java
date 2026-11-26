@@ -120,7 +120,7 @@ public class Path_G1A_NT {
         final Pose nearShootControl2 = poseFactory.of(46.2022, 46.4592, 0);
 
         Path path_4Path = Paths.path(
-                curve(start, nearShootControl1, nearShootControl2, nearShoot).linear(start, nearShoot).with(maxVelocity(45))
+                curve(start, nearShootControl1, nearShootControl2, nearShoot).linear(start, nearShoot).with(maxVelocity(55))
         );
 
         return new NamedFollowPathCommand(robot, "G1A_NT_4", new String[] {"nearShoot"}, path_4Path);

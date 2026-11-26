@@ -44,7 +44,8 @@ public class Path_G1A {
             new SequentialCommandGroup(robot.aimAndShootCommand(), robot.intake.flowerDownCommand(), path_5().withTimeout(1500),
                                        new ParallelDeadlineGroup(robot.intake.intakeUntilFullCommand(1000), new JiggleCommand(robot, 1000) ),
                                        new ParallelCommandGroup(path_6().withTimeout(5000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1600),robot.intake.flowerDownCommand())),
-                                       new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand())
+                                       new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand()),
+                                       new PruneCommand(robot, -0.4, 250),new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand()
                                        ),
             //  Hive has tipped so go and score other side.
             new SequentialCommandGroup(new ParallelCommandGroup(path_2().withTimeout(6000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1800),robot.intake.flowerDownCommand())),
@@ -112,12 +113,12 @@ public class Path_G1A {
     // Generated from G1A_5.turt
     public FollowPathCommand path_5() {
         final Pose start = poseFactory.of(36, 24, 90);
-        final Pose toFlower = poseFactory.of(14, 48, 180);
+        final Pose toFlower = poseFactory.of(15, 48, 180);
         final Pose toFlowerControl1 = poseFactory.of(21.7711, 41.5611, 0);
         final Pose toFlowerControl2 = poseFactory.of(19.5736, 49.5015, 0);
 
         Path path_5Path = Paths.path(
-                curve(start, toFlowerControl1, toFlowerControl2, toFlower).linear(start, toFlower).with(maxVelocity(30))
+                curve(start, toFlowerControl1, toFlowerControl2, toFlower).linear(start, toFlower).with(maxVelocity(40))
         );
 
         return new NamedFollowPathCommand(robot, "G1A_5", new String[] {"toFlower"}, path_5Path);
@@ -125,19 +126,19 @@ public class Path_G1A {
 
     // Generated from G1A_6.turt
     public FollowPathCommand path_6() {
-        final Pose start = poseFactory.of(14, 48, 180);
-        final Pose toFlower = poseFactory.of(36, 56, 90);
+        final Pose start = poseFactory.of(15, 48, 180);
+        final Pose toFlower = poseFactory.of(32, 56, 90);
         final Pose toFlowerControl1 = poseFactory.of(27.9812, 48, 0);
         final Pose toFlowerControl2 = poseFactory.of(31.0172, 52, 0);
-        final Pose point2 = poseFactory.of(36, 110, 90);
+        final Pose point2 = poseFactory.of(32, 103.6793, 90);
         final Pose point3 = poseFactory.of(48, 128, 90);
         final Pose point3Control1 = poseFactory.of(36, 123.6474, 0);
         final Pose point3Control2 = poseFactory.of(49, 112.1035, 0);
 
         Path path_6Path = Paths.path(
                 curve(start, toFlowerControl1, toFlowerControl2, toFlower).linear(start, toFlower).with(maxVelocity(30)),
-                line(toFlower, point2).linear(toFlower, point2),
-                curve(point2, point3Control1, point3Control2, point3).linear(point2, point3).with(maxVelocity(30))
+                line(toFlower, point2).linear(toFlower, point2).with(maxVelocity(55)),
+                curve(point2, point3Control1, point3Control2, point3).linear(point2, point3).with(maxVelocity(40))
         );
 
         return new NamedFollowPathCommand(robot, "G1A_6", new String[] {"toFlower", "point2", "point3"}, path_6Path);
