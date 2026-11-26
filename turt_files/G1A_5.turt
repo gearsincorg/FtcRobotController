@@ -18,7 +18,7 @@
       "id": "mwwduxqk-7pkpwd",
       "name": "To Flower",
       "endPoint": {
-        "x": 14,
+        "x": 15,
         "y": 48,
         "heading": "linear",
         "startDeg": 90,
@@ -41,7 +41,7 @@
       "waitBeforeName": "",
       "waitAfterName": "",
       "hidden": false,
-      "maxSpeed": 30
+      "maxSpeed": 40
     }
   ],
   "sequence": [
