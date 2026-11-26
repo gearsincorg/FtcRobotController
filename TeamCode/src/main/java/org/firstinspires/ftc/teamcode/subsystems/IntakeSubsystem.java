@@ -94,7 +94,7 @@ public class IntakeSubsystem extends SubsystemBase {
     public static final long   FLOWER_MOVE_MS      = 200;   // flowerUp/DownCommand wait this long for the servo
 
     public  static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
-    private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts (spin-up dips included)
+    private static final double VOLLEY_TIMEOUT_MS  = 3000;  // auto volley: stop this long after feeding first starts (may include flower)
     private static final double SHOT_CLEAR_MS      = 300;   // auto volley: last ball leaves the flywheel
 
     public enum Mode { INTAKING, FULL, EJECTING, PASS, SPINUP, SHOOTING }

@@ -19,7 +19,7 @@
       "name": "To Flower",
       "endPoint": {
         "x": 36,
-        "y": 109.98905269303752,
+        "y": 110,
         "heading": "linear",
         "startDeg": 90,
         "endDeg": 90
@@ -37,8 +37,8 @@
       "id": "mwwdvn4o-u9bzge",
       "name": "",
       "endPoint": {
-        "x": 47.94,
-        "y": 128.34491315136472,
+        "x": 48,
+        "y": 128,
         "heading": "linear",
         "startDeg": 90,
         "endDeg": 90
@@ -60,7 +60,8 @@
       "waitBeforeName": "",
       "waitAfterName": "",
       "maxSpeed": 30,
-      "hidden": false
+      "hidden": false,
+      "isChain": false
     }
   ],
   "sequence": [
@@ -70,7 +71,8 @@
     },
     {
       "kind": "path",
-      "lineId": "mwwdvn4o-u9bzge"
+      "lineId": "mwwdvn4o-u9bzge",
+      "isChain": false
     }
   ],
   "shapes": [

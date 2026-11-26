@@ -8,6 +8,7 @@ import com.pedropathing.api.PoseFactory;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
 import com.seattlesolvers.solverslib.command.Command;
+import com.seattlesolvers.solverslib.command.ConditionalCommand;
 import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
 import com.seattlesolvers.solverslib.command.ParallelDeadlineGroup;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
@@ -32,6 +33,18 @@ public class Path_G1A {
         robot.setStartPose(getStartPose());
 
         // Add paths and other subsystem commands here
+        auto.addCommands(robot.shooter.startTrackingCommand());
+        auto.addCommands(new ParallelCommandGroup(path_start(), robot.aimAndShootCommand()));  // shoot everything.
+        auto.addCommands(path_1()); // go and check on hive tilt.
+        auto.addCommands(new ConditionalCommand(
+            //  Hive is still up, so go get more pollen
+            new SequentialCommandGroup(robot.aimAndShootCommand()),
+            //  Hive has tipped so go and score other side.
+            new SequentialCommandGroup(new ParallelCommandGroup(path_2(), robot.intake.flowerDownCommand()),robot.aimAndShootCommand()),
+            robot.vision::isHiveUp
+        ));
+
+        auto.addCommands(robot.shooter.stopTrackingCommand());
         return auto;
     }
 

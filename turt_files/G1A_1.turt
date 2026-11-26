@@ -38,66 +38,12 @@
       "waitBeforeName": "",
       "waitAfterName": "",
       "hidden": false
-    },
-    {
-      "id": "mwwduxqk-7pkpwd",
-      "name": "",
-      "endPoint": {
-        "x": 36,
-        "y": 109.98905269303752,
-        "heading": "linear",
-        "startDeg": 90,
-        "endDeg": 90
-      },
-      "controlPoints": [],
-      "color": "#5559D8",
-      "eventMarkers": [],
-      "waitBeforeMs": 0,
-      "waitAfterMs": 0,
-      "waitBeforeName": "",
-      "waitAfterName": ""
-    },
-    {
-      "id": "mwwdvn4o-u9bzge",
-      "name": "",
-      "endPoint": {
-        "x": 47.94,
-        "y": 128.34491315136472,
-        "heading": "linear",
-        "startDeg": 90,
-        "endDeg": 90
-      },
-      "controlPoints": [
-        {
-          "x": 36,
-          "y": 118.57057363888484
-        },
-        {
-          "x": 47.711574952561676,
-          "y": 118.54079696394687
-        }
-      ],
-      "color": "#567DA6",
-      "eventMarkers": [],
-      "waitBeforeMs": 0,
-      "waitAfterMs": 0,
-      "waitBeforeName": "",
-      "waitAfterName": "",
-      "maxSpeed": 30
     }
   ],
   "sequence": [
     {
       "kind": "path",
       "lineId": "line-mwwcuwr8-eukwc2"
-    },
-    {
-      "kind": "path",
-      "lineId": "mwwduxqk-7pkpwd"
-    },
-    {
-      "kind": "path",
-      "lineId": "mwwdvn4o-u9bzge"
     }
   ],
   "shapes": [
