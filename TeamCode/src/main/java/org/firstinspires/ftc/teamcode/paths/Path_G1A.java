@@ -55,7 +55,7 @@ public class Path_G1A {
 
     // Generated from G1A_start.turt
     public Pose getStartPose() {
-        return poseFactory.of(32.3543, 10, 270); // from start path in this name group
+        return poseFactory.of(30.88, 10, 270); // from start path in this name group
     }
 
     public FollowPathCommand path_start() {
@@ -75,25 +75,19 @@ public class Path_G1A {
         final Pose start = poseFactory.of(8, 10, 270);
         final Pose tiltCheck = poseFactory.of(36, 24, 90);
         final Pose tiltCheckControl1 = poseFactory.of(19.1833, 22.3761, 0);
-        final Pose point2 = poseFactory.of(36, 109.9891, 90);
-        final Pose point3 = poseFactory.of(47.94, 128.3449, 90);
-        final Pose point3Control1 = poseFactory.of(36, 118.5706, 0);
-        final Pose point3Control2 = poseFactory.of(47.7116, 118.5408, 0);
 
         Path path_1Path = Paths.path(
-                curve(start, tiltCheckControl1, tiltCheck).linear(start, tiltCheck),
-                line(tiltCheck, point2).linear(tiltCheck, point2),
-                curve(point2, point3Control1, point3Control2, point3).linear(point2, point3).with(maxVelocity(30))
+                curve(start, tiltCheckControl1, tiltCheck).linear(start, tiltCheck)
         );
 
-        return new NamedFollowPathCommand(robot, "G1A_1", new String[] {"tiltCheck", "point2", "point3"}, path_1Path);
+        return new NamedFollowPathCommand(robot, "G1A_1", new String[] {"tiltCheck"}, path_1Path);
     }
 
     // Generated from G1A_2.turt
     public FollowPathCommand path_2() {
         final Pose start = poseFactory.of(36, 24, 90);
-        final Pose toFlower = poseFactory.of(36, 109.9891, 90);
-        final Pose point2 = poseFactory.of(47.94, 128.3449, 90);
+        final Pose toFlower = poseFactory.of(36, 110, 90);
+        final Pose point2 = poseFactory.of(48, 128, 90);
         final Pose point2Control1 = poseFactory.of(36, 118.5706, 0);
         final Pose point2Control2 = poseFactory.of(47.7116, 118.5408, 0);
 
@@ -103,6 +97,40 @@ public class Path_G1A {
         );
 
         return new NamedFollowPathCommand(robot, "G1A_2", new String[] {"toFlower", "point2"}, path_2Path);
+    }
+
+    // Generated from G1A_5.turt
+    public FollowPathCommand path_5() {
+        final Pose start = poseFactory.of(36, 24, 90);
+        final Pose toFlower = poseFactory.of(14, 48, 180);
+        final Pose toFlowerControl1 = poseFactory.of(21.7711, 41.5611, 0);
+        final Pose toFlowerControl2 = poseFactory.of(19.5736, 49.5015, 0);
+
+        Path path_5Path = Paths.path(
+                curve(start, toFlowerControl1, toFlowerControl2, toFlower).linear(start, toFlower).with(maxVelocity(30))
+        );
+
+        return new NamedFollowPathCommand(robot, "G1A_5", new String[] {"toFlower"}, path_5Path);
+    }
+
+    // Generated from G1A_6.turt
+    public FollowPathCommand path_6() {
+        final Pose start = poseFactory.of(14, 48, 180);
+        final Pose toFlower = poseFactory.of(36, 56, 90);
+        final Pose toFlowerControl1 = poseFactory.of(27.9812, 48, 0);
+        final Pose toFlowerControl2 = poseFactory.of(31.0172, 52, 0);
+        final Pose point2 = poseFactory.of(36, 110, 90);
+        final Pose point3 = poseFactory.of(48, 128, 90);
+        final Pose point3Control1 = poseFactory.of(36, 123.6474, 0);
+        final Pose point3Control2 = poseFactory.of(49, 112.1035, 0);
+
+        Path path_6Path = Paths.path(
+                curve(start, toFlowerControl1, toFlowerControl2, toFlower).linear(start, toFlower).with(maxVelocity(30)),
+                line(toFlower, point2).linear(toFlower, point2),
+                curve(point2, point3Control1, point3Control2, point3).linear(point2, point3).with(maxVelocity(30))
+        );
+
+        return new NamedFollowPathCommand(robot, "G1A_6", new String[] {"toFlower", "point2", "point3"}, path_6Path);
     }
 
     /** Caps path speed (in/s) on one line of a path; from maxSpeed in the .turt file. */
