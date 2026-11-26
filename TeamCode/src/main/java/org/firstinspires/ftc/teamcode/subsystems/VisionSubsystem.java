@@ -263,7 +263,8 @@ public class VisionSubsystem extends SubsystemBase {
      * waits for).  False with no valid cluster (the tilt then counts as above the threshold).
      */
     public boolean isHiveUp() {
-        return getTiltAngleDeg() < TILT_THRESHOLD_DEG;
+        // TEMPORARY (2026-11-26): always true. Normal: return getTiltAngleDeg() < TILT_THRESHOLD_DEG;
+        return true;
     }
 
     /** isHiveUp() as a BooleanSupplier, for conditional commands and triggers. */

@@ -18,7 +18,7 @@
       "id": "line-mwwcuwr8-eukwc2",
       "name": "Tilt check",
       "endPoint": {
-        "x": 36,
+        "x": 32,
         "y": 24,
         "heading": "linear",
         "startDeg": 270,

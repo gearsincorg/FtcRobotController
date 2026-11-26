@@ -127,7 +127,7 @@ public class GFORCE_Teleop extends CommandOpMode {
         if (l1 && !lastInitL1) robot.intake.toggleFlower();
         lastInitL1 = l1;
 
-        telemetry.addData("Flower", "%s  (L1 toggles)", robot.intake.isFlowerDown() ? "DOWN" : "UP");
+        telemetry.addData("Flower", "%s  (L1 toggles)", robot.intake.getFlower());
         telemetry.addData("Start pose", poseAutoReset
                 ? "none saved (no auto run): reset to the auto start"
                 : String.format(java.util.Locale.US, "from last run: x %.1f  y %.1f  hdg %.0f",

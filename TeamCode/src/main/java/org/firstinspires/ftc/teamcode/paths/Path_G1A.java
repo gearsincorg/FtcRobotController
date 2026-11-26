@@ -18,6 +18,7 @@ import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
 import org.firstinspires.ftc.teamcode.BiobuzzRobot;
 import org.firstinspires.ftc.teamcode.Commands.JiggleCommand;
+import org.firstinspires.ftc.teamcode.Commands.PruneCommand;
 
 public class Path_G1A {
     private PoseFactory poseFactory;
@@ -35,13 +36,21 @@ public class Path_G1A {
 
         // Add paths and other subsystem commands here
         auto.addCommands(robot.shooter.startTrackingCommand());
-        auto.addCommands(new ParallelCommandGroup(path_start(), robot.aimAndShootCommand()));  // shoot everything.
+        auto.addCommands(robot.aimAndShootCommand());  // shoot everything.
+        auto.addCommands(path_start(), robot.intake.intakeUntilFullCommand(1000));
         auto.addCommands(path_1()); // go and check on hive tilt.
         auto.addCommands(new ConditionalCommand(
             //  Hive is still up, so go get more pollen
-            new SequentialCommandGroup(robot.aimAndShootCommand()),
+            new SequentialCommandGroup(robot.aimAndShootCommand(), robot.intake.flowerDownCommand(), path_5().withTimeout(1500),
+                                       new ParallelDeadlineGroup(robot.intake.intakeUntilFullCommand(1000), new JiggleCommand(robot, 1000) ),
+                                       new ParallelCommandGroup(path_6().withTimeout(5000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1600),robot.intake.flowerDownCommand())),
+                                       new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand())
+                                       ),
             //  Hive has tipped so go and score other side.
-            new SequentialCommandGroup(new ParallelCommandGroup(path_2(), robot.intake.flowerDownCommand()),new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand())),
+            new SequentialCommandGroup(new ParallelCommandGroup(path_2().withTimeout(6000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1800),robot.intake.flowerDownCommand())),
+                                       new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand()),
+                                       new PruneCommand(robot, -0.4, 250),new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand()
+                                       ),
             robot.vision::isHiveUp
         ));
 
@@ -74,7 +83,7 @@ public class Path_G1A {
     // Generated from G1A_1.turt
     public FollowPathCommand path_1() {
         final Pose start = poseFactory.of(8, 10, 270);
-        final Pose tiltCheck = poseFactory.of(36, 24, 90);
+        final Pose tiltCheck = poseFactory.of(32, 24, 90);
         final Pose tiltCheckControl1 = poseFactory.of(19.1833, 22.3761, 0);
 
         Path path_1Path = Paths.path(
@@ -86,15 +95,15 @@ public class Path_G1A {
 
     // Generated from G1A_2.turt
     public FollowPathCommand path_2() {
-        final Pose start = poseFactory.of(36, 24, 90);
-        final Pose toFlower = poseFactory.of(36, 110, 90);
-        final Pose point2 = poseFactory.of(48, 128, 90);
-        final Pose point2Control1 = poseFactory.of(36, 118.5706, 0);
+        final Pose start = poseFactory.of(32, 24, 90);
+        final Pose toFlower = poseFactory.of(32, 110, 90);
+        final Pose point2 = poseFactory.of(48, 130, 90);
+        final Pose point2Control1 = poseFactory.of(32, 120.4434, 0);
         final Pose point2Control2 = poseFactory.of(47.7116, 118.5408, 0);
 
         Path path_2Path = Paths.path(
-                line(start, toFlower).linear(start, toFlower),
-                curve(toFlower, point2Control1, point2Control2, point2).linear(toFlower, point2).with(maxVelocity(30))
+                line(start, toFlower).linear(start, toFlower).with(maxVelocity(55)),
+                curve(toFlower, point2Control1, point2Control2, point2).linear(toFlower, point2).with(maxVelocity(40))
         );
 
         return new NamedFollowPathCommand(robot, "G1A_2", new String[] {"toFlower", "point2"}, path_2Path);

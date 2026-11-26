@@ -6,7 +6,7 @@
     "link": "https://github.com/Mallen220/TurtleTracer"
   },
   "startPoint": {
-    "x": 36,
+    "x": 32,
     "y": 24,
     "heading": "linear",
     "locked": false,
@@ -18,7 +18,7 @@
       "id": "mwwduxqk-7pkpwd",
       "name": "To Flower",
       "endPoint": {
-        "x": 36,
+        "x": 32,
         "y": 110,
         "heading": "linear",
         "startDeg": 90,
@@ -31,22 +31,23 @@
       "waitAfterMs": 0,
       "waitBeforeName": "",
       "waitAfterName": "",
-      "hidden": false
+      "hidden": false,
+      "maxSpeed": 55
     },
     {
       "id": "mwwdvn4o-u9bzge",
       "name": "",
       "endPoint": {
         "x": 48,
-        "y": 128,
+        "y": 130,
         "heading": "linear",
         "startDeg": 90,
         "endDeg": 90
       },
       "controlPoints": [
         {
-          "x": 36,
-          "y": 118.57057363888484
+          "x": 32,
+          "y": 120.44337894516653
         },
         {
           "x": 47.711574952561676,
@@ -59,7 +60,7 @@
       "waitAfterMs": 0,
       "waitBeforeName": "",
       "waitAfterName": "",
-      "maxSpeed": 30,
+      "maxSpeed": 40,
       "hidden": false,
       "isChain": false
     }

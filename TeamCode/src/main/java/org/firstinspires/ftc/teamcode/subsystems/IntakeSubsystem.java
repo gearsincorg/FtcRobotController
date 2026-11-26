@@ -89,9 +89,19 @@ public class IntakeSubsystem extends SubsystemBase {
     private static final double GATE_OPEN_LEAD_MS  = 150;
 
     // Flower Intake servo ("flower"): UP from init, each teleop L1 press toggles UP / DOWN.
-    public static final double FLOWER_DOWN         = 0.45;  // was 0.475
+    // BUMPER: the flower arm used as a deflector so nectars don't catch on the front while
+    // driving in auto (flowerBumpCommand()).
     public static final double FLOWER_UP           = 0.02;
-    public static final long   FLOWER_MOVE_MS      = 200;   // flowerUp/DownCommand wait this long for the servo
+    public static final double FLOWER_BUMPER       = 0.40;  // pushes the Nectar
+    public static final double FLOWER_DOWN         = 0.45;  // was 0.475
+    public static final long   FLOWER_MOVE_MS      = 200;   // flowerUp/Down/BumpCommand wait this long for the servo
+
+    public enum FlowerPosition {
+        UP(FLOWER_UP, "UP"), DOWN(FLOWER_DOWN, "DN"), BUMPER(FLOWER_BUMPER, "BMP");
+        public final double servo;
+        public final String shortName;
+        FlowerPosition(double servo, String shortName) { this.servo = servo; this.shortName = shortName; }
+    }
 
     public  static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
     private static final double VOLLEY_TIMEOUT_MS  = 3000;  // auto volley: stop this long after feeding first starts (may include flower)
@@ -105,7 +115,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private DcMotorEx        transfer;
     private Servo            gate;
     private Servo            flower;
-    private boolean          flowerDown = false;
+    private FlowerPosition   flowerPosition = FlowerPosition.UP;
     private DigitalChannel[] slotSensors = new DigitalChannel[SLOT_NAMES.length];
     private SimulatedSlots   sim;
 
@@ -173,7 +183,7 @@ public class IntakeSubsystem extends SubsystemBase {
         // Motors off and gate closed until the first loop after START (the scheduler doesn't run
         // during init); from then on the mode decides.
         set(0, 0, GATE_CLOSED);
-        setFlowerDown(false);   // flower UP from init
+        setFlower(FlowerPosition.UP);   // flower UP from init
     }
 
     @Override
@@ -190,9 +200,9 @@ public class IntakeSubsystem extends SubsystemBase {
         } else if (sim != null) {
             opMode.telemetry.addLine("SIMULATED BALL SENSORS");
         }
-        // Balls : 3  [ - X X X ]  INTAKING  PACKED  flwr UP
-        opMode.telemetry.addData("Balls", "%d  [ %s]  %s%s%s", ballCount, pattern, mode,
-                isPacked() ? "  PACKED" : "", flowerDown ? "  flwr DN" : "  flwr UP");
+        // Balls : 3  [ - X X X ]  INTAKING  PACKED  flwr UP   (UP / DN / BMP)
+        opMode.telemetry.addData("Balls", "%d  [ %s]  %s%s  flwr %s", ballCount, pattern, mode,
+                isPacked() ? "  PACKED" : "", flowerPosition.shortName);
         if (showPowers) {
             opMode.telemetry.addData("Intake : Transfer : Gate", "%4.2f : %4.2f : %4.2f",
                     intakePower, transferPower, gatePosition);
@@ -203,14 +213,18 @@ public class IntakeSubsystem extends SubsystemBase {
 
     // == Flower Intake ========================================================
 
-    /** Flower servo DOWN (true) or UP (false). */
-    public void setFlowerDown(boolean down) {
-        flowerDown = down;
-        if (flower != null) flower.setPosition(down ? FLOWER_DOWN : FLOWER_UP);
+    /** Move the flower servo to UP, DOWN or BUMPER. */
+    public void setFlower(FlowerPosition position) {
+        flowerPosition = position;
+        if (flower != null) flower.setPosition(position.servo);
     }
 
-    public void toggleFlower()       { setFlowerDown(!flowerDown); }
-    public boolean isFlowerDown()    { return flowerDown; }
+    /** Flower servo DOWN (true) or UP (false). */
+    public void setFlowerDown(boolean down) { setFlower(down ? FlowerPosition.DOWN : FlowerPosition.UP); }
+
+    /** DOWN goes UP; UP or BUMPER goes DOWN. */
+    public void toggleFlower()       { setFlowerDown(flowerPosition != FlowerPosition.DOWN); }
+    public FlowerPosition getFlower() { return flowerPosition; }
 
     /** Also show the motor powers and gate position in telemetry (test opmodes). */
     public void setShowPowers(boolean show) { showPowers = show; }
@@ -455,6 +469,13 @@ public class IntakeSubsystem extends SubsystemBase {
     public Command flowerDownCommand() {
         return new SequentialCommandGroup(
                 new InstantCommand(() -> setFlowerDown(true)), new WaitCommand(FLOWER_MOVE_MS));
+    }
+
+    /** Flower to BUMPER (auto: deflects nectars off the front while driving); ends FLOWER_MOVE_MS
+     *  later, once the servo has had time to get there. */
+    public Command flowerBumpCommand() {
+        return new SequentialCommandGroup(
+                new InstantCommand(() -> setFlower(FlowerPosition.BUMPER)), new WaitCommand(FLOWER_MOVE_MS));
     }
 
     public Command passCommand() {
