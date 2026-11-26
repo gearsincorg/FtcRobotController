@@ -11,6 +11,7 @@ import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.ConditionalCommand;
 import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
 import com.seattlesolvers.solverslib.command.ParallelDeadlineGroup;
+import com.seattlesolvers.solverslib.command.ParallelRaceGroup;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
@@ -40,7 +41,7 @@ public class Path_G1A {
             //  Hive is still up, so go get more pollen
             new SequentialCommandGroup(robot.aimAndShootCommand()),
             //  Hive has tipped so go and score other side.
-            new SequentialCommandGroup(new ParallelCommandGroup(path_2(), robot.intake.flowerDownCommand()),robot.aimAndShootCommand()),
+            new SequentialCommandGroup(new ParallelCommandGroup(path_2(), robot.intake.flowerDownCommand()),new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand())),
             robot.vision::isHiveUp
         ));
 

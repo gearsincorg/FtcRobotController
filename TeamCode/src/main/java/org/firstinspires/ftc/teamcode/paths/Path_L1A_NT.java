@@ -32,7 +32,9 @@ public class Path_L1A_NT {
         robot.setStartPose(getStartPose());
 
         // Add paths and other subsystem commands here
-        // Jiggles run in a deadline group: they stop as soon as the intake is full (or its wait times out).
+        auto.addCommands(robot.shooter.startTrackingCommand());
+        auto.addCommands(path_start(), robot.vision.waitForTipUpCommand(), robot.aimAndShootCommand());  // shoot everything.
+
         return auto;
     }
 
