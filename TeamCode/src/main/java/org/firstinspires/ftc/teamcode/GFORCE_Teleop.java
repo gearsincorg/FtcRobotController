@@ -53,8 +53,8 @@ public class GFORCE_Teleop extends CommandOpMode {
 
     // Declare robot Subsystems
     private BiobuzzRobot robot = new BiobuzzRobot(this);
-    private final double DRIVE_SCALE_FACTOR = 0.75;  // was 1.0
-    private final double STEER_SCALE_FACTOR = 0.55;  // was 0.7
+    private final double DRIVE_SCALE_FACTOR = 1.00;  // was 1.0
+    private final double STEER_SCALE_FACTOR = 0.7;  // was 0.7
 
     // Optional vision features.  Off: the camera does no detection work and the button does nothing
     // extra.  On: the finder runs only while its button (L1 / R2) is held.
