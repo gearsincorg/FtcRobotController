@@ -294,6 +294,16 @@ public class BiobuzzRobot {
     }
 
     /**
+     * Same as aimAndShootCommand(), but fires only the balls already in the transfer: the intake
+     * stays off until the volley is done, so nothing new is taken in.  Limited to VOLLEY_MAX_MS.
+     */
+    public Command aimAndShootTransferOnlyCommand() {
+        return new SequentialCommandGroup(
+                aimAtGoalCommand().withTimeout(AIM_TIMEOUT_MS),
+                intake.shootTransferOnlyCommand().withTimeout(VOLLEY_MAX_MS));
+    }
+
+    /**
      * Auto step mode:with step mode on (auto setup menu), wait here until gamepad 1 Cross is pressed;
      * with it off, finish at once.  Cross must be released and pressed again, so holding it doesn't
      * skip several pauses.  Pedro holds the robot at the end of the last path while paused.

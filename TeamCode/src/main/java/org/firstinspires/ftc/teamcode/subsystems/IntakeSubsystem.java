@@ -129,6 +129,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private boolean  shootHeld       = false;
     private boolean  passHeld        = false;
     private boolean  ejectHeld       = false;
+    private boolean  shootIntakeOff  = false;  // SHOOTING runs the transfer only: no intake (auto transfer-only volley)
     private boolean  fedThisPress    = false;  // SHOOTING has been reached since shoot was pressed
 
     // State
@@ -240,6 +241,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public void stopShoot() {
         shootHeld = false;
+        shootIntakeOff = false;
         fedThisPress = false;
     }
 
@@ -382,7 +384,8 @@ public class IntakeSubsystem extends SubsystemBase {
                 // ago runs at the normal speed.)
                 boolean lastBall = ballCount == 1
                         || (isEmpty() && emptyTimer.milliseconds() < TRANSFER_LAST_HOLD_MS);
-                set(INTAKE_POWER, lastBall ? TRANSFER_LAST_POWER : TRANSFER_POWER, GATE_OPEN);
+                set(shootIntakeOff ? 0 : INTAKE_POWER,
+                        lastBall ? TRANSFER_LAST_POWER : TRANSFER_POWER, GATE_OPEN);
                 break;
             case SPINUP:
                 set(0, 0, GATE_CLOSED);
@@ -442,11 +445,27 @@ public class IntakeSubsystem extends SubsystemBase {
      * conditions (empty for SHOT_CLEAR_MS, or VOLLEY_TIMEOUT_MS) still apply after that.
      */
     public Command shootAllCommand(long minShootTimeMs) {
+        return shootAllCommand(minShootTimeMs, false);
+    }
+
+    /**
+     * Fire only the balls already in the transfer (auto): the intake stays off from the moment
+     * feeding starts until the volley is done, so nothing new is taken in.  Finishes when the last
+     * one has left (the count can only fall, so it always finishes).
+     */
+    public Command shootTransferOnlyCommand() {
+        return shootAllCommand(0, true);
+    }
+
+    private Command shootAllCommand(long minShootTimeMs, boolean intakeOff) {
         // Shoot is released in isFinished as well as in end(): SolversLib 0.3.6's withTimeout()
         // (a ParallelRaceGroup) never calls end() on a command that finished by itself, so
         // relying on end() left shoot held after every auto volley (intake stuck in SPINUP).
         return new FunctionalCommand(
-                this::startShoot,
+                () -> {
+                    startShoot();
+                    shootIntakeOff = intakeOff;
+                },
                 () -> {},
                 interrupted -> stopShoot(),
                 () -> {
