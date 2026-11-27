@@ -38,7 +38,8 @@ import java.util.function.BooleanSupplier;
  *              after it opens) intake in, transfer feeds (TRANSFER_POWER; TRANSFER_LAST_POWER with one ball left and for
  *              TRANSFER_LAST_HOLD_MS after the count reads empty).  The only mode with the gate open.
  *   SPINUP     shoot held but the shooter isn't up to speed (yet, or again after a shot slowed it):
- *              intake and transfer stopped, gate closed.  While shoot is held (SHOOTING or SPINUP), pass and eject are ignored.
+ *              gate closed; while not full, intake and transfer as INTAKING (keeps collecting),
+ *              else (or in a transfer-only volley) both stopped.  While shoot is held (SHOOTING or SPINUP), pass and eject are ignored.
  *   PASS       pass held: intake out, transfer reversed, every ball goes out the intake.
  *   EJECTING   eject held: intake out, transfer holds the column.
  *   FULL       four balls: intake holds gently (INTAKE_HOLD_POWER), transfer at TRANSFER_PACKED_POWER.
@@ -388,7 +389,10 @@ public class IntakeSubsystem extends SubsystemBase {
                         lastBall ? TRANSFER_LAST_POWER : TRANSFER_POWER, GATE_OPEN);
                 break;
             case SPINUP:
-                set(0, 0, GATE_CLOSED);
+                // Keep collecting while we wait for the shooter, as INTAKING does (gate closed),
+                // unless full, or in a transfer-only volley (nothing new may be taken in).
+                if (isFull() || shootIntakeOff) set(0, 0, GATE_CLOSED);
+                else                            intakingOutputs();
                 break;
             case PASS:
                 set(INTAKE_EJECT_POWER, TRANSFER_EJECT_POWER, GATE_CLOSED);
@@ -401,14 +405,19 @@ public class IntakeSubsystem extends SubsystemBase {
                 break;
             case INTAKING:
             default:
-                // Move balls up until they're stacked under the gate, then ease off so the
-                // transfer doesn't stall against the closed gate.
-                double transferPower = isEmpty()  ? TRANSFER_EMPTY_POWER
-                                     : isPacked() ? TRANSFER_PACKED_POWER
-                                     :              TRANSFER_POWER;
-                set(INTAKE_POWER, transferPower, GATE_CLOSED);
+                intakingOutputs();
                 break;
         }
+    }
+
+    /** INTAKING (also SPINUP while not full): intake in, gate closed. */
+    private void intakingOutputs() {
+        // Move balls up until they're stacked under the gate, then ease off so the
+        // transfer doesn't stall against the closed gate.
+        double transferPower = isEmpty()  ? TRANSFER_EMPTY_POWER
+                             : isPacked() ? TRANSFER_PACKED_POWER
+                             :              TRANSFER_POWER;
+        set(INTAKE_POWER, transferPower, GATE_CLOSED);
     }
 
     private void set(double intakePower, double transferPower, double gatePosition) {
