@@ -103,9 +103,9 @@ public class IntakeSubsystem extends SubsystemBase {
         FlowerPosition(double servo, String shortName) { this.servo = servo; this.shortName = shortName; }
     }
 
-    public  static final double COUNT_DEBOUNCE_MS  = 100;   // sensor pattern must hold this long
-    private static final double VOLLEY_TIMEOUT_MS  = 3000;  // auto volley: stop this long after feeding first starts (may include flower)
-    private static final double SHOT_CLEAR_MS      = 300;   // auto volley: last ball leaves the flywheel
+    public  static final double COUNT_DEBOUNCE_MS  =  100;   // sensor pattern must hold this long
+    private static final double VOLLEY_TIMEOUT_MS  = 2000;  // auto volley: stop this long after feeding first starts
+    private static final double SHOT_CLEAR_MS      =  300;   // auto volley: last ball leaves the flywheel
 
     public enum Mode { INTAKING, FULL, EJECTING, PASS, SPINUP, SHOOTING }
 
@@ -116,7 +116,7 @@ public class IntakeSubsystem extends SubsystemBase {
     private Servo            gate;
     private Servo            flower;
     private FlowerPosition   flowerPosition = FlowerPosition.UP;
-    private DigitalChannel[] slotSensors = new DigitalChannel[SLOT_NAMES.length];
+    private DigitalChannel[] slotSensors    = new DigitalChannel[SLOT_NAMES.length];
     private SimulatedSlots   sim;
 
     // Sensors
@@ -278,9 +278,12 @@ public class IntakeSubsystem extends SubsystemBase {
 
     public double getGatePosition() { return gatePosition; }
 
-    /** An auto volley is done: the column has read empty long enough, or we've fed too long. */
-    private boolean volleyDone() {
-        if (!fedThisPress) {
+    /**
+     * An auto volley is done: the volley has run at least minShootTimeMs since feeding first
+     * started, and the column has read empty long enough or we've fed too long.
+     */
+    private boolean volleyDone(long minShootTimeMs) {
+        if (!fedThisPress || volleyTimer.milliseconds() < minShootTimeMs) {
             return false;
         }
         return (isEmpty() && emptyTimer.milliseconds() > SHOT_CLEAR_MS)
@@ -429,6 +432,16 @@ public class IntakeSubsystem extends SubsystemBase {
 
     /** Fire every ball in one volley (auto); finishes when the last one has left. */
     public Command shootAllCommand() {
+        return shootAllCommand(0);
+    }
+
+    /**
+     * Same, but the volley lasts at least minShootTimeMs from when feeding first starts (the
+     * intake and transfer keep running, with the gate open), even if the column reads empty.  Gives
+     * pollen released from the flower time to reach the transfer and be shot.  The usual end
+     * conditions (empty for SHOT_CLEAR_MS, or VOLLEY_TIMEOUT_MS) still apply after that.
+     */
+    public Command shootAllCommand(long minShootTimeMs) {
         // Shoot is released in isFinished as well as in end(): SolversLib 0.3.6's withTimeout()
         // (a ParallelRaceGroup) never calls end() on a command that finished by itself, so
         // relying on end() left shoot held after every auto volley (intake stuck in SPINUP).
@@ -437,7 +450,7 @@ public class IntakeSubsystem extends SubsystemBase {
                 () -> {},
                 interrupted -> stopShoot(),
                 () -> {
-                    if (!volleyDone()) return false;
+                    if (!volleyDone(minShootTimeMs)) return false;
                     stopShoot();
                     return true;
                 });

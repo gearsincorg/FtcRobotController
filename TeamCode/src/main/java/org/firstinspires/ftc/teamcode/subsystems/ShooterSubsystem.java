@@ -210,7 +210,7 @@ public class ShooterSubsystem extends SubsystemBase {
     // just starts to slip, then back off.
     private static final double RAMP_START_RPM         = 300;
     private static final double RAMP_RPM_PER_S         = 4000;  // 2026-11-21 (was 2000: it kept up, lead 450-620, but took ~2.2 s to 4400; 3000 tried on 2026-11-17 and set back)
-    private static final double RAMP_MAX_LEAD_RPM      = 800;   // was 400: spin-up took ~4 s
+    private static final double RAMP_MAX_LEAD_RPM      = 1000;
 
     // == Hood ================================================================
     // Hood angle is in degrees from vertical, forward positive.  Two measured points define the

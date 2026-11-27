@@ -237,7 +237,7 @@ public class BiobuzzRobot {
      * shootAllCommand's own VOLLEY_TIMEOUT_MS only starts at the first feed, so if the shooter never
      * gets ready (flywheel short of target, chassis never aimed) the volley would wait forever.
      */
-    public static final long   VOLLEY_MAX_MS         = 3500;
+    public static final long   VOLLEY_MAX_MS         = 2500;
     /** Re-send the hold heading when the aim moves this much (the turret pivot moves as the robot turns). */
     private static final double AIM_RETARGET_RAD      = Math.toRadians(1);
 
@@ -278,9 +278,19 @@ public class BiobuzzRobot {
      * setRequireChassisAim(true), so no ball is fed while the chassis is off target.
      */
     public Command aimAndShootCommand() {
+        return aimAndShootCommand(0);
+    }
+
+    /**
+     * Same, but the shooter runs for at least minShootTimeMs from when feeding first starts, so the
+     * volley doesn't end just because the transfer is empty: pollen released from the flower has
+     * time to leave it and enter the transfer.  The overall limit is the larger of VOLLEY_MAX_MS and
+     * minShootTimeMs, so a long minimum isn't cut off.
+     */
+    public Command aimAndShootCommand(long minShootTimeMs) {
         return new SequentialCommandGroup(
                 aimAtGoalCommand().withTimeout(AIM_TIMEOUT_MS),
-                intake.shootAllCommand().withTimeout(VOLLEY_MAX_MS));
+                intake.shootAllCommand(minShootTimeMs).withTimeout(Math.max(VOLLEY_MAX_MS, minShootTimeMs)));
     }
 
     /**

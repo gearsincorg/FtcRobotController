@@ -45,12 +45,12 @@ public class Path_G1A {
                                        new ParallelDeadlineGroup(robot.intake.intakeUntilFullCommand(1000), new JiggleCommand(robot, 1000) ),
                                        new ParallelCommandGroup(path_6().withTimeout(5000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1600),robot.intake.flowerDownCommand())),
                                        new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand()),
-                                       new PruneCommand(robot, -0.4, 250),new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand()
+                                       new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand()
                                        ),
             //  Hive has tipped so go and score other side.
             new SequentialCommandGroup(new ParallelCommandGroup(path_2().withTimeout(6000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1800),robot.intake.flowerDownCommand())),
                                        new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand()),
-                                       new PruneCommand(robot, -0.4, 250),new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand()
+                                       new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand()
                                        ),
             robot.vision::isHiveUp
         ));
