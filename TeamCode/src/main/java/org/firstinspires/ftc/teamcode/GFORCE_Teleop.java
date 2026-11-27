@@ -45,7 +45,6 @@ import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.paths.Path_G1A_NT;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterSubsystem;
 
 @TeleOp(name = "G-FORCE TELEOP", group = "Competition")
@@ -55,6 +54,15 @@ public class GFORCE_Teleop extends CommandOpMode {
     private BiobuzzRobot robot = new BiobuzzRobot(this);
     private final double DRIVE_SCALE_FACTOR = 1.00;  // was 1.0
     private final double STEER_SCALE_FACTOR = 0.7;  // was 0.7
+
+    // Drive ramp (anti-wheelie): the most the drive command (stick units, 0-1) may grow per second.
+    // The rate is blended in a straight line from LOW (command near 0) to HIGH (full command), so
+    // pulling away is quick and the top of the ramp is gentle: 5 / 2 takes about 0.31 s from rest
+    // to full.  Tips near top speed: lower HIGH.  Tips pulling away: lower LOW.  Sluggish without
+    // tipping: raise LOW.  Only speeding up and reversing are ramped; slowing down is not.
+    private static final double DRIVE_ACCEL_LOW_PER_S  = 10.0;
+    private static final double DRIVE_ACCEL_HIGH_PER_S = 2.0;   // 2.0 alone stopped the tipping (sluggish)
+    private static final double DRIVE_RAMP_MAX_DT_S = 0.05;   // a slow loop can't skip the ramp
 
     // Optional vision features.  Off: the camera does no detection work and the button does nothing
     // extra.  On: the finder runs only while its button (L1 / R2) is held.
@@ -73,6 +81,9 @@ public class GFORCE_Teleop extends CommandOpMode {
 
     // Pedro field direction that "stick forward" means to the driver (away from the driver station).
     private static final double DRIVER_FORWARD = Math.toRadians(0);
+
+    // Touchpad home pose (Pedro coordinates, heading 180 deg). Its own spot, not tied to any auto start.
+    private static final Pose HOME_POSE = new Pose(9, 57.75, Math.toRadians(180));
 
     // class Methods
     private boolean             aimAtGoal = false;
@@ -197,6 +208,10 @@ public class GFORCE_Teleop extends CommandOpMode {
         double lateral  = -gamepad1.left_stick_x  * DRIVE_SCALE_FACTOR;
         double yaw      = -gamepad1.right_stick_x * STEER_SCALE_FACTOR;
 
+        double[] ramped = rampDrive(axial, lateral);
+        axial   = ramped[0];
+        lateral = ramped[1];
+
         double heading = robot.drive.pose().heading();
         boolean aiming = false;     // set by the aim branch; a new aim resets the heading controller
 
@@ -247,6 +262,46 @@ public class GFORCE_Teleop extends CommandOpMode {
 
         // Robot-centric drive
         robot.drive.manual(powers);
+    }
+
+     // Drive ramp state: the drive command actually sent last loop (driver frame).
+    private double cmdAxial = 0, cmdLateral = 0;
+    private final ElapsedTime rampTimer = new ElapsedTime();
+
+    /**
+     * Anti-wheelie: limits how fast the translation command grows, so slamming the stick from rest
+     * (or reversing it) can't lift the robot.  Works on the (axial, lateral) vector in the driver's
+     * frame, before fieldCentric() rotates it, so diagonals are limited like straight moves and
+     * turning doesn't count as accelerating.  Slowing down in the same direction (e.g. letting go
+     * of the stick) passes straight through, so stopping is unchanged.  Turning is not ramped.
+     *
+     * A deliberate teleop-only difference from Pedro (auto doesn't wheelie): if auto ever needs it,
+     * the Pedro equivalent is Foresight's maxAccelerationConstraint (in/s^2, see ForesightConfig.md).
+     */
+    private double[] rampDrive(double axial, double lateral) {
+        double dt = Math.min(rampTimer.seconds(), DRIVE_RAMP_MAX_DT_S);
+        rampTimer.reset();
+
+        double dot = axial * cmdAxial + lateral * cmdLateral;
+        boolean slowing = Math.hypot(axial, lateral) <= Math.hypot(cmdAxial, cmdLateral) && dot >= 0;
+
+        if (slowing) {
+            cmdAxial = axial;
+            cmdLateral = lateral;
+        } else {
+            double dA = axial - cmdAxial, dL = lateral - cmdLateral;
+            double step = Math.hypot(dA, dL);
+            double size = Math.min(1.0, Math.hypot(cmdAxial, cmdLateral));
+            double rate = DRIVE_ACCEL_LOW_PER_S + (DRIVE_ACCEL_HIGH_PER_S - DRIVE_ACCEL_LOW_PER_S) * size;
+            double maxStep = rate * dt;
+            if (step > maxStep) {
+                dA *= maxStep / step;
+                dL *= maxStep / step;
+            }
+            cmdAxial += dA;
+            cmdLateral += dL;
+        }
+        return new double[] { cmdAxial, cmdLateral };
     }
 
     /**
@@ -390,13 +445,12 @@ public class GFORCE_Teleop extends CommandOpMode {
     }
 
     /**
-     * Touchpad: set the pose to the Garden auto start (from G1A_NT_start.turt), so a robot
-     * placed where auto starts gets the same pose and heading as auto gives it.
+     * Touchpad: set the pose to HOME_POSE (9, 57.75, 180 deg), a fixed home spot separate
+     * from every auto routine, so place the robot there before pressing it.
      */
     public void resetHeading () {
-        Pose resetPose = new Path_G1A_NT(robot).getStartPose();
-        robot.setStartPose(resetPose);
-        headingSetpoint = resetPose.heading();
+        robot.setStartPose(HOME_POSE);
+        headingSetpoint = HOME_POSE.heading();
     }
 }
 
