@@ -115,11 +115,15 @@ public class GFORCE_Teleop extends CommandOpMode {
     }
 
     private boolean lastInitL1 = false;
+    private boolean lastInitDpadLeft = false;
+    private boolean turretZeroed = false;
 
     /**
      * During init the scheduler doesn't run, so button bindings don't work yet.  L1 (Flower Intake)
      * is the one control that also works before START: each fresh press toggles the flower here.
      * After START the L1 binding in bindButtons() takes over, from wherever the flower was left.
+     * D-pad left (init only, for practice) zeroes the turret where it is: center it by hand first.
+     * Only in init, so a stray press can't throw the aim off mid-match.
      */
     @Override
     public void initialize_loop() {
@@ -127,7 +131,16 @@ public class GFORCE_Teleop extends CommandOpMode {
         if (l1 && !lastInitL1) robot.intake.toggleFlower();
         lastInitL1 = l1;
 
+        boolean dpadLeft = gamepad1.dpad_left;
+        if (dpadLeft && !lastInitDpadLeft) {
+            robot.shooter.homeTurret();
+            turretZeroed = true;
+        }
+        lastInitDpadLeft = dpadLeft;
+
         telemetry.addData("Flower", "%s  (L1 toggles)", robot.intake.getFlower());
+        telemetry.addData("Turret", turretZeroed ? "ZEROED here  (D-pad left again to redo)"
+                                                 : "center by hand, D-pad left zeroes");
         telemetry.addData("Start pose", poseAutoReset
                 ? "none saved (no auto run): reset to the auto start"
                 : String.format(java.util.Locale.US, "from last run: x %.1f  y %.1f  hdg %.0f",
