@@ -6,10 +6,10 @@ import com.seattlesolvers.solverslib.command.CommandBase;
 import org.firstinspires.ftc.teamcode.BiobuzzRobot;
 
 /**
- * Drives the robot straight back for pruneTimeMs, then straight forward for pruneTimeMs (so it
- * ends about where it started), then stops the drive.  Robot-centric manual drive, no strafe.
+ * Drives the robot straight back for pruneTimeMs, then straight forward for pruneTimeMs - 50 (so it
+ * stays clear or any obstacles), then stops the drive.  Robot-centric manual drive, no strafe.
  * Complements JiggleCommand's side-to-side shake: used in auto to pull any pollen the flower
- * has released into the intake.  Total time is 2 x pruneTimeMs.
+ * has released into the intake.  Total time is 2 x pruneTimeMs - 50.
  *
  * Both parameters are magnitudes (the sign of prunePower is ignored); the command picks the
  * directions itself: new PruneCommand(robot, 0.4, 250).
@@ -48,7 +48,7 @@ public class PruneCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return pruneTimer.milliseconds() >= 2 * pruneTimeMs;
+        return pruneTimer.milliseconds() >= ((2 * pruneTimeMs) - 50);
     }
 
     @Override

@@ -35,22 +35,23 @@ public class Path_G1A {
         robot.setStartPose(getStartPose());
 
         // Add paths and other subsystem commands here
-        auto.addCommands(robot.shooter.startTrackingCommand());
-        auto.addCommands(robot.aimAndShootCommand());  // shoot everything.
+        auto.addCommands(robot.shooter.startTrackingCommand(), robot.aimAndShootTransferOnlyCommand());  // shoot everything.
         auto.addCommands(path_start(), robot.intake.intakeUntilFullCommand(1000));
         auto.addCommands(path_1()); // go and check on hive tilt.
         auto.addCommands(new ConditionalCommand(
             //  Hive is still up, so go get more pollen
-            new SequentialCommandGroup(robot.aimAndShootCommand(), robot.intake.flowerDownCommand(), path_5().withTimeout(1500),
-                                       new ParallelDeadlineGroup(robot.intake.intakeUntilFullCommand(1000), new JiggleCommand(robot, 1000) ),
-                                       new ParallelCommandGroup(path_6().withTimeout(5000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1600),robot.intake.flowerDownCommand())),
-                                       new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand()),
-                                       new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand()
+            new SequentialCommandGroup(
+                robot.aimAndShootCommand(), robot.intake.flowerDownCommand(), path_5().withTimeout(1500),
+                new ParallelDeadlineGroup(robot.intake.intakeUntilFullCommand(1000), new JiggleCommand(robot, 1000) ),
+                new ParallelCommandGroup(path_6().withTimeout(5000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1600),robot.intake.flowerDownCommand())),
+                new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand()),
+                new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand(2000)
                                        ),
             //  Hive has tipped so go and score other side.
-            new SequentialCommandGroup(new ParallelCommandGroup(path_2().withTimeout(6000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1800),robot.intake.flowerDownCommand())),
+            new SequentialCommandGroup(
+                new ParallelCommandGroup(path_2().withTimeout(6000), new SequentialCommandGroup(robot.intake.flowerBumpCommand(), new WaitCommand(1800),robot.intake.flowerDownCommand())),
                                        new ParallelCommandGroup(new JiggleCommand(robot, 1000), robot.aimAndShootCommand()),
-                                       new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand()
+                                       new PruneCommand(robot, 0.4, 250),robot.aimAndShootCommand(2000)
                                        ),
             robot.vision::isHiveUp
         ));
