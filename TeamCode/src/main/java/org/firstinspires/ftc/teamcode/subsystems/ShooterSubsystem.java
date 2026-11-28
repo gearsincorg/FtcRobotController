@@ -108,10 +108,10 @@ public class ShooterSubsystem extends SubsystemBase {
     // integral freed the turret (jump, pause, jump); retuned to Kp 1.3, Ki 2.0, Ks 0.05 (Kd kept;
     // 0.08 overshot 7%).  A motion profile was tried and removed.  KV from the Kv test: 0.2033,
     // then 0.205 with it applied, so the tracking lag is cancelled (Plant ID's 1/K guess was 0.057).
-    public static final double TURRET_KP          = 1.3;    // power per radian of error
-    public static final double TURRET_KI          = 2.0;    // power per radian of error, per second
+    public static final double TURRET_KP          = 1.2;    // power per radian of error
+    public static final double TURRET_KI          = 1.5;    // power per radian of error, per second (was 1.0)
     public static final double TURRET_KD          = 0.11;   // power per rad/s of turret speed (on the measurement)
-    public static final double TURRET_KS          = 0.05;   // power to break static friction, added in the direction of the error
+    public static final double TURRET_KS          = 0.10;   // power to break static friction, added in the direction of the error (was .14)
     public static final double TURRET_KV          = 0.205;  // power per rad/s of chassis turn
     private static final double TURRET_I_ZONE_RAD   = Math.toRadians(10);  // integral only builds within this error
     private static final double TURRET_I_MAX_POWER  = 0.2;                 // and is clamped to this power
